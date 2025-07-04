@@ -8,7 +8,5 @@ public class PlanMateApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(PlanMateApplication.class, args);
-        System.out.println("Hello World!");
     }
-
 }
