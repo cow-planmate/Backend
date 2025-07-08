@@ -1,43 +1,48 @@
 package com.example.planmate.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+import java.util.Set;
 
 @Entity
-@Getter
-@Table(name = "\"user\"")
+@Table(name = "users")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer userId;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(unique = true, nullable = false)
-    @Setter
-    private String username;
-
-    @Setter
+    @Column(nullable = false)
     private String password;
 
-    @Setter
-    private int gender;
+    @Column(nullable = false, unique = true)
+    private String nickname;
 
-    @Setter
-
+    @Column(nullable = false)
     private int age;
 
-    public User(String email, String username, String password, int gender, int age) {
-        this.email = email;
-        this.username = username;
-        this.password = password;
-        this.gender = gender;
-        this.age = age;
-    }
-    public User() {
+    @Column(nullable = false)
+    private int gender;
 
-    }
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Plan> plans;
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_preferred_theme",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "preferred_theme_id")
+    )
+    private Set<PreferredTheme> preferredThemes;
 }

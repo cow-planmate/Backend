@@ -26,22 +26,24 @@ public class UserService implements UserDetailsService {
 
     public RegisterResponse register(RegisterRequest request) {
         RegisterResponse registerResponse = new RegisterResponse();
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+        if (userRepository.findByEmailIgnoreCase(request.getEmail()).isPresent()) {
             registerResponse.setMessage("Email already exists");
             return registerResponse;
         }
-        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+        if (userRepository.findByNickname(request.getNickname()).isPresent()) {
             registerResponse.setMessage("Username already exists");
             return registerResponse;
         }
 
-        User user = new User(
-                request.getEmail(),
-                request.getUsername(),
-                passwordEncoder.encode(request.getPassword()),
-                request.getGender(),
-                request.getAge()
-        );
+        User user = User.builder()
+                .email(request.getEmail())
+                .nickname(request.getNickname())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .gender(request.getGender())
+                .age(request.getAge())
+                .build();
+
+
         userRepository.save(user);
         registerResponse.setMessage("User registered successfully");
         return registerResponse;
@@ -49,7 +51,7 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())

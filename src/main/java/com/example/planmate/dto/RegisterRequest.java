@@ -7,7 +7,7 @@ import lombok.Setter;
 @Setter
 public class RegisterRequest implements IRequest {
     private String email;
-    private String username;
+    private String nickname;
     private String password;
     private int gender;
     private int age;
