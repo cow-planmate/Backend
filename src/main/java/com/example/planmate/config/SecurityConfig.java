@@ -1,6 +1,6 @@
 package com.example.planmate.config;
 
-import com.example.planmate.service.UserService;
+import com.example.planmate.service.RegisterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,11 +14,11 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
-    private final UserService userService;
+    private final RegisterService registerService;
 
     @Autowired
-    public SecurityConfig(UserService userService) {
-        this.userService = userService;
+    public SecurityConfig(RegisterService registerService) {
+        this.registerService = registerService;
     }
 
     @Bean
