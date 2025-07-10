@@ -5,6 +5,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class RegisterResponse extends CommonResponse {
-    private int userId;
+public class NicknameVerificationRequest {
+    private String nickname;
 }

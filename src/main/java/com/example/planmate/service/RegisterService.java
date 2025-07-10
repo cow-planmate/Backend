@@ -26,7 +26,6 @@ public class RegisterService{
             response.setMessage("Username already exists");
             return response;
         }
-
         User user = User.builder()
                 .email(request.getEmail())
                 .nickname(request.getNickname())
@@ -40,6 +39,8 @@ public class RegisterService{
         response.setUserId(user.getUserId());
         return response;
     }
+
+
 
 
 }

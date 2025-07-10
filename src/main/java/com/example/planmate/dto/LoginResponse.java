@@ -5,8 +5,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class LoginResponse implements IResponse{
-    private String message;
+public class LoginResponse extends CommonResponse {
+    private boolean loginSuccess;
     private int userId;
-    private String token;
+
 }

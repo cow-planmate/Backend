@@ -34,9 +34,11 @@ public class LoginService {
             response.setToken(token);
             response.setUserId(userDetails.getUserId());
             response.setMessage("Login successful");
+            response.setLoginSuccess(true);
             return response;
         } catch (AuthenticationException e) {
-            response.setMessage("Login failed");
+            response.setMessage("Invalid username or password");
+            response.setLoginSuccess(false);
             return response;
         }
     }
