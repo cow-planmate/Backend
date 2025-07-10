@@ -1,4 +1,4 @@
 package com.example.planmate.dto;
 
-public class GetPreferredThemeResponse {
+public class GetPreferredThemeResponse extends  CommonResponse{
 }

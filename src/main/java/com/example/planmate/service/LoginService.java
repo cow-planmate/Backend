@@ -29,8 +29,9 @@ public class LoginService {
                     )
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            String token = jwtTokenProvider.generateToken(authentication.getName());
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            String token = jwtTokenProvider.generateToken(userDetails.getUserId());
+
             response.setToken(token);
             response.setUserId(userDetails.getUserId());
             response.setMessage("Login successful");
