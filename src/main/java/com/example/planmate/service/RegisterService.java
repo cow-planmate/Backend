@@ -17,14 +17,14 @@ public class RegisterService{
     private final PasswordEncoder passwordEncoder;
 
     public RegisterResponse register(RegisterRequest request) {
-        RegisterResponse registerResponse = new RegisterResponse();
+        RegisterResponse response = new RegisterResponse();
         if (userRepository.findByEmailIgnoreCase(request.getEmail()).isPresent()) {
-            registerResponse.setMessage("Email already exists");
-            return registerResponse;
+            response.setMessage("Email already exists");
+            return response;
         }
         if (userRepository.findByNickname(request.getNickname()).isPresent()) {
-            registerResponse.setMessage("Username already exists");
-            return registerResponse;
+            response.setMessage("Username already exists");
+            return response;
         }
 
         User user = User.builder()
@@ -35,10 +35,10 @@ public class RegisterService{
                 .age(request.getAge())
                 .build();
 
-
         userRepository.save(user);
-        registerResponse.setMessage("User registered successfully");
-        return registerResponse;
+        response.setMessage("User registered successfully");
+        response.setUserId(user.getUserId());
+        return response;
     }
 
 

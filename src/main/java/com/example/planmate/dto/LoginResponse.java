@@ -7,5 +7,6 @@ import lombok.Setter;
 @Setter
 public class LoginResponse implements IResponse{
     private String message;
+    private int userId;
     private String token;
 }

@@ -8,6 +8,6 @@ import lombok.Setter;
 public class RegisterResponse implements IResponse{
 
     private String message;
-    private Long userId;
+    private int userId;
 
 }

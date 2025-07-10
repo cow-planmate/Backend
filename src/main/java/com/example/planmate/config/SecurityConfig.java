@@ -1,7 +1,5 @@
 package com.example.planmate.config;
 
-import com.example.planmate.service.RegisterService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,13 +11,6 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class SecurityConfig {
-
-    private final RegisterService registerService;
-
-    @Autowired
-    public SecurityConfig(RegisterService registerService) {
-        this.registerService = registerService;
-    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {

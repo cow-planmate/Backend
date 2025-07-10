@@ -45,4 +45,5 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "preferred_theme_id")
     )
     private Set<PreferredTheme> preferredThemes;
+
 }
