@@ -1,5 +1,6 @@
 package com.example.planmate.token;
 
+import com.example.planmate.config.AuthWhitelist;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +23,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        //필터 통과
+        String uri = request.getRequestURI();
+        if (AuthWhitelist.isWhitelisted(uri)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String token = resolveToken(request);
         if (token != null && jwtTokenProvider.validateToken(token)) {
             int userId = jwtTokenProvider.getUserId(token);

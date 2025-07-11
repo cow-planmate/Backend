@@ -8,5 +8,6 @@ import lombok.Setter;
 public class LoginResponse extends CommonResponse {
     private boolean loginSuccess;
     private int userId;
+    private String token;
 
 }

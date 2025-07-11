@@ -22,7 +22,7 @@ public class SecurityConfig {
         http
                 .csrf().disable()
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register/**", "/api/auth/login").permitAll()
+                        .requestMatchers(AuthWhitelist.PATHS.toArray(new String[0])).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
