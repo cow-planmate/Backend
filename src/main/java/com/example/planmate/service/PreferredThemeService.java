@@ -14,8 +14,11 @@ public class PreferredThemeService {
     private final PreferredThemeRepository preferredThemeRepository;
 
     public GetPreferredThemeResponse getPreferredTheme() {
+        GetPreferredThemeResponse response = new GetPreferredThemeResponse();
         List<PreferredTheme> preferredThemes= preferredThemeRepository.findAll();
-
-
+        for (PreferredTheme preferredTheme : preferredThemes) {
+            response.addPreferredTheme(preferredTheme);
+        }
+        return response;
     }
 }
