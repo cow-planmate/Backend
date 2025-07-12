@@ -27,6 +27,6 @@ public class PlanController {
                 makePlanRequest.getAdultCount(),
                 makePlanRequest.getChildCount()
         );
-        return ResponseEntity.ok(response);
+        return response;
     }
 }
