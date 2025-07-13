@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalTime;
 
 @Entity
@@ -24,8 +23,8 @@ public class TimeTablePlaceBlock {
     @Column(nullable = false)
     private String placeTheme;
 
-    @Column(nullable = false, precision = 2, scale = 1)
-    private BigDecimal placeRating;
+    @Column(nullable = false)
+    private float placeRating;
 
     @Column(nullable = false)
     private String placeAddress;
