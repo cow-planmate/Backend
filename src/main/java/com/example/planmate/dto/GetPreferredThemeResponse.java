@@ -18,7 +18,7 @@ public class GetPreferredThemeResponse extends CommonResponse{
         preferredThemeVO.setPreferredThemeId(preferredTheme.getPreferredThemeId());
         preferredThemeVO.setPreferredThemeName(preferredTheme.getPreferredThemeName());
         preferredThemeVO.setPreferredThemeCategoryId(preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId());
-        preferredThemeVO.setPreferredThemeName(preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryName());
+        preferredThemeVO.setPreferredThemeCategoryName(preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryName());
         preferredThemes.add(preferredThemeVO);
     }
 }

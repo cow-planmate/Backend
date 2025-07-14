@@ -1,4 +1,4 @@
-package com.example.planmate.Auth;
+package com.example.planmate.auth;
 
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;

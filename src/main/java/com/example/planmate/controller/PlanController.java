@@ -2,6 +2,7 @@ package com.example.planmate.controller;
 
 import com.example.planmate.dto.*;
 import com.example.planmate.service.EditPlanNameService;
+import com.example.planmate.service.GetPlaceService;
 import com.example.planmate.service.GetPlanService;
 import com.example.planmate.service.MakePlanService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ public class PlanController {
     private final MakePlanService makePlanService;
     private final GetPlanService getPlanService;
     private final EditPlanNameService editPlanNameService;
+    private final GetPlaceService getPlaceService;
     @PostMapping("")
     public ResponseEntity<MakePlanResponse> makePlan(Authentication authentication, @RequestBody MakePlanRequest makePlanRequest) {
         int userId = Integer.parseInt(authentication.getName());
@@ -42,5 +44,9 @@ public class PlanController {
         int userId = Integer.parseInt(authentication.getName());
         EditPlanNameReponse reponse = editPlanNameService.EditPlanName(userId, planId, editPlanNameRequest.getPlanName());
         return ResponseEntity.ok(reponse);
+    }
+    @PostMapping("/{planId}/lodging")
+    public ResponseEntity<GetPlanResponse> getLodgingPlace(@PathVariable int planId, @RequestBody GetPlanRequest request) {
+        GetPlanResponse response = getPlaceService.get
     }
 }

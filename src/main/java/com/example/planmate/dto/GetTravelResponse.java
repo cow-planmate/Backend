@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 @Getter
 @Setter
-public class GetTravelResponse {
+public class GetTravelResponse extends CommonResponse {
     private List<Travel> travels;
     public GetTravelResponse(){
         travels = new ArrayList<>();

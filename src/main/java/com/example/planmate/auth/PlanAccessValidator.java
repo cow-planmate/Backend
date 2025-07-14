@@ -1,4 +1,4 @@
-package com.example.planmate.Auth;
+package com.example.planmate.auth;
 
 import com.example.planmate.entity.Plan;
 import com.example.planmate.repository.PlanRepository;

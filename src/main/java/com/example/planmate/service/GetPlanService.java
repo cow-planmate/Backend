@@ -1,6 +1,6 @@
 package com.example.planmate.service;
 
-import com.example.planmate.Auth.PlanAccessValidator;
+import com.example.planmate.auth.PlanAccessValidator;
 import com.example.planmate.dto.GetPlanResponse;
 import com.example.planmate.entity.Plan;
 import com.example.planmate.entity.TimeTable;

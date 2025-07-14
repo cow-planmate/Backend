@@ -5,6 +5,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class GetPlanRequest{
-    private int planId;
+public class PlaceRequest {
+    private int placeCategory;
 }
