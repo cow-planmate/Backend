@@ -1,4 +1,4 @@
-package com.example.planmate.token;
+package com.example.planmate.Auth;
 
 import com.example.planmate.config.AuthWhitelist;
 import jakarta.servlet.FilterChain;

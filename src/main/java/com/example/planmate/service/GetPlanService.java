@@ -1,5 +1,6 @@
 package com.example.planmate.service;
 
+import com.example.planmate.Auth.PlanAccessValidator;
 import com.example.planmate.dto.GetPlanResponse;
 import com.example.planmate.entity.Plan;
 import com.example.planmate.entity.TimeTable;
@@ -10,7 +11,6 @@ import com.example.planmate.repository.TimeTableRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.AccessDeniedException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,14 +20,10 @@ public class GetPlanService {
     private final PlanRepository planRepository;
     private final TimeTableRepository timeTableRepository;
     private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
-    public GetPlanResponse getPlan(int userId, int planId) throws AccessDeniedException {
+    private final PlanAccessValidator planAccessValidator;
+    public GetPlanResponse getPlan(int userId, int planId) {
         GetPlanResponse response = new GetPlanResponse();
-        Plan plan = planRepository.findById(planId)
-                .orElseThrow(() -> new RuntimeException("플랜 없음"));
-
-        if (plan.getUser().getUserId() != userId) {
-            throw new AccessDeniedException("권한 없음");
-        }
+        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
         response.addPlanFrame(
                 planId,
                 plan.getPlanName(),

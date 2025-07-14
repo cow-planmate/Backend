@@ -3,7 +3,7 @@ package com.example.planmate.service;
 import com.example.planmate.dto.LoginRequest;
 import com.example.planmate.dto.LoginResponse;
 import com.example.planmate.gita.CustomUserDetails;
-import com.example.planmate.token.JwtTokenProvider;
+import com.example.planmate.Auth.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
