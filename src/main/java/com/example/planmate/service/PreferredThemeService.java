@@ -37,7 +37,7 @@ public class PreferredThemeService {
                             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 테마 ID: " + id)))
                     .collect(Collectors.toSet());
 
-            user.setPreferredThemes(themes);
+            user.setPreferredThemes((List<PreferredTheme>) themes);
             userRepository.save(user);
         });
         return response;

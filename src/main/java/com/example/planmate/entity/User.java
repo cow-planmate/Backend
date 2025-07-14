@@ -1,17 +1,17 @@
 package com.example.planmate.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 @Entity
 @Table(name = "users")
 @Data
+@ToString(exclude = {"preferredThemes", "plans"})
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -44,6 +44,6 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "preferred_theme_id")
     )
-    private Set<PreferredTheme> preferredThemes;
+    private List<PreferredTheme> preferredThemes = new ArrayList<>();
 
 }
