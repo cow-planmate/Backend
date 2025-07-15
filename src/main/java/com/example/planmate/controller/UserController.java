@@ -1,9 +1,8 @@
 package com.example.planmate.controller;
 
-import com.example.planmate.dto.GetPreferredThemeResponse;
-import com.example.planmate.dto.MoveMypageResponse;
-import com.example.planmate.dto.SavePreferredThemeRequest;
-import com.example.planmate.dto.SavePreferredThemeResponse;
+import com.example.planmate.dto.*;
+import com.example.planmate.service.ChangeAgeService;
+import com.example.planmate.service.ChangeGenderService;
 import com.example.planmate.service.MoveMypageService;
 import com.example.planmate.service.PreferredThemeService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     private final PreferredThemeService preferredThemeService;
     private final MoveMypageService moveMypageService;
+    private final ChangeAgeService changeAgeService;
+    private final ChangeGenderService changeGenderService;
 
     @GetMapping("/preferredTheme")
     public ResponseEntity<GetPreferredThemeResponse> getPreferredTheme() {
@@ -33,6 +34,18 @@ public class UserController {
     public ResponseEntity<MoveMypageResponse> moveMypage(Authentication authentication) {
         int userId = Integer.parseInt(authentication.getName());
         MoveMypageResponse response = moveMypageService.getMypageInfo(userId);
+        return ResponseEntity.ok(response);
+    }
+    @PatchMapping("/age")
+    public ResponseEntity<ChangeAgeResponse> changeAge(Authentication authentication, @RequestBody ChangeAgeRequest request) {
+        int userId = Integer.parseInt(authentication.getName());
+        ChangeAgeResponse response = changeAgeService.changeAge(userId, request.getAge());
+        return ResponseEntity.ok(response);
+    }
+    @PatchMapping("/gender")
+    public ResponseEntity<ChangeGenderResponse> changeGender(Authentication authentication, @RequestBody ChangeGenderRequest request) {
+        int userId = Integer.parseInt(authentication.getName());
+        ChangeGenderResponse response = changeGenderService.changeGender(userId, request.getGender());
         return ResponseEntity.ok(response);
     }
 }
