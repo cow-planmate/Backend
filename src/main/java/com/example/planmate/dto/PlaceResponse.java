@@ -15,14 +15,14 @@ public class PlaceResponse extends CommonResponse{
     public PlaceResponse() {
         places = new ArrayList<>();
     }
-    public void addLodgingPlace(String placeId, String url, String name, String formatted_address, float rating, double xLocation, double yLocation) {
-        places.add(new LodgingPlaceVO(placeId, url, name, formatted_address, rating, xLocation, yLocation));
+    public void addLodgingPlace(String placeId, String url, String name, String formatted_address, float rating, double xLocation, double yLocation, String iconUrl) {
+        places.add(new LodgingPlaceVO(placeId, url, name, formatted_address, rating, xLocation, yLocation, iconUrl));
     }
-    public void addTourPlace(String placeId, String url, String name, String formatted_address, float rating, double xLocation, double yLocation) {
-        places.add(new TourPlaceVO(placeId, url, name, formatted_address, rating, xLocation, yLocation));
+    public void addTourPlace(String placeId, String url, String name, String formatted_address, float rating, double xLocation, double yLocation, String iconUrl) {
+        places.add(new TourPlaceVO(placeId, url, name, formatted_address, rating, xLocation, yLocation, iconUrl));
     }
-    public void addRestaurantPlace(String placeId, String url, String name, String formatted_address, float rating, double xLocation, double yLocation) {
-        places.add(new RestaurantPlaceVO(placeId, url, name, formatted_address, rating, xLocation, yLocation));
+    public void addRestaurantPlace(String placeId, String url, String name, String formatted_address, float rating, double xLocation, double yLocation, String iconUrl) {
+        places.add(new RestaurantPlaceVO(placeId, url, name, formatted_address, rating, xLocation, yLocation, iconUrl));
     }
     public void addPlace(List<? extends PlaceVO> places) {
         this.places.addAll(places);

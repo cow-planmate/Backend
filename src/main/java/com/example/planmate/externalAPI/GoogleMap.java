@@ -1,7 +1,6 @@
 package com.example.planmate.externalAPI;
 
 import com.example.planmate.valueObject.LodgingPlaceVO;
-import com.example.planmate.valueObject.PlaceVO;
 import com.example.planmate.valueObject.RestaurantPlaceVO;
 import com.example.planmate.valueObject.TourPlaceVO;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -23,7 +22,7 @@ public class GoogleMap {
     private String googleApiKey;
     public StringBuilder searchGoogle(String query) throws IOException {
         String urlStr = "https://maps.googleapis.com/maps/api/place/textsearch/json?query=" +
-                java.net.URLEncoder.encode(query, "UTF-8") + "&key=" + googleApiKey;
+                java.net.URLEncoder.encode(query, "UTF-8") + "&language=ko" + "&key=" + googleApiKey;
 
         URL url = new URL(urlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -39,7 +38,7 @@ public class GoogleMap {
         in.close();
         return response;
     }
-    public List<? extends PlaceVO> getTourPlace(String query) throws IOException {
+    public List<TourPlaceVO> getTourPlace(String query) throws IOException {
         StringBuilder sb = searchGoogle(query);
         List<TourPlaceVO> places = new ArrayList<>();
 
@@ -49,16 +48,18 @@ public class GoogleMap {
 
         if (results != null && results.isArray()) {
             for (JsonNode result : results) {
-                String placeId = result.get("place_id").asText();
+                String placeId = result.path("place_id").asText("");
                 String url = "https://www.google.com/maps/place/?q=place_id:" + placeId;
-                String name = result.get("name").asText();
-                String formatted_address = result.get("formatted_address").asText();
-                float rating = (float)result.get("rating").asDouble();
-                JsonNode location = result.path("geometry").path("location");
-                double xLocation = location.path("lng").asDouble();
-                double yLocation = location.path("lat").asDouble();
+                String name = result.path("name").asText("");
+                String formatted_address = result.path("formatted_address").asText("").replaceAll("…", "");
+                float rating = (float) result.path("rating").asDouble(0.0);
 
-                TourPlaceVO place = new TourPlaceVO(placeId, url, name, formatted_address, rating, xLocation, yLocation);
+                JsonNode location = result.path("geometry").path("location");
+                double xLocation = location.path("lng").asDouble(0.0);
+                double yLocation = location.path("lat").asDouble(0.0);
+                String iconUrl = result.path("icon").asText("");
+
+                TourPlaceVO place = new TourPlaceVO(placeId, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
                 places.add(place);
             }
         }
@@ -66,7 +67,7 @@ public class GoogleMap {
         return places;
     }
 
-    public List<? extends PlaceVO> getLodgingPlace(String query) throws IOException {
+    public List<LodgingPlaceVO> getLodgingPlace(String query) throws IOException {
         StringBuilder sb = searchGoogle(query);
         List<LodgingPlaceVO> places = new ArrayList<>();
 
@@ -76,23 +77,25 @@ public class GoogleMap {
 
         if (results != null && results.isArray()) {
             for (JsonNode result : results) {
-                String placeId = result.get("place_id").asText();
+                String placeId = result.path("place_id").asText("");
                 String url = "https://www.google.com/maps/place/?q=place_id:" + placeId;
-                String name = result.get("name").asText();
-                String formatted_address = result.get("formatted_address").asText();
-                float rating = (float)result.get("rating").asDouble();
-                JsonNode location = result.path("geometry").path("location");
-                double xLocation = location.path("lng").asDouble();
-                double yLocation = location.path("lat").asDouble();
+                String name = result.path("name").asText("");
+                String formatted_address = result.path("formatted_address").asText("").replaceAll("…", "");
+                float rating = (float) result.path("rating").asDouble(0.0);
 
-                LodgingPlaceVO place = new LodgingPlaceVO(placeId, url, name, formatted_address, rating, xLocation, yLocation);
+                JsonNode location = result.path("geometry").path("location");
+                double xLocation = location.path("lng").asDouble(0.0);
+                double yLocation = location.path("lat").asDouble(0.0);
+                String iconUrl = result.path("icon").asText("");
+
+                LodgingPlaceVO place = new LodgingPlaceVO(placeId, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
                 places.add(place);
             }
         }
 
         return places;
     }
-    public List<? extends PlaceVO> getRestaurantPlace(String query) throws IOException {
+    public List<RestaurantPlaceVO> getRestaurantPlace(String query) throws IOException {
         StringBuilder sb = searchGoogle(query);
         List<RestaurantPlaceVO> places = new ArrayList<>();
 
@@ -102,16 +105,18 @@ public class GoogleMap {
 
         if (results != null && results.isArray()) {
             for (JsonNode result : results) {
-                String placeId = result.get("place_id").asText();
+                String placeId = result.path("place_id").asText("");
                 String url = "https://www.google.com/maps/place/?q=place_id:" + placeId;
-                String name = result.get("name").asText();
-                String formatted_address = result.get("formatted_address").asText();
-                float rating = (float)result.get("rating").asDouble();
-                JsonNode location = result.path("geometry").path("location");
-                double xLocation = location.path("lng").asDouble();
-                double yLocation = location.path("lat").asDouble();
+                String name = result.path("name").asText("");
+                String formatted_address = result.path("formatted_address").asText("").replaceAll("…", "");
+                float rating = (float) result.path("rating").asDouble(0.0);
 
-                RestaurantPlaceVO place = new RestaurantPlaceVO(placeId, url, name, formatted_address, rating, xLocation, yLocation);
+                JsonNode location = result.path("geometry").path("location");
+                double xLocation = location.path("lng").asDouble(0.0);
+                double yLocation = location.path("lat").asDouble(0.0);
+                String iconUrl = result.path("icon").asText("");
+
+                RestaurantPlaceVO place = new RestaurantPlaceVO(placeId, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
                 places.add(place);
             }
         }

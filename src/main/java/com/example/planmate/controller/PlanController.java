@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class PlanController {
                 userId,
                 makePlanRequest.getDeparture(),
                 makePlanRequest.getTravelId(),
+                makePlanRequest.getTransportationCategoryId(),
                 makePlanRequest.getDates(),
                 makePlanRequest.getAdultCount(),
                 makePlanRequest.getChildCount()
@@ -46,7 +48,23 @@ public class PlanController {
         return ResponseEntity.ok(reponse);
     }
     @PostMapping("/{planId}/lodging")
-    public ResponseEntity<GetPlanResponse> getLodgingPlace(@PathVariable int planId, @RequestBody GetPlanRequest request) {
-        GetPlanResponse response = getPlaceService.get
+    public ResponseEntity<PlaceResponse> getLodgingPlace(Authentication authentication, @PathVariable int planId) throws IOException {
+        int userId = Integer.parseInt(authentication.getName());
+        PlaceResponse response = getPlaceService.getLodgingPlace(userId, planId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{planId}/tour")
+    public ResponseEntity<PlaceResponse> getTourPlace(Authentication authentication, @PathVariable int planId) throws IOException {
+        int userId = Integer.parseInt(authentication.getName());
+        PlaceResponse response = getPlaceService.getTourPlace(userId, planId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{planId}/restaurant")
+    public ResponseEntity<PlaceResponse> getRestaurantPlace(Authentication authentication, @PathVariable int planId) throws IOException {
+        int userId = Integer.parseInt(authentication.getName());
+        PlaceResponse response = getPlaceService.getRestaurantPlace(userId, planId);
+        return ResponseEntity.ok(response);
     }
 }

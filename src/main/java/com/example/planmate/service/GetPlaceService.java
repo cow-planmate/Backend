@@ -1,30 +1,35 @@
 package com.example.planmate.service;
 
+import com.example.planmate.auth.PlanAccessValidator;
 import com.example.planmate.dto.PlaceResponse;
-import com.example.planmate.entity.Plan;
 import com.example.planmate.externalAPI.GoogleMap;
-import com.example.planmate.repository.PlanRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class GetPlaceService {
-    private PlanRepository planRepository;
-    private GoogleMap googleMap;
+    private final GoogleMap googleMap;
+    private final PlanAccessValidator planAccessValidator;
 
-    public PlaceResponse getLodgingPlace(int planId) throws IOException {
+    public PlaceResponse getLodgingPlace(int userId, int planId) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        String travelName = getTravelName(planId);
+        String travelName = planAccessValidator.validateUserHasAccessToPlan(userId, planId).getPlanName();
         response.addPlace(googleMap.getLodgingPlace(travelName + " " + "숙소"));
         return response;
     }
-    public String getTravelName(int planId) throws IOException {
-        Optional<Plan> plan = planRepository.findById(planId);
-        return plan.map(p -> p.getTravel().getTravelName())
-                .orElse(null);
+    public PlaceResponse getTourPlace(int userId, int planId) throws IOException {
+        PlaceResponse response = new PlaceResponse();
+        String travelName = planAccessValidator.validateUserHasAccessToPlan(userId, planId).getPlanName();
+        response.addPlace(googleMap.getTourPlace(travelName + " " + "관광지"));
+        return response;
+    }
+    public PlaceResponse getRestaurantPlace(int userId, int planId) throws IOException {
+        PlaceResponse response = new PlaceResponse();
+        String travelName = planAccessValidator.validateUserHasAccessToPlan(userId, planId).getPlanName();
+        response.addPlace(googleMap.getRestaurantPlace(travelName + " " + "식당"));
+        return response;
     }
 }

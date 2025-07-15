@@ -15,4 +15,5 @@ public abstract class PlaceVO {
     private float rating;
     private double xLocation;
     private double yLocation;
+    private String iconUrl;
 }
