@@ -41,6 +41,12 @@ public class PlanController {
         GetPlanResponse response = getPlanService.getPlan(userId, planId);
         return ResponseEntity.ok(response);
     }
+    @PatchMapping("/{planId}/save")
+    public ResponseEntity<GetPlanResponse> savePlan(Authentication authentication, @PathVariable int planId) throws AccessDeniedException {
+        int userId = Integer.parseInt(authentication.getName());
+        GetPlanResponse response = getPlanService.getPlan(userId, planId);
+        return ResponseEntity.ok(response);
+    }
     @PatchMapping("/{planId}/name")
     public ResponseEntity<EditPlanNameReponse> editPlanName(Authentication authentication, @PathVariable int planId, @RequestBody EditPlanNameRequest editPlanNameRequest) {
         int userId = Integer.parseInt(authentication.getName());
