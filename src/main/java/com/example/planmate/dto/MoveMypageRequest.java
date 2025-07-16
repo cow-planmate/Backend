@@ -1,4 +1,4 @@
 package com.example.planmate.dto;
 
-public class MoveMypageRequest {
+public class MoveMypageRequest implements IRequest{
 }

@@ -22,8 +22,7 @@ public class VerifyPasswordService {
         if (!passwordEncoder.matches(password, user.getPassword())) {
             response.setMessage("현재 비밀번호가 일치하지 않습니다.");
             response.setPasswordVerified(false);
-        }
-        else {
+        } else {
             response.setMessage("비밀번호가 일치합니다.");
             response.setPasswordVerified(true);
         }

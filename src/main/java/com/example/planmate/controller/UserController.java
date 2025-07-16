@@ -17,6 +17,7 @@ public class UserController {
     private final ChangeAgeService changeAgeService;
     private final ChangeGenderService changeGenderService;
     private final ChangePreferredThemesService changePreferredThemesService;
+    private final ResignAccountService resignAccountService;
 
     @GetMapping("/preferredTheme")
     public ResponseEntity<GetPreferredThemeResponse> getPreferredTheme() {
@@ -51,6 +52,12 @@ public class UserController {
     public ResponseEntity<ChangePreferredThemesResponse> changeGender(Authentication authentication, @RequestBody ChangePreferredThemesRequest request) {
         int userId = Integer.parseInt(authentication.getName());
         ChangePreferredThemesResponse response = changePreferredThemesService.changePreferredThemes(userId, request.getPreferredThemeCategoryId(), request.getPreferredThemeIds());
+        return ResponseEntity.ok(response);
+    }
+    @DeleteMapping("/account")
+    public ResponseEntity<ResignAccountResponse> changeGender(Authentication authentication) {
+        int userId = Integer.parseInt(authentication.getName());
+        ResignAccountResponse response = resignAccountService.resignAccount(userId);
         return ResponseEntity.ok(response);
     }
 }
