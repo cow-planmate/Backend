@@ -1,10 +1,8 @@
 package com.example.planmate.controller;
 
 import com.example.planmate.dto.*;
-import com.example.planmate.service.ChangeAgeService;
-import com.example.planmate.service.ChangeGenderService;
-import com.example.planmate.service.MoveMypageService;
-import com.example.planmate.service.PreferredThemeService;
+import com.example.planmate.repository.PreferredThemeRepository;
+import com.example.planmate.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -18,6 +16,7 @@ public class UserController {
     private final MoveMypageService moveMypageService;
     private final ChangeAgeService changeAgeService;
     private final ChangeGenderService changeGenderService;
+    private final ChangePreferredThemesService changePreferredThemesService;
 
     @GetMapping("/preferredTheme")
     public ResponseEntity<GetPreferredThemeResponse> getPreferredTheme() {
@@ -46,6 +45,12 @@ public class UserController {
     public ResponseEntity<ChangeGenderResponse> changeGender(Authentication authentication, @RequestBody ChangeGenderRequest request) {
         int userId = Integer.parseInt(authentication.getName());
         ChangeGenderResponse response = changeGenderService.changeGender(userId, request.getGender());
+        return ResponseEntity.ok(response);
+    }
+    @PatchMapping("/preferredThemes")
+    public ResponseEntity<ChangePreferredThemesResponse> changeGender(Authentication authentication, @RequestBody ChangePreferredThemesRequest request) {
+        int userId = Integer.parseInt(authentication.getName());
+        ChangePreferredThemesResponse response = changePreferredThemesService.changePreferredThemes(userId, request.getPreferredThemeCategoryId(), request.getPreferredThemeIds());
         return ResponseEntity.ok(response);
     }
 }
