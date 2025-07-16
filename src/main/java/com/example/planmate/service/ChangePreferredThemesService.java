@@ -38,7 +38,7 @@ public class ChangePreferredThemesService {
 
         user.getPreferredThemes().addAll(newThemes);
 
-        response.setMessage("Preferred tour themes changed successfully");
+        response.setMessage("Preferred themes changed successfully");
 
         return response;
     }
