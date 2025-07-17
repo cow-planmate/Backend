@@ -10,6 +10,7 @@ import java.util.List;
 public class MakePlanRequest {
     private String departure;
     private int travelId;
+    private int transportationCategoryId;
     private List<LocalDate> dates;
     private int adultCount;
     private int childCount;

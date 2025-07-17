@@ -1,10 +1,5 @@
 package com.example.planmate.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+public class GetPlanRequest{
 
-@Getter
-@Setter
-public class GetPlanRequest extends CommonResponse{
-    private int planId;
 }

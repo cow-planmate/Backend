@@ -2,6 +2,7 @@ package com.example.planmate.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,6 +14,7 @@ import java.time.LocalTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class TimeTable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,10 +23,8 @@ public class TimeTable {
     @Column(nullable = false)
     private LocalDate date;
 
-    @Column(nullable = false)
     private LocalTime timeTableStartTime;
 
-    @Column(nullable = false)
     private LocalTime timeTableEndTime;
 
     @ManyToOne
