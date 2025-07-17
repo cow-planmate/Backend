@@ -4,12 +4,14 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.Set;
 
 @Entity
 @Table(name = "preferred_theme")
 @Data
+@ToString(exclude = "users")
 @NoArgsConstructor
 @AllArgsConstructor
 public class PreferredTheme {

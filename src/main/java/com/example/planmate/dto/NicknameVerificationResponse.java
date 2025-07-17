@@ -5,6 +5,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class NicknameVerificationResponse extends CommonResponse{
+public class NicknameVerificationResponse extends CommonResponse {
     private boolean nicknameAvailable;
 }
