@@ -3,12 +3,12 @@ package com.example.planmate.service;
 import com.example.planmate.auth.PlanAccessValidator;
 import com.example.planmate.entity.Plan;
 import com.example.planmate.entity.TimeTable;
+import com.example.planmate.entity.TimeTablePlaceBlock;
 import com.example.planmate.entity.TransportationCategory;
 import com.example.planmate.repository.PlanRepository;
 import com.example.planmate.repository.TimeTablePlaceBlockRepository;
 import com.example.planmate.repository.TimeTableRepository;
 import com.example.planmate.repository.TransportationCategoryRepository;
-import com.example.planmate.valueObject.PlanFrameVO;
 import com.example.planmate.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.valueObject.TimetableVO;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ public class SavePlan {
     private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
     private final PlanAccessValidator planAccessValidator;
 
-    public void savePlan(int userId, int planId, String departure, int transportationCategoryId, int adultCount, int childCount, List<TimetableVO> timetables, List<TimetablePlaceBlockVO> timetablePlaceBlocks) {
+    public void savePlan(int userId, int planId, String departure, int transportationCategoryId, int adultCount, int childCount, List<TimetableVO> timetables, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockLists) {
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
         TransportationCategory transportationCategory = transportationCategoryRepository.findById(transportationCategoryId).get();
         plan.setDeparture(departure);
@@ -35,34 +35,45 @@ public class SavePlan {
         plan.setAdultCount(adultCount);
         plan.setChildCount(childCount);
 
-        changeTimetable(planId, timetables);
-        changeTimetablePlaceBlock(planId, timetablePlaceBlocks);
-
+        List<TimeTable> timeTables = changeTimetable(plan, timetables);
+        changeTimetablePlaceBlock(plan, timetablePlaceBlockLists, timeTables);
     }
 
-    private void changeTimetable(int planId, List<TimetableVO> timetables) {
+    private List<TimeTable> changeTimetable(Plan plan, List<TimetableVO> timetables) {
+        timeTableRepository.deleteByPlan(plan);
+        List<TimeTable> afterTimeTables = new ArrayList<>();
         for (TimetableVO timetable : timetables) {
-            List<TimeTable> timeTables = timeTableRepository.findByPlanPlanId(planId);
-            List<TimeTable> afterTimeTables = new ArrayList<>();
-
-            if(timetable.getTimetableId()==0){
                 afterTimeTables.add(TimeTable.builder()
                         .date(timetable.getDate())
                         .timeTableStartTime(LocalTime.of(9,0))
                         .timeTableEndTime(LocalTime.of(20,0))
+                        .plan(plan)
                         .build());
-            }
-            else{
-                TimeTable timeTable = timeTables.get(timetable.getTimetableId());
-                timeTable.setTimeTableStartTime(timeTable.getTimeTableStartTime());
-                timeTable.setTimeTableEndTime(timeTable.getTimeTableEndTime());
-                timeTable.setDate(timetable.getDate());
-                afterTimeTables.add(timeTable);
-            }
             timeTableRepository.saveAll(afterTimeTables);
         }
+        return afterTimeTables;
     }
-    private void changeTimetablePlaceBlock(int planId, List<TimetablePlaceBlockVO> timetablePlaceBlocks) {
-        
+    private void changeTimetablePlaceBlock(Plan plan, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockLists, List<TimeTable> timeTables) {
+        timeTablePlaceBlockRepository.deleteAllByTimeTable_Plan(plan);
+        List<TimeTablePlaceBlock> timeTablePlaceBlocks = new ArrayList<>();
+        for(int i = 0; i < timetablePlaceBlockLists.size(); i++){
+            TimeTable timetable = timeTables.get(i);
+            for(int j = 0; j < timetablePlaceBlockLists.get(i).size(); j++){
+                TimetablePlaceBlockVO timeTablePlaceBlockVO = timetablePlaceBlockLists.get(i).get(j);
+                timeTablePlaceBlocks.add(TimeTablePlaceBlock.builder()
+                        .timeTable(timetable)
+                        .placeName(timeTablePlaceBlockVO.getPlaceName())
+                        .placeTheme(timeTablePlaceBlockVO.getPlaceTheme())
+                        .placeRating(timeTablePlaceBlockVO.getPlaceRating())
+                        .placeAddress(timeTablePlaceBlockVO.getPlaceAddress())
+                        .placeLink(timeTablePlaceBlockVO.getPlaceLink())
+                        .blockStartTime(timeTablePlaceBlockVO.getStartTime())
+                        .blockEndTime(timeTablePlaceBlockVO.getEndTime())
+                        .xLocation(timeTablePlaceBlockVO.getXLocation())
+                        .yLocation(timeTablePlaceBlockVO.getYLocation())
+                        .build());
+            }
+        }
+        timeTablePlaceBlockRepository.saveAll(timeTablePlaceBlocks);
     }
 }

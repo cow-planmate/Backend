@@ -3,6 +3,8 @@ package com.example.planmate.valueObject;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalTime;
+
 @Getter
 @Setter
 public class TimetablePlaceBlockVO {
@@ -14,8 +16,8 @@ public class TimetablePlaceBlockVO {
     private String placeAddress;
     private String placeLink;
     private String date;
-    private String startTime;
-    private String endTime;
+    private LocalTime startTime;
+    private LocalTime endTime;
     private double xLocation;
     private double yLocation;
 }
