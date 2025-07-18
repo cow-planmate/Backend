@@ -1,5 +1,6 @@
 package com.example.planmate.externalAPI;
 
+import com.example.planmate.valueObject.DepartureVO;
 import com.example.planmate.valueObject.LodgingPlaceVO;
 import com.example.planmate.valueObject.RestaurantPlaceVO;
 import com.example.planmate.valueObject.TourPlaceVO;
@@ -122,5 +123,26 @@ public class GoogleMap {
         }
 
         return places;
+    }
+
+    public List<DepartureVO> searchDeparture(String departureName) throws IOException {
+        StringBuilder sb = searchGoogle(departureName);
+        List<DepartureVO> departures = new ArrayList<>();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode root = objectMapper.readTree(sb.toString());
+        JsonNode results = root.get("results");
+
+        if (results != null && results.isArray()) {
+            for (JsonNode result : results) {
+                String placeId = result.path("place_id").asText("");
+                String url = "https://www.google.com/maps/place/?q=place_id:" + placeId;
+                String name = result.path("name").asText("");
+                String formatted_address = result.path("formatted_address").asText("").replaceAll("…", "");
+                DepartureVO departure = new DepartureVO(placeId, url, name, formatted_address);
+                departures.add(departure);
+            }
+        }
+        return departures;
     }
 }

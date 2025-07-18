@@ -13,7 +13,7 @@ public class SearchDepartureResponse extends CommonResponse{
     public SearchDepartureResponse(){
         departures = new ArrayList<>();
     }
-    public void addDeparture(String departureName, String departureAddress){
-        departures.add(new DepartureVO(departureName, departureAddress));
+    public void addDeparture(int placeId, String url, String departureName, String departureAddress){
+        departures.add(new DepartureVO(placeId, url, departureName, departureAddress));
     }
 }
