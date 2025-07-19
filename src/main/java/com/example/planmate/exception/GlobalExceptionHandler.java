@@ -33,7 +33,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("접근 권한이 없습니다");
     }
 
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleAll(Exception ex) {
         System.out.println(ex.getMessage());

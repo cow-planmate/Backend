@@ -1,9 +1,8 @@
 package com.example.planmate.service;
 
-import com.example.planmate.dto.LoginRequest;
+import com.example.planmate.auth.JwtTokenProvider;
 import com.example.planmate.dto.LoginResponse;
 import com.example.planmate.gita.CustomUserDetails;
-import com.example.planmate.auth.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,13 +18,13 @@ public class LoginService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
 
-    public LoginResponse login(LoginRequest request) {
+    public LoginResponse login(String email, String password) {
         LoginResponse response = new LoginResponse();
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            request.getEmail(),
-                            request.getPassword()
+                            email,
+                            password
                     )
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);

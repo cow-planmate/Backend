@@ -12,10 +12,11 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class SearchDepartureService {
-    private GoogleMap googleMap;
+    private final GoogleMap googleMap;
     public SearchDepartureResponse searchDeparture(String departureName) throws IOException {
         SearchDepartureResponse response =  new SearchDepartureResponse();
         List<DepartureVO> searchSuggestions = googleMap.searchDeparture(departureName);
+        response.addDeparture(searchSuggestions);
         return response;
     }
 }

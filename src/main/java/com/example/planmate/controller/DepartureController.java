@@ -10,13 +10,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/departure")
 public class DepartureController {
     private final SearchDepartureService searchDepartureService;
     @PostMapping("")
-    public ResponseEntity<SearchDepartureResponse> searchDeparture(@RequestBody SearchDepartureRepuest repuest){
+    public ResponseEntity<SearchDepartureResponse> searchDeparture(@RequestBody SearchDepartureRepuest repuest) throws IOException {
         SearchDepartureResponse response = searchDepartureService.searchDeparture(repuest.getDepartureQuery());
         return ResponseEntity.ok(response);
     }

@@ -15,7 +15,7 @@ public class LoginController {
 
     @PostMapping("/api/auth/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        LoginResponse loginResponse = loginService.login(request);
+        LoginResponse loginResponse = loginService.login(request.getEmail(), request.getPassword());
         return ResponseEntity.ok(loginResponse);
     }
 

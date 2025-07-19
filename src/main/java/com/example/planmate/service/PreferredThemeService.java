@@ -31,12 +31,10 @@ public class PreferredThemeService {
         SavePreferredThemeResponse response = new SavePreferredThemeResponse();
         // 유저 조회
         userRepository.findById(userId).ifPresent(user -> {
-
             Set<PreferredTheme> themes = preferredThemeIds.stream()
                     .map(id -> preferredThemeRepository.findById(id)
                             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 테마 ID: " + id)))
                     .collect(Collectors.toSet());
-
             user.setPreferredThemes((List<PreferredTheme>) themes);
             userRepository.save(user);
         });

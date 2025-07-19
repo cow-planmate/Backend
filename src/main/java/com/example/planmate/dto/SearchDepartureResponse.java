@@ -13,7 +13,15 @@ public class SearchDepartureResponse extends CommonResponse{
     public SearchDepartureResponse(){
         departures = new ArrayList<>();
     }
-    public void addDeparture(int placeId, String url, String departureName, String departureAddress){
+    public void addDeparture(String placeId, String url, String departureName, String departureAddress){
         departures.add(new DepartureVO(placeId, url, departureName, departureAddress));
+    }
+    public void addDeparture(List<DepartureVO> departures){
+
+            for(DepartureVO departure : departures){
+                if(departure != null) {
+                    this.departures.add(new DepartureVO(departure.getPlaceId(), departure.getUrl(), departure.getDepartureName(), departure.getDepartureAddress()));
+                }
+            }
     }
 }
