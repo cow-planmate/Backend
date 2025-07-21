@@ -14,13 +14,10 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class EmailVerificationService {
-    private UserRepository userRepository;
-    private final Cache<String, EmailVerification> verificationCache;
-    public EmailVerificationService() {
-        verificationCache = CacheBuilder.newBuilder()
-                .expireAfterWrite(5, TimeUnit.MINUTES)
-                .build();
-    }
+    private final UserRepository userRepository;
+    private final Cache<String, EmailVerification> verificationCache = CacheBuilder.newBuilder()
+            .expireAfterWrite(5, TimeUnit.MINUTES)
+            .build();
 
     public SendEmailResponse sendVerificationCode(String email) {
         SendEmailResponse response = new SendEmailResponse();
