@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class NicknameVerificationService {
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     public NicknameVerificationResponse verifyNickname(String nickname) {
         NicknameVerificationResponse response = new NicknameVerificationResponse();
