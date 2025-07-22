@@ -17,6 +17,7 @@ public class MoveMypageResponse extends CommonResponse {
     private String nickname;
     private int age;
     private int gender;
+    private List<String> planNames;
     @Setter(AccessLevel.NONE)
     private List<PreferredThemeVO> preferredThemes;
 

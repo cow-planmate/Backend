@@ -1,28 +1,25 @@
 package com.example.planmate.service;
 
 import com.example.planmate.dto.MoveMypageResponse;
-import com.example.planmate.dto.RegisterRequest;
-import com.example.planmate.dto.RegisterResponse;
+import com.example.planmate.entity.Plan;
 import com.example.planmate.entity.PreferredTheme;
 import com.example.planmate.entity.User;
 import com.example.planmate.exception.UserNotFoundException;
-import com.example.planmate.repository.PreferredThemeRepository;
+import com.example.planmate.repository.PlanRepository;
 import com.example.planmate.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class MoveMypageService {
 
     private final UserRepository userRepository;
+    private final PlanRepository planRepository;
 
     public MoveMypageResponse getMypageInfo(int userId) {
         MoveMypageResponse response = new MoveMypageResponse();
@@ -33,6 +30,8 @@ public class MoveMypageService {
         for (PreferredTheme preferredTheme : preferredThemes) {
             response.addPreferredTheme(preferredTheme);
         }
+        List<Plan> plans = planRepository.findByUserUserId(userId);
+        List<String> planNames = plans.stream().map(Plan::getPlanName).collect(Collectors.toList());
 
         response.setMessage("Mypage info loaded successfully");
         response.setUserId(user.getUserId());
@@ -40,6 +39,7 @@ public class MoveMypageService {
         response.setNickname(user.getNickname());
         response.setAge(user.getAge());
         response.setGender(user.getGender());
+        response.setPlanNames(planNames);
 
         return response;
     }
