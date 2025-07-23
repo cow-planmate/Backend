@@ -10,7 +10,9 @@ public class AuthWhitelist {
             "/api/auth/register/**",
             "/api/auth/login",
             "/api/auth/password/email/**",
-            "/test-api-key"
+            "/test-api-key",
+            "/api/travel",
+            "/api/departure"
     );
 
     public static boolean isWhitelisted(String uri) {
