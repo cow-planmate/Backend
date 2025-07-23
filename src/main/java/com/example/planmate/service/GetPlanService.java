@@ -46,7 +46,7 @@ public class GetPlanService {
 
         for (List<TimeTablePlaceBlock> timeTablePlaceBlock : timeTablePlaceBlocks) {
             for (TimeTablePlaceBlock timeTablePlaceBlock1 : timeTablePlaceBlock) {
-                response.addPlaceBlock(timeTablePlaceBlock1.getBlockId(),
+                response.addPlaceBlock(timeTablePlaceBlock1.getPlaceCategory().getPlaceCategoryId(),
                         timeTablePlaceBlock1.getPlaceName(),
                         timeTablePlaceBlock1.getPlaceTheme(),
                         timeTablePlaceBlock1.getPlaceRating(),
