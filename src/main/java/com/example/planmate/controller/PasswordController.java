@@ -1,10 +1,8 @@
 package com.example.planmate.controller;
 
-import com.example.planmate.dto.ChangePasswordRequest;
-import com.example.planmate.dto.ChangePasswordResponse;
-import com.example.planmate.dto.VerifyPasswordRequest;
-import com.example.planmate.dto.VerifyPasswordResponse;
+import com.example.planmate.dto.*;
 import com.example.planmate.service.ChangePasswordService;
+import com.example.planmate.service.SendTempPasswordService;
 import com.example.planmate.service.VerifyPasswordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 public class PasswordController {
     private final VerifyPasswordService verifyPasswordService;
     private final ChangePasswordService changePasswordService;
+    private final SendTempPasswordService sendTempPasswordService;
 
     @PostMapping("/verify")
     public ResponseEntity<VerifyPasswordResponse> verifyPassword(Authentication authentication, @RequestBody VerifyPasswordRequest request) {
@@ -28,6 +27,11 @@ public class PasswordController {
     public ResponseEntity<ChangePasswordResponse> changePassword(Authentication authentication, @RequestBody ChangePasswordRequest request) {
         int userId = Integer.parseInt(authentication.getName());
         ChangePasswordResponse response = changePasswordService.changePassword(userId, request.getPassword(), request.getConfirmPassword());
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/email")
+    public ResponseEntity<SendTempPasswordResponse> sendTempPassword(@RequestBody SendTempPasswordRequest request) {
+        SendTempPasswordResponse response = sendTempPasswordService.sendTempPassword(request.getEmail());
         return ResponseEntity.ok(response);
     }
 }
