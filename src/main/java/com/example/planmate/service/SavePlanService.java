@@ -13,7 +13,6 @@ import com.example.planmate.repository.TransportationCategoryRepository;
 import com.example.planmate.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.valueObject.TimetableVO;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
@@ -39,21 +38,14 @@ public class SavePlanService {
 
         List<TimeTable> timeTables = changeTimetable(plan, timetables);
         changeTimetablePlaceBlock(plan, timetablePlaceBlockLists, timeTables);
-
-        try {
-            planRepository.save(plan);
-        } catch (DataIntegrityViolationException ex) {
-            throw new IllegalArgumentException("입력 데이터가 유효하지 않습니다.", ex);
-        }
+        planRepository.save(plan);
         transportationCategoryRepository.save(transportationCategory);
+        planRepository.save(plan);
         SavePlanResponse response = new SavePlanResponse();
         return response;
     }
 
     private List<TimeTable> changeTimetable(Plan plan, List<TimetableVO> timetables) {
-        if(timetables == null || timetables.isEmpty()) {
-            return new ArrayList<>();
-        }
         timeTableRepository.deleteByPlan(plan);
         List<TimeTable> afterTimeTables = new ArrayList<>();
         for (TimetableVO timetable : timetables) {
@@ -68,15 +60,9 @@ public class SavePlanService {
         return afterTimeTables;
     }
     private void changeTimetablePlaceBlock(Plan plan, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockLists, List<TimeTable> timeTables) {
-        if(timetablePlaceBlockLists == null || timetablePlaceBlockLists.isEmpty()) {
-            return;
-        }
         timeTablePlaceBlockRepository.deleteAllByTimeTable_Plan(plan);
         List<TimeTablePlaceBlock> timeTablePlaceBlocks = new ArrayList<>();
         for(int i = 0; i < timetablePlaceBlockLists.size(); i++){
-            if(timeTables.isEmpty()){
-                break;
-            }
             TimeTable timetable = timeTables.get(i);
             for(int j = 0; j < timetablePlaceBlockLists.get(i).size(); j++){
                 TimetablePlaceBlockVO timeTablePlaceBlockVO = timetablePlaceBlockLists.get(i).get(j);
