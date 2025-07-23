@@ -53,7 +53,10 @@ public class GetPlanService {
                         timeTablePlaceBlock1.getPlaceAddress(),
                         timeTablePlaceBlock1.getPlaceLink(),
                         timeTablePlaceBlock1.getXLocation(),
-                        timeTablePlaceBlock1.getYLocation()
+                        timeTablePlaceBlock1.getYLocation(),
+                        timeTablePlaceBlock1.getBlockStartTime(),
+                        timeTablePlaceBlock1.getBlockEndTime()
+                        
                 );
             }
         }

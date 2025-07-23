@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalTime;
+
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
@@ -16,4 +18,6 @@ public class PlaceBlockVO {
     private String placeLink;
     private double xLocation;
     private double yLocation;
+    private LocalTime startTime;
+    private LocalTime endTime;
 }

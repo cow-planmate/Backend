@@ -23,8 +23,8 @@ public class GetPlanResponse extends CommonResponse{
     public void addPlanFrame(int planId, String planName, String departure, String travel, int adultCount, int childCount, int transportation) {
         planFrame = new PlanFrameVO(planId, planName, departure, travel, adultCount, childCount, transportation);
     }
-    public void addPlaceBlock(int placeCategory, String placeName, String placeTheme, float placeRating, String placeAddress, String placeLink, double xLocation, double yLocation) {
-        placeBlocks.add(new PlaceBlockVO(placeCategory, placeName, placeTheme, placeRating, placeAddress, placeLink, xLocation, yLocation));
+    public void addPlaceBlock(int placeCategory, String placeName, String placeTheme, float placeRating, String placeAddress, String placeLink, double xLocation, double yLocation, LocalTime startTime, LocalTime endTime) {
+        placeBlocks.add(new PlaceBlockVO(placeCategory, placeName, placeTheme, placeRating, placeAddress, placeLink, xLocation, yLocation, startTime, endTime));
     }
     public void addTimetable(int timetableId, LocalDate date, LocalTime startTime, LocalTime endTime) {
         timetables.add(new TimetableVO(timetableId, date, startTime, endTime));
