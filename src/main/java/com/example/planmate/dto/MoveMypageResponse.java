@@ -2,6 +2,7 @@ package com.example.planmate.dto;
 
 import com.example.planmate.entity.PreferredTheme;
 import com.example.planmate.valueObject.PreferredThemeVO;
+import com.example.planmate.valueObject.SimplePlanVO;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,12 +18,13 @@ public class MoveMypageResponse extends CommonResponse {
     private String nickname;
     private int age;
     private int gender;
-    private List<String> planNames;
+    private List<SimplePlanVO> planVOs;
     @Setter(AccessLevel.NONE)
     private List<PreferredThemeVO> preferredThemes;
 
     public MoveMypageResponse(){
         preferredThemes= new ArrayList<>();
+        planVOs = new ArrayList<>();
     }
     public void addPreferredTheme(PreferredTheme preferredTheme) {
         PreferredThemeVO preferredThemeVO = new PreferredThemeVO();
@@ -31,5 +33,8 @@ public class MoveMypageResponse extends CommonResponse {
         preferredThemeVO.setPreferredThemeCategoryId(preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId());
         preferredThemeVO.setPreferredThemeCategoryName(preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryName());
         preferredThemes.add(preferredThemeVO);
+    }
+    public void addPlanVO(int planId, String planName) {
+        planVOs.add(new SimplePlanVO(planId, planName));
     }
 }

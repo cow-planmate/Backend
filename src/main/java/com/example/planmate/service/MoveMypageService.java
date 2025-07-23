@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +30,9 @@ public class MoveMypageService {
             response.addPreferredTheme(preferredTheme);
         }
         List<Plan> plans = planRepository.findByUserUserId(userId);
-        List<String> planNames = plans.stream().map(Plan::getPlanName).collect(Collectors.toList());
+        for (Plan plan : plans) {
+            response.addPlanVO(plan.getPlanId(), plan.getPlanName());
+        }
 
         response.setMessage("Mypage info loaded successfully");
         response.setUserId(user.getUserId());
@@ -39,7 +40,6 @@ public class MoveMypageService {
         response.setNickname(user.getNickname());
         response.setAge(user.getAge());
         response.setGender(user.getGender());
-        response.setPlanNames(planNames);
 
         return response;
     }
