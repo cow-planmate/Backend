@@ -2,19 +2,14 @@ package com.example.planmate.service;
 
 import com.example.planmate.auth.PlanAccessValidator;
 import com.example.planmate.dto.SavePlanResponse;
-import com.example.planmate.entity.Plan;
-import com.example.planmate.entity.TimeTable;
-import com.example.planmate.entity.TimeTablePlaceBlock;
-import com.example.planmate.entity.TransportationCategory;
-import com.example.planmate.repository.PlanRepository;
-import com.example.planmate.repository.TimeTablePlaceBlockRepository;
-import com.example.planmate.repository.TimeTableRepository;
-import com.example.planmate.repository.TransportationCategoryRepository;
+import com.example.planmate.entity.*;
+import com.example.planmate.repository.*;
 import com.example.planmate.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.valueObject.TimetableVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -28,7 +23,8 @@ public class SavePlanService {
     private final TimeTableRepository timeTableRepository;
     private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
     private final PlanAccessValidator planAccessValidator;
-
+    private final PlaceCategoryRepository placeCategoryRepository;
+    @Transactional
     public SavePlanResponse savePlan(int userId, int planId, String departure, int transportationCategoryId, int adultCount, int childCount, List<TimetableVO> timetables, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockLists) {
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
         TransportationCategory transportationCategory = transportationCategoryRepository.findById(transportationCategoryId).get();
@@ -80,6 +76,7 @@ public class SavePlanService {
             TimeTable timetable = timeTables.get(i);
             for(int j = 0; j < timetablePlaceBlockLists.get(i).size(); j++){
                 TimetablePlaceBlockVO timeTablePlaceBlockVO = timetablePlaceBlockLists.get(i).get(j);
+                PlaceCategory placeCategory = placeCategoryRepository.getReferenceById(timeTablePlaceBlockVO.getPlaceCategoryId());
                 timeTablePlaceBlocks.add(TimeTablePlaceBlock.builder()
                         .timeTable(timetable)
                         .placeName(timeTablePlaceBlockVO.getPlaceName())
@@ -91,6 +88,7 @@ public class SavePlanService {
                         .blockEndTime(timeTablePlaceBlockVO.getEndTime())
                         .xLocation(timeTablePlaceBlockVO.getXLocation())
                         .yLocation(timeTablePlaceBlockVO.getYLocation())
+                        .placeCategory(placeCategory)
                         .build());
             }
         }
