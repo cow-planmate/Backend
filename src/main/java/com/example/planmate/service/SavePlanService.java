@@ -38,6 +38,9 @@ public class SavePlanService {
 
         List<TimeTable> timeTables = changeTimetable(plan, timetables);
         changeTimetablePlaceBlock(plan, timetablePlaceBlockLists, timeTables);
+        planRepository.save(plan);
+        transportationCategoryRepository.save(transportationCategory);
+        planRepository.save(plan);
         SavePlanResponse response = new SavePlanResponse();
         return response;
     }
