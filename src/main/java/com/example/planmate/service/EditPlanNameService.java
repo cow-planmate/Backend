@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class EditPlanNameService {
-    private PlanRepository planRepository;
-    private PlanAccessValidator planAccessValidator;
+    private final PlanRepository planRepository;
+    private final PlanAccessValidator planAccessValidator;
 
     public EditPlanNameReponse EditPlanName(int userId, int planId, String name){
         EditPlanNameReponse reponse = new EditPlanNameReponse();
