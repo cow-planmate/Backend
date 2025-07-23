@@ -7,6 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public abstract class PlaceVO {
     private String placeId;
+    private int categoryId;
     private String url;
     private String name;
     private String formatted_address;
