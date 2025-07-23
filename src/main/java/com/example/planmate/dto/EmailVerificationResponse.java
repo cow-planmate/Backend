@@ -1,10 +1,10 @@
 package com.example.planmate.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
-@AllArgsConstructor
+@Setter
 public class EmailVerificationResponse extends CommonResponse{
     private boolean emailVerified;
 }
