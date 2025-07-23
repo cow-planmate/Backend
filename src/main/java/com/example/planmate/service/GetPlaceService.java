@@ -14,22 +14,27 @@ public class GetPlaceService {
     private final GoogleMap googleMap;
     private final PlanAccessValidator planAccessValidator;
 
-    public PlaceResponse getLodgingPlace(int userId, int planId) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        String travelName = planAccessValidator.validateUserHasAccessToPlan(userId, planId).getTravel().getTravelName();
-        response.addPlace(googleMap.getLodgingPlace(travelName + " " + "숙소"));
-        return response;
-    }
+
     public PlaceResponse getTourPlace(int userId, int planId) throws IOException {
         PlaceResponse response = new PlaceResponse();
+        response.setPlaceCategoryId(0);
         String travelName = planAccessValidator.validateUserHasAccessToPlan(userId, planId).getTravel().getTravelName();
         response.addPlace(googleMap.getTourPlace(travelName + " " + "관광지"));
         return response;
     }
+    public PlaceResponse getLodgingPlace(int userId, int planId) throws IOException {
+        PlaceResponse response = new PlaceResponse();
+        response.setPlaceCategoryId(1);
+        String travelName = planAccessValidator.validateUserHasAccessToPlan(userId, planId).getTravel().getTravelName();
+        response.addPlace(googleMap.getLodgingPlace(travelName + " " + "숙소"));
+        return response;
+    }
     public PlaceResponse getRestaurantPlace(int userId, int planId) throws IOException {
         PlaceResponse response = new PlaceResponse();
+        response.setPlaceCategoryId(2);
         String travelName = planAccessValidator.validateUserHasAccessToPlan(userId, planId).getTravel().getTravelName();
         response.addPlace(googleMap.getRestaurantPlace(travelName + " " + "식당"));
         return response;
     }
+
 }

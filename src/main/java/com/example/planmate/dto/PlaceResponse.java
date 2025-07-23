@@ -5,11 +5,14 @@ import com.example.planmate.valueObject.PlaceVO;
 import com.example.planmate.valueObject.RestaurantPlaceVO;
 import com.example.planmate.valueObject.TourPlaceVO;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 @Getter
+@Setter
 public class PlaceResponse extends CommonResponse{
+    private int placeCategoryId;
     private List<PlaceVO> places;
 
     public PlaceResponse() {
