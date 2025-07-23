@@ -40,7 +40,7 @@ public class PlanController {
         return ResponseEntity.ok(response);
     }
     @PatchMapping("/{planId}/save")
-    public ResponseEntity<SavePlanResponse> savePlan(Authentication authentication, @PathVariable("planId") int planId, @RequestBody SavePlanRequest request) throws AccessDeniedException {
+    public ResponseEntity<SavePlanResponse> savePlan(Authentication authentication, @PathVariable("planId") int planId, @RequestBody SavePlanRequest request) {
         int userId = Integer.parseInt(authentication.getName());
         SavePlanResponse response = savePlanService.savePlan(userId, planId, request.getDeparture(), request.getTransportationCategoryId(), request.getAdultCount(), request.getChildCount(), request.getTimetables(), request.getTimetablePlaceBlocks());
         return ResponseEntity.ok(response);
