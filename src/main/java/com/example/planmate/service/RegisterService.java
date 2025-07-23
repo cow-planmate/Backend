@@ -3,7 +3,6 @@ package com.example.planmate.service;
 import com.example.planmate.dto.RegisterRequest;
 import com.example.planmate.dto.RegisterResponse;
 import com.example.planmate.entity.User;
-import com.example.planmate.repository.PreferredThemeRepository;
 import com.example.planmate.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,7 +14,6 @@ public class RegisterService{
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final PreferredThemeRepository preferredThemeRepository;
 
     public RegisterResponse register(RegisterRequest request) {
         RegisterResponse response = new RegisterResponse();
