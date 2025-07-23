@@ -14,5 +14,5 @@ public class SavePlanRequest {
     private int adultCount;
     private int childCount;
     private List<TimetableVO> timetables;
-    private List<TimetablePlaceBlockVO> timetablePlaceBlocks;
+    private List<List<TimetablePlaceBlockVO>> timetablePlaceBlocks;
 }

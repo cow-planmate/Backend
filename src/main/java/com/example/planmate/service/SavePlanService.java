@@ -1,6 +1,7 @@
 package com.example.planmate.service;
 
 import com.example.planmate.auth.PlanAccessValidator;
+import com.example.planmate.dto.SavePlanResponse;
 import com.example.planmate.entity.Plan;
 import com.example.planmate.entity.TimeTable;
 import com.example.planmate.entity.TimeTablePlaceBlock;
@@ -20,14 +21,14 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class SavePlan {
+public class SavePlanService {
     private final PlanRepository planRepository;
     private final TransportationCategoryRepository transportationCategoryRepository;
     private final TimeTableRepository timeTableRepository;
     private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
     private final PlanAccessValidator planAccessValidator;
 
-    public void savePlan(int userId, int planId, String departure, int transportationCategoryId, int adultCount, int childCount, List<TimetableVO> timetables, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockLists) {
+    public SavePlanResponse savePlan(int userId, int planId, String departure, int transportationCategoryId, int adultCount, int childCount, List<TimetableVO> timetables, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockLists) {
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
         TransportationCategory transportationCategory = transportationCategoryRepository.findById(transportationCategoryId).get();
         plan.setDeparture(departure);
@@ -37,6 +38,8 @@ public class SavePlan {
 
         List<TimeTable> timeTables = changeTimetable(plan, timetables);
         changeTimetablePlaceBlock(plan, timetablePlaceBlockLists, timeTables);
+        SavePlanResponse response = new SavePlanResponse();
+        return response;
     }
 
     private List<TimeTable> changeTimetable(Plan plan, List<TimetableVO> timetables) {

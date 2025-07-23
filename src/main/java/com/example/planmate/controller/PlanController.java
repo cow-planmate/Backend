@@ -1,10 +1,7 @@
 package com.example.planmate.controller;
 
 import com.example.planmate.dto.*;
-import com.example.planmate.service.EditPlanNameService;
-import com.example.planmate.service.GetPlaceService;
-import com.example.planmate.service.GetPlanService;
-import com.example.planmate.service.MakePlanService;
+import com.example.planmate.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -21,6 +18,7 @@ public class PlanController {
     private final GetPlanService getPlanService;
     private final EditPlanNameService editPlanNameService;
     private final GetPlaceService getPlaceService;
+    private final SavePlanService savePlanService;
     @PostMapping("")
     public ResponseEntity<MakePlanResponse> makePlan(Authentication authentication, @RequestBody MakePlanRequest makePlanRequest) {
         int userId = Integer.parseInt(authentication.getName());
@@ -42,9 +40,9 @@ public class PlanController {
         return ResponseEntity.ok(response);
     }
     @PatchMapping("/{planId}/save")
-    public ResponseEntity<GetPlanResponse> savePlan(Authentication authentication, @PathVariable("planId") int planId) throws AccessDeniedException {
+    public ResponseEntity<SavePlanResponse> savePlan(Authentication authentication, @PathVariable("planId") int planId, @RequestBody SavePlanRequest request) throws AccessDeniedException {
         int userId = Integer.parseInt(authentication.getName());
-        GetPlanResponse response = getPlanService.getPlan(userId, planId);
+        SavePlanResponse response = savePlanService.savePlan(userId, planId, request.getDeparture(), request.getTransportationCategoryId(), request.getAdultCount(), request.getChildCount(), request.getTimetables(), request.getTimetablePlaceBlocks());
         return ResponseEntity.ok(response);
     }
     @PatchMapping("/{planId}/name")
