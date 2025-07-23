@@ -9,7 +9,7 @@ import java.time.LocalTime;
 @Setter
 public class TimetablePlaceBlockVO {
     private int timetablePlaceBlockId;
-    private String placeCategory;
+    private int placeCategoryId;
     private String placeName;
     private String placeTheme;
     private float placeRating;
