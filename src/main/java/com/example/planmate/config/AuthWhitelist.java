@@ -9,6 +9,7 @@ public class AuthWhitelist {
     public static final List<String> PATHS = List.of(
             "/api/auth/register/**",
             "/api/auth/login",
+            "/api/auth/password/email/**",
             "/test-api-key"
     );
 
