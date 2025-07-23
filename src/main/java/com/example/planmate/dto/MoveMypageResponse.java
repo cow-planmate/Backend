@@ -25,11 +25,11 @@ public class MoveMypageResponse extends CommonResponse {
         preferredThemes= new ArrayList<>();
     }
     public void addPreferredTheme(PreferredTheme preferredTheme) {
-        PreferredThemeVO preferredThemeVO = new PreferredThemeVO();
-        preferredThemeVO.setPreferredThemeId(preferredTheme.getPreferredThemeId());
-        preferredThemeVO.setPreferredThemeName(preferredTheme.getPreferredThemeName());
-        preferredThemeVO.setPreferredThemeCategoryId(preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId());
-        preferredThemeVO.setPreferredThemeCategoryName(preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryName());
+        PreferredThemeVO preferredThemeVO = new PreferredThemeVO(
+                preferredTheme.getPreferredThemeId(),
+                preferredTheme.getPreferredThemeName(),
+                preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId(),
+                preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryName());
         preferredThemes.add(preferredThemeVO);
     }
 }

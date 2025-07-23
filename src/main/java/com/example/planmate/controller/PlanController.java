@@ -46,9 +46,9 @@ public class PlanController {
         return ResponseEntity.ok(response);
     }
     @PatchMapping("/{planId}/name")
-    public ResponseEntity<EditPlanNameReponse> editPlanName(Authentication authentication, @PathVariable("planId") int planId, @RequestBody EditPlanNameRequest editPlanNameRequest) {
+    public ResponseEntity<EditPlanNameResponse> editPlanName(Authentication authentication, @PathVariable("planId") int planId, @RequestBody EditPlanNameRequest editPlanNameRequest) {
         int userId = Integer.parseInt(authentication.getName());
-        EditPlanNameReponse reponse = editPlanNameService.EditPlanName(userId, planId, editPlanNameRequest.getPlanName());
+        EditPlanNameResponse reponse = editPlanNameService.EditPlanName(userId, planId, editPlanNameRequest.getPlanName());
         return ResponseEntity.ok(reponse);
     }
     @PostMapping("/{planId}/lodging")
