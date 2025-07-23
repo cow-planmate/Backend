@@ -59,7 +59,7 @@ public class GoogleMap {
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
 
-                TourPlaceVO place = new TourPlaceVO(placeId, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
+                TourPlaceVO place = new TourPlaceVO(placeId, 1, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
                 places.add(place);
             }
         }
@@ -88,7 +88,7 @@ public class GoogleMap {
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
 
-                LodgingPlaceVO place = new LodgingPlaceVO(placeId, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
+                LodgingPlaceVO place = new LodgingPlaceVO(placeId, 1, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
                 places.add(place);
             }
         }
@@ -116,7 +116,7 @@ public class GoogleMap {
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
 
-                RestaurantPlaceVO place = new RestaurantPlaceVO(placeId, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
+                RestaurantPlaceVO place = new RestaurantPlaceVO(placeId, 2, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
                 places.add(place);
             }
         }
