@@ -1,0 +1,228 @@
+package com.example.planmate.service;
+
+import com.example.planmate.auth.PlanAccessValidator;
+import com.example.planmate.dto.*;
+import com.example.planmate.entity.*;
+import com.example.planmate.externalAPI.GoogleMap;
+import com.example.planmate.repository.*;
+import com.example.planmate.valueObject.DepartureVO;
+import com.example.planmate.valueObject.TimetablePlaceBlockVO;
+import com.example.planmate.valueObject.TimetableVO;
+import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class PlanService {
+    private final PlanRepository planRepository;
+    private final PlanAccessValidator planAccessValidator;
+    private final UserRepository userRepository;
+    private final TimeTableRepository timeTableRepository;
+    private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
+    private final TransportationCategoryRepository transportationCategoryRepository;
+    private final TravelRepository travelRepository;
+    private final PlaceCategoryRepository placeCategoryRepository;
+    private final GoogleMap googleMap;
+
+    public GetPlanResponse getPlan(int userId, int planId) {
+        GetPlanResponse response = new GetPlanResponse();
+        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+        response.addPlanFrame(
+                planId,
+                plan.getPlanName(),
+                plan.getDeparture(),
+                plan.getTravel().getTravelName(),
+                plan.getAdultCount(),
+                plan.getChildCount(),
+                plan.getTransportationCategory().getTransportationCategoryId());
+
+        List<TimeTable> timeTables = timeTableRepository.findByPlanPlanId(planId);
+        List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
+
+        for (TimeTable timeTable : timeTables) {
+            timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
+        }
+
+        for (TimeTable timeTable : timeTables){
+            response.addTimetable(timeTable.getTimeTableId(), timeTable.getDate(), timeTable.getTimeTableStartTime(), timeTable.getTimeTableEndTime());
+        }
+
+        for (List<TimeTablePlaceBlock> timeTablePlaceBlock : timeTablePlaceBlocks) {
+            for (TimeTablePlaceBlock timeTablePlaceBlock1 : timeTablePlaceBlock) {
+                response.addPlaceBlock(timeTablePlaceBlock1.getBlockId(),
+                        timeTablePlaceBlock1.getPlaceName(),
+                        timeTablePlaceBlock1.getPlaceTheme(),
+                        timeTablePlaceBlock1.getPlaceRating(),
+                        timeTablePlaceBlock1.getPlaceAddress(),
+                        timeTablePlaceBlock1.getPlaceLink(),
+                        timeTablePlaceBlock1.getXLocation(),
+                        timeTablePlaceBlock1.getYLocation(),
+                        timeTablePlaceBlock1.getBlockStartTime(),
+                        timeTablePlaceBlock1.getBlockEndTime()
+                );
+            }
+        }
+        return response; // DTO 변환
+    }
+
+    public EditPlanNameResponse EditPlanName(int userId, int planId, String name){
+        EditPlanNameResponse reponse = new EditPlanNameResponse();
+        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+        plan.setPlanName(name);
+        planRepository.save(plan);
+        return reponse;
+    }
+    public MakePlanResponse makePlan(int userId, String departure, int travelId, int transportationCategoryId, List<LocalDate> dates, int adultCount, int childCount) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다"));
+
+        Travel travel = travelRepository.findById(travelId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행지입니다"));
+
+        TransportationCategory transportationCategory = transportationCategoryRepository.findById(transportationCategoryId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 교통수단입니다"));
+        Plan plan = Plan.builder()
+                .planName(makePlanName(travel))
+                .departure(departure)
+                .adultCount(adultCount)
+                .childCount(childCount)
+                .user(user)
+                .travel(travel)
+                .transportationCategory(transportationCategory)
+                .build();
+        Plan savedPlan = planRepository.save(plan);
+        for (LocalDate date : dates) {
+            TimeTable timeTable = TimeTable.builder()
+                    .date(date)
+                    .timeTableStartTime(LocalTime.of(9, 0))
+                    .timeTableEndTime(LocalTime.of(20, 0))
+                    .plan(plan)
+                    .build();
+            timeTableRepository.save(timeTable);
+        }
+        MakePlanResponse makePlanResponse = new MakePlanResponse();
+        makePlanResponse.setPlanId(savedPlan.getPlanId());
+        return makePlanResponse;
+    }
+    private String makePlanName(Travel travel){
+        List<Plan> plans = planRepository.findAll();
+        List<Integer> index = new ArrayList<>();
+        String travelName = travel.getTravelName();
+        for (Plan plan : plans) {
+            if(plan.getPlanName().contains(travelName)){
+                index.add(Integer.parseInt(plan.getPlanName().substring(travelName.length()+1)));
+            }
+        }
+        Collections.sort(index);
+
+        int i = 1;
+        for(Integer index2 : index){
+            if(i!=index2){break;}
+            i++;
+        }
+        return travel.getTravelName()+ " " + i;
+    }
+    @Transactional
+    public SavePlanResponse savePlan(int userId, int planId, String departure, int transportationCategoryId, int adultCount, int childCount, List<TimetableVO> timetables, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockLists) {
+        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+        TransportationCategory transportationCategory = transportationCategoryRepository.findById(transportationCategoryId).get();
+        plan.setDeparture(departure);
+        plan.setTransportationCategory(transportationCategory);
+        plan.setAdultCount(adultCount);
+        plan.setChildCount(childCount);
+
+        List<TimeTable> timeTables = changeTimetable(plan, timetables);
+        changeTimetablePlaceBlock(plan, timetablePlaceBlockLists, timeTables);
+
+        try {
+            planRepository.save(plan);
+        } catch (DataIntegrityViolationException ex) {
+            throw new IllegalArgumentException("입력 데이터가 유효하지 않습니다.", ex);
+        }
+        transportationCategoryRepository.save(transportationCategory);
+        SavePlanResponse response = new SavePlanResponse();
+        return response;
+    }
+
+    private List<TimeTable> changeTimetable(Plan plan, List<TimetableVO> timetables) {
+        if(timetables == null || timetables.isEmpty()) {
+            return new ArrayList<>();
+        }
+        timeTableRepository.deleteByPlan(plan);
+        List<TimeTable> afterTimeTables = new ArrayList<>();
+        for (TimetableVO timetable : timetables) {
+            afterTimeTables.add(TimeTable.builder()
+                    .date(timetable.getDate())
+                    .timeTableStartTime(LocalTime.of(9,0))
+                    .timeTableEndTime(LocalTime.of(20,0))
+                    .plan(plan)
+                    .build());
+            timeTableRepository.saveAll(afterTimeTables);
+        }
+        return afterTimeTables;
+    }
+    private void changeTimetablePlaceBlock(Plan plan, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockLists, List<TimeTable> timeTables) {
+        if(timetablePlaceBlockLists == null || timetablePlaceBlockLists.isEmpty()) {
+            return;
+        }
+        timeTablePlaceBlockRepository.deleteAllByTimeTable_Plan(plan);
+        List<TimeTablePlaceBlock> timeTablePlaceBlocks = new ArrayList<>();
+        for(int i = 0; i < timetablePlaceBlockLists.size(); i++){
+            if(timeTables.isEmpty()){
+                break;
+            }
+            TimeTable timetable = timeTables.get(i);
+            for(int j = 0; j < timetablePlaceBlockLists.get(i).size(); j++){
+                TimetablePlaceBlockVO timeTablePlaceBlockVO = timetablePlaceBlockLists.get(i).get(j);
+                PlaceCategory placeCategory = placeCategoryRepository.getReferenceById(timeTablePlaceBlockVO.getPlaceCategoryId());
+                timeTablePlaceBlocks.add(TimeTablePlaceBlock.builder()
+                        .timeTable(timetable)
+                        .placeName(timeTablePlaceBlockVO.getPlaceName())
+                        .placeTheme(timeTablePlaceBlockVO.getPlaceTheme())
+                        .placeRating(timeTablePlaceBlockVO.getPlaceRating())
+                        .placeAddress(timeTablePlaceBlockVO.getPlaceAddress())
+                        .placeLink(timeTablePlaceBlockVO.getPlaceLink())
+                        .blockStartTime(timeTablePlaceBlockVO.getStartTime())
+                        .blockEndTime(timeTablePlaceBlockVO.getEndTime())
+                        .xLocation(timeTablePlaceBlockVO.getXLocation())
+                        .yLocation(timeTablePlaceBlockVO.getYLocation())
+                        .placeCategory(placeCategory)
+                        .build());
+            }
+        }
+        timeTablePlaceBlockRepository.saveAll(timeTablePlaceBlocks);
+    }
+    public PlaceResponse getTourPlace(int userId, int planId) throws IOException {
+        PlaceResponse response = new PlaceResponse();
+        String travelName = planAccessValidator.validateUserHasAccessToPlan(userId, planId).getTravel().getTravelName();
+        response.addPlace(googleMap.getTourPlace(travelName + " " + "관광지"));
+        return response;
+    }
+    public PlaceResponse getLodgingPlace(int userId, int planId) throws IOException {
+        PlaceResponse response = new PlaceResponse();
+        String travelName = planAccessValidator.validateUserHasAccessToPlan(userId, planId).getTravel().getTravelName();
+        response.addPlace(googleMap.getLodgingPlace(travelName + " " + "숙소"));
+        return response;
+    }
+    public PlaceResponse getRestaurantPlace(int userId, int planId) throws IOException {
+        PlaceResponse response = new PlaceResponse();
+        String travelName = planAccessValidator.validateUserHasAccessToPlan(userId, planId).getTravel().getTravelName();
+        response.addPlace(googleMap.getRestaurantPlace(travelName + " " + "식당"));
+        return response;
+    }
+    public SearchDepartureResponse searchDeparture(String departureName) throws IOException {
+        SearchDepartureResponse response =  new SearchDepartureResponse();
+        List<DepartureVO> searchSuggestions = googleMap.searchDeparture(departureName);
+        response.addDeparture(searchSuggestions);
+        return response;
+    }
+}
