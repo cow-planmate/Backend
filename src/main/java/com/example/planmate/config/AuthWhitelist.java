@@ -1,9 +1,10 @@
 package com.example.planmate.config;
 
+import org.springframework.context.annotation.Configuration;
 import org.springframework.util.AntPathMatcher;
 
 import java.util.List;
-
+@Configuration
 public class AuthWhitelist {
     private static final AntPathMatcher pathMatcher = new AntPathMatcher();
     public static final List<String> PATHS = List.of(
@@ -12,7 +13,8 @@ public class AuthWhitelist {
             "/api/auth/password/email/**",
             "/test-api-key",
             "/api/travel",
-            "/api/departure"
+            "/api/departure",
+            "/ws-plan/**"
     );
 
     public static boolean isWhitelisted(String uri) {

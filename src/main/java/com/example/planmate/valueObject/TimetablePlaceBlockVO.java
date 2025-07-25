@@ -8,6 +8,7 @@ import java.time.LocalTime;
 @Getter
 @Setter
 public class TimetablePlaceBlockVO {
+    private int timetableId;
     private int timetablePlaceBlockId;
     private int placeCategoryId;
     private String placeName;

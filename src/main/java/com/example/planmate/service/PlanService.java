@@ -5,7 +5,6 @@ import com.example.planmate.dto.*;
 import com.example.planmate.entity.*;
 import com.example.planmate.externalAPI.GoogleMap;
 import com.example.planmate.repository.*;
-import com.example.planmate.valueObject.DepartureVO;
 import com.example.planmate.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.valueObject.TimetableVO;
 import lombok.RequiredArgsConstructor;
@@ -219,10 +218,6 @@ public class PlanService {
         response.addPlace(googleMap.getRestaurantPlace(travelName + " " + "식당"));
         return response;
     }
-    public SearchDepartureResponse searchDeparture(String departureName) throws IOException {
-        SearchDepartureResponse response =  new SearchDepartureResponse();
-        List<DepartureVO> searchSuggestions = googleMap.searchDeparture(departureName);
-        response.addDeparture(searchSuggestions);
-        return response;
-    }
+
+
 }
