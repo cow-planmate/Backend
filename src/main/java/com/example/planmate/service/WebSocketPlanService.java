@@ -51,7 +51,7 @@ public class WebSocketPlanService {
                 .timeTableEndTime(timetableVO.getEndTime())
                 .build();
 
-        int tempId = redisService.registerTimeTable(timeTable);
+        int tempId = redisService.registerNewTimeTable(timeTable);
         timetableVO.setTimetableId(tempId);
         response.setTimetableVO(timetableVO);
         return response;
@@ -110,7 +110,7 @@ public class WebSocketPlanService {
         if(request.getTransportationCategoryId() != null) {
             plan.setTransportationCategory(entityManager.getReference(TransportationCategory.class, request.getTransportationCategoryId()));
         }
-
+        redisService.updatePlan(plan);
         planRepository.save(plan);
         response.setPlanName(request.getPlanName());
         return response;
@@ -126,6 +126,7 @@ public class WebSocketPlanService {
         }
         timetable.setTimeTableEndTime(timetableVO.getEndTime());
         timetable.setTimeTableStartTime(timetableVO.getStartTime());
+        redisService.updateTimeTable(timetable);
         response.setTimetableVO(timetableVO);
         return response;
     }
@@ -166,6 +167,7 @@ public class WebSocketPlanService {
                     entityManager.getReference(PlaceCategory.class, timetablePlaceBlockVO.getPlaceCategoryId())
             );
         }
+        redisService.updateTimeTablePlaceBlock(timetablePlaceBlock);
         response.setTimetablePlaceBlockVO(timetablePlaceBlockVO);
         return response;
     }

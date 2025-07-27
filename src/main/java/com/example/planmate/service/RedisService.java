@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -22,10 +24,13 @@ public class RedisService {
     @Getter
     private final RedisTemplate<Integer, Plan> planRedis;
     @Getter
-    private final RedisTemplate<Integer, TimeTable> timetableRedis;
+    private final RedisTemplate<Integer, TimeTable> timeTableRedis;
     private final AtomicInteger timeTableTempIdGenerator = new AtomicInteger(-1);
+    private final RedisTemplate<Integer, List<Integer>> planToTimeTableRedis;
     @Getter
-    private final RedisTemplate<Integer, TimeTablePlaceBlock> timetablePlaceBlockRedis;
+    private final RedisTemplate<Integer, TimeTablePlaceBlock> timeTablePlaceBlockRedis;
+    private final AtomicInteger timeTablePlaceBlockTempIdGenerator = new AtomicInteger(-1);
+    private final RedisTemplate<Integer, List<Integer>> timeTableToTimeTablePlaceBlockRedis;
 
     public Plan getPlan(int planId) {
         Plan cached = planRedis.opsForValue().get(planId);
@@ -38,18 +43,21 @@ public class RedisService {
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
         planRedis.opsForValue().set(planId, plan);
-        return plan;
-    }
-    public Plan registerPlan(Plan plan){
-        planRedis.opsForValue().set(plan.getPlanId(), plan);
+        List<TimeTable> timeTables = registerTimeTable(plan.getPlanId());
+        for(TimeTable timeTable : timeTables){
+            registerTimeTablePlaceBlock(timeTable.getTimeTableId());
+        }
         return plan;
     }
     public void updatePlan(Plan plan) {
         planRedis.opsForValue().set(plan.getPlanId(), plan);
     }
 
+
+
+
     public TimeTable getTimeTable(int timetableId) {
-        TimeTable cached = timetableRedis.opsForValue().get(timetableId);
+        TimeTable cached = timeTableRedis.opsForValue().get(timetableId);
 
         if (cached == null) {
             throw new IllegalStateException("캐시 누락: Redis에 저장된 TimeTable 정보가 없습니다.");
@@ -57,54 +65,81 @@ public class RedisService {
         return cached;
     }
 
-    public TimeTable registerTimeTable(int timetableId) {
-        TimeTable timeTable = timeTableRepository.findById(timetableId)
-                .orElseThrow(() -> new IllegalArgumentException("TimeTable not found: " + timetableId));
-        timetableRedis.opsForValue().set(timetableId, timeTable);
-        return timeTable;
+    public List<TimeTable> getTimeTableByPlanId(int planId) {
+        List<Integer> timeTableIds = planToTimeTableRedis.opsForValue().get(planId);
+        return timeTableRedis.opsForValue().multiGet(timeTableIds);
     }
-    public int registerTimeTable(TimeTable timetable) {
+
+    public List<TimeTable> registerTimeTable(int planId) {
+        List<TimeTable> timeTables = timeTableRepository.findByPlanPlanId(planId);
+        List<Integer> timeTableIds = new ArrayList<>();
+        for(TimeTable timeTable : timeTables){
+            timeTableRedis.opsForValue().set(timeTable.getTimeTableId(), timeTable);
+            timeTableIds.add(timeTable.getTimeTableId());
+        }
+        planToTimeTableRedis.opsForValue().set(planId, timeTableIds);
+        return timeTables;
+    }
+    public int registerNewTimeTable(TimeTable timetable) {
         int tempId = timeTableTempIdGenerator.getAndIncrement();
         timetable.setTimeTableId(tempId);
-        timetableRedis.opsForValue().set(timetable.getTimeTableId(), timetable);
+        timeTableRedis.opsForValue().set(timetable.getTimeTableId(), timetable);
         return tempId;
     }
 
     public void deleteTimeTable(int timetableId) {
-        timetableRedis.delete(timetableId);
+        timeTableRedis.delete(timetableId);
+        List<Integer> timeTablePlaceBlocks = timeTableToTimeTablePlaceBlockRedis.opsForValue().get(timetableId);
+        if(timeTablePlaceBlocks != null) {
+            timeTablePlaceBlockRedis.delete(timeTablePlaceBlocks);
+        }
     }
 
     public void updateTimeTable(TimeTable timeTable) {
-        timetableRedis.opsForValue().set(timeTable.getTimeTableId(), timeTable);
+        timeTableRedis.opsForValue().set(timeTable.getTimeTableId(), timeTable);
     }
 
 
-    public TimeTablePlaceBlock getTimeTablePlaceBlock(int blockId) {
-        TimeTablePlaceBlock cached = timetablePlaceBlockRedis.opsForValue().get(blockId);
 
+
+    public List<TimeTablePlaceBlock> getTimeTablePlaceBlockByTimeTableId(int timetableId) {
+        List<Integer> timeTablePlaceBlocks = timeTableToTimeTablePlaceBlockRedis.opsForValue().get(timetableId);
+        return timeTablePlaceBlockRedis.opsForValue().multiGet(timeTablePlaceBlocks);
+    }
+
+    public TimeTablePlaceBlock getTimeTablePlaceBlock(int blockId) {
+        TimeTablePlaceBlock cached = timeTablePlaceBlockRedis.opsForValue().get(blockId);
         if (cached == null) {
             throw new IllegalStateException("캐시 누락: Redis에 저장된 TimeTablePlaceBlock 정보가 없습니다.");
         }
         return cached;
     }
 
-    public TimeTablePlaceBlock registerTimeTablePlaceBlock(int blockId) {
-        TimeTablePlaceBlock block = timeTablePlaceBlockRepository.findById(blockId)
-                .orElseThrow(() -> new IllegalArgumentException("TimeTablePlaceBlock not found: " + blockId));
-        timetablePlaceBlockRedis.opsForValue().set(blockId, block);
-        return block;
+
+    public List<TimeTablePlaceBlock> registerTimeTablePlaceBlock(int timeTableId) {
+        List<TimeTablePlaceBlock> timeTablePlaceBlocks = timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTableId);
+        List<Integer> timeTablePlaceBlockIds = new ArrayList<>();
+        for(TimeTablePlaceBlock timeTablePlaceBlock : timeTablePlaceBlocks){
+            timeTablePlaceBlockRedis.opsForValue().set(timeTablePlaceBlock.getBlockId(), timeTablePlaceBlock);
+            timeTablePlaceBlockIds.add(timeTablePlaceBlock.getBlockId());
+        }
+
+        timeTableToTimeTablePlaceBlockRedis.opsForValue().set(timeTableId, timeTablePlaceBlockIds);
+        return timeTablePlaceBlocks;
     }
 
-    public TimeTablePlaceBlock registerTimeTablePlaceBlock(TimeTablePlaceBlock block) {
-        timetablePlaceBlockRedis.opsForValue().set(block.getBlockId(), block);
+    public TimeTablePlaceBlock registerNewTimeTablePlaceBlock(TimeTablePlaceBlock block) {
+        int tempId = timeTablePlaceBlockTempIdGenerator.getAndIncrement();
+        block.setBlockId(tempId);
+        timeTablePlaceBlockRedis.opsForValue().set(block.getBlockId(), block);
         return block;
     }
 
     public void deleteTimeTablePlaceBlock(int blockId) {
-        timetablePlaceBlockRedis.delete(blockId);
+        timeTablePlaceBlockRedis.delete(blockId);
     }
 
     public void updateTimeTablePlaceBlock(TimeTablePlaceBlock block) {
-        timetablePlaceBlockRedis.opsForValue().set(block.getBlockId(), block);
+        timeTablePlaceBlockRedis.opsForValue().set(block.getBlockId(), block);
     }
 }
