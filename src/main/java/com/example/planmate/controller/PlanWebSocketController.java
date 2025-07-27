@@ -21,6 +21,6 @@ public class PlanWebSocketController {
         WebSocketPlanResponse response = webSocketPlanService.run(planId, request);
         response.setType(request.getType());
         response.setObject(request.getObject());
-        return response;  // 클라이언트에게 전달됨
+        return response;
     }
 }

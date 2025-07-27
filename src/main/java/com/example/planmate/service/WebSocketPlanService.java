@@ -53,8 +53,8 @@ public class WebSocketPlanService {
     private WebSocketPlanResponse createTimetable(int planId, WebSocketPlanRequest request) {
         WebSocketPlanResponse response = new WebSocketPlanResponse();
         TimetableVO timetableVO = request.getTimetableVO();
-        Plan plan = planRepository.findById(planId).orElse(null);
 
+        Plan plan = cacheService.getPlan(planId);
         TimeTable timeTable = TimeTable.builder()
                 .plan(plan)
                 .date(timetableVO.getDate())
@@ -62,10 +62,8 @@ public class WebSocketPlanService {
                 .timeTableEndTime(timetableVO.getEndTime())
                 .build();
 
-        cacheService.registerPlan(plan);
-
-        // ID는 아직 없으므로 null 또는 UUID 임시 키 사용 가능
-        timetableVO.setTimetableId(null);
+        int tempId = cacheService.registerTimeTable(timeTable);
+        timetableVO.setTimetableId(tempId);
         response.setTimetableVO(timetableVO);
         return response;
     }
