@@ -9,16 +9,16 @@ import java.time.LocalTime;
 @Setter
 public class TimetablePlaceBlockVO {
     private int timetableId;
-    private int timetablePlaceBlockId;
-    private int placeCategoryId;
+    private Integer timetablePlaceBlockId;
+    private Integer placeCategoryId;
     private String placeName;
     private String placeTheme;
-    private float placeRating;
+    private Float placeRating;
     private String placeAddress;
     private String placeLink;
     private String date;
-    private LocalTime startTime;
-    private LocalTime endTime;
-    private double xLocation;
-    private double yLocation;
+    private LocalTime blockStartTime;
+    private LocalTime blockEndTime;
+    private Double xLocation;
+    private Double yLocation;
 }

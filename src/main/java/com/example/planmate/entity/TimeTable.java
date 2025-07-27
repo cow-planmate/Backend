@@ -20,9 +20,6 @@ public class TimeTable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer timeTableId;
 
-    @Transient
-    private Integer timeTableTempId;
-
     @Column(nullable = false)
     private LocalDate date;
 

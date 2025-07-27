@@ -15,19 +15,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
-public class CacheService {
+public class RedisService {
     private final PlanRepository planRepository;
     private final TimeTableRepository timeTableRepository;
     private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
     @Getter
-    private final RedisTemplate<String, Plan> planRedis;
+    private final RedisTemplate<Integer, Plan> planRedis;
     @Getter
-    private final RedisTemplate<String, TimeTable> timetableRedis;
+    private final RedisTemplate<Integer, TimeTable> timetableRedis;
     private final AtomicInteger timeTableTempIdGenerator = new AtomicInteger(-1);
     @Getter
     private final RedisTemplate<Integer, TimeTablePlaceBlock> timetablePlaceBlockRedis;
-    @Getter
-    private final RedisTemplate<Integer, Integer> timetablePlaceBlockIdRedis;
 
     public Plan getPlan(int planId) {
         Plan cached = planRedis.opsForValue().get(planId);
@@ -39,18 +37,15 @@ public class CacheService {
     public Plan registerPlan(int planId){
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
-        planRedis.opsForValue().set(planId+"", plan);
+        planRedis.opsForValue().set(planId, plan);
         return plan;
     }
     public Plan registerPlan(Plan plan){
-        planRedis.opsForValue().set(plan.getPlanId()+"", plan);
+        planRedis.opsForValue().set(plan.getPlanId(), plan);
         return plan;
     }
-    public void evictPlan(int planId) {
-        planRedis.delete(planId+"");
-    }
     public void updatePlan(Plan plan) {
-        planRedis.opsForValue().set(plan.getPlanId()+"", plan);
+        planRedis.opsForValue().set(plan.getPlanId(), plan);
     }
 
     public TimeTable getTimeTable(int timetableId) {
@@ -65,22 +60,22 @@ public class CacheService {
     public TimeTable registerTimeTable(int timetableId) {
         TimeTable timeTable = timeTableRepository.findById(timetableId)
                 .orElseThrow(() -> new IllegalArgumentException("TimeTable not found: " + timetableId));
-        timetableRedis.opsForValue().set(timetableId+"", timeTable);
+        timetableRedis.opsForValue().set(timetableId, timeTable);
         return timeTable;
     }
     public int registerTimeTable(TimeTable timetable) {
         int tempId = timeTableTempIdGenerator.getAndIncrement();
-        timetable.setTimeTableTempId(tempId);
-        timetableRedis.opsForValue().set(timetable.getTimeTableId()+"", timetable);
+        timetable.setTimeTableId(tempId);
+        timetableRedis.opsForValue().set(timetable.getTimeTableId(), timetable);
         return tempId;
     }
 
-    public void evictTimeTable(int timetableId) {
-        timetableRedis.delete(timetableId+"");
+    public void deleteTimeTable(int timetableId) {
+        timetableRedis.delete(timetableId);
     }
 
     public void updateTimeTable(TimeTable timeTable) {
-        timetableRedis.opsForValue().set(timeTable.getTimeTableId()+"", timeTable);
+        timetableRedis.opsForValue().set(timeTable.getTimeTableId(), timeTable);
     }
 
 
@@ -105,7 +100,7 @@ public class CacheService {
         return block;
     }
 
-    public void evictTimeTablePlaceBlock(int blockId) {
+    public void deleteTimeTablePlaceBlock(int blockId) {
         timetablePlaceBlockRedis.delete(blockId);
     }
 

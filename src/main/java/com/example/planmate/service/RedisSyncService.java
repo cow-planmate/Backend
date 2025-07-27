@@ -18,16 +18,16 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
-public class CacheSyncService {
+public class RedisSyncService {
 
     private final PlanRepository planRepository;
     private final TimeTableRepository timeTableRepository;
-    private final CacheService cacheService;
+    private final RedisService redisService;
     private final SimpMessagingTemplate messagingTemplate;
 
     @Scheduled(fixedRate = 20 * 1000)
     public void syncPlanToDatabase() {
-        RedisTemplate<String, Plan> planRedis = cacheService.getPlanRedis();
+        RedisTemplate<String, Plan> planRedis = redisService.getPlanRedis();
 
         Set<String> keys = planRedis.keys("*");
         List<Plan> plans = keys.stream()
@@ -38,7 +38,7 @@ public class CacheSyncService {
 
     @Scheduled(fixedRate = 20 * 1000)
     public void syncTimetableToDatabase(){
-        RedisTemplate<String, TimeTable> timetableRedis = cacheService.getTimetableRedis();
+        RedisTemplate<String, TimeTable> timetableRedis = redisService.getTimetableRedis();
         Set<String> keys = timetableRedis.keys("*");
         List<TimeTable> timeTables = keys.stream()
                 .map(k -> timetableRedis.opsForValue().get(k))
