@@ -14,11 +14,15 @@ import java.nio.file.AccessDeniedException;
 @RestController
 @RequestMapping("/api/plan")
 public class PlanController {
-    private final PlanService planService;
+    private final MakePlanService makePlanService;
+    private final GetPlanService getPlanService;
+    private final EditPlanNameService editPlanNameService;
+    private final GetPlaceService getPlaceService;
+    private final SavePlanService savePlanService;
     @PostMapping("")
     public ResponseEntity<MakePlanResponse> makePlan(Authentication authentication, @RequestBody MakePlanRequest makePlanRequest) {
         int userId = Integer.parseInt(authentication.getName());
-        MakePlanResponse response = planService.makePlan(
+        MakePlanResponse response = makePlanService.makeService(
                 userId,
                 makePlanRequest.getDeparture(),
                 makePlanRequest.getTravelId(),
@@ -32,39 +36,39 @@ public class PlanController {
     @GetMapping("/{planId}")
     public ResponseEntity<GetPlanResponse> getPlan(Authentication authentication, @PathVariable("planId") int planId) throws AccessDeniedException {
         int userId = Integer.parseInt(authentication.getName());
-        GetPlanResponse response = planService.getPlan(userId, planId);
+        GetPlanResponse response = getPlanService.getPlan(userId, planId);
         return ResponseEntity.ok(response);
     }
     @PatchMapping("/{planId}/save")
     public ResponseEntity<SavePlanResponse> savePlan(Authentication authentication, @PathVariable("planId") int planId, @RequestBody SavePlanRequest request) {
         int userId = Integer.parseInt(authentication.getName());
-        SavePlanResponse response = planService.savePlan(userId, planId, request.getDeparture(), request.getTransportationCategoryId(), request.getAdultCount(), request.getChildCount(), request.getTimetables(), request.getTimetablePlaceBlocks());
+        SavePlanResponse response = savePlanService.savePlan(userId, planId, request.getDeparture(), request.getTransportationCategoryId(), request.getAdultCount(), request.getChildCount(), request.getTimetables(), request.getTimetablePlaceBlocks());
         return ResponseEntity.ok(response);
     }
     @PatchMapping("/{planId}/name")
     public ResponseEntity<EditPlanNameResponse> editPlanName(Authentication authentication, @PathVariable("planId") int planId, @RequestBody EditPlanNameRequest editPlanNameRequest) {
         int userId = Integer.parseInt(authentication.getName());
-        EditPlanNameResponse reponse = planService.EditPlanName(userId, planId, editPlanNameRequest.getPlanName());
+        EditPlanNameResponse reponse = editPlanNameService.EditPlanName(userId, planId, editPlanNameRequest.getPlanName());
         return ResponseEntity.ok(reponse);
     }
     @PostMapping("/{planId}/lodging")
     public ResponseEntity<PlaceResponse> getLodgingPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
-        PlaceResponse response = planService.getLodgingPlace(userId, planId);
+        PlaceResponse response = getPlaceService.getLodgingPlace(userId, planId);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{planId}/tour")
     public ResponseEntity<PlaceResponse> getTourPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
-        PlaceResponse response = planService.getTourPlace(userId, planId);
+        PlaceResponse response = getPlaceService.getTourPlace(userId, planId);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{planId}/restaurant")
     public ResponseEntity<PlaceResponse> getRestaurantPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
-        PlaceResponse response = planService.getRestaurantPlace(userId, planId);
+        PlaceResponse response = getPlaceService.getRestaurantPlace(userId, planId);
         return ResponseEntity.ok(response);
     }
 }

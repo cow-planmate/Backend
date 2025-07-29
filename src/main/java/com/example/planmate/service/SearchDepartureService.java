@@ -11,7 +11,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class DepartureService {
+public class SearchDepartureService {
     private final GoogleMap googleMap;
     public SearchDepartureResponse searchDeparture(String departureName) throws IOException {
         SearchDepartureResponse response =  new SearchDepartureResponse();

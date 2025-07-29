@@ -2,7 +2,7 @@ package com.example.planmate.controller;
 
 import com.example.planmate.dto.SearchDepartureRepuest;
 import com.example.planmate.dto.SearchDepartureResponse;
-import com.example.planmate.service.DepartureService;
+import com.example.planmate.service.SearchDepartureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,10 +16,10 @@ import java.io.IOException;
 @RestController
 @RequestMapping("/api/departure")
 public class DepartureController {
-    private final DepartureService departureService;
+    private final SearchDepartureService searchDepartureService;
     @PostMapping("")
     public ResponseEntity<SearchDepartureResponse> searchDeparture(@RequestBody SearchDepartureRepuest repuest) throws IOException {
-        SearchDepartureResponse response = departureService.searchDeparture(repuest.getDepartureQuery());
+        SearchDepartureResponse response = searchDepartureService.searchDeparture(repuest.getDepartureQuery());
         return ResponseEntity.ok(response);
     }
 }
