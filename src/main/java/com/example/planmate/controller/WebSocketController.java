@@ -1,27 +1,65 @@
 package com.example.planmate.controller;
 
+import com.example.planmate.entity.Plan;
+import com.example.planmate.service.RedisService;
 import com.example.planmate.service.WebSocketPlanService;
-import com.example.planmate.wdto.WRequest;
-import com.example.planmate.wdto.WResponse;
+import com.example.planmate.wdto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
-
-import java.security.Principal;
 
 @Controller
 @RequiredArgsConstructor
 public class WebSocketController {
     private final WebSocketPlanService webSocketPlanService;
+    private final RedisService redisService;
 
-    @MessageMapping("/plan/{planId}")
-    @SendTo("/topic/plan/{planId}")
-    public WResponse handlePlanUpdate(@DestinationVariable("planId") int planId, Principal principal, WRequest request) {
-        WResponse response = webSocketPlanService.run(planId, request);
-        response.setType(request.getType());
-        response.setObject(request.getObject());
-        return response;
+    @MessageMapping("/plan/{planId}/update/plan")
+    @SendTo("/topic/plan/{planId}/update/plan")
+    public WPlanResponse updatePlan(@DestinationVariable int planId, @Payload WPlanRequest request) {
+        Plan plan = redisService.getPlan(planId);
+        return webSocketPlanService.updatePlan(plan, request);
     }
+
+    @MessageMapping("/plan/{planId}/create/timetable")
+    @SendTo("/topic/plan/{planId}/create/timetable")
+    public WTimetableResponse createTimetable(@DestinationVariable int planId, @Payload WTimetableRequest request) {
+        return webSocketPlanService.createTimetable(planId, request);
+    }
+
+    @MessageMapping("/plan/{planId}/update/timetable")
+    @SendTo("/topic/plan/{planId}/update/timetable")
+    public WTimetableResponse updateTimetable(@DestinationVariable int planId, @Payload WTimetableRequest request) {
+        Plan plan = redisService.getPlan(planId);
+        return webSocketPlanService.updateTimetable(plan, request);
+    }
+
+    @MessageMapping("/plan/{planId}/delete/timetable")
+    @SendTo("/topic/plan/{planId}/delete/timetable")
+    public WTimetableResponse deleteTimetable(@DestinationVariable int planId, @Payload WTimetableRequest request) {
+        return webSocketPlanService.deleteTimetable(request);
+    }
+
+    @MessageMapping("/plan/{planId}/create/placeBlock")
+    @SendTo("/topic/plan/{planId}/create/placeBlock")
+    public WTimeTablePlaceBlockResponse createPlaceBlock(@DestinationVariable int planId, @Payload WTimeTablePlaceBlockRequest request) {
+        return webSocketPlanService.createTimetablePlaceBlock(request);
+    }
+
+    @MessageMapping("/plan/{planId}/update/placeBlock")
+    @SendTo("/topic/plan/{planId}/update/placeBlock")
+    public WTimeTablePlaceBlockResponse updatePlaceBlock(@DestinationVariable int planId, @Payload WTimeTablePlaceBlockRequest request) {
+        return webSocketPlanService.updateTimetablePlaceBlock(request);
+    }
+
+    @MessageMapping("/plan/{planId}/delete/placeBlock")
+    @SendTo("/topic/plan/{planId}/delete/placeBlock")
+    public WTimeTablePlaceBlockResponse deletePlaceBlock(@DestinationVariable int planId, @Payload WTimeTablePlaceBlockRequest request) {
+        return webSocketPlanService.deleteTimetablePlaceBlock(request);
+    }
+
+
 }

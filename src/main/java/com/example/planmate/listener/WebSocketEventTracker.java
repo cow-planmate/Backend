@@ -1,5 +1,6 @@
 package com.example.planmate.listener;
 
+import com.example.planmate.service.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -9,50 +10,58 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
-import java.util.Set;
-
 @Component
 @RequiredArgsConstructor
 public class WebSocketEventTracker {
 
-    private final RedisTemplate<String, String> trackerRedis;
-    private final String PREFIX = "ws:sub:";
+    private final RedisTemplate<String, String> planTrackerRedis;
+    private final String PLANTRACKER_PREFIX = "PLANTRACKER";
+    private final RedisTemplate<String, Integer> sessionTrackerRedis;
+    private final String SESSIONTRACKER_PREFIX = "SESSIONTRACKER";
+    private final RedisService redisService;
 
-    private String topicKey(String destination) {
-        return PREFIX + destination;
-    }
 
     @EventListener
     public void handleSubscribeEvent(SessionSubscribeEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
         String sessionId = accessor.getSessionId();
         String destination = accessor.getDestination();
-        if (destination != null && sessionId != null) {
-            trackerRedis.opsForSet().add(topicKey(destination), sessionId);
+        int planId = Integer.parseInt(destination.split("/")[3]);
+        if(!planTrackerRedis.hasKey(PLANTRACKER_PREFIX + planId)){
+            redisService.registerPlan(planId);
         }
+        if (sessionId != null) {
+            planTrackerRedis.opsForSet().add(PLANTRACKER_PREFIX + planId, sessionId);
+            sessionTrackerRedis.opsForValue().set(SESSIONTRACKER_PREFIX + sessionId, planId);
+        }
+
     }
 
     @EventListener
     public void handleUnsubscribeEvent(SessionUnsubscribeEvent event) {
-        String sessionId = StompHeaderAccessor.wrap(event.getMessage()).getSessionId();
-        removeSessionFromAllTopics(sessionId);
+//        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
+//        String sessionId = accessor.getSessionId();
+//        removeSessionFromAllTopics(sessionId);
     }
 
     @EventListener
     public void handleDisconnectEvent(SessionDisconnectEvent event) {
-        String sessionId = event.getSessionId();
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
+        String sessionId = accessor.getSessionId();
         removeSessionFromAllTopics(sessionId);
     }
 
     private void removeSessionFromAllTopics(String sessionId) {
-        Set<String> keys = trackerRedis.keys(PREFIX + "*");
-        for (String key : keys) {
-            trackerRedis.opsForSet().remove(key, sessionId);
+        int planId = sessionTrackerRedis.opsForValue().get(PLANTRACKER_PREFIX + sessionId);
+        planTrackerRedis.opsForSet().remove(PLANTRACKER_PREFIX + planId, sessionId);
+        sessionTrackerRedis.delete(SESSIONTRACKER_PREFIX + sessionId);
+        if(!planTrackerRedis.hasKey(PLANTRACKER_PREFIX + planId)){
+            redisService.deletePlan(planId);
         }
     }
 
-    public int getSubscriberCount(String destination) {
-        Long size = trackerRedis.opsForSet().size(topicKey(destination));
+    public int getSubscriberCount(int planId) {
+        Long size = planTrackerRedis.opsForSet().size(PLANTRACKER_PREFIX + planId);
         return size != null ? size.intValue() : 0;
     }
 }

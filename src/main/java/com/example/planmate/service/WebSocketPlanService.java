@@ -22,24 +22,8 @@ public class WebSocketPlanService {
     private final RedisService redisService;
     private final EntityManager entityManager;
 
-    public WResponse run(int planId, WRequest request) {
 
-        return switch (request.getType().toLowerCase()) {
-            case "create" -> createObject(planId, request);
-            case "update" -> updateObject(planId, request);
-            case "delete" -> deleteObject(planId, request);
-            default -> throw new IllegalArgumentException("Unknown type: " + request.getType());
-        };
-    }
-
-    private WResponse createObject(int planId, WRequest request) {
-        return switch (request.getObject()){
-            case "timetable" -> createTimetable(planId, (WTimetableRequest) request);
-            case "timetablePlaceBlock" -> createTimetablePlaceBlock((WTimeTablePlaceBlockRequest)request);
-            default -> throw new IllegalArgumentException("Unknown object: " + request.getType() + request.getObject());
-        };
-    }
-    private WResponse createTimetable(int planId, WTimetableRequest request) {
+    public WTimetableResponse createTimetable(int planId, WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
         TimetableVO timetableVO = request.getTimetableVO();
 
@@ -57,7 +41,7 @@ public class WebSocketPlanService {
         return response;
     }
 
-    private WResponse createTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {
+    public WTimeTablePlaceBlockResponse createTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
         TimetablePlaceBlockVO timetablePlaceBlockVO = request.getTimetablePlaceBlockVO();
         TimeTable timetable = timeTableRepository.findById(request.getTimetablePlaceBlockVO().getTimetableId()).orElse(null);
@@ -81,16 +65,8 @@ public class WebSocketPlanService {
         return response;
     }
 
-    private WResponse updateObject(int planId, WRequest request) {
-        Plan plan = planRepository.findById(planId).orElse(null);
-        return switch (request.getObject()){
-            case "plan" -> updatePlan(plan, (WPlanRequest)request);
-            case "timetable" -> updateTimetable(plan, (WTimetableRequest)request);
-            case "timetablePlaceBlock" -> updateTimetablePlaceBlock((WTimeTablePlaceBlockRequest)request);
-            default -> throw new IllegalArgumentException("Unknown object: " + request.getType() + request.getObject());
-        };
-    }
-    private WResponse updatePlan(Plan plan, WPlanRequest request) {
+
+    public WPlanResponse updatePlan(Plan plan, WPlanRequest request) {
         WPlanResponse response = new WPlanResponse();
         if(request.getPlanName() != null) {
             plan.setPlanName(request.getPlanName());
@@ -116,7 +92,7 @@ public class WebSocketPlanService {
         return response;
     }
 
-    private WResponse updateTimetable(Plan plan, WTimetableRequest request) {
+    public WTimetableResponse updateTimetable(Plan plan, WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
         TimetableVO timetableVO = request.getTimetableVO();
         int timetableId = timetableVO.getTimetableId();
@@ -131,7 +107,7 @@ public class WebSocketPlanService {
         return response;
     }
 
-    private WResponse updateTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {
+    public WTimeTablePlaceBlockResponse updateTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
         TimetablePlaceBlockVO timetablePlaceBlockVO = request.getTimetablePlaceBlockVO();
         TimeTablePlaceBlock timetablePlaceBlock = redisService.getTimeTablePlaceBlock(timetablePlaceBlockVO.getTimetablePlaceBlockId());
@@ -172,20 +148,13 @@ public class WebSocketPlanService {
         return response;
     }
 
-    private WResponse deleteObject(int planId, WRequest request) {
-        return switch (request.getObject()){
-            case "timetable" -> deleteTimetable((WTimetableRequest)request);
-            case "timetablePlaceBlock" -> deleteTimetablePlaceBlock((WTimeTablePlaceBlockRequest)request);
-            default -> throw new IllegalArgumentException("Unknown object: " + request.getType() + request.getObject());
-        };
-    }
-    private WTimetableResponse deleteTimetable(WTimetableRequest request) {
+    public WTimetableResponse deleteTimetable(WTimetableRequest request) {
         redisService.deleteTimeTable(request.getTimetableVO().getTimetableId());
         WTimetableResponse response = new WTimetableResponse();
         response.setTimetableVO(request.getTimetableVO());
         return response;
     }
-    private WTimeTablePlaceBlockResponse deleteTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {
+    public WTimeTablePlaceBlockResponse deleteTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {
         redisService.deleteTimeTablePlaceBlock(request.getTimetablePlaceBlockVO().getTimetableId());
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
         response.setTimetablePlaceBlockVO(request.getTimetablePlaceBlockVO());
