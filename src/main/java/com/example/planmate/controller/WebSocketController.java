@@ -43,21 +43,21 @@ public class WebSocketController {
         return webSocketPlanService.deleteTimetable(request);
     }
 
-    @MessageMapping("/plan/{planId}/create/placeBlock")
-    @SendTo("/topic/plan/{planId}/create/placeBlock")
-    public WTimeTablePlaceBlockResponse createPlaceBlock(@DestinationVariable int planId, @Payload WTimeTablePlaceBlockRequest request) {
+    @MessageMapping("/plan/{planId}/create/timetableplaceblock")
+    @SendTo("/topic/plan/{planId}/create/timetableplaceblock")
+    public WTimeTablePlaceBlockResponse createTimeTablePlaceBlock(@DestinationVariable int planId, @Payload WTimeTablePlaceBlockRequest request) {
         return webSocketPlanService.createTimetablePlaceBlock(request);
     }
 
-    @MessageMapping("/plan/{planId}/update/placeBlock")
-    @SendTo("/topic/plan/{planId}/update/placeBlock")
-    public WTimeTablePlaceBlockResponse updatePlaceBlock(@DestinationVariable int planId, @Payload WTimeTablePlaceBlockRequest request) {
+    @MessageMapping("/plan/{planId}/update/timetableplaceblock")
+    @SendTo("/topic/plan/{planId}/update/timetableplaceblock")
+    public WTimeTablePlaceBlockResponse updateTimeTablePlaceBlock(@DestinationVariable int planId, @Payload WTimeTablePlaceBlockRequest request) {
         return webSocketPlanService.updateTimetablePlaceBlock(request);
     }
 
-    @MessageMapping("/plan/{planId}/delete/placeBlock")
-    @SendTo("/topic/plan/{planId}/delete/placeBlock")
-    public WTimeTablePlaceBlockResponse deletePlaceBlock(@DestinationVariable int planId, @Payload WTimeTablePlaceBlockRequest request) {
+    @MessageMapping("/plan/{planId}/delete/timetableplaceblock")
+    @SendTo("/topic/plan/{planId}/delete/timetableplaceblock")
+    public WTimeTablePlaceBlockResponse deleteTimeTablePlaceBlock(@DestinationVariable int planId, @Payload WTimeTablePlaceBlockRequest request) {
         return webSocketPlanService.deleteTimetablePlaceBlock(request);
     }
 

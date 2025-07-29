@@ -12,15 +12,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic"); // 클라이언트 구독 주소
-        config.setApplicationDestinationPrefixes("/app"); // 클라이언트가 보낼 때 prefix
+        config.enableSimpleBroker("/topic");
+        config.setApplicationDestinationPrefixes("/app");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-plan") // 클라이언트 연결 주소
+        registry.addEndpoint("/ws-plan")
                 .setAllowedOrigins("http://localhost:3000",
-                        "http://localhost:63771")   // CORS 허용
-                .withSockJS();            // SockJS fallback 허용
+                        "http://localhost:63771")
+                .withSockJS();
     }
 }

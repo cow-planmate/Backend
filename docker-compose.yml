@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+    container_name: planmate-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - db
+    environment:
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/planmate
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 1234
+
+  redis:
+    image: redis:7
+    container_name: planmate-redis
+    ports:
+      - "6379:6379"
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: planmate
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+#    volumes:
+#      - ./postgres_dump.sql:/docker-entrypoint-initdb.d/init.sql
+
