@@ -38,6 +38,7 @@ public class RedisService {
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
         planRedis.opsForValue().set(PLAN_PREFIX + planId, plan);
+        Plan cached = planRedis.opsForValue().get(PLAN_PREFIX + planId);
         List<TimeTable> timeTables = registerTimeTable(plan.getPlanId());
         for(TimeTable timeTable : timeTables){
             registerTimeTablePlaceBlock(timeTable.getTimeTableId());

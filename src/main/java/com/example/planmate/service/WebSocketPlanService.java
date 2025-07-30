@@ -2,7 +2,6 @@ package com.example.planmate.service;
 
 import com.example.planmate.entity.*;
 import com.example.planmate.repository.PlaceCategoryRepository;
-import com.example.planmate.repository.PlanRepository;
 import com.example.planmate.repository.TimeTablePlaceBlockRepository;
 import com.example.planmate.repository.TimeTableRepository;
 import com.example.planmate.valueObject.TimetablePlaceBlockVO;
@@ -15,13 +14,36 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class WebSocketPlanService {
-    private final PlanRepository planRepository;
     private final TimeTableRepository timeTableRepository;
     private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
     private final PlaceCategoryRepository placeCategoryRepository;
     private final RedisService redisService;
     private final EntityManager entityManager;
 
+    public WPlanResponse updatePlan(Plan plan, WPlanRequest request) {
+        WPlanResponse response = new WPlanResponse();
+        if(request.getPlanName() != null) {
+            plan.setPlanName(request.getPlanName());
+        }
+        if(request.getTravelId() != null) {
+            plan.setTravel(entityManager.getReference(Travel.class, request.getTravelId()));
+        }
+        if(request.getAdultCount() != null) {
+            plan.setAdultCount(request.getAdultCount());
+        }
+        if(request.getChildCount() != null) {
+            plan.setChildCount(request.getChildCount());
+        }
+        if(request.getDeparture() != null) {
+            plan.setDeparture(request.getDeparture());
+        }
+        if(request.getTransportationCategoryId() != null) {
+            plan.setTransportationCategory(entityManager.getReference(TransportationCategory.class, request.getTransportationCategoryId()));
+        }
+        redisService.updatePlan(plan);
+        response.setPlanName(request.getPlanName());
+        return response;
+    }
 
     public WTimetableResponse createTimetable(int planId, WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
@@ -66,31 +88,7 @@ public class WebSocketPlanService {
     }
 
 
-    public WPlanResponse updatePlan(Plan plan, WPlanRequest request) {
-        WPlanResponse response = new WPlanResponse();
-        if(request.getPlanName() != null) {
-            plan.setPlanName(request.getPlanName());
-        }
-        if(request.getTravelId() != null) {
-            plan.setTravel(entityManager.getReference(Travel.class, request.getTravelId()));
-        }
-        if(request.getAdultCount() != null) {
-            plan.setAdultCount(request.getAdultCount());
-        }
-        if(request.getChildCount() != null) {
-            plan.setChildCount(request.getChildCount());
-        }
-        if(request.getDeparture() != null) {
-            plan.setDeparture(request.getDeparture());
-        }
-        if(request.getTransportationCategoryId() != null) {
-            plan.setTransportationCategory(entityManager.getReference(TransportationCategory.class, request.getTransportationCategoryId()));
-        }
-        redisService.updatePlan(plan);
-        planRepository.save(plan);
-        response.setPlanName(request.getPlanName());
-        return response;
-    }
+
 
     public WTimetableResponse updateTimetable(Plan plan, WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
@@ -160,6 +158,5 @@ public class WebSocketPlanService {
         response.setTimetablePlaceBlockVO(request.getTimetablePlaceBlockVO());
         return response;
     }
-
 
 }

@@ -1,6 +1,7 @@
 package com.example.planmate.listener;
 
 import com.example.planmate.service.RedisService;
+import com.example.planmate.service.RedisSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -19,6 +20,7 @@ public class WebSocketEventTracker {
     private final RedisTemplate<String, Integer> sessionTrackerRedis;
     private final String SESSIONTRACKER_PREFIX = "SESSIONTRACKER";
     private final RedisService redisService;
+    private final RedisSyncService redisSyncService;
 
 
     @EventListener
@@ -52,10 +54,11 @@ public class WebSocketEventTracker {
     }
 
     private void removeSessionFromAllTopics(String sessionId) {
-        int planId = sessionTrackerRedis.opsForValue().get(PLANTRACKER_PREFIX + sessionId);
+        int planId = sessionTrackerRedis.opsForValue().get(SESSIONTRACKER_PREFIX + sessionId);
         planTrackerRedis.opsForSet().remove(PLANTRACKER_PREFIX + planId, sessionId);
         sessionTrackerRedis.delete(SESSIONTRACKER_PREFIX + sessionId);
         if(!planTrackerRedis.hasKey(PLANTRACKER_PREFIX + planId)){
+            redisSyncService.syncPlanToDatabase(planId);
             redisService.deletePlan(planId);
         }
     }

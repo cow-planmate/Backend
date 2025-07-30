@@ -1,6 +1,5 @@
 package com.example.planmate.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,7 +29,7 @@ public class Plan {
     @Column(nullable = false)
     private int childCount;
 
-    @JsonIgnore
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
