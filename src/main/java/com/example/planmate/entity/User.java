@@ -1,12 +1,11 @@
 package com.example.planmate.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -35,7 +34,8 @@ public class User {
     @Column(nullable = false)
     private int gender;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Plan> plans;
 
     @ManyToMany
@@ -44,6 +44,7 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "preferred_theme_id")
     )
+    @JsonIgnore
     private List<PreferredTheme> preferredThemes = new ArrayList<>();
 
 }

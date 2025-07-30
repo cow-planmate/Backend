@@ -12,7 +12,7 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TimetableVO {
-    private int timetableId;
+    private Integer timetableId;
     private LocalDate date;
     private LocalTime startTime;
     private LocalTime endTime;

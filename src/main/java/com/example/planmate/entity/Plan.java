@@ -29,6 +29,7 @@ public class Plan {
     @Column(nullable = false)
     private int childCount;
 
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
