@@ -75,8 +75,8 @@ public class WebSocketPlanService {
                 .placeRating(timetablePlaceBlockVO.getPlaceRating())
                 .placeAddress(timetablePlaceBlockVO.getPlaceAddress())
                 .placeLink(timetablePlaceBlockVO.getPlaceLink())
-                .blockStartTime(timetablePlaceBlockVO.getBlockStartTime())
-                .blockEndTime(timetablePlaceBlockVO.getBlockEndTime())
+                .blockStartTime(timetablePlaceBlockVO.getStartTime())
+                .blockEndTime(timetablePlaceBlockVO.getEndTime())
                 .xLocation(timetablePlaceBlockVO.getXLocation())
                 .yLocation(timetablePlaceBlockVO.getYLocation())
                 .placeCategory(placeCategory)
@@ -124,11 +124,11 @@ public class WebSocketPlanService {
         if (timetablePlaceBlockVO.getPlaceLink() != null) {
             timetablePlaceBlock.setPlaceLink(timetablePlaceBlockVO.getPlaceLink());
         }
-        if (timetablePlaceBlockVO.getBlockStartTime() != null) {
-            timetablePlaceBlock.setBlockStartTime(timetablePlaceBlockVO.getBlockStartTime());
+        if (timetablePlaceBlockVO.getStartTime() != null) {
+            timetablePlaceBlock.setBlockStartTime(timetablePlaceBlockVO.getStartTime());
         }
-        if (timetablePlaceBlockVO.getBlockEndTime() != null) {
-            timetablePlaceBlock.setBlockEndTime(timetablePlaceBlockVO.getBlockEndTime());
+        if (timetablePlaceBlockVO.getEndTime() != null) {
+            timetablePlaceBlock.setBlockEndTime(timetablePlaceBlockVO.getEndTime());
         }
         if (timetablePlaceBlockVO.getXLocation() != null) {
             timetablePlaceBlock.setXLocation(timetablePlaceBlockVO.getXLocation());
