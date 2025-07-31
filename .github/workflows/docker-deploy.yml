@@ -33,6 +33,6 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t yourname/planmate:latest .
-          docker push yourname/planmate:latest
+          docker build -t cycle123/planmate:latest .
+          docker push cycle123/planmate:latest
 
