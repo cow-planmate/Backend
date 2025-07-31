@@ -35,4 +35,23 @@ jobs:
         run: |
           docker build -t cycle123/planmate:latest .
           docker push cycle123/planmate:latest
-
+      
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            docker stop  planmate-app
+            docker rm  planmate-app
+            docker pull cycle123/planmate
+            docker run -d --name planmate-app \
+              --network planmate-net \
+              -p 8080:8080 \
+              -e SPRING_DATASOURCE_URL=jdbc:postgresql://planmate-db:5432/planmate \
+              -e SPRING_DATASOURCE_USERNAME=postgres \
+              -e SPRING_DATASOURCE_PASSWORD=1234 \
+              -e SPRING_REDIS_HOST=planmate-redis \
+              -e SPRING_REDIS_PORT=6379 \
+              cycle123/planmate
