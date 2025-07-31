@@ -1,0 +1,51 @@
+spring:
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  config:
+    import: ${APPLICATION-SECRET:classpath:application-secret.yml}
+
+  main:
+    web-application-type: servlet
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: warn
+
+server:
+  servlet:
+    encoding:
+      enabled: true
+      force: true
+      charset: UTF-8
+
