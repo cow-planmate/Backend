@@ -37,7 +37,7 @@ jobs:
           docker push cycle123/planmate:latest
       
       - name: Deploy to Server via SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.SSH_HOST }}
           port: 2222
