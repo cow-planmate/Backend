@@ -23,8 +23,8 @@ public class ChangePreferredThemesService {
     public ChangePreferredThemesResponse changePreferredThemes(int userId, int preferredThemeCategoryId, List<Integer> preferredThemeIds) {
         ChangePreferredThemesResponse response = new ChangePreferredThemesResponse();
 
-        if (preferredThemeCategoryId != 0 && preferredThemeCategoryId != 1) {
-            throw new IllegalArgumentException("preferredThemeCategoryId 값은 0(관광지) 또는 1(식당)이어야 합니다.");
+        if (preferredThemeCategoryId != 0 && preferredThemeCategoryId != 1 && preferredThemeCategoryId != 2) {
+            throw new IllegalArgumentException("preferredThemeCategoryId 값은 0(관광지) 또는 1(식당) 또는 2(숙소)이어야 합니다.");
         }
 
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("존재하지 않는 유저 ID입니다"));
