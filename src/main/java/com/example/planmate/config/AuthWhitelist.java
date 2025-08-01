@@ -8,9 +8,9 @@ import java.util.List;
 public class AuthWhitelist {
     private static final AntPathMatcher pathMatcher = new AntPathMatcher();
     public static final List<String> PATHS = List.of(
-            "/api/auth/register/**",
+            "/api/auth/register/nickname/verify",
             "/api/auth/login",
-            "/api/auth/password/email/**",
+            "/api/auth/email/verification/**",
             "/test-api-key",
             "/api/travel",
             "/api/departure",
