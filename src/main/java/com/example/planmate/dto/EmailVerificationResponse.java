@@ -7,5 +7,4 @@ import lombok.Setter;
 @Setter
 public class EmailVerificationResponse extends CommonResponse{
     private boolean emailVerified;
-    private String token;
 }

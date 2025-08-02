@@ -6,7 +6,6 @@ import com.example.planmate.service.NicknameVerificationService;
 import com.example.planmate.service.RegisterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,12 +16,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth/register")
 public class RegisterController {
     private final RegisterService registerService;
+    private final EmailVerificationService emailVerificationService;
     private final NicknameVerificationService nicknameVerificationService;
 
     @PostMapping("")
-    public ResponseEntity<RegisterResponse> register(Authentication authentication, @RequestBody RegisterRequest request) {
-        String email = authentication.getName();
-        RegisterResponse response = registerService.register(email, request);
+    public ResponseEntity<RegisterResponse> register(@RequestBody RegisterRequest request) {
+        RegisterResponse response = registerService.register(request);
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/email")
+    public ResponseEntity<SendEmailResponse> sendEmail(@RequestBody SendEmailRequest request) {
+        SendEmailResponse response = emailVerificationService.sendVerificationCode(request.getEmail());
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/email/verify")
+    public ResponseEntity<EmailVerificationResponse> verifyEmail(@RequestBody EmailVerificationRequest request) {
+        EmailVerificationResponse response = emailVerificationService.registerEmailVerify(request.getEmail(), request.getVerificationCode());
         return ResponseEntity.ok(response);
     }
     @PostMapping("/nickname/verify")

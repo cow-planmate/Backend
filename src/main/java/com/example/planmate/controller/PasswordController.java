@@ -30,9 +30,8 @@ public class PasswordController {
         return ResponseEntity.ok(response);
     }
     @PostMapping("/email")
-    public ResponseEntity<SendTempPasswordResponse> sendTempPassword(Authentication authentication) {
-        String email = authentication.getName();
-        SendTempPasswordResponse response = sendTempPasswordService.sendTempPassword(email);
+    public ResponseEntity<SendTempPasswordResponse> sendTempPassword(@RequestBody SendTempPasswordRequest request) {
+        SendTempPasswordResponse response = sendTempPasswordService.sendTempPassword(request.getEmail());
         return ResponseEntity.ok(response);
     }
 }

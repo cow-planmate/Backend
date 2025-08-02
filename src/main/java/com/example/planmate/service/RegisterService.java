@@ -15,9 +15,9 @@ public class RegisterService{
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public RegisterResponse register(String email, RegisterRequest request) {
+    public RegisterResponse register(RegisterRequest request) {
         RegisterResponse response = new RegisterResponse();
-        if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
+        if (userRepository.findByEmailIgnoreCase(request.getEmail()).isPresent()) {
             response.setMessage("Email already exists");
             return response;
         }
@@ -26,7 +26,7 @@ public class RegisterService{
             return response;
         }
         User user = User.builder()
-                .email(email)
+                .email(request.getEmail())
                 .nickname(request.getNickname())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .gender(request.getGender())

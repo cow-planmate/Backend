@@ -1,10 +1,8 @@
 package com.example.planmate.service;
 
-import com.example.planmate.auth.JwtTokenProvider;
 import com.example.planmate.dto.SendEmailResponse;
 import com.example.planmate.dto.EmailVerificationResponse;
 import com.example.planmate.gita.EmailVerification;
-import com.example.planmate.gita.EmailVerificationPurpose;
 import com.example.planmate.repository.UserRepository;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -22,35 +20,25 @@ public class EmailVerificationService {
     private final UserRepository userRepository;
     private final JavaMailSender mailSender;
     private final SecureRandom secureRandom;
-    private final JwtTokenProvider jwtTokenProvider;
 
     private final Cache<String, EmailVerification> verificationCache = CacheBuilder.newBuilder()
             .expireAfterWrite(5, TimeUnit.MINUTES)
             .build();
 
-    public SendEmailResponse sendVerificationCode(String email, EmailVerificationPurpose purpose) {
+    public SendEmailResponse sendVerificationCode(String email) {
         SendEmailResponse response = new SendEmailResponse();
 
         //이메일 정규식 검증
 
-        if (EmailVerificationPurpose.SIGN_UP.equals(purpose)) {
-            if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
-                response.setMessage("Email already in use");
-                response.setVerificationSent(false);
-                return response;
-            }
-        } else if (EmailVerificationPurpose.RESET_PASSWORD.equals(purpose)) {
-            if (userRepository.findByEmailIgnoreCase(email).isEmpty()) {
-                response.setMessage("Email not found");
-                response.setVerificationSent(false);
-                return response;
-            }
+        if(userRepository.findByEmailIgnoreCase(email).isPresent()) {
+            response.setMessage("Email already in use");
+            response.setVerificationSent(false);
+            return response;
         }
 
-        String cacheKey = email + "_" + purpose.name();
         int code = secureRandom.nextInt(900000) + 100000;
-        EmailVerification verification = new EmailVerification(email, purpose, code);
-        verificationCache.put(cacheKey, verification);
+        EmailVerification verification = new EmailVerification(email, code);
+        verificationCache.put(email, verification);
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);
@@ -66,28 +54,29 @@ public class EmailVerificationService {
     }
 
     // 인증 확인
-    public EmailVerificationResponse registerEmailVerify(String email, EmailVerificationPurpose purpose, int inputCode) {
+    public EmailVerificationResponse registerEmailVerify(String email, int inputCode) {
         EmailVerificationResponse response = new EmailVerificationResponse();
-        String cacheKey = email + "_" + purpose.name();
-        EmailVerification emailVerification = verificationCache.getIfPresent(cacheKey);
-
+        EmailVerification emailVerification = verificationCache.getIfPresent(email);
+        //인증시간이 끝났을때
         if(emailVerification == null) {
-            response.setMessage("Verification request not found or expired");
+            response.setMessage("The verification time has expired");
             response.setEmailVerified(false);
             return response;
         }
-
-        if(!emailVerification.verify(purpose, inputCode)){
+        //이메일을 이미 사용중일 때
+        if(userRepository.findByEmailIgnoreCase(email).isPresent()) {
+            response.setMessage("Email already in use");
+            response.setEmailVerified(false);
+            return response;
+        }
+        if(!emailVerification.verify(inputCode)){
             response.setMessage("Invalid verification code");
             response.setEmailVerified(false);
             return response;
         }
-        verificationCache.invalidate(cacheKey);
-
-        String token = jwtTokenProvider.generateToken(email, purpose);
+        verificationCache.invalidate(email);
         response.setMessage("Verification completed successfully");
         response.setEmailVerified(true);
-        response.setToken(token);
         return response;
     }
 }
