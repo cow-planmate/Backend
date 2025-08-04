@@ -1,10 +1,13 @@
 package com.example.planmate.valueObject;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalTime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalTime;
 
 @Getter
 @Setter

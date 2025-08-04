@@ -9,6 +9,7 @@ public class PlanFrameVO {
     private int planId;
     private String planName;
     private String departure;
+    private int travelId;
     private String travel;
     private int adultCount;
     private int childCount;

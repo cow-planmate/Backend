@@ -28,6 +28,7 @@ public class GetPlanService {
                 planId,
                 plan.getPlanName(),
                 plan.getDeparture(),
+                plan.getTravel().getTravelId(),
                 plan.getTravel().getTravelName(),
                 plan.getAdultCount(),
                 plan.getChildCount(),
