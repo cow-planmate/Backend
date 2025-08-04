@@ -20,8 +20,8 @@ public class GetPlanResponse extends CommonResponse{
         placeBlocks = new ArrayList<>();
         timetables = new ArrayList<>();
     }
-    public void addPlanFrame(int planId, String planName, String departure, String travel, int adultCount, int childCount, int transportation) {
-        planFrame = new PlanFrameVO(planId, planName, departure, travel, adultCount, childCount, transportation);
+    public void addPlanFrame(int planId, String planName, String departure, int travelId, String travel, int adultCount, int childCount, int transportation) {
+        planFrame = new PlanFrameVO(planId, planName, departure, travelId, travel, adultCount, childCount, transportation);
     }
     public void addPlaceBlock(int placeCategory, String placeName, String placeTheme, float placeRating, String placeAddress, String placeLink, double xLocation, double yLocation, LocalTime startTime, LocalTime endTime) {
         placeBlocks.add(new PlaceBlockVO(placeCategory, placeName, placeTheme, placeRating, placeAddress, placeLink, xLocation, yLocation, startTime, endTime));

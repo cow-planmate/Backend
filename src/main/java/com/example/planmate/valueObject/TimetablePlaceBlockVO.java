@@ -1,9 +1,10 @@
 package com.example.planmate.valueObject;
 
-import java.time.LocalTime;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalTime;
 
 @Getter
 @Setter
@@ -19,6 +20,8 @@ public class TimetablePlaceBlockVO {
     private String date;
     private LocalTime startTime;
     private LocalTime endTime;
+    @JsonProperty("xLocation")
     private Double xLocation;
+    @JsonProperty("yLocation")
     private Double yLocation;
 }
