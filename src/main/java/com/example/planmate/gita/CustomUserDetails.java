@@ -2,6 +2,7 @@ package com.example.planmate.gita;
 
 import com.example.planmate.entity.User;
 import lombok.Data;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -12,11 +13,14 @@ public class CustomUserDetails implements UserDetails {
     private final int userId;
     private final String email;
     private final String password;
+    @Getter
+    private final String nickname;
 
     public CustomUserDetails(User user) {
         this.userId = user.getUserId();
         this.email = user.getEmail();
         this.password = user.getPassword();
+        this.nickname = user.getNickname();
     }
 
     @Override
