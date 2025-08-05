@@ -19,6 +19,8 @@ public class PlanController {
     private final EditPlanNameService editPlanNameService;
     private final GetPlaceService getPlaceService;
     private final SavePlanService savePlanService;
+    private final DeletePlanService deletePlanService;
+
     @PostMapping("")
     public ResponseEntity<MakePlanResponse> makePlan(Authentication authentication, @RequestBody MakePlanRequest makePlanRequest) {
         int userId = Integer.parseInt(authentication.getName());
@@ -37,6 +39,12 @@ public class PlanController {
     public ResponseEntity<GetPlanResponse> getPlan(Authentication authentication, @PathVariable("planId") int planId) throws AccessDeniedException {
         int userId = Integer.parseInt(authentication.getName());
         GetPlanResponse response = getPlanService.getPlan(userId, planId);
+        return ResponseEntity.ok(response);
+    }
+    @DeleteMapping("/{planId}")
+    public ResponseEntity<DeletePlanResponse> deletePlan(Authentication authentication, @PathVariable("planId") int planId) throws AccessDeniedException {
+        int userId = Integer.parseInt(authentication.getName());
+        DeletePlanResponse response = deletePlanService.deletePlan(userId, planId);
         return ResponseEntity.ok(response);
     }
     @PatchMapping("/{planId}/save")
