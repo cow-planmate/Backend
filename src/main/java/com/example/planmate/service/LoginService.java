@@ -33,6 +33,7 @@ public class LoginService {
 
             response.setToken(token);
             response.setUserId(userDetails.getUserId());
+            response.setNickname(userDetails.getNickname());
             response.setMessage("Login successful");
             response.setLoginSuccess(true);
             return response;
