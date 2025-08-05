@@ -48,3 +48,4 @@ jobs:
             docker pull cycle123/planmate
             docker compose up -d
             docker image prune
+            y
