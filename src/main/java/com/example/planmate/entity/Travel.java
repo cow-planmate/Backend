@@ -21,4 +21,8 @@ public class Travel {
     @ManyToOne
     @JoinColumn(name = "travel_category_id", nullable = false)
     private TravelCategory travelCategory;
+
+    public Travel(Integer travelId) {
+        this.travelId = travelId;
+    }
 }

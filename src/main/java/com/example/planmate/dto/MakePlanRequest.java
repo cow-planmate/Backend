@@ -1,5 +1,6 @@
 package com.example.planmate.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,6 +11,7 @@ import java.util.List;
 public class MakePlanRequest {
     private String departure;
     private int travelId;
+    @JsonProperty("transportation")
     private int transportationCategoryId;
     private List<LocalDate> dates;
     private int adultCount;

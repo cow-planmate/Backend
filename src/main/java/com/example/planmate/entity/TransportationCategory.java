@@ -19,4 +19,8 @@ public class TransportationCategory {
 
     @Column(nullable = false)
     private String transportationCategoryName;
+
+    public TransportationCategory(Integer transportationCategoryId) {
+        this.transportationCategoryId = transportationCategoryId;
+    }
 }

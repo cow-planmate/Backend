@@ -8,6 +8,7 @@ import lombok.Setter;
 public class WPlanRequest{
     private String planName;
     private Integer travelId;
+    private String travelName;
     private String departure;
     private Integer transportationCategoryId;
     private Integer adultCount;

@@ -21,9 +21,25 @@ public class GetPlanService {
     private final TimeTableRepository timeTableRepository;
     private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
     private final PlanAccessValidator planAccessValidator;
+    private final RedisService redisService;
     public GetPlanResponse getPlan(int userId, int planId) {
         GetPlanResponse response = new GetPlanResponse();
-        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+        Plan plan = redisService.getPlan(planId);
+        List<TimeTable> timeTables;
+        List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
+        if(plan != null) {
+            timeTables = redisService.getTimeTableByPlanId(planId);
+            for(TimeTable timeTable : timeTables) {
+                timeTablePlaceBlocks.add(redisService.getTimeTablePlaceBlockByTimeTableId(timeTable.getTimeTableId()));
+            }
+        }
+        else {
+            plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+            timeTables = timeTableRepository.findByPlanPlanId(planId);
+            for (TimeTable timeTable : timeTables) {
+                timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
+            }
+        }
         response.addPlanFrame(
                 planId,
                 plan.getPlanName(),
@@ -33,13 +49,6 @@ public class GetPlanService {
                 plan.getAdultCount(),
                 plan.getChildCount(),
                 plan.getTransportationCategory().getTransportationCategoryId());
-
-        List<TimeTable> timeTables = timeTableRepository.findByPlanPlanId(planId);
-        List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
-
-        for (TimeTable timeTable : timeTables) {
-            timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
-        }
 
         for (TimeTable timeTable : timeTables){
             response.addTimetable(timeTable.getTimeTableId(), timeTable.getDate(), timeTable.getTimeTableStartTime(), timeTable.getTimeTableEndTime());

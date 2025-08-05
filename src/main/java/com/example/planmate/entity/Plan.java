@@ -5,8 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.util.List;
-import java.util.ArrayList;
 
 @Entity
 @Table(name = "plan", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "plan_name"}))
@@ -40,7 +38,7 @@ public class Plan {
     @JoinColumn(name = "transportation_category_id", nullable = false)
     private TransportationCategory transportationCategory;
 
-    @ManyToOne
+    @ManyToOne()
     @JoinColumn(name = "travel_id", nullable = false)
     private Travel travel;
 }

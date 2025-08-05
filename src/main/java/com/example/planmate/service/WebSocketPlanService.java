@@ -24,24 +24,30 @@ public class WebSocketPlanService {
         WPlanResponse response = new WPlanResponse();
         if(request.getPlanName() != null) {
             plan.setPlanName(request.getPlanName());
+            response.setPlanName(plan.getPlanName());
         }
         if(request.getTravelId() != null) {
-            plan.setTravel(entityManager.getReference(Travel.class, request.getTravelId()));
+            plan.setTravel(new Travel(request.getTravelId()));
+
+            response.setTravelName(response.getTravelName());
         }
         if(request.getAdultCount() != null) {
             plan.setAdultCount(request.getAdultCount());
+            response.setAdultCount(request.getAdultCount());
         }
         if(request.getChildCount() != null) {
             plan.setChildCount(request.getChildCount());
+            response.setChildCount(request.getChildCount());
         }
         if(request.getDeparture() != null) {
             plan.setDeparture(request.getDeparture());
+            response.setDeparture(request.getDeparture());
         }
         if(request.getTransportationCategoryId() != null) {
-            plan.setTransportationCategory(entityManager.getReference(TransportationCategory.class, request.getTransportationCategoryId()));
+            plan.setTransportationCategory(new TransportationCategory(request.getTransportationCategoryId()));
+            response.setTransportationCategoryId(request.getTransportationCategoryId());
         }
         redisService.updatePlan(plan);
-        response.setPlanName(request.getPlanName());
         return response;
     }
 

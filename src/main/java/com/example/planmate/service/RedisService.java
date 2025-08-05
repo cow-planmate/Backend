@@ -38,6 +38,7 @@ public class RedisService {
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
         planRedis.opsForValue().set(PLAN_PREFIX + planId, plan);
+        //테스트용
         Plan cached = planRedis.opsForValue().get(PLAN_PREFIX + planId);
         List<TimeTable> timeTables = registerTimeTable(plan.getPlanId());
         for(TimeTable timeTable : timeTables){
@@ -46,9 +47,6 @@ public class RedisService {
     }
     public Plan getPlan(int planId) {
         Plan cached = planRedis.opsForValue().get(PLAN_PREFIX + planId);
-        if (cached == null) {
-            throw new IllegalStateException("캐시 누락: Redis에 저장된 Plan 정보가 없습니다.");
-        }
         return cached;
     }
     public void updatePlan(Plan plan) {
