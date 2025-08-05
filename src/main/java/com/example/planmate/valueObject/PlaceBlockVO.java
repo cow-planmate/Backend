@@ -10,6 +10,7 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PlaceBlockVO {
+    private int blockId;
     private int placeCategory;
     private String placeName;
     private String placeTheme;

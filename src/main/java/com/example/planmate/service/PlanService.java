@@ -59,6 +59,7 @@ public class PlanService {
         for (List<TimeTablePlaceBlock> timeTablePlaceBlock : timeTablePlaceBlocks) {
             for (TimeTablePlaceBlock timeTablePlaceBlock1 : timeTablePlaceBlock) {
                 response.addPlaceBlock(timeTablePlaceBlock1.getBlockId(),
+                        timeTablePlaceBlock1.getPlaceCategory().getPlaceCategoryId(),
                         timeTablePlaceBlock1.getPlaceName(),
                         timeTablePlaceBlock1.getPlaceTheme(),
                         timeTablePlaceBlock1.getPlaceRating(),
@@ -71,7 +72,7 @@ public class PlanService {
                 );
             }
         }
-        return response; // DTO 변환
+        return response;
     }
 
     public EditPlanNameResponse EditPlanName(int userId, int planId, String name){

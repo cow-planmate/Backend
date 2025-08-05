@@ -89,7 +89,6 @@ public class WebSocketPlanService {
 
 
 
-
     public WTimetableResponse updateTimetable(Plan plan, WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
         TimetableVO timetableVO = request.getTimetableVO();
