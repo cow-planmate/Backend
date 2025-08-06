@@ -24,6 +24,7 @@ public class PlanController {
     private final RequestEditAccessService requestEditAccessService;
     private final ResignEditorAccessService resignEditorAccessService;
     private final RemoveEditorAccessByOwnerService removeEditorAccessByOwnerService;
+    private final GetCompletePlanService getCompletePlanService;
 
     @PostMapping("")
     public ResponseEntity<MakePlanResponse> makePlan(Authentication authentication, @RequestBody MakePlanRequest makePlanRequest) {
@@ -43,6 +44,11 @@ public class PlanController {
     public ResponseEntity<GetPlanResponse> getPlan(Authentication authentication, @PathVariable("planId") int planId) throws AccessDeniedException {
         int userId = Integer.parseInt(authentication.getName());
         GetPlanResponse response = getPlanService.getPlan(userId, planId);
+        return ResponseEntity.ok(response);
+    }
+    @GetMapping("/{planId}/complete")
+    public ResponseEntity<GetCompletePlanResponse> getCompletePlan(@PathVariable("planId") int planId) throws AccessDeniedException {
+        GetCompletePlanResponse response = getCompletePlanService.getCompletePlan(planId);
         return ResponseEntity.ok(response);
     }
     @DeleteMapping("/{planId}")
