@@ -97,8 +97,6 @@ public class WebSocketPlanService {
         return response;
     }
 
-
-
     public WTimetableResponse updateTimetable(Plan plan, WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
         List<TimetableVO> timetableVOs = request.getTimetableVOs();
