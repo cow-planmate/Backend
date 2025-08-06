@@ -28,8 +28,10 @@ public class WebSocketPlanService {
         }
         if(request.getTravelId() != null) {
             plan.setTravel(new Travel(request.getTravelId()));
-
-            response.setTravelName(response.getTravelName());
+            response.setTravelId(request.getTravelId());
+            if(request.getTravelName() != null) {
+                response.setTravelName(request.getTravelName());
+            }
         }
         if(request.getAdultCount() != null) {
             plan.setAdultCount(request.getAdultCount());
