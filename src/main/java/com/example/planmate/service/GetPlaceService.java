@@ -40,6 +40,13 @@ public class GetPlaceService {
         response.addPlace(googleMap.getRestaurantPlace(travelCategoryName + " " +travelName + " " + "식당"));
         return response;
     }
-    
+
+    public PlaceResponse getSearchPlace(int userId, int planId, String query) throws IOException {
+        PlaceResponse response = new PlaceResponse();
+        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+        response.addPlace(googleMap.getSearchPlace(query));
+        return response;
+    }
+
 
 }
