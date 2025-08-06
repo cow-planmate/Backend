@@ -22,7 +22,8 @@ public class Travel {
     @JoinColumn(name = "travel_category_id", nullable = false)
     private TravelCategory travelCategory;
 
-    public Travel(Integer travelId) {
+    public Travel(Integer travelId, String travelName) {
         this.travelId = travelId;
+        this.travelName = travelName;
     }
 }

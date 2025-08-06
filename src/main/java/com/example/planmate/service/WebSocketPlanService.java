@@ -27,9 +27,9 @@ public class WebSocketPlanService {
             response.setPlanName(plan.getPlanName());
         }
         if(request.getTravelId() != null) {
-            plan.setTravel(new Travel(request.getTravelId()));
-
-            response.setTravelName(response.getTravelName());
+            plan.setTravel(new Travel(request.getTravelId(), request.getTravelName()));
+            response.setTravelId(request.getTravelId());
+            response.setTravelName(request.getTravelName());
         }
         if(request.getAdultCount() != null) {
             plan.setAdultCount(request.getAdultCount());

@@ -5,7 +5,6 @@ import com.example.planmate.dto.GetPlanResponse;
 import com.example.planmate.entity.Plan;
 import com.example.planmate.entity.TimeTable;
 import com.example.planmate.entity.TimeTablePlaceBlock;
-import com.example.planmate.repository.PlanRepository;
 import com.example.planmate.repository.TimeTablePlaceBlockRepository;
 import com.example.planmate.repository.TimeTableRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class GetPlanService {
-    private final PlanRepository planRepository;
     private final TimeTableRepository timeTableRepository;
     private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
     private final PlanAccessValidator planAccessValidator;
@@ -68,11 +66,9 @@ public class GetPlanService {
                         timeTablePlaceBlock1.getYLocation(),
                         timeTablePlaceBlock1.getBlockStartTime(),
                         timeTablePlaceBlock1.getBlockEndTime()
-                        
                 );
             }
         }
-
         return response; // DTO 변환
     }
 }
