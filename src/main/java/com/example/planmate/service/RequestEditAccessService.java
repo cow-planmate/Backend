@@ -6,6 +6,7 @@ import com.example.planmate.dto.RequestEditAccessResponse;
 import com.example.planmate.entity.*;
 import com.example.planmate.repository.CollaborationRequestRepository;
 import com.example.planmate.repository.PlanEditorRepository;
+import com.example.planmate.repository.PlanRepository;
 import com.example.planmate.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,7 +17,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class RequestEditAccessService {
-    private final PlanAccessValidator planAccessValidator;
+    private final PlanRepository planRepository;
     private final UserRepository userRepository;
     private final CollaborationRequestRepository collaborationRequestRepository;
     private final PlanEditorRepository planEditorRepository;
@@ -26,8 +27,8 @@ public class RequestEditAccessService {
     public RequestEditAccessResponse requestEditAccess(int senderId, int planId) {
         RequestEditAccessResponse response = new RequestEditAccessResponse();
 
-        // 1. 사용자와 플랜 유효성 검증
-        Plan plan = planAccessValidator.validateUserHasAccessToPlan(senderId, planId);
+        // 1. 플랜 조회
+        Plan plan = planRepository.findById(planId).orElseThrow(() -> new IllegalArgumentException("요청한 일정이 존재하지 않습니다."));
 
         // 2. 유저 조회
         User sender = userRepository.findById(senderId)
