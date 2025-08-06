@@ -17,4 +17,8 @@ public interface PlanEditorRepository extends JpaRepository<PlanEditor, Integer>
     List<PlanEditor> findByUserUserId(int userId);
 
     Optional<PlanEditor> findByUser_UserIdAndPlan_PlanId(int userId, int planId);
+
+    List<PlanEditor> findByPlan_PlanId(int planId);
+
+    boolean existsByUser_UserIdAndPlan_PlanId(int userId, int planId);
 }

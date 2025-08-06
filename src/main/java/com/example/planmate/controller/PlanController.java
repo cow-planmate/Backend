@@ -25,6 +25,7 @@ public class PlanController {
     private final ResignEditorAccessService resignEditorAccessService;
     private final RemoveEditorAccessByOwnerService removeEditorAccessByOwnerService;
     private final GetCompletePlanService getCompletePlanService;
+    private final GetEditorsService getEditorsService;
 
     @PostMapping("")
     public ResponseEntity<MakePlanResponse> makePlan(Authentication authentication, @RequestBody MakePlanRequest makePlanRequest) {
@@ -109,6 +110,12 @@ public class PlanController {
     public ResponseEntity<RemoveEditorAccessByOwnerResponse> removeEditorAccessByOwner(Authentication authentication, @PathVariable("planId") int planId, @PathVariable("targetUserId") int targetUserId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
         RemoveEditorAccessByOwnerResponse response = removeEditorAccessByOwnerService.removeEditorAccessByOwner(userId, planId, targetUserId);
+        return ResponseEntity.ok(response);
+    }
+    @GetMapping("/{planId}/editors")
+    public ResponseEntity<GetEditorsResponse> getEditors(Authentication authentication, @PathVariable("planId") int planId) throws AccessDeniedException {
+        int userId = Integer.parseInt(authentication.getName());
+        GetEditorsResponse response = getEditorsService.getEditors(userId, planId);
         return ResponseEntity.ok(response);
     }
 }
