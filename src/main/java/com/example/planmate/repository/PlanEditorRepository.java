@@ -6,8 +6,12 @@ import com.example.planmate.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface PlanEditorRepository extends JpaRepository<PlanEditor, Integer> {
 
     boolean existsByUserAndPlan(User user, Plan plan);
+
+    List<PlanEditor> findByUserUserId(int userId);
 }
