@@ -39,6 +39,10 @@ public class InviteUserToPlanService {
             throw new IllegalStateException("이미 편집 권한이 있는 유저입니다.");
         }
 
+        if (sender.getUserId().equals(receiver.getUserId())) {
+            throw new IllegalArgumentException("자신에게는 일정 초대를 보낼 수 없습니다.");
+        }
+
         // 3. 이미 초대한 적이 있는지 확인 (PENDING 상태)
         Optional<CollaborationRequest> existingRequest =
                 collaborationRequestRepository.findBySenderAndReceiverAndPlanAndTypeAndStatus(
