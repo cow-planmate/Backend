@@ -22,6 +22,8 @@ public class PlanController {
     private final DeletePlanService deletePlanService;
     private final InviteUserToPlanService inviteUserToPlanService;
     private final RequestEditAccessService requestEditAccessService;
+    private final ResignEditorAccessService resignEditorAccessService;
+    private final RemoveEditorAccessByOwnerService removeEditorAccessByOwnerService;
 
     @PostMapping("")
     public ResponseEntity<MakePlanResponse> makePlan(Authentication authentication, @RequestBody MakePlanRequest makePlanRequest) {
@@ -89,6 +91,18 @@ public class PlanController {
     public ResponseEntity<RequestEditAccessResponse> requestEditAccess(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
         RequestEditAccessResponse response = requestEditAccessService.requestEditAccess(userId, planId);
+        return ResponseEntity.ok(response);
+    }
+    @DeleteMapping("/{planId}/editor/me")
+    public ResponseEntity<ResignEditorAccessResponse> resignEditorAccess(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
+        int userId = Integer.parseInt(authentication.getName());
+        ResignEditorAccessResponse response = resignEditorAccessService.resignEditorAccess(userId, planId);
+        return ResponseEntity.ok(response);
+    }
+    @DeleteMapping("/{planId}/editor/{targetUserId}")
+    public ResponseEntity<RemoveEditorAccessByOwnerResponse> removeEditorAccessByOwner(Authentication authentication, @PathVariable("planId") int planId, @PathVariable("targetUserId") int targetUserId) throws IOException {
+        int userId = Integer.parseInt(authentication.getName());
+        RemoveEditorAccessByOwnerResponse response = removeEditorAccessByOwnerService.removeEditorAccessByOwner(userId, planId, targetUserId);
         return ResponseEntity.ok(response);
     }
 }
