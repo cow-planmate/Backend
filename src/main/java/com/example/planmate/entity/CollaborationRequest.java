@@ -55,4 +55,12 @@ public class CollaborationRequest {
 
         this.status = newStatus;
     }
+
+    public User getTargetUserForAcceptance() {
+        return switch (this.type) {
+            case INVITE -> this.receiver;
+            case REQUEST -> this.sender;
+            default -> throw new IllegalStateException("알 수 없는 요청 타입입니다.");
+        };
+    }
 }

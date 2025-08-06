@@ -4,5 +4,19 @@ public enum CollaborationRequestStatus {
     APPROVED,
     DENIED,
     ACCEPTED,
-    DECLINED
+    DECLINED;
+
+    public static CollaborationRequestStatus getAcceptedStatus(CollaborationRequestType type) {
+        return switch (type) {
+            case INVITE -> ACCEPTED;
+            case REQUEST -> APPROVED;
+        };
+    }
+
+    public static CollaborationRequestStatus getRejectedStatus(CollaborationRequestType type) {
+        return switch (type) {
+            case INVITE -> DECLINED;
+            case REQUEST -> DENIED;
+        };
+    }
 }
