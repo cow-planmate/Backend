@@ -1,7 +1,5 @@
 package com.example.planmate.controller;
 
-import com.example.planmate.entity.Plan;
-import com.example.planmate.service.RedisService;
 import com.example.planmate.service.WebSocketPlanService;
 import com.example.planmate.wdto.*;
 import lombok.RequiredArgsConstructor;
@@ -15,13 +13,11 @@ import org.springframework.stereotype.Controller;
 @RequiredArgsConstructor
 public class WebSocketController {
     private final WebSocketPlanService webSocketPlanService;
-    private final RedisService redisService;
 
     @MessageMapping("/plan/{planId}/update/plan")
     @SendTo("/topic/plan/{planId}/update/plan")
     public WPlanResponse updatePlan(@DestinationVariable int planId, @Payload WPlanRequest request) {
-        Plan plan = redisService.getPlan(planId);
-        return webSocketPlanService.updatePlan(plan, request);
+        return webSocketPlanService.updatePlan(planId, request);
     }
 
     @MessageMapping("/plan/{planId}/create/timetable")
@@ -33,8 +29,7 @@ public class WebSocketController {
     @MessageMapping("/plan/{planId}/update/timetable")
     @SendTo("/topic/plan/{planId}/update/timetable")
     public WTimetableResponse updateTimetable(@DestinationVariable int planId, @Payload WTimetableRequest request) {
-        Plan plan = redisService.getPlan(planId);
-        return webSocketPlanService.updateTimetable(plan, request);
+        return webSocketPlanService.updateTimetable(planId, request);
     }
 
     @MessageMapping("/plan/{planId}/delete/timetable")

@@ -23,8 +23,9 @@ public class WebSocketPlanService {
     private final RedisService redisService;
     private final EntityManager entityManager;
 
-    public WPlanResponse updatePlan(Plan plan, WPlanRequest request) {
+    public WPlanResponse updatePlan(int planId, WPlanRequest request) {
         WPlanResponse response = new WPlanResponse();
+        Plan plan = redisService.getPlan(planId);
         if(request.getPlanName() != null) {
             plan.setPlanName(request.getPlanName());
             response.setPlanName(plan.getPlanName());
@@ -97,13 +98,13 @@ public class WebSocketPlanService {
         return response;
     }
 
-    public WTimetableResponse updateTimetable(Plan plan, WTimetableRequest request) {
+    public WTimetableResponse updateTimetable(int planId, WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
         List<TimetableVO> timetableVOs = request.getTimetableVOs();
         for(TimetableVO timetableVO : timetableVOs) {
             int timetableId = timetableVO.getTimetableId();
             TimeTable timetable = redisService.getTimeTable(timetableId);
-            if(timetable.getPlan().getPlanId() != plan.getPlanId()) {
+            if(timetable.getPlan().getPlanId() != planId) {
                 throw new AccessDeniedException("timetable 접근 권한이 없습니다");
             }
             timetable.setTimeTableEndTime(timetableVO.getEndTime());

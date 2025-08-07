@@ -1,8 +1,9 @@
 package com.example.planmate.controller;
 
-import com.example.planmate.dto.*;
-import com.example.planmate.service.EmailVerificationService;
-import com.example.planmate.service.NicknameVerificationService;
+import com.example.planmate.dto.NicknameVerificationRequest;
+import com.example.planmate.dto.NicknameVerificationResponse;
+import com.example.planmate.dto.RegisterRequest;
+import com.example.planmate.dto.RegisterResponse;
 import com.example.planmate.service.RegisterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth/register")
 public class RegisterController {
     private final RegisterService registerService;
-    private final NicknameVerificationService nicknameVerificationService;
 
     @PostMapping("")
     public ResponseEntity<RegisterResponse> register(Authentication authentication, @RequestBody RegisterRequest request) {
@@ -27,7 +27,7 @@ public class RegisterController {
     }
     @PostMapping("/nickname/verify")
     public ResponseEntity<NicknameVerificationResponse> verifyNickname(@RequestBody NicknameVerificationRequest request) {
-        NicknameVerificationResponse response = nicknameVerificationService.verifyNickname(request.getNickname());
+        NicknameVerificationResponse response = registerService.verifyNickname(request.getNickname());
         return ResponseEntity.ok(response);
     }
 }

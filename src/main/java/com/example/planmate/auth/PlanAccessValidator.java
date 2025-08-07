@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class PlanAccessValidator {
-
     private final PlanRepository planRepository;
     private final RedisService redisService;
     public Plan validateUserHasAccessToPlan(int userId, int planId) {

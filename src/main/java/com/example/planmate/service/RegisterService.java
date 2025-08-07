@@ -1,5 +1,6 @@
 package com.example.planmate.service;
 
+import com.example.planmate.dto.NicknameVerificationResponse;
 import com.example.planmate.dto.RegisterRequest;
 import com.example.planmate.dto.RegisterResponse;
 import com.example.planmate.entity.User;
@@ -36,6 +37,17 @@ public class RegisterService{
         userRepository.save(user);
         response.setMessage("User registered successfully");
         response.setUserId(user.getUserId());
+        return response;
+    }
+
+    public NicknameVerificationResponse verifyNickname(String nickname) {
+        NicknameVerificationResponse response = new NicknameVerificationResponse();
+        if(userRepository.findByNickname(nickname).isPresent()) {
+            response.setMessage("Nickname already exists");
+            response.setNicknameAvailable(false);
+            return response;
+        }
+        response.setNicknameAvailable(true);
         return response;
     }
 

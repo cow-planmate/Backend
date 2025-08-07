@@ -14,19 +14,12 @@ import java.nio.file.AccessDeniedException;
 @RestController
 @RequestMapping("/api/plan")
 public class PlanController {
-    private final MakePlanService makePlanService;
-    private final GetPlanService getPlanService;
-    private final EditPlanNameService editPlanNameService;
-    private final GetPlaceService getPlaceService;
-    private final SavePlanService savePlanService;
-    private final DeletePlanService deletePlanService;
-    private final InviteUserToPlanService inviteUserToPlanService;
-    private final RequestEditAccessService requestEditAccessService;
+    private final PlanService planService;
 
     @PostMapping("")
     public ResponseEntity<MakePlanResponse> makePlan(Authentication authentication, @RequestBody MakePlanRequest makePlanRequest) {
         int userId = Integer.parseInt(authentication.getName());
-        MakePlanResponse response = makePlanService.makeService(
+        MakePlanResponse response = planService.makeService(
                 userId,
                 makePlanRequest.getDeparture(),
                 makePlanRequest.getTravelId(),
@@ -40,43 +33,43 @@ public class PlanController {
     @GetMapping("/{planId}")
     public ResponseEntity<GetPlanResponse> getPlan(Authentication authentication, @PathVariable("planId") int planId) throws AccessDeniedException {
         int userId = Integer.parseInt(authentication.getName());
-        GetPlanResponse response = getPlanService.getPlan(userId, planId);
+        GetPlanResponse response = planService.getPlan(userId, planId);
         return ResponseEntity.ok(response);
     }
     @DeleteMapping("/{planId}")
     public ResponseEntity<DeletePlanResponse> deletePlan(Authentication authentication, @PathVariable("planId") int planId) throws AccessDeniedException {
         int userId = Integer.parseInt(authentication.getName());
-        DeletePlanResponse response = deletePlanService.deletePlan(userId, planId);
+        DeletePlanResponse response = planService.deletePlan(userId, planId);
         return ResponseEntity.ok(response);
     }
     @PatchMapping("/{planId}/save")
     public ResponseEntity<SavePlanResponse> savePlan(Authentication authentication, @PathVariable("planId") int planId, @RequestBody SavePlanRequest request) {
         int userId = Integer.parseInt(authentication.getName());
-        SavePlanResponse response = savePlanService.savePlan(userId, planId, request.getDeparture(), request.getTransportationCategoryId(), request.getAdultCount(), request.getChildCount(), request.getTimetables(), request.getTimetablePlaceBlocks());
+        SavePlanResponse response = planService.savePlan(userId, planId, request.getDeparture(), request.getTransportationCategoryId(), request.getAdultCount(), request.getChildCount(), request.getTimetables(), request.getTimetablePlaceBlocks());
         return ResponseEntity.ok(response);
     }
     @PatchMapping("/{planId}/name")
     public ResponseEntity<EditPlanNameResponse> editPlanName(Authentication authentication, @PathVariable("planId") int planId, @RequestBody EditPlanNameRequest editPlanNameRequest) {
         int userId = Integer.parseInt(authentication.getName());
-        EditPlanNameResponse reponse = editPlanNameService.EditPlanName(userId, planId, editPlanNameRequest.getPlanName());
+        EditPlanNameResponse reponse = planService.EditPlanName(userId, planId, editPlanNameRequest.getPlanName());
         return ResponseEntity.ok(reponse);
     }
     @PostMapping("/{planId}/lodging")
     public ResponseEntity<PlaceResponse> getLodgingPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
-        PlaceResponse response = getPlaceService.getLodgingPlace(userId, planId);
+        PlaceResponse response = planService.getLodgingPlace(userId, planId);
         return ResponseEntity.ok(response);
     }
     @PostMapping("/{planId}/tour")
     public ResponseEntity<PlaceResponse> getTourPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
-        PlaceResponse response = getPlaceService.getTourPlace(userId, planId);
+        PlaceResponse response = planService.getTourPlace(userId, planId);
         return ResponseEntity.ok(response);
     }
     @PostMapping("/{planId}/restaurant")
     public ResponseEntity<PlaceResponse> getRestaurantPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
-        PlaceResponse response = getPlaceService.getRestaurantPlace(userId, planId);
+        PlaceResponse response = planService.getRestaurantPlace(userId, planId);
         return ResponseEntity.ok(response);
     }
 
@@ -84,20 +77,20 @@ public class PlanController {
     public ResponseEntity<PlaceResponse> getPlace(Authentication authentication, @PathVariable("planId") int planId, @RequestBody SearchPlaceRequest request) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
         String query = request.getQuery();
-        PlaceResponse response = getPlaceService.getSearchPlace(userId, planId, query);
+        PlaceResponse response = planService.getSearchPlace(userId, planId, query);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{planId}/invite")
     public ResponseEntity<InviteUserToPlanResponse> inviteUserToPlan(Authentication authentication, @PathVariable("planId") int planId, @RequestBody InviteUserToPlanRequest request) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
-        InviteUserToPlanResponse response = inviteUserToPlanService.inviteUserToPlan(userId, planId, request.getReceiverNickname());
+        InviteUserToPlanResponse response = planService.inviteUserToPlan(userId, planId, request.getReceiverNickname());
         return ResponseEntity.ok(response);
     }
     @PostMapping("/{planId}/request-access")
     public ResponseEntity<RequestEditAccessResponse> requestEditAccess(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
-        RequestEditAccessResponse response = requestEditAccessService.requestEditAccess(userId, planId);
+        RequestEditAccessResponse response = planService.requestEditAccess(userId, planId);
         return ResponseEntity.ok(response);
     }
 }
