@@ -3,6 +3,7 @@ package com.example.planmate.config;
 import com.example.planmate.entity.Plan;
 import com.example.planmate.entity.TimeTable;
 import com.example.planmate.entity.TimeTablePlaceBlock;
+import com.example.planmate.entity.Travel;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -52,7 +53,6 @@ public class RedisConfig {
         );
 
         GenericJackson2JsonRedisSerializer customSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
-
         template.setDefaultSerializer(customSerializer);
         template.setValueSerializer(customSerializer);
 
@@ -111,5 +111,13 @@ public class RedisConfig {
         return template;
     }
 
+    @Bean
+    public RedisTemplate<String, Travel> travelRedis(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Travel> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.afterPropertiesSet();
+        return template;
+    }
 }
 

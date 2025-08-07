@@ -7,6 +7,7 @@ import lombok.Setter;
 @Setter
 public class WPlanResponse{
     private String planName;
+    private String travelCategoryName;
     private Integer travelId;
     private String travelName;
     private String departure;

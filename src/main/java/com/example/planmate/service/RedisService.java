@@ -3,9 +3,9 @@ package com.example.planmate.service;
 import com.example.planmate.entity.Plan;
 import com.example.planmate.entity.TimeTable;
 import com.example.planmate.entity.TimeTablePlaceBlock;
-import com.example.planmate.repository.PlanRepository;
-import com.example.planmate.repository.TimeTablePlaceBlockRepository;
-import com.example.planmate.repository.TimeTableRepository;
+import com.example.planmate.entity.Travel;
+import com.example.planmate.repository.*;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -20,6 +20,7 @@ public class RedisService {
     private final PlanRepository planRepository;
     private final TimeTableRepository timeTableRepository;
     private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
+    private final TravelRepository travelRepository;
     private final RedisTemplate<String, Plan> planRedis;
     private final String PLAN_PREFIX = "PLAN";
     private final RedisTemplate<String, TimeTable> timeTableRedis;
@@ -32,8 +33,16 @@ public class RedisService {
     private final AtomicInteger timeTablePlaceBlockTempIdGenerator = new AtomicInteger(-1);
     private final RedisTemplate<String, List<Integer>> timeTableToTimeTablePlaceBlockRedis;
     private final String TIMETABLETOTIMETABLEPLACEBLOCK_PREFIX = "TIMETABLETOTIMETABLEPLACEBLOCK";
+    private final RedisTemplate<String, Travel> travelRedis;
+    private final String TRAVEL_PREFIX = "TRAVEL";
 
-
+    @PostConstruct
+    public void init() {
+        List<Travel> travels = travelRepository.findAll();
+        for(Travel travel : travels) {
+            travelRedis.opsForValue().set(TRAVEL_PREFIX +travel.getTravelId(), travel);
+        }
+    }
     public void registerPlan(int planId){
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
@@ -149,5 +158,9 @@ public class RedisService {
 
     public void updateTimeTablePlaceBlock(TimeTablePlaceBlock block) {
         timeTablePlaceBlockRedis.opsForValue().set(TIMETABLEPLACEBLOCK_PREFIX +block.getBlockId(), block);
+    }
+
+    public Travel getTravelByTravelId(int travelId) {
+        return travelRedis.opsForValue().get(TRAVEL_PREFIX + travelId);
     }
 }

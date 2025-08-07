@@ -2,8 +2,6 @@ package com.example.planmate.controller;
 
 import com.example.planmate.dto.*;
 import com.example.planmate.service.EmailVerificationService;
-import com.example.planmate.service.NicknameVerificationService;
-import com.example.planmate.service.RegisterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

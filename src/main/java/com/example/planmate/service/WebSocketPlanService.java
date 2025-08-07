@@ -26,14 +26,17 @@ public class WebSocketPlanService {
     public WPlanResponse updatePlan(int planId, WPlanRequest request) {
         WPlanResponse response = new WPlanResponse();
         Plan plan = redisService.getPlan(planId);
+
         if(request.getPlanName() != null) {
             plan.setPlanName(request.getPlanName());
             response.setPlanName(plan.getPlanName());
         }
+
         if(request.getTravelId() != null) {
-            plan.setTravel(new Travel(request.getTravelId(), request.getTravelName()));
-            response.setTravelId(request.getTravelId());
-            response.setTravelName(request.getTravelName());
+            Travel travel = redisService.getTravelByTravelId(request.getTravelId());
+            plan.setTravel(travel);
+            response.setTravelId(travel.getTravelId());
+            response.setTravelName(travel.getTravelName());
         }
         if(request.getAdultCount() != null) {
             plan.setAdultCount(request.getAdultCount());
