@@ -109,8 +109,9 @@ public class PlanService {
                 planId,
                 plan.getPlanName(),
                 plan.getDeparture(),
-                plan.getTravel().getTravelName(),
                 plan.getTravel().getTravelCategory().getTravelCategoryName(),
+                plan.getTravel().getTravelId(),
+                plan.getTravel().getTravelName(),
                 plan.getAdultCount(),
                 plan.getChildCount(),
                 plan.getTransportationCategory().getTransportationCategoryId());
@@ -367,8 +368,9 @@ public class PlanService {
                 planId,
                 plan.getPlanName(),
                 plan.getDeparture(),
-                plan.getTravel().getTravelName(),
                 plan.getTravel().getTravelCategory().getTravelCategoryName(),
+                plan.getTravel().getTravelId(),
+                plan.getTravel().getTravelName(),
                 plan.getAdultCount(),
                 plan.getChildCount(),
                 plan.getTransportationCategory().getTransportationCategoryId());
