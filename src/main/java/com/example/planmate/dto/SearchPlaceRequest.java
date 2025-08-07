@@ -5,6 +5,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class PlaceRequest {
-    private int placeCategory;
+public class SearchPlaceRequest {
+    private String query;
 }

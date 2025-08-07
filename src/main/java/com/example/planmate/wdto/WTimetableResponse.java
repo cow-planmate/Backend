@@ -2,10 +2,18 @@ package com.example.planmate.wdto;
 
 import com.example.planmate.valueObject.TimetableVO;
 import lombok.Getter;
-import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
-@Setter
 public class WTimetableResponse{
-    private TimetableVO timetableVO;
+    private final List<TimetableVO> timetableVOs;
+    public WTimetableResponse() {
+        timetableVOs = new ArrayList<>();
+    }
+    public void addTimetableVO(TimetableVO timetableVO) {
+        timetableVOs.add(timetableVO);
+    }
+
 }

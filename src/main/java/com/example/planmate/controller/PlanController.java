@@ -88,6 +88,15 @@ public class PlanController {
         PlaceResponse response = getPlaceService.getRestaurantPlace(userId, planId);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/{planId}/place")
+    public ResponseEntity<PlaceResponse> getPlace(Authentication authentication, @PathVariable("planId") int planId, @RequestBody SearchPlaceRequest request) throws IOException {
+        int userId = Integer.parseInt(authentication.getName());
+        String query = request.getQuery();
+        PlaceResponse response = getPlaceService.getSearchPlace(userId, planId, query);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/{planId}/invite")
     public ResponseEntity<InviteUserToPlanResponse> inviteUserToPlan(Authentication authentication, @PathVariable("planId") int planId, @RequestBody InviteUserToPlanRequest request) throws IOException {
         int userId = Integer.parseInt(authentication.getName());

@@ -1,9 +1,6 @@
 package com.example.planmate.externalAPI;
 
-import com.example.planmate.valueObject.DepartureVO;
-import com.example.planmate.valueObject.LodgingPlaceVO;
-import com.example.planmate.valueObject.RestaurantPlaceVO;
-import com.example.planmate.valueObject.TourPlaceVO;
+import com.example.planmate.valueObject.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -123,6 +120,36 @@ public class GoogleMap {
 
         return places;
     }
+
+    public List<SearchPlaceVO> getSearchPlace(String query) throws IOException {
+        StringBuilder sb = searchGoogle(query);
+        List<SearchPlaceVO> places = new ArrayList<>();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode root = objectMapper.readTree(sb.toString());
+        JsonNode results = root.get("results");
+
+        if (results != null && results.isArray()) {
+            for (JsonNode result : results) {
+                String placeId = result.path("place_id").asText("");
+                String url = "https://www.google.com/maps/place/?q=place_id:" + placeId;
+                String name = result.path("name").asText("");
+                String formatted_address = result.path("formatted_address").asText("").replaceAll("…", "");
+                float rating = (float) result.path("rating").asDouble(0.0);
+
+                JsonNode location = result.path("geometry").path("location");
+                double xLocation = location.path("lng").asDouble(0.0);
+                double yLocation = location.path("lat").asDouble(0.0);
+                String iconUrl = result.path("icon").asText("");
+
+                SearchPlaceVO place = new SearchPlaceVO(placeId, 4, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
+                places.add(place);
+            }
+        }
+
+        return places;
+    }
+
     public List<DepartureVO> searchDeparture(String departureName) throws IOException {
         StringBuilder sb = searchGoogle(departureName);
         List<DepartureVO> departures = new ArrayList<>();

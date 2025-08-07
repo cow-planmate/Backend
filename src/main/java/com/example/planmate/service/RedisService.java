@@ -99,6 +99,7 @@ public class RedisService {
         }
     }
 
+
     public void updateTimeTable(TimeTable timeTable) {
         timeTableRedis.opsForValue().set(TIMETABLE_PREFIX + timeTable.getTimeTableId(), timeTable);
     }

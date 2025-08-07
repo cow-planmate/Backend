@@ -11,6 +11,9 @@ import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class WebSocketPlanService {
@@ -27,9 +30,9 @@ public class WebSocketPlanService {
             response.setPlanName(plan.getPlanName());
         }
         if(request.getTravelId() != null) {
-            plan.setTravel(new Travel(request.getTravelId()));
-
-            response.setTravelName(response.getTravelName());
+            plan.setTravel(new Travel(request.getTravelId(), request.getTravelName()));
+            response.setTravelId(request.getTravelId());
+            response.setTravelName(request.getTravelName());
         }
         if(request.getAdultCount() != null) {
             plan.setAdultCount(request.getAdultCount());
@@ -53,19 +56,20 @@ public class WebSocketPlanService {
 
     public WTimetableResponse createTimetable(int planId, WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
-        TimetableVO timetableVO = request.getTimetableVO();
+        List<TimetableVO> timetableVOs = request.getTimetableVOs();
 
         Plan plan = redisService.getPlan(planId);
-        TimeTable timeTable = TimeTable.builder()
-                .plan(plan)
-                .date(timetableVO.getDate())
-                .timeTableStartTime(timetableVO.getStartTime())
-                .timeTableEndTime(timetableVO.getEndTime())
-                .build();
-
-        int tempId = redisService.registerNewTimeTable(timeTable);
-        timetableVO.setTimetableId(tempId);
-        response.setTimetableVO(timetableVO);
+        for(TimetableVO timetableVO : timetableVOs) {
+            TimeTable timeTable = TimeTable.builder()
+                    .plan(plan)
+                    .date(timetableVO.getDate())
+                    .timeTableStartTime(timetableVO.getStartTime())
+                    .timeTableEndTime(timetableVO.getEndTime())
+                    .build();
+            int tempId = redisService.registerNewTimeTable(timeTable);
+            timetableVO.setTimetableId(tempId);
+            response.addTimetableVO(timetableVO);
+        }
         return response;
     }
 
@@ -93,20 +97,20 @@ public class WebSocketPlanService {
         return response;
     }
 
-
-
     public WTimetableResponse updateTimetable(Plan plan, WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
-        TimetableVO timetableVO = request.getTimetableVO();
-        int timetableId = timetableVO.getTimetableId();
-        TimeTable timetable = redisService.getTimeTable(timetableId);
-        if(timetable.getPlan().getPlanId() != plan.getPlanId()) {
-            throw new AccessDeniedException("timetable 접근 권한이 없습니다");
+        List<TimetableVO> timetableVOs = request.getTimetableVOs();
+        for(TimetableVO timetableVO : timetableVOs) {
+            int timetableId = timetableVO.getTimetableId();
+            TimeTable timetable = redisService.getTimeTable(timetableId);
+            if(timetable.getPlan().getPlanId() != plan.getPlanId()) {
+                throw new AccessDeniedException("timetable 접근 권한이 없습니다");
+            }
+            timetable.setTimeTableEndTime(timetableVO.getEndTime());
+            timetable.setTimeTableStartTime(timetableVO.getStartTime());
+            redisService.updateTimeTable(timetable);
+            response.addTimetableVO(timetableVO);
         }
-        timetable.setTimeTableEndTime(timetableVO.getEndTime());
-        timetable.setTimeTableStartTime(timetableVO.getStartTime());
-        redisService.updateTimeTable(timetable);
-        response.setTimetableVO(timetableVO);
         return response;
     }
 
@@ -152,9 +156,11 @@ public class WebSocketPlanService {
     }
 
     public WTimetableResponse deleteTimetable(WTimetableRequest request) {
-        redisService.deleteTimeTable(request.getTimetableVO().getTimetableId());
         WTimetableResponse response = new WTimetableResponse();
-        response.setTimetableVO(request.getTimetableVO());
+        for(TimetableVO timetableVO : request.getTimetableVOs()) {
+            response.addTimetableVO(timetableVO);
+            redisService.deleteTimeTable(timetableVO.getTimetableId());
+        }
         return response;
     }
     public WTimeTablePlaceBlockResponse deleteTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {
