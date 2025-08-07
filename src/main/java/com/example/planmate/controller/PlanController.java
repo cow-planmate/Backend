@@ -85,6 +85,9 @@ public class PlanController {
         int userId = Integer.parseInt(authentication.getName());
         String query = request.getQuery();
         PlaceResponse response = getPlaceService.getSearchPlace(userId, planId, query);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/{planId}/invite")
     public ResponseEntity<InviteUserToPlanResponse> inviteUserToPlan(Authentication authentication, @PathVariable("planId") int planId, @RequestBody InviteUserToPlanRequest request) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
