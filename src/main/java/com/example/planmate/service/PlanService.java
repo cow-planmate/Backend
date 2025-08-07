@@ -360,5 +360,99 @@ public class PlanService {
         return response;
     }
 
+    public GetCompletePlanResponse getCompletePlan(int planId) {
+        GetCompletePlanResponse response = new GetCompletePlanResponse();
+        Plan plan = planRepository.findById(planId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
+        response.addPlanFrame(
+                planId,
+                plan.getPlanName(),
+                plan.getDeparture(),
+                plan.getTravel().getTravelName(),
+                plan.getTravel().getTravelCategory().getTravelCategoryName(),
+                plan.getAdultCount(),
+                plan.getChildCount(),
+                plan.getTransportationCategory().getTransportationCategoryId());
 
+        List<TimeTable> timeTables = timeTableRepository.findByPlanPlanId(planId);
+        List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
+
+        for (TimeTable timeTable : timeTables) {
+            timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
+        }
+
+        for (TimeTable timeTable : timeTables){
+            response.addTimetable(timeTable.getTimeTableId(), timeTable.getDate(), timeTable.getTimeTableStartTime(), timeTable.getTimeTableEndTime());
+        }
+
+        for (List<TimeTablePlaceBlock> timeTablePlaceBlock : timeTablePlaceBlocks) {
+            for (TimeTablePlaceBlock timeTablePlaceBlock1 : timeTablePlaceBlock) {
+                response.addPlaceBlock(timeTablePlaceBlock1.getBlockId(),
+                        timeTablePlaceBlock1.getPlaceCategory().getPlaceCategoryId(),
+                        timeTablePlaceBlock1.getPlaceName(),
+                        timeTablePlaceBlock1.getPlaceTheme(),
+                        timeTablePlaceBlock1.getPlaceRating(),
+                        timeTablePlaceBlock1.getPlaceAddress(),
+                        timeTablePlaceBlock1.getPlaceLink(),
+                        timeTablePlaceBlock1.getXLocation(),
+                        timeTablePlaceBlock1.getYLocation(),
+                        timeTablePlaceBlock1.getBlockStartTime(),
+                        timeTablePlaceBlock1.getBlockEndTime()
+                );
+            }
+        }
+        response.setMessage("성공적으로 일정 완성본을 전송하였습니다.");
+        return response;
+    }
+
+    @Transactional
+    public RemoveEditorAccessByOwnerResponse removeEditorAccessByOwner(int ownerId, int planId, int targetUserId) {
+        RemoveEditorAccessByOwnerResponse response = new RemoveEditorAccessByOwnerResponse();
+
+        Plan plan = planRepository.findById(planId)
+                .orElseThrow(() -> new IllegalArgumentException("플랜이 존재하지 않습니다."));
+
+        if (!plan.getUser().getUserId().equals(ownerId)) {
+            throw new SecurityException("플랜 소유자만 편집 권한을 삭제할 수 있습니다.");
+        }
+
+        PlanEditor planEditor = planEditorRepository.findByUser_UserIdAndPlan_PlanId(targetUserId, planId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 편집 권한이 존재하지 않습니다."));
+
+        planEditorRepository.delete(planEditor);
+
+        response.setMessage("성공적으로 편집 권한을 삭제하였습니다");
+        return response;
+    }
+
+    @Transactional
+    public ResignEditorAccessResponse resignEditorAccess(int userId, int planId) {
+        ResignEditorAccessResponse response = new ResignEditorAccessResponse();
+
+        PlanEditor planEditor = planEditorRepository.findByUser_UserIdAndPlan_PlanId(userId, planId).orElseThrow(() -> new IllegalArgumentException("해당 편집 권한이 존재하지 않습니다."));
+
+        planEditorRepository.delete(planEditor);
+
+        response.setMessage("성공적으로 편집 권한을 삭제하였습니다");
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public GetEditorsResponse getEditors(int userId, int planId) {
+        GetEditorsResponse response = new GetEditorsResponse();
+
+        if (!planRepository.existsByPlanIdAndUserUserId(planId, userId) &&
+                !planEditorRepository.existsByUser_UserIdAndPlan_PlanId(userId, planId)) {
+            throw new IllegalArgumentException("해당 일정에 대한 접근 권한이 없습니다.");
+        }
+
+        List<PlanEditor> editors = planEditorRepository.findByPlan_PlanId(planId);
+
+        for (PlanEditor editor : editors) {
+            User editorDetail = editor.getUser();
+            response.addSimpleEditorVO(editorDetail.getUserId(), editorDetail.getNickname());
+        }
+
+        response.setMessage("성공적으로 편집자 목록을 가져왔습니다.");
+        return response;
+    }
 }

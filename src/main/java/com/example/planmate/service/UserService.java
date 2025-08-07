@@ -59,7 +59,7 @@ public class UserService {
         }
         List<Plan> plans = planRepository.findByUserUserId(userId);
         for (Plan plan : plans) {
-            response.addPlanVO(plan.getPlanId(), plan.getPlanName());
+            response.addMyPlanVO(plan.getPlanId(), plan.getPlanName());
         }
 
         response.setMessage("Mypage info loaded successfully");
