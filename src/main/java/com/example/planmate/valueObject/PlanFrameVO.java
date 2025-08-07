@@ -13,5 +13,5 @@ public class PlanFrameVO {
     private String travelName;
     private int adultCount;
     private int childCount;
-    private int transportationCatrgoryId;
+    private int transportationCategoryId;
 }
