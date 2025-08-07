@@ -36,6 +36,11 @@ public class PlanController {
         GetPlanResponse response = planService.getPlan(userId, planId);
         return ResponseEntity.ok(response);
     }
+    @GetMapping("/{planId}/complete")
+    public ResponseEntity<GetCompletePlanResponse> getCompletePlan(@PathVariable("planId") int planId) throws AccessDeniedException {
+        GetCompletePlanResponse response = getCompletePlanService.getCompletePlan(planId);
+        return ResponseEntity.ok(response);
+    }
     @DeleteMapping("/{planId}")
     public ResponseEntity<DeletePlanResponse> deletePlan(Authentication authentication, @PathVariable("planId") int planId) throws AccessDeniedException {
         int userId = Integer.parseInt(authentication.getName());
@@ -91,6 +96,24 @@ public class PlanController {
     public ResponseEntity<RequestEditAccessResponse> requestEditAccess(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
         RequestEditAccessResponse response = planService.requestEditAccess(userId, planId);
+        return ResponseEntity.ok(response);
+    }
+    @DeleteMapping("/{planId}/editor/me")
+    public ResponseEntity<ResignEditorAccessResponse> resignEditorAccess(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
+        int userId = Integer.parseInt(authentication.getName());
+        ResignEditorAccessResponse response = resignEditorAccessService.resignEditorAccess(userId, planId);
+        return ResponseEntity.ok(response);
+    }
+    @DeleteMapping("/{planId}/editor/{targetUserId}")
+    public ResponseEntity<RemoveEditorAccessByOwnerResponse> removeEditorAccessByOwner(Authentication authentication, @PathVariable("planId") int planId, @PathVariable("targetUserId") int targetUserId) throws IOException {
+        int userId = Integer.parseInt(authentication.getName());
+        RemoveEditorAccessByOwnerResponse response = removeEditorAccessByOwnerService.removeEditorAccessByOwner(userId, planId, targetUserId);
+        return ResponseEntity.ok(response);
+    }
+    @GetMapping("/{planId}/editors")
+    public ResponseEntity<GetEditorsResponse> getEditors(Authentication authentication, @PathVariable("planId") int planId) throws AccessDeniedException {
+        int userId = Integer.parseInt(authentication.getName());
+        GetEditorsResponse response = getEditorsService.getEditors(userId, planId);
         return ResponseEntity.ok(response);
     }
 }

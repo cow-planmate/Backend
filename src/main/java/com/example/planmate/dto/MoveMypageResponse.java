@@ -18,13 +18,15 @@ public class MoveMypageResponse extends CommonResponse {
     private String nickname;
     private int age;
     private int gender;
-    private List<SimplePlanVO> planVOs;
+    private List<SimplePlanVO> myPlanVOs;
+    private List<SimplePlanVO> editablePlanVOs;
     @Setter(AccessLevel.NONE)
     private List<PreferredThemeVO> preferredThemes;
 
     public MoveMypageResponse(){
         preferredThemes= new ArrayList<>();
-        planVOs = new ArrayList<>();
+        myPlanVOs = new ArrayList<>();
+        editablePlanVOs = new ArrayList<>();
     }
     public void addPreferredTheme(PreferredTheme preferredTheme) {
         PreferredThemeVO preferredThemeVO = new PreferredThemeVO(
@@ -34,7 +36,10 @@ public class MoveMypageResponse extends CommonResponse {
                 preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryName());
         preferredThemes.add(preferredThemeVO);
     }
-    public void addPlanVO(int planId, String planName) {
-        planVOs.add(new SimplePlanVO(planId, planName));
+    public void addMyPlanVO(int planId, String planName) {
+        myPlanVOs.add(new SimplePlanVO(planId, planName));
+    }
+    public void addEditablePlanVO(int planId, String planName) {
+        editablePlanVOs.add(new SimplePlanVO(planId, planName));
     }
 }

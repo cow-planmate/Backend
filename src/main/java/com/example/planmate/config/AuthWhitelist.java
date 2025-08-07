@@ -14,7 +14,8 @@ public class AuthWhitelist {
             "/test-api-key",
             "/api/travel",
             "/api/departure",
-            "/ws-plan/**"
+            "/ws-plan/**",
+            "/api/plan/{planId}/complete"
     );
 
     public static boolean isWhitelisted(String uri) {
