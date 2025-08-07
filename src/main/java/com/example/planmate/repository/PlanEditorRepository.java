@@ -10,4 +10,5 @@ import org.springframework.stereotype.Repository;
 public interface PlanEditorRepository extends JpaRepository<PlanEditor, Integer> {
 
     boolean existsByUserAndPlan(User user, Plan plan);
+    boolean existsByUserUserIdAndPlanPlanId(int userId, int planId);
 }
