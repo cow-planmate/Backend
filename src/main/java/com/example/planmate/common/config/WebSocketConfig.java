@@ -22,7 +22,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setAllowedOrigins("http://localhost:3000",
                         "http://localhost:63771",
                         "http://localhost:5173",
-                        "https://www.planmate.site")
+                        "https://www.planmate.site",
+                        "https://planmate.site")
                 .withSockJS();
     }
 }
