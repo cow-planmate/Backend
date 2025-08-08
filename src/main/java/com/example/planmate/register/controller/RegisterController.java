@@ -1,10 +1,10 @@
-package com.example.planmate.controller;
+package com.example.planmate.register.controller;
 
-import com.example.planmate.dto.NicknameVerificationRequest;
-import com.example.planmate.dto.NicknameVerificationResponse;
-import com.example.planmate.dto.RegisterRequest;
-import com.example.planmate.dto.RegisterResponse;
-import com.example.planmate.service.RegisterService;
+import com.example.planmate.register.dto.NicknameVerificationRequest;
+import com.example.planmate.register.dto.NicknameVerificationResponse;
+import com.example.planmate.register.dto.RegisterRequest;
+import com.example.planmate.register.dto.RegisterResponse;
+import com.example.planmate.register.service.RegisterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

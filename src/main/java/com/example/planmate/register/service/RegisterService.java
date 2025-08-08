@@ -1,8 +1,8 @@
-package com.example.planmate.service;
+package com.example.planmate.register.service;
 
-import com.example.planmate.dto.NicknameVerificationResponse;
-import com.example.planmate.dto.RegisterRequest;
-import com.example.planmate.dto.RegisterResponse;
+import com.example.planmate.register.dto.NicknameVerificationResponse;
+import com.example.planmate.register.dto.RegisterRequest;
+import com.example.planmate.register.dto.RegisterResponse;
 import com.example.planmate.entity.User;
 import com.example.planmate.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
