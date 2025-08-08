@@ -4,7 +4,7 @@ import com.example.planmate.domain.emailVerificaiton.dto.EmailVerificationReques
 import com.example.planmate.domain.emailVerificaiton.dto.EmailVerificationResponse;
 import com.example.planmate.domain.emailVerificaiton.dto.SendEmailRequest;
 import com.example.planmate.domain.emailVerificaiton.dto.SendEmailResponse;
-import com.example.planmate.domain.webSocket.dto.service.EmailVerificationService;
+import com.example.planmate.common.service.EmailVerificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

@@ -1,4 +1,4 @@
-package com.example.planmate.domain.webSocket.dto.service;
+package com.example.planmate.common.service;
 
 import com.example.planmate.common.auth.JwtTokenProvider;
 import com.example.planmate.domain.emailVerificaiton.dto.SendEmailResponse;

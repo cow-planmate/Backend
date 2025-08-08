@@ -6,7 +6,6 @@ import com.example.planmate.domain.webSocket.dto.*;
 import com.example.planmate.domain.plan.repository.PlaceCategoryRepository;
 import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
 import com.example.planmate.domain.plan.repository.TimeTableRepository;
-import com.example.planmate.domain.webSocket.dto.service.RedisService;
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
 import jakarta.persistence.EntityManager;
@@ -72,10 +71,11 @@ public class WebSocketPlanService {
                     .timeTableStartTime(timetableVO.getStartTime())
                     .timeTableEndTime(timetableVO.getEndTime())
                     .build();
-            int tempId = redisService.registerNewTimeTable(timeTable);
+            int tempId = redisService.registerNewTimeTable(planId, timeTable);
             timetableVO.setTimetableId(tempId);
             response.addTimetableVO(timetableVO);
         }
+
         return response;
     }
 

@@ -7,7 +7,7 @@ import com.example.planmate.domain.plan.entity.*;
 import com.example.planmate.domain.plan.repository.*;
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.common.externalAPI.GoogleMap;
-import com.example.planmate.domain.webSocket.dto.service.RedisService;
+import com.example.planmate.domain.webSocket.service.RedisService;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.travel.repository.TravelRepository;
 import com.example.planmate.domain.user.repository.UserRepository;
@@ -126,20 +126,22 @@ public class PlanService {
         }
 
         for (List<TimeTablePlaceBlock> timeTablePlaceBlock : timeTablePlaceBlocks) {
-            for (TimeTablePlaceBlock timeTablePlaceBlock1 : timeTablePlaceBlock) {
-                response.addPlaceBlock(
-                        timeTablePlaceBlock1.getBlockId(),
-                        timeTablePlaceBlock1.getPlaceCategory().getPlaceCategoryId(),
-                        timeTablePlaceBlock1.getPlaceName(),
-                        timeTablePlaceBlock1.getPlaceTheme(),
-                        timeTablePlaceBlock1.getPlaceRating(),
-                        timeTablePlaceBlock1.getPlaceAddress(),
-                        timeTablePlaceBlock1.getPlaceLink(),
-                        timeTablePlaceBlock1.getXLocation(),
-                        timeTablePlaceBlock1.getYLocation(),
-                        timeTablePlaceBlock1.getBlockStartTime(),
-                        timeTablePlaceBlock1.getBlockEndTime()
-                );
+            if(timeTablePlaceBlock!=null) {
+                for (TimeTablePlaceBlock timeTablePlaceBlock1 : timeTablePlaceBlock) {
+                    response.addPlaceBlock(
+                            timeTablePlaceBlock1.getBlockId(),
+                            timeTablePlaceBlock1.getPlaceCategory().getPlaceCategoryId(),
+                            timeTablePlaceBlock1.getPlaceName(),
+                            timeTablePlaceBlock1.getPlaceTheme(),
+                            timeTablePlaceBlock1.getPlaceRating(),
+                            timeTablePlaceBlock1.getPlaceAddress(),
+                            timeTablePlaceBlock1.getPlaceLink(),
+                            timeTablePlaceBlock1.getXLocation(),
+                            timeTablePlaceBlock1.getYLocation(),
+                            timeTablePlaceBlock1.getBlockStartTime(),
+                            timeTablePlaceBlock1.getBlockEndTime()
+                    );
+                }
             }
         }
         return response; // DTO 변환

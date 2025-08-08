@@ -1,4 +1,4 @@
-package com.example.planmate.domain.webSocket.dto.service;
+package com.example.planmate.domain.webSocket.service;
 
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TimeTable;
@@ -86,6 +86,16 @@ public class RedisService {
         return timeTableRedis.opsForValue().multiGet(keys);
     }
 
+    public List<TimeTable> deleteTimeTableByPlanId(int planId) {
+        List<Integer> timeTableIds = planToTimeTableRedis.opsForValue().get(PLANTOTIMETABLE_PREFIX + planId);
+        planToTimeTableRedis.delete(PLANTOTIMETABLE_PREFIX + planId);
+        List<String> keys = new ArrayList<>(timeTableIds.size());
+        for(Integer timeTableId : timeTableIds){
+            keys.add(TIMETABLE_PREFIX + timeTableId);
+        }
+        return timeTableRedis.opsForValue().multiGet(keys);
+    }
+
     public List<TimeTable> registerTimeTable(int planId) {
         List<TimeTable> timeTables = timeTableRepository.findByPlanPlanId(planId);
         List<Integer> timeTableIds = new ArrayList<>();
@@ -96,34 +106,56 @@ public class RedisService {
         planToTimeTableRedis.opsForValue().set(PLANTOTIMETABLE_PREFIX + planId, timeTableIds);
         return timeTables;
     }
-    public int registerNewTimeTable(TimeTable timetable) {
-        int tempId = timeTableTempIdGenerator.getAndIncrement();
+    public int registerNewTimeTable(int planId, TimeTable timetable) {
+        int tempId = timeTableTempIdGenerator.getAndDecrement();
         timetable.setTimeTableId(tempId);
         timeTableRedis.opsForValue().set(TIMETABLE_PREFIX + timetable.getTimeTableId(), timetable);
+        List<Integer> timeTableIds = planToTimeTableRedis.opsForValue().get(PLANTOTIMETABLE_PREFIX + planId);
+        timeTableIds.add(timetable.getTimeTableId());
+        planToTimeTableRedis.opsForValue().set(PLANTOTIMETABLE_PREFIX + planId, timeTableIds);
         return tempId;
     }
 
     public void deleteTimeTable(int timetableId) {
         timeTableRedis.delete(TIMETABLE_PREFIX + timetableId);
-        List<Integer> timeTablePlaceBlocks = timeTableToTimeTablePlaceBlockRedis.opsForValue().get(timetableId);
-        if(timeTablePlaceBlocks != null) {
-            timeTablePlaceBlockRedis.delete(TIMETABLEPLACEBLOCK_PREFIX + timeTablePlaceBlocks);
+        List<Integer> timeTablePlaceBlockIds = timeTableToTimeTablePlaceBlockRedis.opsForValue().get(timetableId);
+        if(timeTablePlaceBlockIds != null) {
+            for(Integer timeTablePlaceBlockId : timeTablePlaceBlockIds){
+                timeTablePlaceBlockRedis.delete(TIMETABLE_PREFIX + timeTablePlaceBlockId);
+            }
         }
     }
-
-
+    public void deleteTimeTable(List<TimeTable> timeTableList) {
+        for(TimeTable timeTable : timeTableList){
+            timeTableRedis.delete(TIMETABLE_PREFIX + timeTable.getTimeTableId());
+            List<Integer> timeTablePlaceBlocks = timeTableToTimeTablePlaceBlockRedis.opsForValue().get(timeTable.getTimeTableId());
+            if(timeTablePlaceBlocks != null) {
+                timeTablePlaceBlockRedis.delete(TIMETABLEPLACEBLOCK_PREFIX + timeTablePlaceBlocks);
+            }
+        }
+    }
     public void updateTimeTable(TimeTable timeTable) {
         timeTableRedis.opsForValue().set(TIMETABLE_PREFIX + timeTable.getTimeTableId(), timeTable);
     }
 
-
-
-
     public List<TimeTablePlaceBlock> getTimeTablePlaceBlockByTimeTableId(int timetableId) {
         List<Integer> timeTablePlaceBlocks = timeTableToTimeTablePlaceBlockRedis.opsForValue().get(TIMETABLETOTIMETABLEPLACEBLOCK_PREFIX + timetableId);
+        if(timeTablePlaceBlocks != null) {
+            List<String> keys = new ArrayList<>();
+            for(Integer timeTablePlaceBlockId : timeTablePlaceBlocks){
+                keys.add(TIMETABLEPLACEBLOCK_PREFIX + timeTablePlaceBlockId);
+            }
+            return timeTablePlaceBlockRedis.opsForValue().multiGet(keys);
+        }
+        return null;
+    }
+
+    public List<TimeTablePlaceBlock> deleteTimeTablePlaceBlockByTimeTableId(int timetableId) {
+        List<Integer> timeTablePlaceBlocks = timeTableToTimeTablePlaceBlockRedis.opsForValue().get(TIMETABLETOTIMETABLEPLACEBLOCK_PREFIX + timetableId);
+        timeTableToTimeTablePlaceBlockRedis.delete(TIMETABLETOTIMETABLEPLACEBLOCK_PREFIX + timeTablePlaceBlocks);
         List<String> keys = new ArrayList<>(timeTablePlaceBlocks.size());
         for(Integer timeTablePlaceBlockId : timeTablePlaceBlocks){
-           keys.add(TIMETABLEPLACEBLOCK_PREFIX + timeTablePlaceBlockId);
+            keys.add(TIMETABLEPLACEBLOCK_PREFIX + timeTablePlaceBlockId);
         }
         return timeTablePlaceBlockRedis.opsForValue().multiGet(keys);
     }
@@ -149,7 +181,7 @@ public class RedisService {
     }
 
     public TimeTablePlaceBlock registerNewTimeTablePlaceBlock(TimeTablePlaceBlock block) {
-        int tempId = timeTablePlaceBlockTempIdGenerator.getAndIncrement();
+        int tempId = timeTablePlaceBlockTempIdGenerator.getAndDecrement();
         block.setBlockId(tempId);
         timeTablePlaceBlockRedis.opsForValue().set(TIMETABLEPLACEBLOCK_PREFIX + block.getBlockId(), block);
         return block;

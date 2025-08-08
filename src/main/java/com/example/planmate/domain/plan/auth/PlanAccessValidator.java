@@ -3,7 +3,7 @@ package com.example.planmate.domain.plan.auth;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.repository.PlanEditorRepository;
 import com.example.planmate.domain.plan.repository.PlanRepository;
-import com.example.planmate.domain.webSocket.dto.service.RedisService;
+import com.example.planmate.domain.webSocket.service.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;

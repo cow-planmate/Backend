@@ -1,4 +1,4 @@
-package com.example.planmate.domain.webSocket.dto.service;
+package com.example.planmate.common.service;
 
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.CustomUserDetails;

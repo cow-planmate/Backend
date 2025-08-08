@@ -1,7 +1,7 @@
 package com.example.planmate.domain.webSocket.listener;
 
-import com.example.planmate.domain.webSocket.dto.service.RedisService;
-import com.example.planmate.domain.webSocket.dto.service.RedisSyncService;
+import com.example.planmate.domain.webSocket.service.RedisService;
+import com.example.planmate.domain.webSocket.service.RedisSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -32,18 +32,13 @@ public class WebSocketEventTracker {
         if(!planTrackerRedis.hasKey(PLANTRACKER_PREFIX + planId)){
             redisService.registerPlan(planId);
         }
-        if (sessionId != null) {
-            planTrackerRedis.opsForSet().add(PLANTRACKER_PREFIX + planId, sessionId);
-            sessionTrackerRedis.opsForValue().set(SESSIONTRACKER_PREFIX + sessionId, planId);
-        }
-
+        planTrackerRedis.opsForSet().add(PLANTRACKER_PREFIX + planId, sessionId);
+        sessionTrackerRedis.opsForValue().set(SESSIONTRACKER_PREFIX + sessionId, planId);
     }
 
     @EventListener
     public void handleUnsubscribeEvent(SessionUnsubscribeEvent event) {
-//        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-//        String sessionId = accessor.getSessionId();
-//        removeSessionFromAllTopics(sessionId);
+
     }
 
     @EventListener
@@ -59,7 +54,6 @@ public class WebSocketEventTracker {
         sessionTrackerRedis.delete(SESSIONTRACKER_PREFIX + sessionId);
         if(!planTrackerRedis.hasKey(PLANTRACKER_PREFIX + planId)){
             redisSyncService.syncPlanToDatabase(planId);
-            redisService.deletePlan(planId);
         }
     }
 
