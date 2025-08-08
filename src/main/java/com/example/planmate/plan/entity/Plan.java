@@ -1,5 +1,8 @@
-package com.example.planmate.entity;
+package com.example.planmate.plan.entity;
 
+import com.example.planmate.entity.TransportationCategory;
+import com.example.planmate.entity.Travel;
+import com.example.planmate.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

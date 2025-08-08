@@ -1,4 +1,4 @@
-package com.example.planmate.dto;
+package com.example.planmate.plan.dto;
 
 import com.example.planmate.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.valueObject.TimetableVO;

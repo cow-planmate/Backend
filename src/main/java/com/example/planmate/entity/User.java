@@ -1,5 +1,6 @@
 package com.example.planmate.entity;
 
+import com.example.planmate.plan.entity.Plan;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;

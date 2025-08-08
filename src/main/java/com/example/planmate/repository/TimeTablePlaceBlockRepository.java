@@ -1,6 +1,6 @@
 package com.example.planmate.repository;
 
-import com.example.planmate.entity.Plan;
+import com.example.planmate.plan.entity.Plan;
 import com.example.planmate.entity.TimeTable;
 import com.example.planmate.entity.TimeTablePlaceBlock;
 import org.springframework.data.jpa.repository.JpaRepository;

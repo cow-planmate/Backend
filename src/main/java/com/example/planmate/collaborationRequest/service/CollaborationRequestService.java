@@ -10,9 +10,11 @@ import com.example.planmate.collaborationRequest.entity.CollaborationRequestStat
 import com.example.planmate.collaborationRequest.entity.CollaborationRequestType;
 import com.example.planmate.collaborationRequest.repository.CollaborationRequestRepository;
 import com.example.planmate.dto.*;
-import com.example.planmate.entity.Plan;
+import com.example.planmate.plan.entity.Plan;
 import com.example.planmate.entity.PlanEditor;
 import com.example.planmate.entity.User;
+import com.example.planmate.plan.repository.PlanEditorRepository;
+import com.example.planmate.plan.repository.PlanRepository;
 import com.example.planmate.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

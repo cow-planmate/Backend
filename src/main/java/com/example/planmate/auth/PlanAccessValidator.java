@@ -1,8 +1,8 @@
 package com.example.planmate.auth;
 
-import com.example.planmate.entity.Plan;
-import com.example.planmate.repository.PlanEditorRepository;
-import com.example.planmate.repository.PlanRepository;
+import com.example.planmate.plan.entity.Plan;
+import com.example.planmate.plan.repository.PlanEditorRepository;
+import com.example.planmate.plan.repository.PlanRepository;
 import com.example.planmate.service.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;

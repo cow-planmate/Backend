@@ -1,5 +1,6 @@
-package com.example.planmate.dto;
+package com.example.planmate.plan.dto;
 
+import com.example.planmate.dto.CommonResponse;
 import com.example.planmate.valueObject.SimpleEditorVO;
 import lombok.Getter;
 import lombok.Setter;

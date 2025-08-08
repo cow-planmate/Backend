@@ -1,9 +1,10 @@
 package com.example.planmate.service;
 
-import com.example.planmate.entity.Plan;
+import com.example.planmate.plan.entity.Plan;
 import com.example.planmate.entity.TimeTable;
 import com.example.planmate.entity.TimeTablePlaceBlock;
 import com.example.planmate.entity.Travel;
+import com.example.planmate.plan.repository.PlanRepository;
 import com.example.planmate.repository.*;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;

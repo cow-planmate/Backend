@@ -1,6 +1,6 @@
-package com.example.planmate.repository;
+package com.example.planmate.plan.repository;
 
-import com.example.planmate.entity.Plan;
+import com.example.planmate.plan.entity.Plan;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

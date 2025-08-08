@@ -1,11 +1,11 @@
 package com.example.planmate.service;
 
 import com.example.planmate.dto.*;
-import com.example.planmate.entity.Plan;
+import com.example.planmate.plan.entity.Plan;
 import com.example.planmate.entity.PreferredTheme;
 import com.example.planmate.entity.User;
 import com.example.planmate.exception.UserNotFoundException;
-import com.example.planmate.repository.PlanRepository;
+import com.example.planmate.plan.repository.PlanRepository;
 import com.example.planmate.repository.PreferredThemeRepository;
 import com.example.planmate.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

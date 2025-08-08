@@ -1,4 +1,4 @@
-package com.example.planmate.dto;
+package com.example.planmate.plan.dto;
 
 import lombok.Getter;
 import lombok.Setter;

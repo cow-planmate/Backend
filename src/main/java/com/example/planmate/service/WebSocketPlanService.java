@@ -1,6 +1,7 @@
 package com.example.planmate.service;
 
 import com.example.planmate.entity.*;
+import com.example.planmate.plan.entity.Plan;
 import com.example.planmate.repository.PlaceCategoryRepository;
 import com.example.planmate.repository.TimeTablePlaceBlockRepository;
 import com.example.planmate.repository.TimeTableRepository;
