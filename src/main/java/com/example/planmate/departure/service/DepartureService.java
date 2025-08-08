@@ -1,6 +1,6 @@
-package com.example.planmate.service;
+package com.example.planmate.departure.service;
 
-import com.example.planmate.dto.SearchDepartureResponse;
+import com.example.planmate.departure.dto.SearchDepartureResponse;
 import com.example.planmate.externalAPI.GoogleMap;
 import com.example.planmate.valueObject.DepartureVO;
 import lombok.RequiredArgsConstructor;

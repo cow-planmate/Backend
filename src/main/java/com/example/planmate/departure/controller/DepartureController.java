@@ -1,8 +1,8 @@
 package com.example.planmate.departure.controller;
 
-import com.example.planmate.dto.SearchDepartureRepuest;
-import com.example.planmate.dto.SearchDepartureResponse;
-import com.example.planmate.service.DepartureService;
+import com.example.planmate.departure.dto.SearchDepartureRepuest;
+import com.example.planmate.departure.dto.SearchDepartureResponse;
+import com.example.planmate.departure.service.DepartureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

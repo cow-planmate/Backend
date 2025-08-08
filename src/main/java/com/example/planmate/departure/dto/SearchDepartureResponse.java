@@ -1,5 +1,6 @@
-package com.example.planmate.dto;
+package com.example.planmate.departure.dto;
 
+import com.example.planmate.dto.CommonResponse;
 import com.example.planmate.valueObject.DepartureVO;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 @Getter
 @Setter
-public class SearchDepartureResponse extends CommonResponse{
+public class SearchDepartureResponse extends CommonResponse {
     private List<DepartureVO> departures;
     public SearchDepartureResponse(){
         departures = new ArrayList<>();
