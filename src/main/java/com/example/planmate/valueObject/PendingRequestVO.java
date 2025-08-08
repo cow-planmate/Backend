@@ -1,6 +1,5 @@
 package com.example.planmate.valueObject;
 
-import com.example.planmate.entity.CollaborationRequestType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

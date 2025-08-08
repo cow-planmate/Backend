@@ -1,4 +1,4 @@
-package com.example.planmate.controller;
+package com.example.planmate.departure.controller;
 
 import com.example.planmate.dto.SearchDepartureRepuest;
 import com.example.planmate.dto.SearchDepartureResponse;

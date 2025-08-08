@@ -1,8 +1,8 @@
-package com.example.planmate.auth;
+package com.example.planmate.collaborationRequest.auth;
 
-import com.example.planmate.entity.CollaborationRequest;
-import com.example.planmate.entity.CollaborationRequestStatus;
-import com.example.planmate.repository.CollaborationRequestRepository;
+import com.example.planmate.collaborationRequest.entity.CollaborationRequest;
+import com.example.planmate.collaborationRequest.entity.CollaborationRequestStatus;
+import com.example.planmate.collaborationRequest.repository.CollaborationRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

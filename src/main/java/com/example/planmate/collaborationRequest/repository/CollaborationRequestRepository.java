@@ -1,6 +1,10 @@
-package com.example.planmate.repository;
+package com.example.planmate.collaborationRequest.repository;
 
-import com.example.planmate.entity.*;
+import com.example.planmate.collaborationRequest.entity.CollaborationRequest;
+import com.example.planmate.collaborationRequest.entity.CollaborationRequestStatus;
+import com.example.planmate.collaborationRequest.entity.CollaborationRequestType;
+import com.example.planmate.entity.Plan;
+import com.example.planmate.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

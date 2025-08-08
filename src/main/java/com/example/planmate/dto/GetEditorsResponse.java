@@ -1,10 +1,6 @@
 package com.example.planmate.dto;
 
-import com.example.planmate.entity.PreferredTheme;
-import com.example.planmate.valueObject.PreferredThemeVO;
 import com.example.planmate.valueObject.SimpleEditorVO;
-import com.example.planmate.valueObject.SimplePlanVO;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
