@@ -10,7 +10,11 @@ public class CorsGlobalConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                .allowedOrigins("https://www.planmate.site", "https://planmate.site")
+                .allowedOrigins("http://localhost:3000",
+                        "http://localhost:63771",
+                        "http://localhost:5173",
+                        "https://www.planmate.site",
+                        "https://planmate.site")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")
                 .allowCredentials(true);
