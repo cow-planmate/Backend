@@ -1,7 +1,7 @@
-package com.example.planmate.controller;
+package com.example.planmate.password.controller;
 
-import com.example.planmate.dto.*;
-import com.example.planmate.service.PasswordService;
+import com.example.planmate.password.dto.*;
+import com.example.planmate.password.service.PasswordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

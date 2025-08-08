@@ -1,8 +1,8 @@
-package com.example.planmate.service;
+package com.example.planmate.password.service;
 
-import com.example.planmate.dto.ChangePasswordResponse;
-import com.example.planmate.dto.SendTempPasswordResponse;
-import com.example.planmate.dto.VerifyPasswordResponse;
+import com.example.planmate.password.dto.ChangePasswordResponse;
+import com.example.planmate.password.dto.SendTempPasswordResponse;
+import com.example.planmate.password.dto.VerifyPasswordResponse;
 import com.example.planmate.entity.User;
 import com.example.planmate.exception.UserNotFoundException;
 import com.example.planmate.repository.UserRepository;
