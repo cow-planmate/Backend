@@ -1,8 +1,8 @@
-package com.example.planmate.controller;
+package com.example.planmate.login.controller;
 
-import com.example.planmate.dto.LoginRequest;
-import com.example.planmate.dto.LoginResponse;
-import com.example.planmate.service.LoginService;
+import com.example.planmate.login.dto.LoginRequest;
+import com.example.planmate.login.dto.LoginResponse;
+import com.example.planmate.login.service.LoginService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

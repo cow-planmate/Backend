@@ -1,7 +1,7 @@
-package com.example.planmate.service;
+package com.example.planmate.login.service;
 
 import com.example.planmate.auth.JwtTokenProvider;
-import com.example.planmate.dto.LoginResponse;
+import com.example.planmate.login.dto.LoginResponse;
 import com.example.planmate.gita.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
