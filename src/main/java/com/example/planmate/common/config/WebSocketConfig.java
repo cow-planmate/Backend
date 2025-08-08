@@ -21,7 +21,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws-plan")
                 .setAllowedOrigins("http://localhost:3000",
                         "http://localhost:63771",
-                        "http://localhost:5173")
+                        "http://localhost:5173",
+                        "https://www.planmate.site")
                 .withSockJS();
     }
 }
