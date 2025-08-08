@@ -1,15 +1,12 @@
 package com.example.planmate.auth;
 
 import com.example.planmate.entity.Plan;
-import com.example.planmate.entity.PlanEditor;
 import com.example.planmate.repository.PlanEditorRepository;
 import com.example.planmate.repository.PlanRepository;
 import com.example.planmate.service.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor

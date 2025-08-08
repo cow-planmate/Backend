@@ -1,5 +1,6 @@
-package com.example.planmate.dto;
+package com.example.planmate.collaborationRequest.dto;
 
+import com.example.planmate.dto.CommonResponse;
 import com.example.planmate.valueObject.PendingRequestVO;
 import lombok.Getter;
 import lombok.Setter;

@@ -1,5 +1,7 @@
-package com.example.planmate.entity;
+package com.example.planmate.collaborationRequest.entity;
 
+import com.example.planmate.entity.Plan;
+import com.example.planmate.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
