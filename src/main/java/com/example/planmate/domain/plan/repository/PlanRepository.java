@@ -9,4 +9,6 @@ public interface PlanRepository extends JpaRepository<Plan, Integer> {
     List<Plan> findByUserUserId(Integer userId);
     boolean existsByUserUserIdAndPlanName(Integer userId, String planName);
     boolean existsByPlanIdAndUserUserId(Integer planId, Integer userId);
+
+    boolean existsByUser_UserIdAndPlanName(int userId, String name);
 }
