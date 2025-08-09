@@ -39,6 +39,8 @@ public class RedisSyncService {
             }
         }
         List<TimeTable> savedTimetables = new ArrayList<>();
+        List<TimeTable> newTimetables = new ArrayList<>();
+
         for(TimeTable t : timetableList){
             //원래 있던거
             if(t.getTimeTableId()!=null&&t.getTimeTableId()>=0){
@@ -50,9 +52,10 @@ public class RedisSyncService {
             }
             //새로운 거
             else{
-                timeTableRepository.save(t);
+                newTimetables.add(t);
                 savedTimetables.add(t);
             }
+            timeTableRepository.saveAll(newTimetables);
         }
 
         Map<Integer, TimeTable> realMap = new HashMap<>();
@@ -67,24 +70,29 @@ public class RedisSyncService {
             }
         }
 
-        List<TimeTablePlaceBlock> allBlocks = new ArrayList<>();
+        List<TimeTablePlaceBlock> newBlocks = new ArrayList<>();
         for (Map.Entry<Integer, TimeTable> entry : realMap.entrySet()) {
             int tempId = entry.getKey();
             TimeTable realTimetable = entry.getValue();
 
-            List<TimeTablePlaceBlock> blocks = redisService.getTimeTablePlaceBlockByTimeTableId(tempId);
+            List<TimeTablePlaceBlock> blocks = redisService.deleteTimeTablePlaceBlockByTimeTableId(tempId);
             if(blocks != null && !blocks.isEmpty()) {
                 for (TimeTablePlaceBlock block : blocks) {
-                    block.setTimeTable(realTimetable);
-                    block.setBlockId(null);
+                    if(block.getBlockId() >= 0){
+                        TimeTablePlaceBlock timeTablePlaceBlock = timeTablePlaceBlockRepository.findById(block.getBlockId()).orElse(null);
+                        timeTablePlaceBlock.setBlock(block);
+                    }
+                    else {
+                        block.setTimeTable(realTimetable);
+                        block.setBlockId(null);
+                        newBlocks.add(block);
+                    }
                 }
-                allBlocks.addAll(blocks);
                 redisService.deleteTimeTable(tempId);
-                timeTablePlaceBlockRepository.saveAll(allBlocks);
+                timeTablePlaceBlockRepository.saveAll(newBlocks);
             }
         }
         redisService.deletePlan(planId);
-
     }
 
 

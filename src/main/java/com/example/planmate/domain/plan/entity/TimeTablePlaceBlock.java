@@ -53,4 +53,17 @@ public class TimeTablePlaceBlock {
     @ManyToOne
     @JoinColumn(name = "time_table_id", nullable = false)
     private TimeTable timeTable;
+
+    public void setBlock(TimeTablePlaceBlock block) {
+        this.placeName = block.getPlaceName();
+        this.placeTheme = block.getPlaceTheme();
+        this.placeRating = block.getPlaceRating();
+        this.placeAddress = block.getPlaceAddress();
+        this.placeLink = block.getPlaceLink();
+        this.blockStartTime = block.getBlockStartTime();
+        this.blockEndTime = block.getBlockEndTime();
+        this.xLocation = block.getXLocation();
+        this.yLocation = block.getYLocation();
+        this.placeCategory = block.getPlaceCategory();
+    }
 }
