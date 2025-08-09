@@ -35,7 +35,7 @@ public class WebSocketController {
     @MessageMapping("/plan/{planId}/delete/timetable")
     @SendTo("/topic/plan/{planId}/delete/timetable")
     public WTimetableResponse deleteTimetable(@DestinationVariable int planId, @Payload WTimetableRequest request) {
-        return webSocketPlanService.deleteTimetable(request);
+        return webSocketPlanService.deleteTimetable(planId, request);
     }
 
     @MessageMapping("/plan/{planId}/create/timetableplaceblock")

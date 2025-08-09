@@ -48,13 +48,15 @@ public class RedisSyncService {
             //원래 있던거
             if(t.getTimeTableId()!=null&&t.getTimeTableId()>=0){
                 TimeTable timeTable = timeTableRepository.findById(t.getTimeTableId()).orElse(null);
-                timeTable.setDate(t.getDate());
-                timeTable.setTimeTableEndTime(t.getTimeTableEndTime());
-                timeTable.setTimeTableStartTime(t.getTimeTableStartTime());
-                savedTimetables.add(timeTable);
-                oldTimetables.removeIf(ot ->
-                        ot.getTimeTableId() != null && ot.getTimeTableId().equals(timeTable.getTimeTableId())
-                );
+                if(timeTable!=null){
+                    timeTable.setDate(t.getDate());
+                    timeTable.setTimeTableEndTime(t.getTimeTableEndTime());
+                    timeTable.setTimeTableStartTime(t.getTimeTableStartTime());
+                    savedTimetables.add(timeTable);
+                    oldTimetables.removeIf(ot ->
+                            ot.getTimeTableId() != null && ot.getTimeTableId().equals(timeTable.getTimeTableId())
+                    );
+                }
             }
             //새로운 거
             else{

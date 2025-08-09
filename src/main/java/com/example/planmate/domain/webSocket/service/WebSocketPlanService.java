@@ -117,6 +117,7 @@ public class WebSocketPlanService {
             redisService.updateTimeTable(timetable);
             response.addTimetableVO(timetableVO);
         }
+        response.sortTimetableVOs();
         return response;
     }
 
@@ -161,12 +162,10 @@ public class WebSocketPlanService {
         return response;
     }
 
-    public WTimetableResponse deleteTimetable(WTimetableRequest request) {
+    public WTimetableResponse deleteTimetable(int planId, WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
-        for(TimetableVO timetableVO : request.getTimetableVOs()) {
-            response.addTimetableVO(timetableVO);
-            redisService.deleteTimeTable(timetableVO.getTimetableId());
-        }
+        redisService.deleteTimeTable(planId, request.getTimetableVOs());
+        response.setTimetableVOs(request.getTimetableVOs());
         return response;
     }
     public WTimeTablePlaceBlockResponse deleteTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {

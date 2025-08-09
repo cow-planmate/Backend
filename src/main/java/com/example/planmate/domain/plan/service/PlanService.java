@@ -145,6 +145,7 @@ public class PlanService {
                 );
             }
         }
+        response.sortTimetableVOs();
         return response; // DTO 변환
     }
 
