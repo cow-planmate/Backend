@@ -148,12 +148,23 @@ public class PlanService {
         return response; // DTO 변환
     }
 
+    @Transactional
     public EditPlanNameResponse EditPlanName(int userId, int planId, String name){
-        EditPlanNameResponse reponse = new EditPlanNameResponse();
+        EditPlanNameResponse response = new EditPlanNameResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+        boolean exists = planRepository.existsByUser_UserIdAndPlanName(userId, name);
+
+        if(exists && !plan.getPlanName().equals(name)) {
+            response.setEdited(false);
+            response.setMessage("이미 동일한 이름의 일정이 존재합니다.");
+            return response;
+        }
+
         plan.setPlanName(name);
         planRepository.save(plan);
-        return reponse;
+        response.setEdited(true);
+        response.setMessage("성공적으로 일정 이름을 변경하였습니다");
+        return response;
     }
 
     public PlaceResponse getTourPlace(int userId, int planId) throws IOException {
