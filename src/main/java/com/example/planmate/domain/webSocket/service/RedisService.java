@@ -125,6 +125,15 @@ public class RedisService {
             }
         }
     }
+    public void deleteRedisTimeTable(int timetableId) {
+        timeTableRedis.delete(TIMETABLE_PREFIX + timetableId);
+        List<Integer> timeTablePlaceBlockIds = timeTableToTimeTablePlaceBlockRedis.opsForValue().get(timetableId);
+        if(timeTablePlaceBlockIds != null) {
+            for(Integer timeTablePlaceBlockId : timeTablePlaceBlockIds){
+                timeTablePlaceBlockRedis.delete(TIMETABLE_PREFIX + timeTablePlaceBlockId);
+            }
+        }
+    }
     public void deleteTimeTable(List<TimeTable> timeTableList) {
         for(TimeTable timeTable : timeTableList){
             timeTableRedis.delete(TIMETABLE_PREFIX + timeTable.getTimeTableId());

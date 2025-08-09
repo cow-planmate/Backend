@@ -35,6 +35,25 @@ public class GoogleMap {
         in.close();
         return response;
     }
+
+    public StringBuilder searchGoogle(String query, List<String> preferredThemeName) throws IOException {
+        String urlStr = "https://maps.googleapis.com/maps/api/place/textsearch/json?query=" +
+                java.net.URLEncoder.encode(query, "UTF-8") + "&language=ko" + "&key=" + googleApiKey;
+
+        URL url = new URL(urlStr);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+
+        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        String inputLine;
+        StringBuilder response = new StringBuilder();
+
+        while ((inputLine = in.readLine()) != null)
+            response.append(inputLine);
+        in.close();
+        return response;
+    }
+
     public List<TourPlaceVO> getTourPlace(String query) throws IOException {
         StringBuilder sb = searchGoogle(query);
         List<TourPlaceVO> places = new ArrayList<>();

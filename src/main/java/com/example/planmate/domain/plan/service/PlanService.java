@@ -1,18 +1,20 @@
 package com.example.planmate.domain.plan.service;
 
+import com.example.planmate.common.externalAPI.GoogleMap;
+import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
+import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
 import com.example.planmate.domain.plan.auth.PlanAccessValidator;
 import com.example.planmate.domain.plan.dto.*;
 import com.example.planmate.domain.plan.entity.*;
 import com.example.planmate.domain.plan.repository.*;
 import com.example.planmate.domain.travel.entity.Travel;
-import com.example.planmate.common.externalAPI.GoogleMap;
-import com.example.planmate.domain.webSocket.service.RedisService;
-import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.travel.repository.TravelRepository;
+import com.example.planmate.domain.user.entity.PreferredTheme;
+import com.example.planmate.domain.user.entity.User;
+import com.example.planmate.domain.user.repository.PreferredThemeRepository;
 import com.example.planmate.domain.user.repository.UserRepository;
-import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
-import com.example.planmate.common.valueObject.TimetableVO;
+import com.example.planmate.domain.webSocket.service.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,7 @@ public class PlanService {
     private final TravelRepository travelRepository;
     private final PlaceCategoryRepository placeCategoryRepository;
     private final PlanEditorRepository planEditorRepository;
+    private final PreferredThemeRepository preferredThemeRepository;
     private final RedisService redisService;
     private final GoogleMap googleMap;
 
@@ -126,22 +129,20 @@ public class PlanService {
         }
 
         for (List<TimeTablePlaceBlock> timeTablePlaceBlock : timeTablePlaceBlocks) {
-            if(timeTablePlaceBlock!=null) {
-                for (TimeTablePlaceBlock timeTablePlaceBlock1 : timeTablePlaceBlock) {
-                    response.addPlaceBlock(
-                            timeTablePlaceBlock1.getBlockId(),
-                            timeTablePlaceBlock1.getPlaceCategory().getPlaceCategoryId(),
-                            timeTablePlaceBlock1.getPlaceName(),
-                            timeTablePlaceBlock1.getPlaceTheme(),
-                            timeTablePlaceBlock1.getPlaceRating(),
-                            timeTablePlaceBlock1.getPlaceAddress(),
-                            timeTablePlaceBlock1.getPlaceLink(),
-                            timeTablePlaceBlock1.getXLocation(),
-                            timeTablePlaceBlock1.getYLocation(),
-                            timeTablePlaceBlock1.getBlockStartTime(),
-                            timeTablePlaceBlock1.getBlockEndTime()
-                    );
-                }
+            for (TimeTablePlaceBlock timeTablePlaceBlock1 : timeTablePlaceBlock) {
+                response.addPlaceBlock(
+                        timeTablePlaceBlock1.getBlockId(),
+                        timeTablePlaceBlock1.getPlaceCategory().getPlaceCategoryId(),
+                        timeTablePlaceBlock1.getPlaceName(),
+                        timeTablePlaceBlock1.getPlaceTheme(),
+                        timeTablePlaceBlock1.getPlaceRating(),
+                        timeTablePlaceBlock1.getPlaceAddress(),
+                        timeTablePlaceBlock1.getPlaceLink(),
+                        timeTablePlaceBlock1.getXLocation(),
+                        timeTablePlaceBlock1.getYLocation(),
+                        timeTablePlaceBlock1.getBlockStartTime(),
+                        timeTablePlaceBlock1.getBlockEndTime()
+                );
             }
         }
         return response; // DTO 변환
@@ -158,6 +159,8 @@ public class PlanService {
     public PlaceResponse getTourPlace(int userId, int planId) throws IOException {
         PlaceResponse response = new PlaceResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+        List<PreferredTheme> preferredThemes = preferredThemeRepository.findPreferredThemesByPreferredThemeCategory_PreferredThemeCategoryId(0);
+
         String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
         String travelName = plan.getTravel().getTravelName();
         response.addPlace(googleMap.getTourPlace(travelCategoryName + " " +travelName + " " + "관광지"));
