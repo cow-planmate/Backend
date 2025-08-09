@@ -148,6 +148,7 @@ public class PlanService {
         return response; // DTO 변환
     }
 
+    @Transactional
     public EditPlanNameResponse EditPlanName(int userId, int planId, String name){
         EditPlanNameResponse response = new EditPlanNameResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
