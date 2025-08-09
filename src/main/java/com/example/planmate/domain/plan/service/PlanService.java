@@ -145,7 +145,6 @@ public class PlanService {
                 );
             }
         }
-        response.sortTimetableVOs();
         return response; // DTO 변환
     }
 
@@ -160,27 +159,46 @@ public class PlanService {
     public PlaceResponse getTourPlace(int userId, int planId) throws IOException {
         PlaceResponse response = new PlaceResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-        List<PreferredTheme> preferredThemes = preferredThemeRepository.findPreferredThemesByPreferredThemeCategory_PreferredThemeCategoryId(0);
-
         String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
-        String travelName = plan.getTravel().getTravelName();
-        response.addPlace(googleMap.getTourPlace(travelCategoryName + " " +travelName + " " + "관광지"));
+        List<PreferredTheme> preferredThemes = userRepository.findById(userId).get().getPreferredThemes();
+        preferredThemes.removeIf(preferredTheme -> preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId() != 0);
+
+        List<String> preferredThemeNames = new ArrayList<>();
+        for (PreferredTheme preferredTheme : preferredThemes) {
+            preferredThemeNames.add(preferredTheme.getPreferredThemeName());
+        }
+        String travelName = travelCategoryName + " "+ plan.getTravel().getTravelName();
+        response.addPlace(googleMap.getTourPlace(travelName, preferredThemeNames));
         return response;
     }
     public PlaceResponse getLodgingPlace(int userId, int planId) throws IOException {
         PlaceResponse response = new PlaceResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
         String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
-        String travelName = plan.getTravel().getTravelName();
-        response.addPlace(googleMap.getLodgingPlace(travelCategoryName + " " +travelName + " " + "숙소"));
+        List<PreferredTheme> preferredThemes = userRepository.findById(userId).get().getPreferredThemes();
+        preferredThemes.removeIf(preferredTheme -> preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId() != 1);
+
+        List<String> preferredThemeNames = new ArrayList<>();
+        for (PreferredTheme preferredTheme : preferredThemes) {
+            preferredThemeNames.add(preferredTheme.getPreferredThemeName());
+        }
+        String travelName = travelCategoryName + " "+ plan.getTravel().getTravelName();
+        response.addPlace(googleMap.getLodgingPlace(travelName, preferredThemeNames));
         return response;
     }
     public PlaceResponse getRestaurantPlace(int userId, int planId) throws IOException {
         PlaceResponse response = new PlaceResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
         String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
-        String travelName = plan.getTravel().getTravelName();
-        response.addPlace(googleMap.getRestaurantPlace(travelCategoryName + " " +travelName + " " + "식당"));
+        List<PreferredTheme> preferredThemes = userRepository.findById(userId).get().getPreferredThemes();
+        preferredThemes.removeIf(preferredTheme -> preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId() != 2);
+
+        List<String> preferredThemeNames = new ArrayList<>();
+        for (PreferredTheme preferredTheme : preferredThemes) {
+            preferredThemeNames.add(preferredTheme.getPreferredThemeName());
+        }
+        String travelName = travelCategoryName + " "+ plan.getTravel().getTravelName();
+        response.addPlace(googleMap.getRestaurantPlace(travelName, preferredThemeNames));
         return response;
     }
 

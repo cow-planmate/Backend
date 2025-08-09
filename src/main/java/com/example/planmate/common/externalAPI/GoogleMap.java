@@ -3,6 +3,8 @@ package com.example.planmate.common.externalAPI;
 import com.example.planmate.common.valueObject.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -11,8 +13,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class GoogleMap {
@@ -54,8 +60,8 @@ public class GoogleMap {
         return response;
     }
 
-    public List<TourPlaceVO> getTourPlace(String query) throws IOException {
-        StringBuilder sb = searchGoogle(query);
+    public List<TourPlaceVO> getTourPlace(String query, List<String> preferredThemeNames) throws IOException {
+        StringBuilder sb = searchGoogleOrWithJackson("관광지", preferredThemeNames, query, null, null, null, 4.0, 50);
         List<TourPlaceVO> places = new ArrayList<>();
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -79,12 +85,11 @@ public class GoogleMap {
                 places.add(place);
             }
         }
-
         return places;
     }
 
-    public List<LodgingPlaceVO> getLodgingPlace(String query) throws IOException {
-        StringBuilder sb = searchGoogle(query);
+    public List<LodgingPlaceVO> getLodgingPlace(String query, List<String> preferredThemeNames) throws IOException {
+        StringBuilder sb = searchGoogleOrWithJackson("숙소", preferredThemeNames, query, null, null, null, 4.0, 50);
         List<LodgingPlaceVO> places = new ArrayList<>();
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -108,11 +113,10 @@ public class GoogleMap {
                 places.add(place);
             }
         }
-
         return places;
     }
-    public List<RestaurantPlaceVO> getRestaurantPlace(String query) throws IOException {
-        StringBuilder sb = searchGoogle(query);
+    public List<RestaurantPlaceVO> getRestaurantPlace(String query, List<String> preferredThemeNames) throws IOException {
+        StringBuilder sb = searchGoogleOrWithJackson("식당", preferredThemeNames, query, null, null, null, 4.0, 50);
         List<RestaurantPlaceVO> places = new ArrayList<>();
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -136,7 +140,6 @@ public class GoogleMap {
                 places.add(place);
             }
         }
-
         return places;
     }
 
@@ -189,58 +192,103 @@ public class GoogleMap {
         return departures;
     }
 
-    public String getTransitTime(String origin, String destination) throws IOException {
-//        String apiKey = "YOUR_API_KEY";
-//        String urlStr = "https://maps.googleapis.com/maps/api/directions/json"
-//                + "?origin=" + URLEncoder.encode(origin, "UTF-8")
-//                + "&destination=" + URLEncoder.encode(destination, "UTF-8")
-//                + "&mode=transit"
-//                + "&language=ko"
-//                + "&key=" + apiKey;
-//
-//        URL url = new URL(urlStr);
-//        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-//        conn.setRequestMethod("GET");
-//
-//        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-//        StringBuilder sb = new StringBuilder();
-//        String inputLine;
-//        while ((inputLine = in.readLine()) != null) {
-//            sb.append(inputLine);
-//        }
-//        in.close();
-//
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        JsonNode root = objectMapper.readTree(sb.toString());
-//        JsonNode routes = root.get("routes");
-//
-//        if (routes != null && routes.isArray() && routes.size() > 0) {
-//            JsonNode leg = routes.get(0).path("legs").get(0);
-//
-//            String startAddress = leg.path("start_address").asText("");
-//            String endAddress = leg.path("end_address").asText("");
-//            String distanceText = leg.path("distance").path("text").asText("");  // 예: "13.1km"
-//            String durationText = leg.path("duration").path("text").asText("");  // 예: "28분"
-//
-//            double startLat = leg.path("start_location").path("lat").asDouble(0.0);
-//            double startLng = leg.path("start_location").path("lng").asDouble(0.0);
-//            double endLat = leg.path("end_location").path("lat").asDouble(0.0);
-//            double endLng = leg.path("end_location").path("lng").asDouble(0.0);
-//
-//            // 너가 사용할 VO 클래스가 있다면 아래와 같이 사용
-//            DirectionInfoVO direction = new DirectionInfoVO(
-//                    startAddress,
-//                    endAddress,
-//                    distanceText,
-//                    durationText,
-//                    startLat,
-//                    startLng,
-//                    endLat,
-//                    endLng
-//            );
-//
-//            // 예: List<DirectionInfoVO> directions = new ArrayList<>();
-//            directions.add(direction);
-        return null;
+    private String httpGet(String urlStr) throws IOException {
+        URL url = new URL(urlStr);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+            StringBuilder raw = new StringBuilder();
+            String line;
+            while ((line = in.readLine()) != null) raw.append(line);
+            return raw.toString();
+        }
+    }
+
+    // ===== URL 쿼리 파라미터 안전 인코딩 =====
+    private String enc(String s) {
+        return URLEncoder.encode(s, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * OR 검색 + 별점/리뷰수 필터 + (선택) 위치 문자열/좌표 반경.
+     *
+     * @param query               기본 검색어 (예: "맛집", "카페")
+     * @param preferredThemeNames 선호 테마 목록 (각 테마별로 별도 호출 → OR 효과)
+     * @param locationText        위치 키워드(예: "강남", "부산 해운대"). null 가능.
+     * @param lat                 중심 위도. null 가능.
+     * @param lng                 중심 경도. null 가능.
+     * @param radiusMeters        반경(m). lat/lng 주면 함께 사용. null 가능.
+     * @param minRating           최소 별점(기본 4.0 추천)
+     * @param minReviews          최소 리뷰 수(노이즈 방지용, 예: 50). 0이면 미적용.
+     * @return                    합쳐진 JSON(results 배열 포함)을 StringBuilder로 반환
+     */
+    private StringBuilder searchGoogleOrWithJackson(
+            String query,
+            List<String> preferredThemeNames,
+            String locationText,
+            Double lat,
+            Double lng,
+            Integer radiusMeters,
+            Double minRating,
+            int minReviews
+    ) throws IOException {
+
+        final String base = "https://maps.googleapis.com/maps/api/place/textsearch/json";
+        ObjectMapper mapper = new ObjectMapper();
+        // query + (선택) 위치 문자열을 합친다.
+        String fullQuery = (locationText == null || locationText.isBlank())
+                ? query
+                : (query + " " + locationText);
+
+        // place_id → place(JsonNode) 저장: LinkedHashMap으로 순서 보존
+        Map<String, JsonNode> placeMap = new LinkedHashMap<>();
+
+        // 테마가 비었을 경우를 대비해 1회 호출(키워드 없이)도 가능하게 처리
+        List<String> themes = (preferredThemeNames == null || preferredThemeNames.isEmpty())
+                ? List.of("") : preferredThemeNames;
+
+        for (String theme : themes) {
+            StringBuilder url = new StringBuilder(base)
+                    .append("?query=").append(enc(fullQuery))
+                    .append("&language=ko")
+                    .append("&key=").append(enc(googleApiKey));
+
+            // keyword(테마) 추가. 빈 문자열이면 붙이지 않는다.
+            if (theme != null && !theme.isBlank()) {
+                url.append("&keyword=").append(enc(theme));
+            }
+
+            // 좌표 기반 검색 옵션
+            if (lat != null && lng != null) {
+                url.append("&location=").append(lat).append(",").append(lng);
+                if (radiusMeters != null && radiusMeters > 0) {
+                    url.append("&radius=").append(radiusMeters);
+                }
+            }
+
+            // 1페이지(최대 20건)만 합친다. 필요 시 next_page_token 처리 확장 가능.
+            String raw = httpGet(url.toString());
+            JsonNode root = mapper.readTree(raw);
+            JsonNode results = root.path("results");
+            if (results.isArray()) {
+                for (JsonNode place : results) {
+                    double rating = place.path("rating").asDouble(0.0);
+                    int reviews = place.path("user_ratings_total").asInt(0);
+                    if (rating >= minRating && (minReviews <= 0 || reviews >= minReviews)) {
+                        String placeId = place.path("place_id").asText(null);
+                        if (placeId != null && !placeId.isBlank()) {
+                            placeMap.put(placeId, place); // 중복이면 덮어쓴다.
+                        }
+                    }
+                }
+            }
+        }
+        // 최종 JSON 구성
+        ObjectNode finalJson = mapper.createObjectNode();
+        ArrayNode merged = mapper.createArrayNode();
+        placeMap.values().forEach(merged::add);
+        finalJson.set("results", merged);
+
+        return new StringBuilder(finalJson.toString());
     }
 }
