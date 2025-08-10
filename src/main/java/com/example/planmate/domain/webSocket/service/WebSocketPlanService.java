@@ -112,6 +112,7 @@ public class WebSocketPlanService {
             if(timetable.getPlan().getPlanId() != planId) {
                 throw new AccessDeniedException("timetable 접근 권한이 없습니다");
             }
+            timetable.setDate(timetableVO.getDate());
             timetable.setTimeTableEndTime(timetableVO.getEndTime());
             timetable.setTimeTableStartTime(timetableVO.getStartTime());
             redisService.updateTimeTable(timetable);
