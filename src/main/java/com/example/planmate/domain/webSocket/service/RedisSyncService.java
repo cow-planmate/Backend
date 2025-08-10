@@ -67,21 +67,37 @@ public class RedisSyncService {
         }
         timeTableRepository.deleteAll(oldTimetables);
 
-        Map<Integer, TimeTable> realMap = new HashMap<>();
+        Map<Integer, TimeTable> changeTimeTable = new HashMap<>();
+        Map<Integer, TimeTable> notChangeTimeTable = new HashMap<>();
         for (Map.Entry<Integer, TimeTable> entry : tempIdToEntity.entrySet()) {
             int tempId = entry.getKey();
             TimeTable oldT = entry.getValue();
             for (TimeTable saved : savedTimetables) {
                 if (saved != null && saved.equals(oldT)) {
-                    realMap.put(tempId, saved);
-                    break;
+                    changeTimeTable.put(tempId, saved);
+                } else if (saved != null) {
+                    notChangeTimeTable.put(tempId, saved);
                 }
             }
         }
 
         List<TimeTablePlaceBlock> newBlocks = new ArrayList<>();
 
-        for (Map.Entry<Integer, TimeTable> entry : realMap.entrySet()) {
+        for (Map.Entry<Integer, TimeTable> entry : changeTimeTable.entrySet()) {
+            int tempId = entry.getKey();
+            TimeTable realTimetable = entry.getValue();
+            List<TimeTablePlaceBlock> blocks = redisService.deleteTimeTablePlaceBlockByTimeTableId(tempId);
+            if(blocks != null && !blocks.isEmpty()) {
+                for (TimeTablePlaceBlock block : blocks) {
+                    block.setTimeTable(realTimetable);
+                    block.setBlockId(null);
+                    newBlocks.add(block);
+                }
+                redisService.deleteRedisTimeTable(tempId);
+            }
+        }
+
+        for (Map.Entry<Integer, TimeTable> entry : notChangeTimeTable.entrySet()) {
             int tempId = entry.getKey();
             TimeTable realTimetable = entry.getValue();
             List<TimeTablePlaceBlock> oldBlocks = timeTablePlaceBlockRepository.findByTimeTableTimeTableId(entry.getKey());

@@ -82,11 +82,10 @@ public class WebSocketPlanService {
     public WTimeTablePlaceBlockResponse createTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
         TimetablePlaceBlockVO timetablePlaceBlockVO = request.getTimetablePlaceBlockVO();
-        TimeTable timetable = timeTableRepository.findById(request.getTimetablePlaceBlockVO().getTimetableId()).orElse(null);
-        PlaceCategory placeCategory = placeCategoryRepository.findById(timetablePlaceBlockVO.getPlaceCategoryId()).orElse(null);
         TimeTablePlaceBlock timeTablePlaceBlock = TimeTablePlaceBlock.builder()
-                .timeTable(timetable)
+                .timeTable(redisService.getTimeTable(timetablePlaceBlockVO.getTimetableId()))
                 .placeName(timetablePlaceBlockVO.getPlaceName())
+                .placeTheme("")
                 .placeRating(timetablePlaceBlockVO.getPlaceRating())
                 .placeAddress(timetablePlaceBlockVO.getPlaceAddress())
                 .placeLink(timetablePlaceBlockVO.getPlaceLink())
@@ -94,10 +93,10 @@ public class WebSocketPlanService {
                 .blockEndTime(timetablePlaceBlockVO.getEndTime())
                 .xLocation(timetablePlaceBlockVO.getXLocation())
                 .yLocation(timetablePlaceBlockVO.getYLocation())
-                .placeCategory(placeCategory)
+                .placeCategory(redisService.getPlaceCategory(timetablePlaceBlockVO.getPlaceCategoryId()))
                 .build();
-        timeTablePlaceBlockRepository.save(timeTablePlaceBlock);
-        timetablePlaceBlockVO.setTimetablePlaceBlockId(timeTablePlaceBlock.getBlockId());
+        int tempId = redisService.registerNewTimeTablePlaceBlock(timetablePlaceBlockVO.getTimetableId(), timeTablePlaceBlock);
+        timetablePlaceBlockVO.setTimetablePlaceBlockId(tempId);
         response.setTimetablePlaceBlockVO(timetablePlaceBlockVO);
         return response;
     }
@@ -128,7 +127,7 @@ public class WebSocketPlanService {
         if (timetablePlaceBlockVO.getPlaceName() != null) {
             timetablePlaceBlock.setPlaceName(timetablePlaceBlockVO.getPlaceName());
         }
-        
+
         if (timetablePlaceBlockVO.getPlaceRating() != null) {
             timetablePlaceBlock.setPlaceRating(timetablePlaceBlockVO.getPlaceRating());
         }

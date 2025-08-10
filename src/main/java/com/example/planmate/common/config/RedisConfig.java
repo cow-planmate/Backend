@@ -1,5 +1,6 @@
 package com.example.planmate.common.config;
 
+import com.example.planmate.domain.plan.entity.PlaceCategory;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
@@ -78,9 +79,13 @@ public class RedisConfig {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        objectMapper.activateDefaultTyping(
+                LaissezFaireSubTypeValidator.instance,
+                ObjectMapper.DefaultTyping.EVERYTHING,
+                JsonTypeInfo.As.WRAPPER_OBJECT
+        );
 
         GenericJackson2JsonRedisSerializer customSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
-
         template.setDefaultSerializer(customSerializer);
         template.setValueSerializer(customSerializer);
 
@@ -114,6 +119,15 @@ public class RedisConfig {
     @Bean
     public RedisTemplate<String, Travel> travelRedis(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Travel> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, PlaceCategory> placeCategoryRedis(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, PlaceCategory> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         template.afterPropertiesSet();

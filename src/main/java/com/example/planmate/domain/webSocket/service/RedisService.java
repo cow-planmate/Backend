@@ -1,9 +1,11 @@
 package com.example.planmate.domain.webSocket.service;
 
 import com.example.planmate.common.valueObject.TimetableVO;
+import com.example.planmate.domain.plan.entity.PlaceCategory;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
+import com.example.planmate.domain.plan.repository.PlaceCategoryRepository;
 import com.example.planmate.domain.plan.repository.PlanRepository;
 import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
 import com.example.planmate.domain.plan.repository.TimeTableRepository;
@@ -39,12 +41,19 @@ public class RedisService {
     private final String TIMETABLETOTIMETABLEPLACEBLOCK_PREFIX = "TIMETABLETOTIMETABLEPLACEBLOCK";
     private final RedisTemplate<String, Travel> travelRedis;
     private final String TRAVEL_PREFIX = "TRAVEL";
+    private final RedisTemplate<String, PlaceCategory> placeCategoryRedis;
+    private final String PLACECATEGORY_PREFIX = "PLACECATEGORY";
+    private final PlaceCategoryRepository placeCategoryRepository;
 
     @PostConstruct
     public void init() {
         List<Travel> travels = travelRepository.findAll();
         for(Travel travel : travels) {
             travelRedis.opsForValue().set(TRAVEL_PREFIX +travel.getTravelId(), travel);
+        }
+        List<PlaceCategory> placeCategories = placeCategoryRepository.findAll();
+        for(PlaceCategory placeCategory : placeCategories) {
+            placeCategoryRedis.opsForValue().set(PLACECATEGORY_PREFIX +placeCategory.getPlaceCategoryId(), placeCategory);
         }
     }
     public void registerPlan(int planId){
@@ -186,11 +195,14 @@ public class RedisService {
         return timeTablePlaceBlocks;
     }
 
-    public TimeTablePlaceBlock registerNewTimeTablePlaceBlock(TimeTablePlaceBlock block) {
+    public int registerNewTimeTablePlaceBlock(int timeTableId, TimeTablePlaceBlock block) {
         int tempId = timeTablePlaceBlockTempIdGenerator.getAndDecrement();
         block.setBlockId(tempId);
         timeTablePlaceBlockRedis.opsForValue().set(TIMETABLEPLACEBLOCK_PREFIX + block.getBlockId(), block);
-        return block;
+        List<Integer> timeTableBlockIds = timeTableToTimeTablePlaceBlockRedis.opsForValue().get(TIMETABLETOTIMETABLEPLACEBLOCK_PREFIX + timeTableId);
+        timeTableBlockIds.add(block.getBlockId());
+        timeTableToTimeTablePlaceBlockRedis.opsForValue().set(TIMETABLETOTIMETABLEPLACEBLOCK_PREFIX + timeTableId, timeTableBlockIds);
+        return tempId;
     }
 
     public void deleteTimeTablePlaceBlock(int blockId) {
@@ -204,4 +216,6 @@ public class RedisService {
     public Travel getTravelByTravelId(int travelId) {
         return travelRedis.opsForValue().get(TRAVEL_PREFIX + travelId);
     }
+
+    public PlaceCategory getPlaceCategory(int placeCategoryId) {return  placeCategoryRedis.opsForValue().get(PLACECATEGORY_PREFIX+ placeCategoryId);}
 }

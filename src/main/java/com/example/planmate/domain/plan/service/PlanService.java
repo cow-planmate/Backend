@@ -275,6 +275,7 @@ public class PlanService {
                 timeTablePlaceBlocks.add(TimeTablePlaceBlock.builder()
                         .timeTable(timetable)
                         .placeName(timeTablePlaceBlockVO.getPlaceName())
+                        .placeTheme("")
                         .placeRating(timeTablePlaceBlockVO.getPlaceRating())
                         .placeAddress(timeTablePlaceBlockVO.getPlaceAddress())
                         .placeLink(timeTablePlaceBlockVO.getPlaceLink())
