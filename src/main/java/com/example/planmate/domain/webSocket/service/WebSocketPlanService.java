@@ -150,9 +150,7 @@ public class WebSocketPlanService {
             timetablePlaceBlock.setYLocation(timetablePlaceBlockVO.getYLocation());
         }
         if (timetablePlaceBlockVO.getPlaceCategoryId() != null) {
-            timetablePlaceBlock.setPlaceCategory(
-                    entityManager.getReference(PlaceCategory.class, timetablePlaceBlockVO.getPlaceCategoryId())
-            );
+            timetablePlaceBlock.setPlaceCategory(redisService.getPlaceCategory(timetablePlaceBlockVO.getPlaceCategoryId()));
         }
         redisService.updateTimeTablePlaceBlock(timetablePlaceBlock);
         response.setTimetablePlaceBlockVO(timetablePlaceBlockVO);
@@ -166,7 +164,7 @@ public class WebSocketPlanService {
         return response;
     }
     public WTimeTablePlaceBlockResponse deleteTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {
-        redisService.deleteTimeTablePlaceBlock(request.getTimetablePlaceBlockVO().getTimetableId());
+        redisService.deleteTimeTablePlaceBlock(request.getTimetablePlaceBlockVO().getTimetableId(), request.getTimetablePlaceBlockVO().getTimetablePlaceBlockId());
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
         response.setTimetablePlaceBlockVO(request.getTimetablePlaceBlockVO());
         return response;
