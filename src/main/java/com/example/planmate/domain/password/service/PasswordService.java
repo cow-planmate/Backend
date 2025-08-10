@@ -1,5 +1,7 @@
 package com.example.planmate.domain.password.service;
 
+import com.example.planmate.common.enums.MailTemplate;
+import com.example.planmate.common.service.CustomMailService;
 import com.example.planmate.domain.password.dto.ChangePasswordResponse;
 import com.example.planmate.domain.password.dto.SendTempPasswordResponse;
 import com.example.planmate.domain.password.dto.VerifyPasswordResponse;
@@ -20,8 +22,8 @@ import java.security.SecureRandom;
 public class PasswordService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
-    private final JavaMailSender mailSender;
     private final SecureRandom secureRandom;
+    private final CustomMailService customMailService;
 
     public VerifyPasswordResponse verifyPassword(int userId, String password) {
         VerifyPasswordResponse response = new VerifyPasswordResponse();
@@ -67,12 +69,11 @@ public class PasswordService {
         user.setPassword(passwordEncoder.encode(tempPassword));
         userRepository.save(user);
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(email);
-        message.setSubject("PlanMate 임시 비밀번호입니다.");
-        message.setText("임시 비밀번호: " + tempPassword);
-
-        mailSender.send(message);
+        customMailService.sendSimpleMail(
+                email,
+                MailTemplate.PASSWORD_RESET.getSubject(),
+                MailTemplate.PASSWORD_RESET.formatBody(tempPassword)
+        );
 
         response.setMessage("Temp password sent");
 

@@ -1,6 +1,6 @@
 package com.example.planmate.domain.emailVerificaiton.dto;
 
-import com.example.planmate.domain.emailVerificaiton.EmailVerificationPurpose;
+import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
 import lombok.Getter;
 import lombok.Setter;
 

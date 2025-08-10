@@ -1,7 +1,7 @@
 package com.example.planmate.common.auth;
 
 import com.example.planmate.common.config.AuthWhitelist;
-import com.example.planmate.domain.emailVerificaiton.EmailVerificationPurpose;
+import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

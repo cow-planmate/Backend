@@ -1,6 +1,8 @@
 package com.example.planmate.domain.user.service;
 
+import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
 import com.example.planmate.domain.plan.entity.Plan;
+import com.example.planmate.domain.plan.repository.PlanEditorRepository;
 import com.example.planmate.domain.user.dto.*;
 import com.example.planmate.domain.user.entity.PreferredTheme;
 import com.example.planmate.domain.user.entity.User;
@@ -21,6 +23,7 @@ public class UserService {
     private final PreferredThemeRepository preferredThemeRepository;
     private final UserRepository userRepository;
     private final PlanRepository planRepository;
+    private final PlanEditorRepository planEditorRepository;
 
     public GetPreferredThemeResponse getPreferredTheme() {
         GetPreferredThemeResponse response = new GetPreferredThemeResponse();
@@ -57,9 +60,14 @@ public class UserService {
         for (PreferredTheme preferredTheme : preferredThemes) {
             response.addPreferredTheme(preferredTheme);
         }
-        List<Plan> plans = planRepository.findByUserUserId(userId);
-        for (Plan plan : plans) {
+        List<Plan> myPlans = planRepository.findByUserUserId(userId);
+        for (Plan plan : myPlans) {
             response.addMyPlanVO(plan.getPlanId(), plan.getPlanName());
+        }
+        List<PlanEditor> editablePlanEditors = planEditorRepository.findByUserUserId(userId);
+        for (PlanEditor editor : editablePlanEditors) {
+            Plan plan = editor.getPlan();
+            response.addEditablePlanVO(plan.getPlanId(), plan.getPlanName());
         }
 
         response.setMessage("Mypage info loaded successfully");

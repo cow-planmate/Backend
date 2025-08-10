@@ -22,13 +22,13 @@ spring:
         format_sql: true
 
   mail:
-    host: smtp.gmail.com
-    port: 587
+    host: smtps.hiworks.com
+    port: 465
     properties:
       mail:
         smtp:
           auth: true
-          starttls:
+          ssl:
             enable: true
 
   data:
