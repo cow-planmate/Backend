@@ -1,6 +1,6 @@
 package com.example.planmate.common.auth;
 
-import com.example.planmate.domain.emailVerificaiton.EmailVerificationPurpose;
+import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
