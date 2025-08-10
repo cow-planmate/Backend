@@ -118,10 +118,10 @@ public class RedisSyncService {
                     }
                 }
                 redisService.deleteRedisTimeTable(tempId);
-                timeTablePlaceBlockRepository.saveAll(newBlocks);
-                timeTablePlaceBlockRepository.deleteAll(oldBlocks);
             }
+            timeTablePlaceBlockRepository.deleteAll(oldBlocks);
         }
+        timeTablePlaceBlockRepository.saveAll(newBlocks);
         redisService.deletePlan(planId);
     }
 
