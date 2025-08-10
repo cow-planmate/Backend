@@ -1,0 +1,60 @@
+<configuration>
+    <!-- 공통 변수 -->
+    <property name="LOG_DIR" value="${LOG_PATH:-logs}"/>
+    <property name="SERVER_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"/>
+    <!-- 접근 로그는 더 간결하게 -->
+    <property name="ACCESS_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} INFO [trace=%X{traceId:-} user=%X{userId:-}] %msg%n"/>
+
+    <!-- 콘솔 (선택) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder><pattern>${SERVER_PATTERN}</pattern></encoder>
+    </appender>
+
+    <!-- 서버/프레임워크 로그 파일 -->
+    <appender name="SERVER_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/server.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/server.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder><pattern>${SERVER_PATTERN}</pattern></encoder>
+    </appender>
+
+    <!-- 접근 로그 파일 (인터셉터 전용) -->
+    <appender name="ACCESS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/access.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/access.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>14</maxHistory>
+            <totalSizeCap>5GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder><pattern>${ACCESS_PATTERN}</pattern></encoder>
+    </appender>
+
+    <!-- ROOT: 서버/프레임워크 로그는 여기로 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="SERVER_FILE"/>
+    </root>
+
+    <!-- 프레임워크 소음 낮추기(선택) -->
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="org.apache.catalina" level="WARN"/>
+    <logger name="org.springframework.data" level="WARN"/>
+
+    <!-- 접근 로그 전용 로거: 인터셉터 클래스/패키지 지정 -->
+    <!-- additivity=false: ROOT로 전파 금지 → server.log에 안 섞임 -->
+    <logger name="com.example.planmate.common.log.AccessLogInterceptor" level="INFO" additivity="false">
+        <appender-ref ref="ACCESS_FILE"/>
+    </logger>
+    <!-- 패키지 단위로 쓰면 WebSocket용 채널인터셉터도 같이 분리 가능 -->
+    <!-- <logger name="com.example.planmate.common.log" level="INFO" additivity="false">
+           <appender-ref ref="ACCESS_FILE"/>
+         </logger> -->
+</configuration>

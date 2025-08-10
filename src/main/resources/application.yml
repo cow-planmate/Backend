@@ -38,9 +38,14 @@ spring:
 
 logging:
   level:
-    org:
-      hibernate:
-        SQL: warn
+    org.springframework: WARN
+    org.hibernate: WARN
+    org.apache.catalina: WARN
+    org.springframework.data: WARN
+    com.example.planmate: DEBUG             # 우리 코드만 디버그
+  file:
+    name: ${LOG_PATH:logs}/app.log  # 환경변수로 바꿀 수 있음(기본 logs/)
+
 
 server:
   servlet:

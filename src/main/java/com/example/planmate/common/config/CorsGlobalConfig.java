@@ -1,7 +1,9 @@
 package com.example.planmate.common.config;
 
+import com.example.planmate.common.log.AccessLogInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
@@ -18,5 +20,12 @@ public class CorsGlobalConfig implements WebMvcConfigurer {
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")
                 .allowCredentials(true);
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new AccessLogInterceptor())
+                .addPathPatterns("/**") // 모든 요청
+                .excludePathPatterns("/static/**", "/favicon.ico");
     }
 }

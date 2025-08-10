@@ -87,7 +87,6 @@ public class WebSocketPlanService {
         TimeTablePlaceBlock timeTablePlaceBlock = TimeTablePlaceBlock.builder()
                 .timeTable(timetable)
                 .placeName(timetablePlaceBlockVO.getPlaceName())
-                .placeTheme(timetablePlaceBlockVO.getPlaceTheme())
                 .placeRating(timetablePlaceBlockVO.getPlaceRating())
                 .placeAddress(timetablePlaceBlockVO.getPlaceAddress())
                 .placeLink(timetablePlaceBlockVO.getPlaceLink())
@@ -129,9 +128,7 @@ public class WebSocketPlanService {
         if (timetablePlaceBlockVO.getPlaceName() != null) {
             timetablePlaceBlock.setPlaceName(timetablePlaceBlockVO.getPlaceName());
         }
-        if (timetablePlaceBlockVO.getPlaceTheme() != null) {
-            timetablePlaceBlock.setPlaceTheme(timetablePlaceBlockVO.getPlaceTheme());
-        }
+        
         if (timetablePlaceBlockVO.getPlaceRating() != null) {
             timetablePlaceBlock.setPlaceRating(timetablePlaceBlockVO.getPlaceRating());
         }
