@@ -11,6 +11,7 @@ import java.time.LocalTime;
 @NoArgsConstructor
 public class PlaceBlockVO {
     private int blockId;
+    private int timeTableId;
     private int placeCategory;
     private String placeName;
     private String placeTheme;

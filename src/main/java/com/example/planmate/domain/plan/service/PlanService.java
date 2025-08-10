@@ -133,6 +133,7 @@ public class PlanService {
                 for (TimeTablePlaceBlock timeTablePlaceBlock1 : timeTablePlaceBlock) {
                     response.addPlaceBlock(
                             timeTablePlaceBlock1.getBlockId(),
+                            timeTablePlaceBlock1.getTimeTable().getTimeTableId(),
                             timeTablePlaceBlock1.getPlaceCategory().getPlaceCategoryId(),
                             timeTablePlaceBlock1.getPlaceName(),
                             timeTablePlaceBlock1.getPlaceTheme(),
@@ -339,6 +340,7 @@ public class PlanService {
             for (TimeTablePlaceBlock timeTablePlaceBlock1 : timeTablePlaceBlock) {
                 response.addPlaceBlock(timeTablePlaceBlock1.getBlockId(),
                         timeTablePlaceBlock1.getPlaceCategory().getPlaceCategoryId(),
+                        timeTablePlaceBlock1.getTimeTable().getTimeTableId(),
                         timeTablePlaceBlock1.getPlaceName(),
                         timeTablePlaceBlock1.getPlaceTheme(),
                         timeTablePlaceBlock1.getPlaceRating(),
