@@ -200,6 +200,7 @@ public class RedisService {
         block.setBlockId(tempId);
         timeTablePlaceBlockRedis.opsForValue().set(TIMETABLEPLACEBLOCK_PREFIX + block.getBlockId(), block);
         List<Integer> timeTableBlockIds = timeTableToTimeTablePlaceBlockRedis.opsForValue().get(TIMETABLETOTIMETABLEPLACEBLOCK_PREFIX + timeTableId);
+        if(timeTableBlockIds==null) timeTableBlockIds = new ArrayList<>();
         timeTableBlockIds.add(block.getBlockId());
         timeTableToTimeTablePlaceBlockRedis.opsForValue().set(TIMETABLETOTIMETABLEPLACEBLOCK_PREFIX + timeTableId, timeTableBlockIds);
         return tempId;

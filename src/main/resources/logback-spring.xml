@@ -24,17 +24,30 @@
         <encoder><pattern>${SERVER_PATTERN}</pattern></encoder>
     </appender>
 
-    <!-- 접근 로그 파일 (인터셉터 전용) -->
-    <appender name="ACCESS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_DIR}/access.log</file>
+    <!-- API 접근 로그 파일 -->
+    <appender name="API_ACCESS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/access-api.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_DIR}/access.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${LOG_DIR}/access-api.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>100MB</maxFileSize>
             <maxHistory>14</maxHistory>
             <totalSizeCap>5GB</totalSizeCap>
         </rollingPolicy>
         <encoder><pattern>${ACCESS_PATTERN}</pattern></encoder>
     </appender>
+
+    <!-- WS 접근 로그 파일 -->
+    <appender name="WS_ACCESS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/access-ws.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/access-ws.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>14</maxHistory>
+            <totalSizeCap>5GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder><pattern>${ACCESS_PATTERN}</pattern></encoder>
+    </appender>
+
 
     <!-- ROOT: 서버/프레임워크 로그는 여기로 -->
     <root level="INFO">
@@ -51,10 +64,11 @@
     <!-- 접근 로그 전용 로거: 인터셉터 클래스/패키지 지정 -->
     <!-- additivity=false: ROOT로 전파 금지 → server.log에 안 섞임 -->
     <logger name="com.example.planmate.common.log.AccessLogInterceptor" level="INFO" additivity="false">
-        <appender-ref ref="ACCESS_FILE"/>
+        <appender-ref ref="API_ACCESS_FILE"/>
     </logger>
-    <!-- 패키지 단위로 쓰면 WebSocket용 채널인터셉터도 같이 분리 가능 -->
-    <!-- <logger name="com.example.planmate.common.log" level="INFO" additivity="false">
-           <appender-ref ref="ACCESS_FILE"/>
-         </logger> -->
+
+    <!-- WsAccessLogInterceptor의 실제 FQCN에 맞춰 name을 지정 -->
+    <logger name="com.example.planmate.common.log.ws.WsAccessLogInterceptor" level="INFO" additivity="false">
+        <appender-ref ref="WS_ACCESS_FILE"/>
+    </logger>
 </configuration>
