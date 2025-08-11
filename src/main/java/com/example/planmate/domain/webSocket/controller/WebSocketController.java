@@ -17,43 +17,57 @@ public class WebSocketController {
     @MessageMapping("/plan/{planId}/update/plan")
     @SendTo("/topic/plan/{planId}/update/plan")
     public WPlanResponse updatePlan(@DestinationVariable int planId, @Payload WPlanRequest request) {
-        return webSocketPlanService.updatePlan(planId, request);
+        WPlanResponse response = webSocketPlanService.updatePlan(planId, request);
+        response.setEventId(request.getEventId() == null ? "" : request.getEventId());
+        return response;
     }
 
     @MessageMapping("/plan/{planId}/create/timetable")
     @SendTo("/topic/plan/{planId}/create/timetable")
     public WTimetableResponse createTimetable(@DestinationVariable int planId, @Payload WTimetableRequest request) {
-        return webSocketPlanService.createTimetable(planId, request);
+        WTimetableResponse response = webSocketPlanService.createTimetable(planId, request);
+        response.setEventId(request.getEventId() == null ? "" : request.getEventId());
+        return response;
     }
 
     @MessageMapping("/plan/{planId}/update/timetable")
     @SendTo("/topic/plan/{planId}/update/timetable")
     public WTimetableResponse updateTimetable(@DestinationVariable int planId, @Payload WTimetableRequest request) {
-        return webSocketPlanService.updateTimetable(planId, request);
+        WTimetableResponse response = webSocketPlanService.updateTimetable(planId, request);
+        response.setEventId(request.getEventId() == null ? "" : request.getEventId());
+        return response;
     }
 
     @MessageMapping("/plan/{planId}/delete/timetable")
     @SendTo("/topic/plan/{planId}/delete/timetable")
     public WTimetableResponse deleteTimetable(@DestinationVariable int planId, @Payload WTimetableRequest request) {
-        return webSocketPlanService.deleteTimetable(planId, request);
+        WTimetableResponse response = webSocketPlanService.deleteTimetable(planId, request);
+        response.setEventId(request.getEventId() == null ? "" : request.getEventId());
+        return response;
     }
 
     @MessageMapping("/plan/{planId}/create/timetableplaceblock")
     @SendTo("/topic/plan/{planId}/create/timetableplaceblock")
     public WTimeTablePlaceBlockResponse createTimeTablePlaceBlock(@DestinationVariable int planId, @Payload WTimeTablePlaceBlockRequest request) {
-        return webSocketPlanService.createTimetablePlaceBlock(request);
+        WTimeTablePlaceBlockResponse response = webSocketPlanService.createTimetablePlaceBlock(request);
+        response.setEventId(request.getEventId() == null ? "" : request.getEventId());
+        return response;
     }
 
     @MessageMapping("/plan/{planId}/update/timetableplaceblock")
     @SendTo("/topic/plan/{planId}/update/timetableplaceblock")
     public WTimeTablePlaceBlockResponse updateTimeTablePlaceBlock(@DestinationVariable int planId, @Payload WTimeTablePlaceBlockRequest request) {
-        return webSocketPlanService.updateTimetablePlaceBlock(request);
+        WTimeTablePlaceBlockResponse response = webSocketPlanService.updateTimetablePlaceBlock(request);
+        response.setEventId(request.getEventId() == null ? "" : request.getEventId());
+        return response;
     }
 
     @MessageMapping("/plan/{planId}/delete/timetableplaceblock")
     @SendTo("/topic/plan/{planId}/delete/timetableplaceblock")
     public WTimeTablePlaceBlockResponse deleteTimeTablePlaceBlock(@DestinationVariable int planId, @Payload WTimeTablePlaceBlockRequest request) {
-        return webSocketPlanService.deleteTimetablePlaceBlock(request);
+        WTimeTablePlaceBlockResponse response = webSocketPlanService.deleteTimetablePlaceBlock(request);
+        response.setEventId(request.getEventId() == null ? "" : request.getEventId());
+        return response;
     }
 
 

@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class WPlanRequest{
+public class WPlanRequest extends WResponse {
     private String planName;
     private Integer travelId;
     private String departure;

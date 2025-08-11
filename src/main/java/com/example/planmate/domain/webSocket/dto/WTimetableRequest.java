@@ -8,6 +8,6 @@ import java.util.List;
 
 @Getter
 @Setter
-public class WTimetableRequest{
+public class WTimetableRequest extends WRequest {
     private List<TimetableVO> timetableVOs;
 }

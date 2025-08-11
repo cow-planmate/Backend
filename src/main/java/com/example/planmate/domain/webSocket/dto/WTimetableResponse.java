@@ -10,7 +10,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class WTimetableResponse{
+public class WTimetableResponse extends WResponse {
     private List<TimetableVO> timetableVOs;
     public WTimetableResponse() {
         timetableVOs = new ArrayList<>();

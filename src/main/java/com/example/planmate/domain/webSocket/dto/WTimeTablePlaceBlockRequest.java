@@ -6,6 +6,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class WTimeTablePlaceBlockRequest{
+public class WTimeTablePlaceBlockRequest extends WRequest {
     private TimetablePlaceBlockVO timetablePlaceBlockVO;
 }
