@@ -15,18 +15,6 @@ import java.io.IOException;
 public class CollaborationRequestController {
     private final CollaborationRequestService collaborationRequestService;
 
-    @PostMapping("/{planId}/invite")
-    public ResponseEntity<InviteUserToPlanResponse> inviteUserToPlan(Authentication authentication, @PathVariable("planId") int planId, @RequestBody InviteUserToPlanRequest request) throws IOException {
-        int userId = Integer.parseInt(authentication.getName());
-        InviteUserToPlanResponse response = collaborationRequestService.inviteUserToPlan(userId, planId, request.getReceiverNickname());
-        return ResponseEntity.ok(response);
-    }
-    @PostMapping("/{planId}/request-access")
-    public ResponseEntity<RequestEditAccessResponse> requestEditAccess(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
-        int userId = Integer.parseInt(authentication.getName());
-        RequestEditAccessResponse response = collaborationRequestService.requestEditAccess(userId, planId);
-        return ResponseEntity.ok(response);
-    }
     @PostMapping("/{collaborationRequestId}/accept")
     public ResponseEntity<AcceptRequestResponse> acceptRequest(Authentication authentication, @PathVariable("collaborationRequestId") int collaborationRequestId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());

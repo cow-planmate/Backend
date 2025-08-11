@@ -1,5 +1,9 @@
 package com.example.planmate.domain.plan.controller;
 
+import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanRequest;
+import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanResponse;
+import com.example.planmate.domain.collaborationRequest.dto.RequestEditAccessResponse;
+import com.example.planmate.domain.collaborationRequest.service.CollaborationRequestService;
 import com.example.planmate.domain.plan.dto.*;
 import com.example.planmate.domain.plan.service.PlanService;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +19,7 @@ import java.nio.file.AccessDeniedException;
 @RequestMapping("/api/plan")
 public class PlanController {
     private final PlanService planService;
+    private final CollaborationRequestService collaborationRequestService;
 
     @PostMapping("")
     public ResponseEntity<MakePlanResponse> makePlan(Authentication authentication, @RequestBody MakePlanRequest makePlanRequest) {
@@ -102,6 +107,18 @@ public class PlanController {
     public ResponseEntity<GetEditorsResponse> getEditors(Authentication authentication, @PathVariable("planId") int planId) throws AccessDeniedException {
         int userId = Integer.parseInt(authentication.getName());
         GetEditorsResponse response = planService.getEditors(userId, planId);
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/{planId}/invite")
+    public ResponseEntity<InviteUserToPlanResponse> inviteUserToPlan(Authentication authentication, @PathVariable("planId") int planId, @RequestBody InviteUserToPlanRequest request) throws IOException {
+        int userId = Integer.parseInt(authentication.getName());
+        InviteUserToPlanResponse response = collaborationRequestService.inviteUserToPlan(userId, planId, request.getReceiverNickname());
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/{planId}/request-access")
+    public ResponseEntity<RequestEditAccessResponse> requestEditAccess(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
+        int userId = Integer.parseInt(authentication.getName());
+        RequestEditAccessResponse response = collaborationRequestService.requestEditAccess(userId, planId);
         return ResponseEntity.ok(response);
     }
 
