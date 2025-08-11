@@ -52,12 +52,16 @@ public class CollaborationRequestService {
                 collaborationRequestRepository.findBySenderAndReceiverAndPlanAndTypeAndStatus(
                         sender, receiver, plan, CollaborationRequestType.INVITE, CollaborationRequestStatus.PENDING
                 );
-
         if (existingRequest.isPresent()) {
             throw new IllegalStateException("이미 초대한 유저입니다.");
         }
 
-        // 4. CollaborationRequest 생성
+        // 4. 본인이 본인에게 요청하지 못하도록 막기
+        if (receiver.getUserId().equals(senderId)) {
+            throw new IllegalArgumentException("자신에게는 초대를 보낼 수 없습니다.");
+        }
+
+        // 5. CollaborationRequest 생성
         CollaborationRequest request = CollaborationRequest.builder()
                 .sender(sender)
                 .receiver(receiver)
