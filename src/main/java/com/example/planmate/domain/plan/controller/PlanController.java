@@ -97,7 +97,7 @@ public class PlanController {
         ResignEditorAccessResponse response = planService.resignEditorAccess(userId, planId);
         return ResponseEntity.ok(response);
     }
-    @DeleteMapping("/{planId}/editor/{targetUserId}")
+    @DeleteMapping("/{planId}/editors/{targetUserId}")
     public ResponseEntity<RemoveEditorAccessByOwnerResponse> removeEditorAccessByOwner(Authentication authentication, @PathVariable("planId") int planId, @PathVariable("targetUserId") int targetUserId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
         RemoveEditorAccessByOwnerResponse response = planService.removeEditorAccessByOwner(userId, planId, targetUserId);
