@@ -72,12 +72,11 @@ public class RedisSyncService {
         for (Map.Entry<Integer, TimeTable> entry : tempIdToEntity.entrySet()) {
             int tempId = entry.getKey();
             TimeTable oldT = entry.getValue();
-            for (TimeTable saved : savedTimetables) {
-                if (saved != null && saved.equals(oldT)) {
-                    changeTimeTable.put(tempId, saved);
-                } else if (saved != null) {
-                    notChangeTimeTable.put(tempId, saved);
-                }
+            if(tempId >= 0){
+                notChangeTimeTable.put(tempId, oldT);
+            }
+            else{
+                changeTimeTable.put(tempId, oldT);
             }
         }
 

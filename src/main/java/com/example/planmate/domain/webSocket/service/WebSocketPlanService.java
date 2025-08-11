@@ -123,6 +123,9 @@ public class WebSocketPlanService {
     public WTimeTablePlaceBlockResponse updateTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
         TimetablePlaceBlockVO timetablePlaceBlockVO = request.getTimetablePlaceBlockVO();
+        if(timetablePlaceBlockVO.getTimetablePlaceBlockId() == null) {
+            return response;
+        }
         TimeTablePlaceBlock timetablePlaceBlock = redisService.getTimeTablePlaceBlock(timetablePlaceBlockVO.getTimetablePlaceBlockId());
         if (timetablePlaceBlockVO.getPlaceName() != null) {
             timetablePlaceBlock.setPlaceName(timetablePlaceBlockVO.getPlaceName());
