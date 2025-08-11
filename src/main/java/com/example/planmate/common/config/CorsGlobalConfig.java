@@ -22,7 +22,8 @@ public class CorsGlobalConfig implements WebMvcConfigurer {
                         "http://localhost:63771",
                         "http://localhost:5173",
                         "https://www.planmate.site",
-                        "https://planmate.site")
+                        "https://planmate.site",
+                        "https://frontendplanmate-8sh5ish0j-donghyeoks-projects-dd8e94be.vercel.app/")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")
                 .allowCredentials(true);

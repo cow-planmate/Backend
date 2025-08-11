@@ -209,8 +209,10 @@ public class RedisService {
     public void deleteTimeTablePlaceBlock(int timeTableId, int blockId) {
         timeTablePlaceBlockRedis.delete(TIMETABLEPLACEBLOCK_PREFIX +blockId);
         List<Integer> timeTablePlaceBlockIds = timeTableToTimeTablePlaceBlockRedis.opsForValue().get(TIMETABLETOTIMETABLEPLACEBLOCK_PREFIX + timeTableId);
-        timeTablePlaceBlockIds.remove(Integer.valueOf(blockId));
-        timeTableToTimeTablePlaceBlockRedis.opsForValue().set(TIMETABLETOTIMETABLEPLACEBLOCK_PREFIX + timeTableId, timeTablePlaceBlockIds);
+        if(timeTablePlaceBlockIds != null) {
+            timeTablePlaceBlockIds.remove(Integer.valueOf(blockId));
+            timeTableToTimeTablePlaceBlockRedis.opsForValue().set(TIMETABLETOTIMETABLEPLACEBLOCK_PREFIX + timeTableId, timeTablePlaceBlockIds);
+        }
     }
 
     public void updateTimeTablePlaceBlock(TimeTablePlaceBlock block) {
