@@ -156,6 +156,12 @@ public class PlanService {
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
         boolean exists = planRepository.existsByUser_UserIdAndPlanName(userId, name);
 
+        if(userId != plan.getUser().getUserId()){
+            response.setEdited(false);
+            response.setMessage("이름 변경 권한이 없습니다.");
+            return response;
+        }
+
         if(exists && !plan.getPlanName().equals(name)) {
             response.setEdited(false);
             response.setMessage("이미 동일한 이름의 일정이 존재합니다.");
