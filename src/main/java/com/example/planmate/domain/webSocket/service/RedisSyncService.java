@@ -39,7 +39,6 @@ public class RedisSyncService {
             }
         }
 
-        List<TimeTable> savedTimetables = new ArrayList<>();
         List<TimeTable> newTimetables = new ArrayList<>();
         List<TimeTable> oldTimetables = timeTableRepository.findByPlanPlanId(planId);
 
@@ -52,7 +51,6 @@ public class RedisSyncService {
                     timeTable.setDate(t.getDate());
                     timeTable.setTimeTableEndTime(t.getTimeTableEndTime());
                     timeTable.setTimeTableStartTime(t.getTimeTableStartTime());
-                    savedTimetables.add(timeTable);
                     oldTimetables.removeIf(ot ->
                             ot.getTimeTableId() != null && ot.getTimeTableId().equals(timeTable.getTimeTableId())
                     );
@@ -61,7 +59,6 @@ public class RedisSyncService {
             //새로운 거
             else{
                 newTimetables.add(t);
-                savedTimetables.add(t);
             }
             timeTableRepository.saveAll(newTimetables);
         }
@@ -88,9 +85,11 @@ public class RedisSyncService {
             List<TimeTablePlaceBlock> blocks = redisService.deleteTimeTablePlaceBlockByTimeTableId(tempId);
             if(blocks != null && !blocks.isEmpty()) {
                 for (TimeTablePlaceBlock block : blocks) {
-                    block.setTimeTable(realTimetable);
-                    block.setBlockId(null);
-                    newBlocks.add(block);
+                    if(block != null) {
+                        block.setTimeTable(realTimetable);
+                        block.setBlockId(null);
+                        newBlocks.add(block);
+                    }
                 }
                 redisService.deleteRedisTimeTable(tempId);
             }
