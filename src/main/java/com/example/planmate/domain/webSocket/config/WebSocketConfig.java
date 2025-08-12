@@ -30,7 +30,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         "http://localhost:5173",
                         "https://www.planmate.site",
                         "https://planmate.site")
-                .addInterceptors(handshakeInterceptor)
+//                .addInterceptors(handshakeInterceptor)
                 .withSockJS();
     }
 
