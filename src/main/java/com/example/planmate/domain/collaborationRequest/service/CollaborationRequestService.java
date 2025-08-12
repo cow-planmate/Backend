@@ -81,7 +81,7 @@ public class CollaborationRequestService {
         RequestEditAccessResponse response = new RequestEditAccessResponse();
 
         // 1. 사용자와 플랜 유효성 검증
-        Plan plan = planAccessValidator.validateUserHasAccessToPlan(senderId, planId);
+        Plan plan = planRepository.findById(planId).orElseThrow(() -> new IllegalArgumentException("일정이 존재하지 않습니다."));
 
         // 2. 유저 조회
         User sender = userRepository.findById(senderId)
