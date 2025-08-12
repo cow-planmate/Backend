@@ -17,6 +17,7 @@ import com.example.planmate.domain.user.repository.UserRepository;
 import com.example.planmate.domain.webSocket.service.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -365,11 +366,11 @@ public class PlanService {
                 .orElseThrow(() -> new IllegalArgumentException("플랜이 존재하지 않습니다."));
 
         if (!plan.getUser().getUserId().equals(ownerId)) {
-            throw new SecurityException("플랜 소유자만 편집 권한을 삭제할 수 있습니다.");
+            throw new AccessDeniedException("플랜 소유자만 편집 권한을 삭제할 수 있습니다.");
         }
 
         PlanEditor planEditor = planEditorRepository.findByUser_UserIdAndPlan_PlanId(targetUserId, planId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 편집 권한이 존재하지 않습니다."));
+                .orElseThrow(() -> new AccessDeniedException("해당 편집 권한이 존재하지 않습니다."));
 
         planEditorRepository.delete(planEditor);
 
@@ -395,7 +396,7 @@ public class PlanService {
 
         if (!planRepository.existsByPlanIdAndUserUserId(planId, userId) &&
                 !planEditorRepository.existsByUser_UserIdAndPlan_PlanId(userId, planId)) {
-            throw new IllegalArgumentException("해당 일정에 대한 접근 권한이 없습니다.");
+            throw new AccessDeniedException("해당 일정에 대한 접근 권한이 없습니다.");
         }
 
         List<PlanEditor> editors = planEditorRepository.findByPlan_PlanId(planId);
