@@ -82,7 +82,5 @@ public class JwtTokenProvider {
             return false;
         }
     }
-
-
 }
 

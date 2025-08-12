@@ -1,4 +1,4 @@
-package com.example.planmate.domain.webSocket.config;
+package com.example.planmate.common.config;
 
 import com.example.planmate.domain.plan.entity.PlaceCategory;
 import com.example.planmate.domain.plan.entity.Plan;
