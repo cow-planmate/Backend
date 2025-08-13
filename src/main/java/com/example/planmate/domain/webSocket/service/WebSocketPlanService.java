@@ -167,9 +167,11 @@ public class WebSocketPlanService {
         return response;
     }
     public WTimeTablePlaceBlockResponse deleteTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {
-        redisService.deleteTimeTablePlaceBlock(request.getTimetablePlaceBlockVO().getTimetableId(), request.getTimetablePlaceBlockVO().getTimetablePlaceBlockId());
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
-        response.setTimetablePlaceBlockVO(request.getTimetablePlaceBlockVO());
+        if(request.getTimetablePlaceBlockVO()!=null) {
+            redisService.deleteTimeTablePlaceBlock(request.getTimetablePlaceBlockVO().getTimetableId(), request.getTimetablePlaceBlockVO().getTimetablePlaceBlockId());
+            response.setTimetablePlaceBlockVO(request.getTimetablePlaceBlockVO());
+        }
         return response;
     }
 
