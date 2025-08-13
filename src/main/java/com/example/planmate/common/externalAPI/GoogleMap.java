@@ -144,7 +144,7 @@ public class GoogleMap {
     }
 
     public List<SearchPlaceVO> getSearchPlace(String query) throws IOException {
-        StringBuilder sb = searchGoogle(query);
+        StringBuilder sb = searchGoogleOrWithJackson(query, null, null, null, null, null, 0.0, 0);
         List<SearchPlaceVO> places = new ArrayList<>();
 
         ObjectMapper objectMapper = new ObjectMapper();
