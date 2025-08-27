@@ -10,6 +10,6 @@ public class LoginResponse extends CommonResponse {
     private boolean loginSuccess;
     private int userId;
     private String nickname;
-    private String token;
-
+    private String accessToken;
+    private String refreshToken;
 }

@@ -85,7 +85,7 @@ public class EmailVerificationService {
         }
         verificationCache.invalidate(cacheKey);
 
-        String token = jwtTokenProvider.generateToken(email, purpose);
+        String token = jwtTokenProvider.generateEmailToken(email, purpose);
         response.setMessage("Verification completed successfully");
         response.setEmailVerified(true);
         response.setToken(token);

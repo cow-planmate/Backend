@@ -1,14 +1,13 @@
 package com.example.planmate.domain.webSocket.service;
 
-import com.example.planmate.domain.plan.entity.*;
-import com.example.planmate.domain.travel.entity.Travel;
-import com.example.planmate.domain.webSocket.dto.*;
-import com.example.planmate.domain.plan.repository.PlaceCategoryRepository;
-import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
-import com.example.planmate.domain.plan.repository.TimeTableRepository;
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
-import jakarta.persistence.EntityManager;
+import com.example.planmate.domain.plan.entity.Plan;
+import com.example.planmate.domain.plan.entity.TimeTable;
+import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
+import com.example.planmate.domain.plan.entity.TransportationCategory;
+import com.example.planmate.domain.travel.entity.Travel;
+import com.example.planmate.domain.webSocket.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -18,11 +17,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class WebSocketPlanService {
-    private final TimeTableRepository timeTableRepository;
-    private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
-    private final PlaceCategoryRepository placeCategoryRepository;
     private final RedisService redisService;
-    private final EntityManager entityManager;
 
     public WPlanResponse updatePlan(int planId, WPlanRequest request) {
         WPlanResponse response = new WPlanResponse();

@@ -1,11 +1,14 @@
 package com.example.planmate.common.auth;
 
 import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
+import com.example.planmate.domain.webSocket.service.RedisService;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -13,38 +16,63 @@ import java.security.Key;
 import java.util.Date;
 
 @Component
+@RequiredArgsConstructor
 public class JwtTokenProvider {
 
-    private final Key key;
-    private long authTokenExpirationMs = 86_400_000;
+    private Key accessKey;
+    private Key refreshKey;
+    private final long accessTtlMillis = 15 * 60 * 1000;
+    private final long refreshTtlMillis = 14L * 24 * 60 * 60 * 1000;
     private long emailVerificationTokenExpirationMs = 600_000;
 
-    public JwtTokenProvider(@Value("${jwt.secret}") String secret) {
-        this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+    private final RedisService redisService;
+
+    @Value("${jwt.access secret}")
+    private String accessSecret;
+    @Value("${jwt.refresh secret}")
+    private String refreshSecret;
+
+    @PostConstruct
+    void init() {
+        this.accessKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(accessSecret));
+        this.refreshKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(refreshSecret));
     }
 
     // 토큰 생성
-    public String generateToken(int userId) {
+    public String generateAccessToken(int userId) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + authTokenExpirationMs); // 1일
+        Date expiryDate = new Date(now.getTime() + accessTtlMillis);
 
         return Jwts.builder()
+                .claim("typ", "access")
                 .setSubject(Integer.toString(userId))
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(key, SignatureAlgorithm.HS256)
+                .signWith(accessKey, SignatureAlgorithm.HS256)
                 .compact();
     }
-    public String generateToken(String email, EmailVerificationPurpose purpose) {
+    public String generateRefreshToken(int userId) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + emailVerificationTokenExpirationMs); // 10분, 인증코드용 짧은 만료시간
+        Date expiryDate = new Date(now.getTime() + refreshTtlMillis);
+        String token = Jwts.builder()
+                .claim("typ", "refresh")
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(refreshKey, SignatureAlgorithm.HS256)
+                .compact();
+        redisService.registerRefreshToken(token, userId);
+        return token;
+    }
+    public String generateEmailToken(String email, EmailVerificationPurpose purpose) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + emailVerificationTokenExpirationMs);
 
         return Jwts.builder()
                 .setSubject(email)
                 .claim("purpose", purpose.name())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(key, SignatureAlgorithm.HS256)
+                .signWith(accessKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -52,7 +80,7 @@ public class JwtTokenProvider {
     // 토큰에서 정보 추출
     public String getSubject(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(key)
+                .setSigningKey(accessKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
@@ -61,7 +89,7 @@ public class JwtTokenProvider {
 
     public EmailVerificationPurpose getPurpose(String token) {
         String purposeStr = Jwts.parserBuilder()
-                .setSigningKey(key)
+                .setSigningKey(accessKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
@@ -73,7 +101,7 @@ public class JwtTokenProvider {
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
-                    .setSigningKey(key)
+                    .setSigningKey(accessKey)
                     .build()
                     .parseClaimsJws(token);
             return true;

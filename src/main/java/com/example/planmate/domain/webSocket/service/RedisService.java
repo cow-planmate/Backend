@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -44,6 +45,9 @@ public class RedisService {
     private final RedisTemplate<String, PlaceCategory> placeCategoryRedis;
     private final String PLACECATEGORY_PREFIX = "PLACECATEGORY";
     private final PlaceCategoryRepository placeCategoryRepository;
+
+    private final String REFRESHTOKEN_PREFIX = "REFRESHTOKEN";
+    private final RedisTemplate<String, Integer> refreshTokenRedis;
 
     @PostConstruct
     public void init() {
@@ -226,4 +230,18 @@ public class RedisService {
     }
 
     public PlaceCategory getPlaceCategory(int placeCategoryId) {return  placeCategoryRedis.opsForValue().get(PLACECATEGORY_PREFIX+ placeCategoryId);}
+
+    public void registerRefreshToken(String token, int userId) {
+        long ttl = 14L; // 14일
+        refreshTokenRedis.opsForValue().set(
+                REFRESHTOKEN_PREFIX + token,
+                userId,
+                ttl,
+                TimeUnit.DAYS
+        );
+    }
+
+    public Integer validateRefreshToken(String refreshToken) {
+        return refreshTokenRedis.opsForValue().get(REFRESHTOKEN_PREFIX + refreshToken);
+    }
 }
