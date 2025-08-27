@@ -1,6 +1,8 @@
 package com.example.planmate.common.valueObject;
 
+import com.example.planmate.domain.webSocket.dto.LocalTime24Deserializer;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,6 +22,7 @@ public class TimetablePlaceBlockVO {
     private String placeLink;
     private String date;
     private LocalTime startTime;
+    @JsonDeserialize(using = LocalTime24Deserializer.class)
     private LocalTime endTime;
     @JsonProperty("xLocation")
     private Double xLocation;
