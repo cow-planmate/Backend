@@ -70,5 +70,14 @@ public class WebSocketController {
         return response;
     }
 
+    @MessageMapping("/plan/{planId}/update/presence")
+    @SendTo("/topic/plan/{planId}/update/presence")
+    public WPresencesResponse updatePresence(@DestinationVariable int planId, @Payload WPresencesRequest request) {
+        WPresencesResponse response = webSocketPlanService.updatePresence(planId, request);
+        response.setUserDayIndexVOs(request.getUserDayIndexVO());
+
+        return response;
+    }
+
 
 }

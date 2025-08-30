@@ -5,6 +5,7 @@ import com.example.planmate.domain.register.dto.RegisterRequest;
 import com.example.planmate.domain.register.dto.RegisterResponse;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
+import com.example.planmate.domain.webSocket.service.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ public class RegisterService{
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RedisService redisService;
 
     public RegisterResponse register(String email, RegisterRequest request) {
         RegisterResponse response = new RegisterResponse();
@@ -35,6 +37,7 @@ public class RegisterService{
                 .build();
 
         userRepository.save(user);
+        redisService.addNickname(user.getUserId(), user.getNickname());
         response.setMessage("User registered successfully");
         response.setUserId(user.getUserId());
         return response;

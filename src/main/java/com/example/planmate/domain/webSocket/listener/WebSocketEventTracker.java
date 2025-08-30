@@ -1,65 +1,64 @@
 package com.example.planmate.domain.webSocket.listener;
 
+import com.example.planmate.domain.webSocket.dto.WPresenceResponse;
+import com.example.planmate.domain.webSocket.enums.EAction;
 import com.example.planmate.domain.webSocket.service.RedisService;
 import com.example.planmate.domain.webSocket.service.RedisSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
-import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
 @Component
 @RequiredArgsConstructor
 public class WebSocketEventTracker {
 
-    private final RedisTemplate<String, String> planTrackerRedis;
-    private final String PLANTRACKER_PREFIX = "PLANTRACKER";
-    private final RedisTemplate<String, Integer> sessionTrackerRedis;
-    private final String SESSIONTRACKER_PREFIX = "SESSIONTRACKER";
+
+    private final String USER_ID = "userId";
+
     private final RedisService redisService;
     private final RedisSyncService redisSyncService;
-
+    private final SimpMessagingTemplate messaging;
 
     @EventListener
     public void handleSubscribeEvent(SessionSubscribeEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        String sessionId = accessor.getSessionId();
+        int userId = (int) accessor.getSessionAttributes().get(USER_ID);
         String destination = accessor.getDestination();
         int planId = Integer.parseInt(destination.split("/")[3]);
-        if(!planTrackerRedis.hasKey(PLANTRACKER_PREFIX + planId)){
+        if(!redisService.hasPlanTracker(planId)) {
             redisService.registerPlan(planId);
         }
-        planTrackerRedis.opsForSet().add(PLANTRACKER_PREFIX + planId, sessionId);
-        sessionTrackerRedis.opsForValue().set(SESSIONTRACKER_PREFIX + sessionId, planId);
-    }
-
-    @EventListener
-    public void handleUnsubscribeEvent(SessionUnsubscribeEvent event) {
-
+        redisService.putPlanTracker(planId, userId, 0);
+        redisService.registerNickname(userId);
+        broadcastPresence(planId, userId, EAction.CREATE);
     }
 
     @EventListener
     public void handleDisconnectEvent(SessionDisconnectEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        String sessionId = accessor.getSessionId();
-        removeSessionFromAllTopics(sessionId);
+        int userId = (int) accessor.getSessionAttributes().get(USER_ID);
+        String destination = accessor.getDestination();
+        int planId = Integer.parseInt(destination.split("/")[3]);
+        removeSessionFromAllTopics(planId, userId);
     }
 
-    private void removeSessionFromAllTopics(String sessionId) {
-        int planId = sessionTrackerRedis.opsForValue().get(SESSIONTRACKER_PREFIX + sessionId);
-        planTrackerRedis.opsForSet().remove(PLANTRACKER_PREFIX + planId, sessionId);
-        sessionTrackerRedis.delete(SESSIONTRACKER_PREFIX + sessionId);
-        if(!planTrackerRedis.hasKey(PLANTRACKER_PREFIX + planId)){
+    private void removeSessionFromAllTopics(int planId, int userId) {
+        redisService.removePlanTracker(planId, userId);
+        redisService.removeNickname(userId);
+        if(!redisService.hasPlanTracker(planId)){
             redisSyncService.syncPlanToDatabase(planId);
         }
+        broadcastPresence(planId, userId, EAction.DELETE);
     }
 
-    public int getSubscriberCount(int planId) {
-        Long size = planTrackerRedis.opsForSet().size(PLANTRACKER_PREFIX + planId);
-        return size != null ? size.intValue() : 0;
+    private void broadcastPresence(int planId, int userId, EAction action) {
+        String nickname = redisService.getNicknameByUserId(userId);
+        WPresenceResponse response = new WPresenceResponse(nickname, userId);
+        messaging.convertAndSend("/topic/plan/" + planId + action.getValue() + "/presence", response);
     }
 }
 

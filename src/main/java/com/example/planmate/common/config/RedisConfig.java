@@ -110,13 +110,6 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, Integer> sessionTrackerRedis(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Integer> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        return template;
-    }
-
-    @Bean
     public RedisTemplate<String, Travel> travelRedis(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Travel> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
@@ -128,6 +121,24 @@ public class RedisConfig {
     @Bean
     public RedisTemplate<String, PlaceCategory> placeCategoryRedis(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, PlaceCategory> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, String> userIdNicknameRedis(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, Integer> nicknameUseridRedis(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Integer> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         template.afterPropertiesSet();
