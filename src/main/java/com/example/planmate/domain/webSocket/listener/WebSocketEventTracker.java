@@ -26,7 +26,8 @@ public class WebSocketEventTracker {
     @EventListener
     public void handleSubscribeEvent(SessionSubscribeEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        int userId = (int) accessor.getSessionAttributes().get(USER_ID);
+        Object v = accessor.getSessionAttributes().get(USER_ID);
+        Integer userId = Integer.valueOf(String.valueOf(v));
         String destination = accessor.getDestination();
         int planId = Integer.parseInt(destination.split("/")[3]);
         if(!redisService.hasPlanTracker(planId)) {
@@ -40,10 +41,12 @@ public class WebSocketEventTracker {
     @EventListener
     public void handleDisconnectEvent(SessionDisconnectEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        int userId = (int) accessor.getSessionAttributes().get(USER_ID);
+        Object v = accessor.getSessionAttributes().get(USER_ID);
+        Integer userId = Integer.valueOf(String.valueOf(v));
         String destination = accessor.getDestination();
         int planId = Integer.parseInt(destination.split("/")[3]);
         removeSessionFromAllTopics(planId, userId);
+
     }
 
     private void removeSessionFromAllTopics(int planId, int userId) {
