@@ -177,7 +177,7 @@ public class WebSocketPlanService {
 
     public WPresencesResponse updatePresence(int planId, WPresencesRequest request) {
         WPresencesResponse response = new WPresencesResponse();
-        redisService.putPlanTracker(planId, request.getUserDayIndexVO());
+        redisService.registerPlanTracker(planId, request.getUserDayIndexVO());
         response.setUserDayIndexVOs(request.getUserDayIndexVO());
         return response;
     }

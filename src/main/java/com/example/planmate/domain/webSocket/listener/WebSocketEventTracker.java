@@ -26,24 +26,27 @@ public class WebSocketEventTracker {
     @EventListener
     public void handleSubscribeEvent(SessionSubscribeEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        int userId = (int) accessor.getSessionAttributes().get(USER_ID);
+        Object v = accessor.getSessionAttributes().get(USER_ID);
+        Integer userId = Integer.valueOf(String.valueOf(v));
         String destination = accessor.getDestination();
         int planId = Integer.parseInt(destination.split("/")[3]);
         if(!redisService.hasPlanTracker(planId)) {
             redisService.registerPlan(planId);
         }
-        redisService.putPlanTracker(planId, userId, 0);
+        redisService.registerPlanTracker(planId, userId, 0);
         redisService.registerNickname(userId);
+        redisService.registerUserIdToPlanId(planId, userId);
         broadcastPresence(planId, userId, EAction.CREATE);
     }
 
     @EventListener
     public void handleDisconnectEvent(SessionDisconnectEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        int userId = (int) accessor.getSessionAttributes().get(USER_ID);
-        String destination = accessor.getDestination();
-        int planId = Integer.parseInt(destination.split("/")[3]);
+        Object v = accessor.getSessionAttributes().get(USER_ID);
+        Integer userId = Integer.valueOf(String.valueOf(v));
+        int planId = redisService.removeUserIdToPlanId(userId);
         removeSessionFromAllTopics(planId, userId);
+
     }
 
     private void removeSessionFromAllTopics(int planId, int userId) {

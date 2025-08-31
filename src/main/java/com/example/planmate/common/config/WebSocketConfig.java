@@ -1,6 +1,7 @@
 package com.example.planmate.common.config;
 
 import com.example.planmate.common.log.WsAccessLogInterceptor;
+import com.example.planmate.domain.webSocket.auth.JwtHandshakeInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -14,6 +15,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final WsAccessLogInterceptor wsAccessLogInterceptor;
+    private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -24,6 +26,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-plan")
+                .addInterceptors(jwtHandshakeInterceptor)
                 .setAllowedOrigins("http://localhost:3000",
                         "http://localhost:63771",
                         "http://localhost:5173",

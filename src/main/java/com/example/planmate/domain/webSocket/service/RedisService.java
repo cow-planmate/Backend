@@ -56,6 +56,9 @@ public class RedisService {
     private final RedisTemplate<String, String> planTrackerRedis;
     private final String PLANTRACKER_PREFIX = "PLANTRACKER";
 
+    private final RedisTemplate<String, Integer> userIdToPlanIdRedis;
+    private final String USERIDTOPLANID_PREFIX = "USERIDTOPLANID";
+
     @PostConstruct
     public void init() {
         List<Travel> travels = travelRepository.findAll();
@@ -239,16 +242,16 @@ public class RedisService {
 
     public String getNicknameByUserId(int userId) { return  userIdNicknameRedis.opsForValue().get(USERID_NICKNAME_PREFIX + userId); }
     public Integer getUserIdByNickname(String nickname){ return nicknameUseridRedis.opsForValue().get(NICKNAME_USERID_PREFIX + nickname); }
-    public void addNickname(int userId, String nickname) {
+    public void registerNickname(int userId, String nickname) {
         userIdNicknameRedis.opsForValue().set(USERID_NICKNAME_PREFIX + userId, nickname);
     }
     public boolean hasPlanTracker(int planId) {
         return planTrackerRedis.hasKey(PLANTRACKER_PREFIX + planId);
     }
-    public void putPlanTracker(int planId, int userId, int dayIndex) {
+    public void registerPlanTracker(int planId, int userId, int dayIndex) {
         planTrackerRedis.opsForHash().put(PLANTRACKER_PREFIX + planId, userId, dayIndex);
     }
-    public void putPlanTracker(int planId, List<UserDayIndexVO> userDayIndexVOs) {
+    public void registerPlanTracker(int planId, List<UserDayIndexVO> userDayIndexVOs) {
         for(UserDayIndexVO userDayIndexVO : userDayIndexVOs){
             int userId = getUserIdByNickname(userDayIndexVO.getNickname());
             planTrackerRedis.opsForHash().put(PLANTRACKER_PREFIX + planId, userId, userDayIndexVO.getDayIndex());
@@ -265,10 +268,18 @@ public class RedisService {
         nicknameUseridRedis.opsForValue().set(NICKNAME_USERID_PREFIX + user.getNickname(), user.getUserId());
     }
     public void removeNickname(int userId) {
-        String nickname = userIdNicknameRedis.opsForValue().get(NICKNAME_USERID_PREFIX + userId);
-        userIdNicknameRedis.delete(USERID_NICKNAME_PREFIX + userId);
+        String nickname = userIdNicknameRedis.opsForValue().getAndDelete(NICKNAME_USERID_PREFIX + userId);
         nicknameUseridRedis.delete(NICKNAME_USERID_PREFIX + nickname);
     }
 
+    public void registerUserIdToPlanId(int planId, int userId){
+        userIdToPlanIdRedis.opsForValue().set(USERIDTOPLANID_PREFIX + userId, planId);
+    }
+    public int getPlanIdByUserId(int userId){
+        return userIdToPlanIdRedis.opsForValue().get(USERIDTOPLANID_PREFIX + userId);
+    }
+    public int removeUserIdToPlanId(int userId){
+        return userIdToPlanIdRedis.opsForValue().getAndDelete(USERIDTOPLANID_PREFIX + userId);
+    }
 
 }

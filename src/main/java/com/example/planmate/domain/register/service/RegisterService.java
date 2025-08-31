@@ -37,7 +37,7 @@ public class RegisterService{
                 .build();
 
         userRepository.save(user);
-        redisService.addNickname(user.getUserId(), user.getNickname());
+        redisService.registerNickname(user.getUserId(), user.getNickname());
         response.setMessage("User registered successfully");
         response.setUserId(user.getUserId());
         return response;

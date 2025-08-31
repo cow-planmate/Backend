@@ -144,5 +144,14 @@ public class RedisConfig {
         template.afterPropertiesSet();
         return template;
     }
+
+    @Bean
+    public  RedisTemplate<String, Integer> userIdToPlanIdRedis(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Integer> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.afterPropertiesSet();
+        return template;
+    }
 }
 
