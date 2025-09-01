@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -147,6 +148,29 @@ public class RedisService {
             }
         }
     }
+    public void deleteRedisTimeTable(List<Integer> timetableIds) {
+        List<String> timetableKeys = timetableIds.stream()
+                .map(id -> TIMETABLE_PREFIX + id)
+                .toList();
+        timeTableRedis.delete(timetableKeys);
+
+        // placeBlock 삭제
+        deleteRedisTimeTableBlockByTimeTableId(timetableIds);
+    }
+
+    private void deleteRedisTimeTableBlockByTimeTableId(List<Integer> timetableIds) {
+        List<Integer> placeBlockIds = timetableIds.stream()
+                .map(id -> timeTableToTimeTablePlaceBlockRedis.opsForValue().get(id))
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .toList();
+
+        List<String> placeBlockKeys = placeBlockIds.stream()
+                .map(id -> TIMETABLE_PREFIX + id)
+                .toList();
+        timeTablePlaceBlockRedis.delete(placeBlockKeys);
+    }
+
     public void deleteTimeTable(int planId, List<TimetableVO> timeTableVOs) {
         for(TimetableVO timeTable : timeTableVOs){
             if(timeTable.getTimetableId() != null){

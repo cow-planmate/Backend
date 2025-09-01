@@ -26,10 +26,11 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
             if (token != null && jwtTokenProvider.validateToken(token)) {
                 String userId = jwtTokenProvider.getSubject(token);
                 attributes.put("userId", userId);
+                return true;
             }
-            return true;
+            return false;
         } catch (Exception e) {
-            return true;
+            return false;
         }
     }
 
