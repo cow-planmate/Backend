@@ -1,5 +1,6 @@
 package com.example.planmate.domain.webSocket.service;
 
+import com.example.planmate.common.exception.PlanNotFoundException;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
@@ -26,6 +27,9 @@ public class RedisSyncService {
 
     @Transactional
     public void syncPlanToDatabase(int planId) {
+        if(!planRepository.existsById(planId)) {
+            throw new PlanNotFoundException();
+        }
         Plan plan = redisService.getPlan(planId);
         planRepository.save(plan);
 

@@ -54,7 +54,7 @@ public class UserService {
     public MoveMypageResponse getMypageInfo(int userId) {
         MoveMypageResponse response = new MoveMypageResponse();
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("존재하지 않는 유저 ID입니다"));
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
         List<PreferredTheme> preferredThemes = new ArrayList<>(user.getPreferredThemes());
         for (PreferredTheme preferredTheme : preferredThemes) {
@@ -88,7 +88,7 @@ public class UserService {
             throw new IllegalArgumentException("나이는 0 이상의 정수여야 합니다.");
         }
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("존재하지 않는 유저 ID입니다"));
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
         user.setAge(age);
 
@@ -104,7 +104,7 @@ public class UserService {
             throw new IllegalArgumentException("gender 값은 0(남성) 또는 1(여성)이어야 합니다.");
         }
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("존재하지 않는 유저 ID입니다"));
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
         user.setGender(gender);
 
@@ -121,7 +121,7 @@ public class UserService {
             throw new IllegalArgumentException("preferredThemeCategoryId 값은 0(관광지) 또는 1(식당) 또는 2(숙소)이어야 합니다.");
         }
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("존재하지 않는 유저 ID입니다"));
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         List<PreferredTheme> preferredTourThemes = user.getPreferredThemes();
         List<PreferredTheme> newThemes = preferredThemeRepository.findAllById(preferredThemeIds);
 
@@ -142,7 +142,7 @@ public class UserService {
         ResignAccountResponse response = new ResignAccountResponse();
 
         if (!userRepository.existsById(userId)) {
-            throw new UserNotFoundException("존재하지 않는 유저 ID입니다");
+            throw new UserNotFoundException();
         }
 
         userRepository.deleteById(userId);
