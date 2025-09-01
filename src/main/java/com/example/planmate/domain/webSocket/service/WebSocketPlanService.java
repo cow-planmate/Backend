@@ -170,4 +170,10 @@ public class WebSocketPlanService {
         return response;
     }
 
+    public WPresencesResponse updatePresence(int planId, WPresencesRequest request) {
+        WPresencesResponse response = new WPresencesResponse();
+        redisService.registerPlanTracker(planId, request.getUserDayIndexVO());
+        response.setUserDayIndexVOs(request.getUserDayIndexVO());
+        return response;
+    }
 }

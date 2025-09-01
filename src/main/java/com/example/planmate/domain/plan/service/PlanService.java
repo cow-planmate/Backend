@@ -1,5 +1,6 @@
 package com.example.planmate.domain.plan.service;
 
+import com.example.planmate.common.exception.UserNotFoundException;
 import com.example.planmate.common.externalAPI.GoogleMap;
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
@@ -45,7 +46,7 @@ public class PlanService {
 
     public MakePlanResponse makeService(int userId, String departure, int travelId, int transportationCategoryId, List<LocalDate> dates, int adultCount, int childCount) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다"));
+                .orElseThrow(UserNotFoundException::new);
 
         Travel travel = travelRepository.findById(travelId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행지입니다"));

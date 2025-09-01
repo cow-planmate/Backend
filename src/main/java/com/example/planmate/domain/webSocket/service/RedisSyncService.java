@@ -1,5 +1,6 @@
 package com.example.planmate.domain.webSocket.service;
 
+import com.example.planmate.common.exception.PlanNotFoundException;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
@@ -26,63 +27,51 @@ public class RedisSyncService {
 
     @Transactional
     public void syncPlanToDatabase(int planId) {
-        Plan plan = redisService.getPlan(planId);
-        planRepository.save(plan);
+        if(!planRepository.existsById(planId)) {
+            //plan이 없을때 예외
+            throw new PlanNotFoundException();
+        }
+        //plan save
+        planRepository.save(redisService.getPlan(planId));
 
         List<TimeTable> timetableList = redisService.deleteTimeTableByPlanId(planId);
-
+        List<TimeTable> newTimetables = new ArrayList<>();
+        List<TimeTable> oldTimetables = timeTableRepository.findByPlanPlanId(planId);
         Map<Integer, TimeTable> tempIdToEntity = new HashMap<>();
         for (TimeTable t : timetableList) {
             tempIdToEntity.put(t.getTimeTableId(), t); // 기존 ID 보관
+            //새로운 테이블
             if(t.getTimeTableId()<0){
                 t.setTimeTableId(null);
+                newTimetables.add(t);
             }
-        }
-
-        List<TimeTable> newTimetables = new ArrayList<>();
-        List<TimeTable> oldTimetables = timeTableRepository.findByPlanPlanId(planId);
-
-        for(TimeTable t : timetableList){
-
-            //원래 있던거
-            if(t.getTimeTableId()!=null&&t.getTimeTableId()>=0){
+            //기존 테이블
+            else{
                 TimeTable timeTable = timeTableRepository.findById(t.getTimeTableId()).orElse(null);
                 if(timeTable!=null){
-                    timeTable.setDate(t.getDate());
-                    timeTable.setTimeTableEndTime(t.getTimeTableEndTime());
-                    timeTable.setTimeTableStartTime(t.getTimeTableStartTime());
+                    timeTable.timeTableAddNotId(t);
                     oldTimetables.removeIf(ot ->
                             ot.getTimeTableId() != null && ot.getTimeTableId().equals(timeTable.getTimeTableId())
                     );
                 }
             }
-            //새로운 거
-            else{
-                newTimetables.add(t);
-            }
-            timeTableRepository.saveAll(newTimetables);
         }
+        timeTableRepository.saveAll(newTimetables);
         timeTableRepository.deleteAll(oldTimetables);
 
         Map<Integer, TimeTable> changeTimeTable = new HashMap<>();
         Map<Integer, TimeTable> notChangeTimeTable = new HashMap<>();
-        for (Map.Entry<Integer, TimeTable> entry : tempIdToEntity.entrySet()) {
-            int tempId = entry.getKey();
-            TimeTable oldT = entry.getValue();
-            if(tempId >= 0){
-                notChangeTimeTable.put(tempId, oldT);
-            }
-            else{
-                changeTimeTable.put(tempId, oldT);
-            }
-        }
+        tempIdToEntity.forEach((tempId, oldT) -> {
+            (tempId >= 0 ? notChangeTimeTable : changeTimeTable).put(tempId, oldT);
+        });
 
         List<TimeTablePlaceBlock> newBlocks = new ArrayList<>();
-
+        List<Integer> deletTimeTableIds = new ArrayList<>();
         for (Map.Entry<Integer, TimeTable> entry : changeTimeTable.entrySet()) {
-            int tempId = entry.getKey();
+            int timeTableId = entry.getKey();
+            deletTimeTableIds.add(timeTableId);
             TimeTable realTimetable = entry.getValue();
-            List<TimeTablePlaceBlock> blocks = redisService.deleteTimeTablePlaceBlockByTimeTableId(tempId);
+            List<TimeTablePlaceBlock> blocks = redisService.deleteTimeTablePlaceBlockByTimeTableId(timeTableId);
             if(blocks != null && !blocks.isEmpty()) {
                 for (TimeTablePlaceBlock block : blocks) {
                     if(block != null) {
@@ -91,15 +80,15 @@ public class RedisSyncService {
                         newBlocks.add(block);
                     }
                 }
-                redisService.deleteRedisTimeTable(tempId);
             }
         }
-
+        List<TimeTablePlaceBlock> deletedBlocks = new ArrayList<>();
         for (Map.Entry<Integer, TimeTable> entry : notChangeTimeTable.entrySet()) {
-            int tempId = entry.getKey();
+            int timeTableId = entry.getKey();
+            deletTimeTableIds.add(timeTableId);
             TimeTable realTimetable = entry.getValue();
-            List<TimeTablePlaceBlock> oldBlocks = timeTablePlaceBlockRepository.findByTimeTableTimeTableId(entry.getKey());
-            List<TimeTablePlaceBlock> blocks = redisService.deleteTimeTablePlaceBlockByTimeTableId(tempId);
+            List<TimeTablePlaceBlock> oldBlocks = timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTableId);
+            List<TimeTablePlaceBlock> blocks = redisService.deleteTimeTablePlaceBlockByTimeTableId(timeTableId);
             if(blocks != null && !blocks.isEmpty()) {
                 for (TimeTablePlaceBlock block : blocks) {
                     if(block.getBlockId() >= 0){
@@ -115,15 +104,12 @@ public class RedisSyncService {
                         newBlocks.add(block);
                     }
                 }
-                redisService.deleteRedisTimeTable(tempId);
             }
-            timeTablePlaceBlockRepository.deleteAll(oldBlocks);
+            deletedBlocks.addAll(oldBlocks);
         }
+        timeTablePlaceBlockRepository.deleteAll(deletedBlocks);
+        redisService.deleteRedisTimeTable(deletTimeTableIds);
         timeTablePlaceBlockRepository.saveAll(newBlocks);
         redisService.deletePlan(planId);
     }
-
-
-
-
 }

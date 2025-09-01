@@ -28,7 +28,7 @@ public class PasswordService {
     public VerifyPasswordResponse verifyPassword(int userId, String password) {
         VerifyPasswordResponse response = new VerifyPasswordResponse();
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("존재하지 않는 유저 ID입니다"));
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             response.setMessage("현재 비밀번호가 일치하지 않습니다.");
@@ -44,7 +44,7 @@ public class PasswordService {
     public ChangePasswordResponse changePassword(int userId, String password, String confirmPassword) {
         ChangePasswordResponse response = new ChangePasswordResponse();
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("존재하지 않는 유저 ID입니다"));
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
         if (!password.equals(confirmPassword)) {
             throw new IllegalArgumentException("새 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
@@ -62,7 +62,7 @@ public class PasswordService {
     public SendTempPasswordResponse sendTempPassword(String email) {
         SendTempPasswordResponse response = new SendTempPasswordResponse();
         //이메일 인증 토큰 처리 과정 필요
-        User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(() -> new UserNotFoundException("존재하지 않는 유저입니다"));
+        User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(UserNotFoundException::new);
 
         String tempPassword = generateTempPassword();
 

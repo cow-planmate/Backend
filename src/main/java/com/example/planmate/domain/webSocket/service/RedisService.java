@@ -1,5 +1,14 @@
 package com.example.planmate.domain.webSocket.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.plan.entity.PlaceCategory;
 import com.example.planmate.domain.plan.entity.Plan;
@@ -11,15 +20,12 @@ import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository
 import com.example.planmate.domain.plan.repository.TimeTableRepository;
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.travel.repository.TravelRepository;
+import com.example.planmate.domain.user.entity.User;
+import com.example.planmate.domain.user.repository.UserRepository;
+import com.example.planmate.domain.webSocket.valueObject.UserDayIndexVO;
+
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +51,17 @@ public class RedisService {
     private final RedisTemplate<String, PlaceCategory> placeCategoryRedis;
     private final String PLACECATEGORY_PREFIX = "PLACECATEGORY";
     private final PlaceCategoryRepository placeCategoryRepository;
+    private final String USERID_NICKNAME_PREFIX = "USERIDNICKNAME";
+    private final RedisTemplate<String, String> userIdNicknameRedis;
+    private final String NICKNAME_USERID_PREFIX = "NICKNAMEUSERID";
+    private final RedisTemplate<String, Integer> nicknameUseridRedis;
+    private final UserRepository userRepository;
+
+    private final RedisTemplate<String, String> planTrackerRedis;
+    private final String PLANTRACKER_PREFIX = "PLANTRACKER";
+
+    private final RedisTemplate<String, Integer> userIdToPlanIdRedis;
+    private final String USERIDTOPLANID_PREFIX = "USERIDTOPLANID";
 
     private final String REFRESHTOKEN_PREFIX = "REFRESHTOKEN";
     private final RedisTemplate<String, Integer> refreshTokenRedis;
@@ -60,20 +77,19 @@ public class RedisService {
             placeCategoryRedis.opsForValue().set(PLACECATEGORY_PREFIX +placeCategory.getPlaceCategoryId(), placeCategory);
         }
     }
+
+
     public void registerPlan(int planId){
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
         planRedis.opsForValue().set(PLAN_PREFIX + planId, plan);
-        //테스트용
-        Plan cached = planRedis.opsForValue().get(PLAN_PREFIX + planId);
         List<TimeTable> timeTables = registerTimeTable(plan.getPlanId());
         for(TimeTable timeTable : timeTables){
             registerTimeTablePlaceBlock(timeTable.getTimeTableId());
         }
     }
     public Plan getPlan(int planId) {
-        Plan cached = planRedis.opsForValue().get(PLAN_PREFIX + planId);
-        return cached;
+        return planRedis.opsForValue().get(PLAN_PREFIX + planId);
     }
     public void updatePlan(Plan plan) {
         planRedis.opsForValue().set(PLAN_PREFIX + plan.getPlanId(), plan);
@@ -138,6 +154,29 @@ public class RedisService {
             }
         }
     }
+    public void deleteRedisTimeTable(List<Integer> timetableIds) {
+        List<String> timetableKeys = timetableIds.stream()
+                .map(id -> TIMETABLE_PREFIX + id)
+                .toList();
+        timeTableRedis.delete(timetableKeys);
+
+        // placeBlock 삭제
+        deleteRedisTimeTableBlockByTimeTableId(timetableIds);
+    }
+
+    private void deleteRedisTimeTableBlockByTimeTableId(List<Integer> timetableIds) {
+        List<Integer> placeBlockIds = timetableIds.stream()
+                .map(id -> timeTableToTimeTablePlaceBlockRedis.opsForValue().get(id))
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .toList();
+
+        List<String> placeBlockKeys = placeBlockIds.stream()
+                .map(id -> TIMETABLE_PREFIX + id)
+                .toList();
+        timeTablePlaceBlockRedis.delete(placeBlockKeys);
+    }
+
     public void deleteTimeTable(int planId, List<TimetableVO> timeTableVOs) {
         for(TimetableVO timeTable : timeTableVOs){
             if(timeTable.getTimetableId() != null){
@@ -244,4 +283,46 @@ public class RedisService {
     public Integer validateRefreshToken(String refreshToken) {
         return refreshTokenRedis.opsForValue().get(REFRESHTOKEN_PREFIX + refreshToken);
     }
+    public String getNicknameByUserId(int userId) { return  userIdNicknameRedis.opsForValue().get(USERID_NICKNAME_PREFIX + userId); }
+    public Integer getUserIdByNickname(String nickname){ return nicknameUseridRedis.opsForValue().get(NICKNAME_USERID_PREFIX + nickname); }
+    public void registerNickname(int userId, String nickname) {
+        userIdNicknameRedis.opsForValue().set(USERID_NICKNAME_PREFIX + userId, nickname);
+    }
+    public boolean hasPlanTracker(int planId) {
+        return planTrackerRedis.hasKey(PLANTRACKER_PREFIX + planId);
+    }
+    public void registerPlanTracker(int planId, int userId, int dayIndex) {
+        planTrackerRedis.opsForHash().put(PLANTRACKER_PREFIX + planId, userId, dayIndex);
+    }
+    public void registerPlanTracker(int planId, List<UserDayIndexVO> userDayIndexVOs) {
+        for(UserDayIndexVO userDayIndexVO : userDayIndexVOs){
+            int userId = getUserIdByNickname(userDayIndexVO.getNickname());
+            planTrackerRedis.opsForHash().put(PLANTRACKER_PREFIX + planId, userId, userDayIndexVO.getDayIndex());
+        }
+
+    }
+    public void removePlanTracker(int planId, int userId) {
+        planTrackerRedis.opsForHash().delete(PLANTRACKER_PREFIX + planId, userId);
+    }
+
+    public void registerNickname(int userId) {
+        User user = userRepository.findById(userId).get();
+        userIdNicknameRedis.opsForValue().set(USERID_NICKNAME_PREFIX + user.getUserId(), user.getNickname());
+        nicknameUseridRedis.opsForValue().set(NICKNAME_USERID_PREFIX + user.getNickname(), user.getUserId());
+    }
+    public void removeNickname(int userId) {
+        String nickname = userIdNicknameRedis.opsForValue().getAndDelete(NICKNAME_USERID_PREFIX + userId);
+        nicknameUseridRedis.delete(NICKNAME_USERID_PREFIX + nickname);
+    }
+
+    public void registerUserIdToPlanId(int planId, int userId){
+        userIdToPlanIdRedis.opsForValue().set(USERIDTOPLANID_PREFIX + userId, planId);
+    }
+    public int getPlanIdByUserId(int userId){
+        return userIdToPlanIdRedis.opsForValue().get(USERIDTOPLANID_PREFIX + userId);
+    }
+    public int removeUserIdToPlanId(int userId){
+        return userIdToPlanIdRedis.opsForValue().getAndDelete(USERIDTOPLANID_PREFIX + userId);
+    }
+
 }

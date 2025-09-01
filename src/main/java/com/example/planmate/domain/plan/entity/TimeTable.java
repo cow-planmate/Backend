@@ -30,4 +30,9 @@ public class TimeTable {
     @ManyToOne
     @JoinColumn(name = "plan_id", nullable = false)
     private Plan plan;
+    public void timeTableAddNotId(TimeTable timeTable) {
+        timeTable.setDate(date);
+        timeTable.setTimeTableStartTime(timeTableStartTime);
+        timeTable.setTimeTableEndTime(timeTableEndTime);
+    }
 }
