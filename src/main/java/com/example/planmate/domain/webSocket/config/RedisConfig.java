@@ -136,6 +136,7 @@ public class RedisConfig {
         template.afterPropertiesSet();
         return template;
     }
+    @Bean
     public RedisTemplate<String, String> userIdNicknameRedis(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);

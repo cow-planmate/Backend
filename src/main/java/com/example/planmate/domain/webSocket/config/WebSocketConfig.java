@@ -27,7 +27,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-plan")
-                .addInterceptors(jwtHandshakeInterceptor)
                 .setAllowedOrigins("http://localhost:3000",
                         "http://localhost:63771",
                         "http://localhost:5173",

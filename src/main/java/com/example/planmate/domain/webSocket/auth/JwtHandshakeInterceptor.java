@@ -30,10 +30,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                 return false;
             }
 
-            // 권장: Authentication을 만들어 저장 (또는 Principal)
-            var auth = jwt.getSubject(token); // UsernamePasswordAuthenticationToken 등
-            attributes.put("auth", auth);            // 나중에 ChannelInterceptor에서 acc.setUser(auth) 가능
-            attributes.put("sub", jwt.getSubject(token)); // 필요하면 subject도 같이
+            attributes.put("userId", jwt.getSubject(token));
             return true;
 
         } catch (Exception e) {
@@ -47,7 +44,6 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                                WebSocketHandler h, Exception ex) {}
 
     private String extractToken(ServerHttpRequest request) {
-        // 1) 쿼리스트링 우선 (SockJS 폴백 호환성)
         if (request instanceof org.springframework.http.server.ServletServerHttpRequest sreq) {
             String query = sreq.getServletRequest().getQueryString();
             if (query != null) {
@@ -61,7 +57,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                 }
             }
         }
-        // 2) Authorization 헤더 보조
+
         var headers = request.getHeaders();
         String auth = headers.getFirst("Authorization");
         if (auth != null && auth.startsWith("Bearer ")) {
