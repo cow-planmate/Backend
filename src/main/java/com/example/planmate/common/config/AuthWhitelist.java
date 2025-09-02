@@ -16,6 +16,7 @@ public class AuthWhitelist {
             "/api/departure",
             "/ws-plan/**",
             "/api/plan/{planId}/complete",
+            "/api/auth/token",
             "/logs/**"
     );
 
