@@ -280,8 +280,11 @@ public class RedisService {
         );
     }
 
-    public Integer validateRefreshToken(String refreshToken) {
+    public Integer findUserIdByRefreshToken(String refreshToken) {
         return refreshTokenRedis.opsForValue().get(REFRESHTOKEN_PREFIX + refreshToken);
+    }
+    public void deleteRefreshToken(String refreshToken) {
+        refreshTokenRedis.delete(REFRESHTOKEN_PREFIX + refreshToken);
     }
     public String getNicknameByUserId(int userId) { return  userIdNicknameRedis.opsForValue().get(USERID_NICKNAME_PREFIX + userId); }
     public Integer getUserIdByNickname(String nickname){ return nicknameUseridRedis.opsForValue().get(NICKNAME_USERID_PREFIX + nickname); }

@@ -13,7 +13,7 @@ public class RefreshTokenService {
     private final JwtTokenProvider jwtTokenProvider;
     public RefreshTokenResponse getToken(String refreshToken) {
         RefreshTokenResponse response = new RefreshTokenResponse();
-        Integer userId = redisService.validateRefreshToken(refreshToken);
+        Integer userId = redisService.findUserIdByRefreshToken(refreshToken);
         if(userId != null){
             response.setToken(jwtTokenProvider.generateAccessToken(userId));
         }
