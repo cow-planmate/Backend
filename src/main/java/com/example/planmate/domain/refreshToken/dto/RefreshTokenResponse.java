@@ -7,5 +7,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class RefreshTokenResponse extends CommonResponse {
-    public String token;
+    private String accessToken;
 }

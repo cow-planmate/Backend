@@ -15,7 +15,7 @@ public class RefreshTokenService {
         RefreshTokenResponse response = new RefreshTokenResponse();
         Integer userId = redisService.findUserIdByRefreshToken(refreshToken);
         if(userId != null){
-            response.setToken(jwtTokenProvider.generateAccessToken(userId));
+            response.setAccessToken(jwtTokenProvider.generateAccessToken(userId));
         }
         return response;
     }

@@ -17,7 +17,7 @@ public class RefreshTokenController {
     public ResponseEntity<RefreshTokenResponse> getAccessToken(RefreshTokenRequest request) {
         RefreshTokenResponse response;
         response = refreshTokenService.getToken(request.getRefreshToken());
-        if(response.getToken() != null) {
+        if(response.getAccessToken() != null) {
             return ResponseEntity.ok(response);
         }
         else{
