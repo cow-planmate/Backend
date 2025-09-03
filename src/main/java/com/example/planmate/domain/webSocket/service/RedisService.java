@@ -1,14 +1,5 @@
 package com.example.planmate.domain.webSocket.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
-
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.plan.entity.PlaceCategory;
 import com.example.planmate.domain.plan.entity.Plan;
@@ -23,9 +14,14 @@ import com.example.planmate.domain.travel.repository.TravelRepository;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
 import com.example.planmate.domain.webSocket.valueObject.UserDayIndexVO;
-
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
@@ -295,7 +291,22 @@ public class RedisService {
             int userId = getUserIdByNickname(userDayIndexVO.getNickname());
             planTrackerRedis.opsForHash().put(PLANTRACKER_PREFIX + planId, userId, userDayIndexVO.getDayIndex());
         }
+    }
 
+    public List<UserDayIndexVO> getPlanTracker(int planId) {
+        String key = PLANTRACKER_PREFIX + planId;
+
+        Map<Object, Object> entries = planTrackerRedis.opsForHash().entries(key);
+        if (entries.isEmpty()) return Collections.emptyList();
+
+        List<UserDayIndexVO> result = new ArrayList<>(entries.size());
+        for (Map.Entry<Object, Object> e : entries.entrySet()) {
+            Integer userId   = (Integer) e.getKey();     // hash field
+            Integer dayIndex = (Integer) e.getValue();   // hash value
+            String nickname  = getNicknameByUserId(userId);
+            result.add(new UserDayIndexVO(nickname, dayIndex));
+        }
+        return result;
     }
     public void removePlanTracker(int planId, int userId) {
         planTrackerRedis.opsForHash().delete(PLANTRACKER_PREFIX + planId, userId);

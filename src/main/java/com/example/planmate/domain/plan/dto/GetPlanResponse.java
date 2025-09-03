@@ -4,13 +4,13 @@ import com.example.planmate.common.dto.CommonResponse;
 import com.example.planmate.common.valueObject.PlaceBlockVO;
 import com.example.planmate.common.valueObject.PlanFrameVO;
 import com.example.planmate.common.valueObject.TimetableVO;
+import com.example.planmate.domain.webSocket.valueObject.UserDayIndexVO;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 @Getter
 @Setter
@@ -18,6 +18,7 @@ public class GetPlanResponse extends CommonResponse {
     private PlanFrameVO planFrame;
     private List<PlaceBlockVO> placeBlocks;
     private List<TimetableVO> timetables;
+    private List<UserDayIndexVO> userDayIndexes;
     public GetPlanResponse() {
         placeBlocks = new ArrayList<>();
         timetables = new ArrayList<>();
@@ -30,9 +31,6 @@ public class GetPlanResponse extends CommonResponse {
     }
     public void addTimetable(int timetableId, LocalDate date, LocalTime startTime, LocalTime endTime) {
         timetables.add(new TimetableVO(timetableId, date, startTime, endTime));
-    }
-    public void sortTimetableVOs() {
-        timetables.sort(Comparator.comparing(TimetableVO::getDate));
     }
 
 }

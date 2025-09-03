@@ -148,6 +148,7 @@ public class PlanService {
                 }
             }
         }
+        response.setUserDayIndexes(redisService.getPlanTracker(planId));
         return response; // DTO 변환
     }
 

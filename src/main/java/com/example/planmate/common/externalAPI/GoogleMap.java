@@ -42,24 +42,6 @@ public class GoogleMap {
         return response;
     }
 
-    public StringBuilder searchGoogle(String query, List<String> preferredThemeName) throws IOException {
-        String urlStr = "https://maps.googleapis.com/maps/api/place/textsearch/json?query=" +
-                java.net.URLEncoder.encode(query, "UTF-8") + "&language=ko" + "&key=" + googleApiKey;
-
-        URL url = new URL(urlStr);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-
-        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-        String inputLine;
-        StringBuilder response = new StringBuilder();
-
-        while ((inputLine = in.readLine()) != null)
-            response.append(inputLine);
-        in.close();
-        return response;
-    }
-
     public List<TourPlaceVO> getTourPlace(String query, List<String> preferredThemeNames) throws IOException {
         StringBuilder sb = searchGoogleOrWithJackson("관광지", preferredThemeNames, query, null, null, null, 4.0, 50);
         List<TourPlaceVO> places = new ArrayList<>();
@@ -89,7 +71,7 @@ public class GoogleMap {
     }
 
     public List<LodgingPlaceVO> getLodgingPlace(String query, List<String> preferredThemeNames) throws IOException {
-        StringBuilder sb = searchGoogleOrWithJackson("숙소", preferredThemeNames, query, null, null, null, 4.0, 50);
+        StringBuilder sb = searchGoogleOrWithJackson("호텧", preferredThemeNames, query, null, null, null, 4.0, 50);
         List<LodgingPlaceVO> places = new ArrayList<>();
 
         ObjectMapper objectMapper = new ObjectMapper();
