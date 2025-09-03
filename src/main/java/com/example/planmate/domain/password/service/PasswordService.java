@@ -50,7 +50,7 @@ public class PasswordService {
             throw new IllegalArgumentException("새 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
         } else{
             String encodedPassword = passwordEncoder.encode(password);
-            user.setPassword(encodedPassword);
+            user.changePassword(encodedPassword);
             userRepository.save(user);
 
             response.setMessage("비밀번호가 성공적으로 변경되었습니다.");
@@ -66,7 +66,7 @@ public class PasswordService {
 
         String tempPassword = generateTempPassword();
 
-        user.setPassword(passwordEncoder.encode(tempPassword));
+        user.changePassword(passwordEncoder.encode(tempPassword));
         userRepository.save(user);
 
         customMailService.sendSimpleMail(

@@ -90,7 +90,7 @@ public class UserService {
 
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
-        user.setAge(age);
+        user.changeAge(age);
 
         response.setMessage("Age changed successfully");
 
@@ -106,7 +106,7 @@ public class UserService {
 
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
-        user.setGender(gender);
+        user.changeGender(gender);
 
         response.setMessage("Gender changed successfully");
 

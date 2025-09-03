@@ -138,7 +138,7 @@ public class RedisService {
     }
     public int registerNewTimeTable(int planId, TimeTable timetable) {
         int tempId = timeTableTempIdGenerator.getAndDecrement();
-        timetable.setTimeTableId(tempId);
+        timetable.changeId(tempId);
         timeTableRedis.opsForValue().set(TIMETABLE_PREFIX + timetable.getTimeTableId(), timetable);
         List<Integer> timeTableIds = planToTimeTableRedis.opsForValue().get(PLANTOTIMETABLE_PREFIX + planId);
         timeTableIds.add(timetable.getTimeTableId());
@@ -235,7 +235,7 @@ public class RedisService {
 
     public int registerNewTimeTablePlaceBlock(int timeTableId, TimeTablePlaceBlock block) {
         int tempId = timeTablePlaceBlockTempIdGenerator.getAndDecrement();
-        block.setBlockId(tempId);
+        block.changeId(tempId);
         timeTablePlaceBlockRedis.opsForValue().set(TIMETABLEPLACEBLOCK_PREFIX + block.getBlockId(), block);
         List<Integer> timeTableBlockIds = timeTableToTimeTablePlaceBlockRedis.opsForValue().get(TIMETABLETOTIMETABLEPLACEBLOCK_PREFIX + timeTableId);
         if(timeTableBlockIds==null) timeTableBlockIds = new ArrayList<>();

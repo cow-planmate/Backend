@@ -21,6 +21,7 @@ public class CorsGlobalConfig implements WebMvcConfigurer {
                 .allowedOrigins("http://localhost:3000",
                         "http://localhost:63771",
                         "http://localhost:5173",
+                        "http://127.0.0.1:5173",
                         "https://www.planmate.site",
                         "https://planmate.site",
                         "https://frontendplanmate-8sh5ish0j-donghyeoks-projects-dd8e94be.vercel.app")
