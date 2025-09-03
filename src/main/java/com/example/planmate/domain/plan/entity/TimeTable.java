@@ -1,10 +1,10 @@
 package com.example.planmate.domain.plan.entity;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "time_table")
@@ -28,16 +28,9 @@ public class TimeTable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plan_id", nullable = false)
     private Plan plan;
-    public void timeTableAddNotId(TimeTable timeTable) {
-        timeTable.setDate(date);
-        timeTable.setTimeTableStartTime(timeTableStartTime);
-        timeTable.setTimeTableEndTime(timeTableEndTime);
-    }
+
 
     public void changeId(Integer newId) {
-        if (newId == null || newId <= 0) {
-            throw new IllegalArgumentException("ID는 null이거나 0 이하일 수 없습니다.");
-        }
         this.timeTableId = newId;
     }
 

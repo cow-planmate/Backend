@@ -1,7 +1,6 @@
 package com.example.planmate.domain.login.service;
 
 import com.example.planmate.common.auth.JwtTokenProvider;
-import com.example.planmate.common.exception.UnauthorizedException;
 import com.example.planmate.domain.login.dto.LoginResponse;
 import com.example.planmate.domain.login.dto.LogoutResponse;
 import com.example.planmate.domain.user.CustomUserDetails;
@@ -34,7 +33,7 @@ public class LoginService {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-            response.setAccessToken(jwtTokenProvider.generateAccessToken(userDetails.getUserId()));
+            response.setToken(jwtTokenProvider.generateAccessToken(userDetails.getUserId()));
             response.setRefreshToken(jwtTokenProvider.generateRefreshToken(userDetails.getUserId()));
             response.setUserId(userDetails.getUserId());
             response.setNickname(userDetails.getNickname());

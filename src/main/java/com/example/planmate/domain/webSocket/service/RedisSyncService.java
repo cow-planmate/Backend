@@ -1,20 +1,19 @@
 package com.example.planmate.domain.webSocket.service;
 
+import com.example.planmate.common.exception.PlanNotFoundException;
+import com.example.planmate.domain.plan.entity.TimeTable;
+import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
+import com.example.planmate.domain.plan.repository.PlanRepository;
+import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
+import com.example.planmate.domain.plan.repository.TimeTableRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.example.planmate.common.exception.PlanNotFoundException;
-import com.example.planmate.domain.plan.entity.TimeTable;
-import com.example.planmate.domain.plan.repository.PlanRepository;
-import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
-import com.example.planmate.domain.plan.repository.TimeTableRepository;
-
-import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +41,7 @@ public class RedisSyncService {
             tempIdToEntity.put(t.getTimeTableId(), t); // 기존 ID 보관
             //새로운 테이블
             if(t.getTimeTableId()<0){
-                t.setTimeTableId(null);
+                t.changeId(null);
                 newTimetables.add(t);
             }
             //기존 테이블
