@@ -168,7 +168,7 @@ public class PlanService {
             return response;
         }
 
-        plan.setPlanName(name);
+        plan.changePlanName(name);
         planRepository.save(plan);
         response.setEdited(true);
         response.setMessage("성공적으로 일정 이름을 변경하였습니다");
@@ -231,10 +231,9 @@ public class PlanService {
     public SavePlanResponse savePlan(int userId, int planId, String departure, int transportationCategoryId, int adultCount, int childCount, List<TimetableVO> timetables, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockLists) {
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
         TransportationCategory transportationCategory = transportationCategoryRepository.findById(transportationCategoryId).get();
-        plan.setDeparture(departure);
-        plan.setTransportationCategory(transportationCategory);
-        plan.setAdultCount(adultCount);
-        plan.setChildCount(childCount);
+        plan.changeDeparture(departure);
+        plan.changeTransportationCategory(transportationCategory);
+        plan.updateCounts(adultCount, childCount);
 
         List<TimeTable> timeTables = changeTimetable(plan, timetables);
         changeTimetablePlaceBlock(plan, timetablePlaceBlockLists, timeTables);

@@ -90,7 +90,7 @@ public class UserService {
 
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("존재하지 않는 유저 ID입니다"));
 
-        user.setAge(age);
+        user.changeAge(age);
 
         response.setMessage("Age changed successfully");
 
@@ -106,7 +106,7 @@ public class UserService {
 
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("존재하지 않는 유저 ID입니다"));
 
-        user.setGender(gender);
+        user.changeGender(gender);
 
         response.setMessage("Gender changed successfully");
 

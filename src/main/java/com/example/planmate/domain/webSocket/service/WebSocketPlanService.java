@@ -29,30 +29,30 @@ public class WebSocketPlanService {
         Plan plan = redisService.getPlan(planId);
 
         if(request.getPlanName() != null) {
-            plan.setPlanName(request.getPlanName());
+            plan.changePlanName(request.getPlanName());
             response.setPlanName(plan.getPlanName());
         }
 
         if(request.getTravelId() != null) {
             Travel travel = redisService.getTravelByTravelId(request.getTravelId());
-            plan.setTravel(travel);
+            plan.changeTravel(travel);
             response.setTravelId(travel.getTravelId());
             response.setTravelName(travel.getTravelName());
         }
-        if(request.getAdultCount() != null) {
-            plan.setAdultCount(request.getAdultCount());
-            response.setAdultCount(request.getAdultCount());
-        }
-        if(request.getChildCount() != null) {
-            plan.setChildCount(request.getChildCount());
-            response.setChildCount(request.getChildCount());
+        if (request.getAdultCount() != null || request.getChildCount() != null) {
+            int adult = request.getAdultCount() != null ? request.getAdultCount() : plan.getAdultCount();
+            int child = request.getChildCount() != null ? request.getChildCount() : plan.getChildCount();
+            plan.updateCounts(adult, child);
+
+            response.setAdultCount(adult);
+            response.setChildCount(child);
         }
         if(request.getDeparture() != null) {
-            plan.setDeparture(request.getDeparture());
+            plan.changeDeparture(request.getDeparture());
             response.setDeparture(request.getDeparture());
         }
         if(request.getTransportationCategoryId() != null) {
-            plan.setTransportationCategory(new TransportationCategory(request.getTransportationCategoryId()));
+            plan.changeTransportationCategory(new TransportationCategory(request.getTransportationCategoryId()));
             response.setTransportationCategoryId(request.getTransportationCategoryId());
         }
         redisService.updatePlan(plan);
@@ -110,9 +110,8 @@ public class WebSocketPlanService {
             if(timetable.getPlan().getPlanId() != planId) {
                 throw new AccessDeniedException("timetable 접근 권한이 없습니다");
             }
-            timetable.setDate(timetableVO.getDate());
-            timetable.setTimeTableEndTime(timetableVO.getEndTime());
-            timetable.setTimeTableStartTime(timetableVO.getStartTime());
+            timetable.changeDate(timetableVO.getDate());
+            timetable.changeTime(timetableVO.getStartTime(), timetableVO.getEndTime());
             redisService.updateTimeTable(timetable);
             response.addTimetableVO(timetableVO);
         }
@@ -128,32 +127,32 @@ public class WebSocketPlanService {
         }
         TimeTablePlaceBlock timetablePlaceBlock = redisService.getTimeTablePlaceBlock(timetablePlaceBlockVO.getTimetablePlaceBlockId());
         if (timetablePlaceBlockVO.getPlaceName() != null) {
-            timetablePlaceBlock.setPlaceName(timetablePlaceBlockVO.getPlaceName());
+            timetablePlaceBlock.changePlaceName(timetablePlaceBlockVO.getPlaceName());
         }
 
         if (timetablePlaceBlockVO.getPlaceRating() != null) {
-            timetablePlaceBlock.setPlaceRating(timetablePlaceBlockVO.getPlaceRating());
+            timetablePlaceBlock.changeRating(timetablePlaceBlockVO.getPlaceRating());
         }
         if (timetablePlaceBlockVO.getPlaceAddress() != null) {
-            timetablePlaceBlock.setPlaceAddress(timetablePlaceBlockVO.getPlaceAddress());
+            timetablePlaceBlock.changeAddress(timetablePlaceBlockVO.getPlaceAddress());
         }
         if (timetablePlaceBlockVO.getPlaceLink() != null) {
-            timetablePlaceBlock.setPlaceLink(timetablePlaceBlockVO.getPlaceLink());
+            timetablePlaceBlock.changeLink(timetablePlaceBlockVO.getPlaceLink());
         }
-        if (timetablePlaceBlockVO.getStartTime() != null) {
-            timetablePlaceBlock.setBlockStartTime(timetablePlaceBlockVO.getStartTime());
+        if (timetablePlaceBlockVO.getStartTime() != null || timetablePlaceBlockVO.getEndTime() != null) {
+            timetablePlaceBlock.changeTimes(
+                    timetablePlaceBlockVO.getStartTime() != null ? timetablePlaceBlockVO.getStartTime() : timetablePlaceBlock.getBlockStartTime(),
+                    timetablePlaceBlockVO.getEndTime() != null ? timetablePlaceBlockVO.getEndTime() : timetablePlaceBlock.getBlockEndTime()
+            );
         }
-        if (timetablePlaceBlockVO.getEndTime() != null) {
-            timetablePlaceBlock.setBlockEndTime(timetablePlaceBlockVO.getEndTime());
-        }
-        if (timetablePlaceBlockVO.getXLocation() != null) {
-            timetablePlaceBlock.setXLocation(timetablePlaceBlockVO.getXLocation());
-        }
-        if (timetablePlaceBlockVO.getYLocation() != null) {
-            timetablePlaceBlock.setYLocation(timetablePlaceBlockVO.getYLocation());
+        if (timetablePlaceBlockVO.getXLocation() != null || timetablePlaceBlockVO.getYLocation() != null) {
+            timetablePlaceBlock.changeLocation(
+                    timetablePlaceBlockVO.getXLocation() != null ? timetablePlaceBlockVO.getXLocation() : timetablePlaceBlock.getXLocation(),
+                    timetablePlaceBlockVO.getYLocation() != null ? timetablePlaceBlockVO.getYLocation() : timetablePlaceBlock.getYLocation()
+            );
         }
         if (timetablePlaceBlockVO.getPlaceCategoryId() != null) {
-            timetablePlaceBlock.setPlaceCategory(redisService.getPlaceCategory(timetablePlaceBlockVO.getPlaceCategoryId()));
+            timetablePlaceBlock.changeCategory(redisService.getPlaceCategory(timetablePlaceBlockVO.getPlaceCategoryId()));
         }
         redisService.updateTimeTablePlaceBlock(timetablePlaceBlock);
         response.setTimetablePlaceBlockVO(timetablePlaceBlockVO);
