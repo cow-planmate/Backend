@@ -47,11 +47,11 @@ public class TimeTablePlaceBlock {
     @Column(nullable = false)
     private double yLocation;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "place_category_id", nullable = false)
     private PlaceCategory placeCategory;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "time_table_id", nullable = false)
     private TimeTable timeTable;
 
