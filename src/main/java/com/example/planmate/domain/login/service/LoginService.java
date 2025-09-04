@@ -33,7 +33,7 @@ public class LoginService {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-            response.setToken(jwtTokenProvider.generateAccessToken(userDetails.getUserId()));
+            response.setAccessToken(jwtTokenProvider.generateAccessToken(userDetails.getUserId()));
             response.setRefreshToken(jwtTokenProvider.generateRefreshToken(userDetails.getUserId()));
             response.setUserId(userDetails.getUserId());
             response.setNickname(userDetails.getNickname());
