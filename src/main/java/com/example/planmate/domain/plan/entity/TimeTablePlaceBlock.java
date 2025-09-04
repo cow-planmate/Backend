@@ -58,9 +58,6 @@ public class TimeTablePlaceBlock {
     private TimeTable timeTable;
 
     public void changeId(Integer newId) {
-        if (newId == null || newId <= 0) {
-            throw new IllegalArgumentException("블록 ID는 null이거나 0 이하일 수 없습니다.");
-        }
         this.blockId = newId;
     }
 
