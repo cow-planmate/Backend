@@ -57,4 +57,11 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(createErrorBody(getErrorMessage(ex, "서버 오류가 발생했습니다.")));
     }
+
+    @ExceptionHandler(ResourceConflictException.class)
+    public ResponseEntity<Map<String, String>> handleResourceConflict(ResourceConflictException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(createErrorBody(getErrorMessage(ex, "자원 충돌이 발생했습니다")));
+    }
 }

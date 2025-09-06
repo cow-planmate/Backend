@@ -30,6 +30,12 @@ public class UserController {
         MoveMypageResponse response = userService.getMypageInfo(userId);
         return ResponseEntity.ok(response);
     }
+    @PatchMapping("/nickname")
+    public ResponseEntity<ChangeNicknameResponse> changeNickname(Authentication authentication, @RequestBody ChangeNicknameRequest request) {
+        int userId = Integer.parseInt(authentication.getName());
+        ChangeNicknameResponse response = userService.changeNickname(userId, request.getNickname());
+        return ResponseEntity.ok(response);
+    }
     @PatchMapping("/age")
     public ResponseEntity<ChangeAgeResponse> changeAge(Authentication authentication, @RequestBody ChangeAgeRequest request) {
         int userId = Integer.parseInt(authentication.getName());
