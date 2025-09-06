@@ -53,9 +53,9 @@ public class PlanController {
         return ResponseEntity.ok(response);
     }
     @DeleteMapping("")
-    public ResponseEntity<DeleteMultiplePlanResponse> deleteMultiplePlan(Authentication authentication, @RequestBody DeleteMultiplePlanRequest request) throws AccessDeniedException {
+    public ResponseEntity<DeleteMultiplePlansResponse> deleteMultiplePlans(Authentication authentication, @RequestBody DeleteMultiplePlansRequest request) throws AccessDeniedException {
         int userId = Integer.parseInt(authentication.getName());
-        DeleteMultiplePlanResponse response = planService.deleteMultiplePlans(userId, request.getPlanIds());
+        DeleteMultiplePlansResponse response = planService.deleteMultiplePlans(userId, request.getPlanIds());
         return ResponseEntity.ok(response);
     }
     @PatchMapping("/{planId}/save")

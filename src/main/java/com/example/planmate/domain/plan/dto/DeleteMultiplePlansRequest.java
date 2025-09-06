@@ -8,6 +8,6 @@ import java.util.List;
 
 @Getter
 @Setter
-public class DeleteMultiplePlanRequest implements IRequest {
+public class DeleteMultiplePlansRequest implements IRequest {
     private List<Integer> planIds;
 }

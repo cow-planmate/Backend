@@ -316,8 +316,8 @@ public class PlanService {
         return response;
     }
     @Transactional
-    public DeleteMultiplePlanResponse deleteMultiplePlans(int userId, List<Integer> planIds) {
-        DeleteMultiplePlanResponse response = new DeleteMultiplePlanResponse();
+    public DeleteMultiplePlansResponse deleteMultiplePlans(int userId, List<Integer> planIds) {
+        DeleteMultiplePlansResponse response = new DeleteMultiplePlansResponse();
 
         if (planIds == null || planIds.isEmpty()) {
             throw new IllegalArgumentException("삭제할 일정 ID가 비어 있습니다.");
