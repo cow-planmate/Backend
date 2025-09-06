@@ -11,6 +11,7 @@ import java.util.List;
 public class SavePlanRequest {
     private String departure;
     private int transportationCategoryId;
+    private int travelId;
     private int adultCount;
     private int childCount;
     private List<TimetableVO> timetables;

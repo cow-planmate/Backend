@@ -16,7 +16,6 @@ import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
 import com.example.planmate.domain.webSocket.service.RedisService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -230,56 +229,60 @@ public class PlanService {
         return response;
     }
     @Transactional
-    public SavePlanResponse savePlan(int userId, int planId, String departure, int transportationCategoryId, int adultCount, int childCount, List<TimetableVO> timetables, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockLists) {
-        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-        TransportationCategory transportationCategory = transportationCategoryRepository.findById(transportationCategoryId).get();
-        plan.changeDeparture(departure);
-        plan.changeTransportationCategory(transportationCategory);
-        plan.updateCounts(adultCount, childCount);
+    public SavePlanResponse savePlan(int userId, String departure, int travelId, int transportationCategoryId, int adultCount, int childCount, List<TimetableVO> timetableVOs, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockVOLists) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
 
-        List<TimeTable> timeTables = changeTimetable(plan, timetables);
-        changeTimetablePlaceBlock(plan, timetablePlaceBlockLists, timeTables);
+        Travel travel = travelRepository.findById(travelId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행지입니다"));
 
-        try {
-            planRepository.save(plan);
-        } catch (DataIntegrityViolationException ex) {
-            throw new IllegalArgumentException("입력 데이터가 유효하지 않습니다.", ex);
-        }
-        transportationCategoryRepository.save(transportationCategory);
-        SavePlanResponse response = new SavePlanResponse();
-        return response;
+        TransportationCategory transportationCategory = transportationCategoryRepository.findById(transportationCategoryId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 교통수단입니다"));
+        Plan plan = Plan.builder()
+                .planName(makePlanName(travel))
+                .departure(departure)
+                .adultCount(adultCount)
+                .childCount(childCount)
+                .user(user)
+                .travel(travel)
+                .transportationCategory(transportationCategory)
+                .build();
+        Plan savedPlan = planRepository.save(plan);
+
+        List<TimeTable> timeTables = saveTimetable(plan, timetableVOs);
+        saveTimetablePlaceBlock(timeTables, timetablePlaceBlockVOLists);
+        SavePlanResponse savePlanResponse = new SavePlanResponse(savedPlan.getPlanId());
+        return savePlanResponse;
     }
 
-    private List<TimeTable> changeTimetable(Plan plan, List<TimetableVO> timetables) {
-        if(timetables == null || timetables.isEmpty()) {
+    private List<TimeTable> saveTimetable(Plan plan, List<TimetableVO> timetableVOs) {
+        if(timetableVOs == null || timetableVOs.isEmpty()) {
             return new ArrayList<>();
         }
-        timeTableRepository.deleteByPlan(plan);
-        List<TimeTable> afterTimeTables = new ArrayList<>();
-        for (TimetableVO timetable : timetables) {
-            afterTimeTables.add(TimeTable.builder()
+        List<TimeTable> timeTables = new ArrayList<>();
+        for (TimetableVO timetable : timetableVOs) {
+            timeTables.add(TimeTable.builder()
                     .date(timetable.getDate())
-                    .timeTableStartTime(LocalTime.of(9,0))
-                    .timeTableEndTime(LocalTime.of(20,0))
+                    .timeTableStartTime(timetable.getStartTime())
+                    .timeTableEndTime(timetable.getEndTime())
                     .plan(plan)
                     .build());
-            timeTableRepository.saveAll(afterTimeTables);
+            timeTableRepository.saveAll(timeTables);
         }
-        return afterTimeTables;
+        return timeTables;
     }
-    private void changeTimetablePlaceBlock(Plan plan, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockLists, List<TimeTable> timeTables) {
-        if(timetablePlaceBlockLists == null || timetablePlaceBlockLists.isEmpty()) {
+    private void saveTimetablePlaceBlock(List<TimeTable> timeTableVOs, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockVOLists) {
+        if(timetablePlaceBlockVOLists == null || timetablePlaceBlockVOLists.isEmpty()) {
             return;
         }
-        timeTablePlaceBlockRepository.deleteAllByTimeTable_Plan(plan);
         List<TimeTablePlaceBlock> timeTablePlaceBlocks = new ArrayList<>();
-        for(int i = 0; i < timetablePlaceBlockLists.size(); i++){
-            if(timeTables.isEmpty()){
+        for(int i = 0; i < timetablePlaceBlockVOLists.size(); i++){
+            if(timeTableVOs.isEmpty()){
                 break;
             }
-            TimeTable timetable = timeTables.get(i);
-            for(int j = 0; j < timetablePlaceBlockLists.get(i).size(); j++){
-                TimetablePlaceBlockVO timeTablePlaceBlockVO = timetablePlaceBlockLists.get(i).get(j);
+            TimeTable timetable = timeTableVOs.get(i);
+            for(int j = 0; j < timetablePlaceBlockVOLists.get(i).size(); j++){
+                TimetablePlaceBlockVO timeTablePlaceBlockVO = timetablePlaceBlockVOLists.get(i).get(j);
                 PlaceCategory placeCategory = placeCategoryRepository.getReferenceById(timeTablePlaceBlockVO.getPlaceCategoryId());
                 timeTablePlaceBlocks.add(TimeTablePlaceBlock.builder()
                         .timeTable(timetable)

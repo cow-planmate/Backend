@@ -52,10 +52,10 @@ public class PlanController {
         DeletePlanResponse response = planService.deletePlan(userId, planId);
         return ResponseEntity.ok(response);
     }
-    @PatchMapping("/{planId}/save")
-    public ResponseEntity<SavePlanResponse> savePlan(Authentication authentication, @PathVariable("planId") int planId, @RequestBody SavePlanRequest request) {
+    @PatchMapping("/save")
+    public ResponseEntity<SavePlanResponse> savePlan(Authentication authentication, @RequestBody SavePlanRequest request) {
         int userId = Integer.parseInt(authentication.getName());
-        SavePlanResponse response = planService.savePlan(userId, planId, request.getDeparture(), request.getTransportationCategoryId(), request.getAdultCount(), request.getChildCount(), request.getTimetables(), request.getTimetablePlaceBlocks());
+        SavePlanResponse response = planService.savePlan(userId, request.getDeparture(), request.getTravelId(), request.getTransportationCategoryId(), request.getAdultCount(), request.getChildCount(), request.getTimetables(), request.getTimetablePlaceBlocks());
         return ResponseEntity.ok(response);
     }
     @PatchMapping("/{planId}/name")
