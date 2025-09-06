@@ -17,6 +17,10 @@ public class AuthWhitelist {
             "/ws-plan/**",
             "/api/plan/{planId}/complete",
             "/api/auth/token",
+            "/api/plan/tour",
+            "/api/plan/restaurant",
+            "/api/plan/lodging",
+            "/api/plan/place",
             "/logs/**"
     );
 

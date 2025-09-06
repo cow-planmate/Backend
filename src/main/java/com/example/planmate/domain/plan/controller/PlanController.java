@@ -82,7 +82,6 @@ public class PlanController {
         PlaceResponse response = planService.getRestaurantPlace(userId, planId);
         return ResponseEntity.ok(response);
     }
-
     @PostMapping("/{planId}/place")
     public ResponseEntity<PlaceResponse> getPlace(Authentication authentication, @PathVariable("planId") int planId, @RequestBody SearchPlaceRequest request) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
@@ -90,6 +89,32 @@ public class PlanController {
         PlaceResponse response = planService.getSearchPlace(userId, planId, query);
         return ResponseEntity.ok(response);
     }
+
+
+
+    @PostMapping("/lodging")
+    public ResponseEntity<PlaceResponse> getLodgingPlace(@RequestBody PlaceRequest request) throws IOException {
+        PlaceResponse response = planService.getLodgingPlace(request.getTravelCategoryName(), request.getTravelName());
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/tour")
+    public ResponseEntity<PlaceResponse> getTourPlace(@RequestBody PlaceRequest request) throws IOException {
+        PlaceResponse response = planService.getTourPlace(request.getTravelCategoryName(), request.getTravelName());
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/restaurant")
+    public ResponseEntity<PlaceResponse> getRestaurantPlace(@RequestBody PlaceRequest request) throws IOException {
+        PlaceResponse response = planService.getRestaurantPlace(request.getTravelCategoryName(), request.getTravelName());
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/place")
+    public ResponseEntity<PlaceResponse> getPlace(@RequestBody SearchPlaceRequest request) throws IOException {
+        String query = request.getQuery();
+        PlaceResponse response = planService.getSearchPlace(query);
+        return ResponseEntity.ok(response);
+    }
+
+
 
     @DeleteMapping("/{planId}/editor/me")
     public ResponseEntity<ResignEditorAccessResponse> resignEditorAccess(Authentication authentication, @PathVariable("planId") int planId) throws IOException {

@@ -224,10 +224,34 @@ public class PlanService {
 
     public PlaceResponse getSearchPlace(int userId, int planId, String query) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+        planAccessValidator.validateUserHasAccessToPlan(userId, planId);
         response.addPlace(googleMap.getSearchPlace(query));
         return response;
     }
+
+    public PlaceResponse getTourPlace(String travelCategoryName, String travelName) throws IOException {
+        PlaceResponse response = new PlaceResponse();
+        response.addPlace(googleMap.getTourPlace(travelCategoryName + " "+ travelName, new ArrayList<>()));
+        return response;
+    }
+    public PlaceResponse getLodgingPlace(String travelCategoryName, String travelName) throws IOException {
+        PlaceResponse response = new PlaceResponse();
+        response.addPlace(googleMap.getLodgingPlace(travelCategoryName + " "+ travelName, new ArrayList<>()));
+        return response;
+    }
+    public PlaceResponse getRestaurantPlace(String travelCategoryName, String travelName) throws IOException {
+        PlaceResponse response = new PlaceResponse();
+        response.addPlace(googleMap.getLodgingPlace(travelCategoryName + " "+ travelName, new ArrayList<>()));
+        return response;
+    }
+
+    public PlaceResponse getSearchPlace(String query) throws IOException {
+        PlaceResponse response = new PlaceResponse();
+        response.addPlace(googleMap.getSearchPlace(query));
+        return response;
+    }
+
+
     @Transactional
     public SavePlanResponse savePlan(int userId, String departure, int travelId, int transportationCategoryId, int adultCount, int childCount, List<TimetableVO> timetableVOs, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockVOLists) {
         User user = userRepository.findById(userId)
