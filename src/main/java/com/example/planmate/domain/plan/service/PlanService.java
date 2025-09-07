@@ -2,8 +2,7 @@ package com.example.planmate.domain.plan.service;
 
 import com.example.planmate.common.exception.UserNotFoundException;
 import com.example.planmate.common.externalAPI.GoogleMap;
-import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
-import com.example.planmate.common.valueObject.TimetableVO;
+import com.example.planmate.common.valueObject.*;
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
 import com.example.planmate.domain.plan.auth.PlanAccessValidator;
 import com.example.planmate.domain.plan.dto.*;
@@ -16,6 +15,7 @@ import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
 import com.example.planmate.domain.webSocket.service.RedisService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.util.Pair;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -188,7 +188,9 @@ public class PlanService {
             preferredThemeNames.add(preferredTheme.getPreferredThemeName());
         }
         String travelName = travelCategoryName + " "+ plan.getTravel().getTravelName();
-        response.addPlace(googleMap.getTourPlace(travelName, preferredThemeNames));
+        Pair<List<TourPlaceVO>, List<String>> pair = googleMap.getTourPlace(travelCategoryName + " "+ travelName, preferredThemeNames);
+        response.addPlace(pair.getFirst());
+        response.addNextPageToken(pair.getSecond());
         return response;
     }
     public PlaceResponse getLodgingPlace(int userId, int planId) throws IOException {
@@ -203,7 +205,9 @@ public class PlanService {
             preferredThemeNames.add(preferredTheme.getPreferredThemeName());
         }
         String travelName = travelCategoryName + " "+ plan.getTravel().getTravelName();
-        response.addPlace(googleMap.getLodgingPlace(travelName, preferredThemeNames));
+        Pair<List<LodgingPlaceVO>, List<String>> pair = googleMap.getLodgingPlace(travelCategoryName + " "+ travelName, preferredThemeNames);
+        response.addPlace(pair.getFirst());
+        response.addNextPageToken(pair.getSecond());
         return response;
     }
     public PlaceResponse getRestaurantPlace(int userId, int planId) throws IOException {
@@ -218,36 +222,48 @@ public class PlanService {
             preferredThemeNames.add(preferredTheme.getPreferredThemeName());
         }
         String travelName = travelCategoryName + " "+ plan.getTravel().getTravelName();
-        response.addPlace(googleMap.getRestaurantPlace(travelName, preferredThemeNames));
+        Pair<List<RestaurantPlaceVO>, List<String>> pair = googleMap.getRestaurantPlace(travelCategoryName + " "+ travelName, preferredThemeNames);
+        response.addPlace(pair.getFirst());
+        response.addNextPageToken(pair.getSecond());
         return response;
     }
 
     public PlaceResponse getSearchPlace(int userId, int planId, String query) throws IOException {
         PlaceResponse response = new PlaceResponse();
         planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-        response.addPlace(googleMap.getSearchPlace(query));
+        Pair<List<SearchPlaceVO>, List<String>> pair = googleMap.getSearchPlace(query);
+        response.addPlace(pair.getFirst());
+        response.addNextPageToken(pair.getSecond());
         return response;
     }
 
     public PlaceResponse getTourPlace(String travelCategoryName, String travelName) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        response.addPlace(googleMap.getTourPlace(travelCategoryName + " "+ travelName, new ArrayList<>()));
+        Pair<List<TourPlaceVO>, List<String>> pair = googleMap.getTourPlace(travelCategoryName + " "+ travelName, new ArrayList<>());
+        response.addPlace(pair.getFirst());
+        response.addNextPageToken(pair.getSecond());
         return response;
     }
     public PlaceResponse getLodgingPlace(String travelCategoryName, String travelName) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        response.addPlace(googleMap.getLodgingPlace(travelCategoryName + " "+ travelName, new ArrayList<>()));
+        Pair<List<LodgingPlaceVO>, List<String>> pair = googleMap.getLodgingPlace(travelCategoryName + " "+ travelName, new ArrayList<>());
+        response.addPlace(pair.getFirst());
+        response.addNextPageToken(pair.getSecond());
         return response;
     }
     public PlaceResponse getRestaurantPlace(String travelCategoryName, String travelName) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        response.addPlace(googleMap.getLodgingPlace(travelCategoryName + " "+ travelName, new ArrayList<>()));
+        Pair<List<RestaurantPlaceVO>, List<String>> pair = googleMap.getRestaurantPlace(travelCategoryName + " "+ travelName, new ArrayList<>());
+        response.addPlace(pair.getFirst());
+        response.addNextPageToken(pair.getSecond());
         return response;
     }
 
     public PlaceResponse getSearchPlace(String query) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        response.addPlace(googleMap.getSearchPlace(query));
+        Pair<List<SearchPlaceVO>, List<String>> pair = googleMap.getSearchPlace(query);
+        response.addPlace(pair.getFirst());
+        response.addNextPageToken(pair.getSecond());
         return response;
     }
 

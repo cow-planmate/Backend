@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
@@ -42,13 +43,11 @@ public class GoogleMap {
         return response;
     }
 
-    public List<TourPlaceVO> getTourPlace(String query, List<String> preferredThemeNames) throws IOException {
-        StringBuilder sb = searchGoogleOrWithJackson("관광지", preferredThemeNames, query, null, null, null, 4.0, 50);
+    public Pair<List<TourPlaceVO>, List<String>> getTourPlace(String query, List<String> preferredThemeNames) throws IOException {
         List<TourPlaceVO> places = new ArrayList<>();
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode root = objectMapper.readTree(sb.toString());
-        JsonNode results = root.get("results");
+        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson(query, null, null, null, null, null, 0.0, 0);
+        JsonNode results = pair.getFirst();
+        List<String> nextPageTokens = pair.getSecond();
 
         if (results != null && results.isArray()) {
             for (JsonNode result : results) {
@@ -67,17 +66,14 @@ public class GoogleMap {
                 places.add(place);
             }
         }
-        return places;
+        return Pair.of(places, nextPageTokens);
     }
 
-    public List<LodgingPlaceVO> getLodgingPlace(String query, List<String> preferredThemeNames) throws IOException {
-        StringBuilder sb = searchGoogleOrWithJackson("호텧", preferredThemeNames, query, null, null, null, 4.0, 50);
+    public Pair<List<LodgingPlaceVO>, List<String>> getLodgingPlace(String query, List<String> preferredThemeNames) throws IOException {
         List<LodgingPlaceVO> places = new ArrayList<>();
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode root = objectMapper.readTree(sb.toString());
-        JsonNode results = root.get("results");
-
+        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson(query, null, null, null, null, null, 0.0, 0);
+        JsonNode results = pair.getFirst();
+        List<String> nextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
             for (JsonNode result : results) {
                 String placeId = result.path("place_id").asText("");
@@ -95,16 +91,13 @@ public class GoogleMap {
                 places.add(place);
             }
         }
-        return places;
+        return Pair.of(places, nextPageTokens);
     }
-    public List<RestaurantPlaceVO> getRestaurantPlace(String query, List<String> preferredThemeNames) throws IOException {
-        StringBuilder sb = searchGoogleOrWithJackson("식당", preferredThemeNames, query, null, null, null, 4.0, 50);
+    public Pair<List<RestaurantPlaceVO>, List<String>> getRestaurantPlace(String query, List<String> preferredThemeNames) throws IOException {
         List<RestaurantPlaceVO> places = new ArrayList<>();
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode root = objectMapper.readTree(sb.toString());
-        JsonNode results = root.get("results");
-
+        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson(query, null, null, null, null, null, 0.0, 0);
+        JsonNode results = pair.getFirst();
+        List<String> nextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
             for (JsonNode result : results) {
                 String placeId = result.path("place_id").asText("");
@@ -122,17 +115,14 @@ public class GoogleMap {
                 places.add(place);
             }
         }
-        return places;
+        return Pair.of(places, nextPageTokens);
     }
 
-    public List<SearchPlaceVO> getSearchPlace(String query) throws IOException {
-        StringBuilder sb = searchGoogleOrWithJackson(query, null, null, null, null, null, 0.0, 0);
+    public Pair<List<SearchPlaceVO>, List<String>> getSearchPlace(String query) throws IOException {
         List<SearchPlaceVO> places = new ArrayList<>();
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode root = objectMapper.readTree(sb.toString());
-        JsonNode results = root.get("results");
-
+        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson(query, null, null, null, null, null, 0.0, 0);
+        JsonNode results = pair.getFirst();
+        List<String> nextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
             for (JsonNode result : results) {
                 String placeId = result.path("place_id").asText("");
@@ -146,12 +136,10 @@ public class GoogleMap {
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
 
-                SearchPlaceVO place = new SearchPlaceVO(placeId, 4, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
-                places.add(place);
+                places.add(new SearchPlaceVO(placeId, 4, url, name, formatted_address, rating, xLocation, yLocation, iconUrl));
             }
         }
-
-        return places;
+        return Pair.of(places, nextPageTokens);
     }
 
     public List<DepartureVO> searchDeparture(String departureName) throws IOException {
@@ -173,6 +161,10 @@ public class GoogleMap {
         }
         return departures;
     }
+
+//    public List<SearchPlaceVO> getNextPagePlace(List<String> nextPageTokens) throws IOException {
+//
+//    }
 
     private String httpGet(String urlStr) throws IOException {
         URL url = new URL(urlStr);
@@ -204,7 +196,7 @@ public class GoogleMap {
      * @param minReviews          최소 리뷰 수(노이즈 방지용, 예: 50). 0이면 미적용.
      * @return                    합쳐진 JSON(results 배열 포함)을 StringBuilder로 반환
      */
-    private StringBuilder searchGoogleOrWithJackson(
+    private Pair<JsonNode, List<String>> searchGoogleOrWithJackson(
             String query,
             List<String> preferredThemeNames,
             String locationText,
@@ -222,12 +214,14 @@ public class GoogleMap {
                 ? query
                 : (query + " " + locationText);
 
+
         // place_id → place(JsonNode) 저장: LinkedHashMap으로 순서 보존
         Map<String, JsonNode> placeMap = new LinkedHashMap<>();
 
         // 테마가 비었을 경우를 대비해 1회 호출(키워드 없이)도 가능하게 처리
         List<String> themes = (preferredThemeNames == null || preferredThemeNames.isEmpty())
                 ? List.of("") : preferredThemeNames;
+        List<String> nextPageTokens = new ArrayList<>();
 
         for (String theme : themes) {
             StringBuilder url = new StringBuilder(base)
@@ -248,9 +242,10 @@ public class GoogleMap {
                 }
             }
 
-            // 1페이지(최대 20건)만 합친다. 필요 시 next_page_token 처리 확장 가능.
+
             String raw = httpGet(url.toString());
             JsonNode root = mapper.readTree(raw);
+            nextPageTokens.add(root.path("next_page_token").asText(null));
             JsonNode results = root.path("results");
             if (results.isArray()) {
                 for (JsonNode place : results) {
@@ -269,8 +264,43 @@ public class GoogleMap {
         ObjectNode finalJson = mapper.createObjectNode();
         ArrayNode merged = mapper.createArrayNode();
         placeMap.values().forEach(merged::add);
-        finalJson.set("results", merged);
-
-        return new StringBuilder(finalJson.toString());
+        return Pair.of(finalJson.set("results", merged), nextPageTokens);
     }
+
+    private JsonNode searchGoogleNextPagePlace(List<String> nextPageTokens, Double minRating) throws IOException {
+
+        final String base = "https://maps.googleapis.com/maps/api/place/textsearch/json";
+        ObjectMapper mapper = new ObjectMapper();
+        List<String> nextNextPageTokens = new ArrayList<>();
+        Map<String, JsonNode> placeMap = new LinkedHashMap<>();
+
+        for (String nextPageToken : nextPageTokens) {
+            StringBuilder url = new StringBuilder(base)
+                    .append("&language=ko")
+                    .append("&key=").append(enc(googleApiKey))
+                    .append("&pagetoken=").append(enc(nextPageToken));
+
+            String raw = httpGet(url.toString());
+            JsonNode root = mapper.readTree(raw);
+            nextNextPageTokens.add(root.path("next_page_token").asText(null));
+            JsonNode results = root.path("results");
+            if (results.isArray()) {
+                for (JsonNode place : results) {
+                    double rating = place.path("rating").asDouble(0.0);
+                    if (rating >= minRating) {
+                        String placeId = place.path("place_id").asText(null);
+                        if (placeId != null && !placeId.isBlank()) {
+                            placeMap.put(placeId, place); // 중복이면 덮어쓴다.
+                        }
+                    }
+                }
+            }
+        }
+        // 최종 JSON 구성
+        ObjectNode finalJson = mapper.createObjectNode();
+        ArrayNode merged = mapper.createArrayNode();
+        placeMap.values().forEach(merged::add);
+        return finalJson.set("results", merged);
+    }
+
 }

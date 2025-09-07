@@ -29,6 +29,8 @@ public class Plan {
     @Column(nullable = false)
     private int childCount;
 
+    private String nextPageToken;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
