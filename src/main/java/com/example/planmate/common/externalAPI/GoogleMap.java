@@ -49,7 +49,7 @@ public class GoogleMap {
         JsonNode results = pair.getFirst();
         List<String> nextPageTokens = pair.getSecond();
 
-        if (results != null && results.isArray()) {
+        if (results.isArray()) {
             for (JsonNode result : results) {
                 String placeId = result.path("place_id").asText("");
                 String url = "https://www.google.com/maps/place/?q=place_id:" + placeId;
@@ -284,7 +284,10 @@ public class GoogleMap {
         ObjectNode finalJson = mapper.createObjectNode();
         ArrayNode merged = mapper.createArrayNode();
         placeMap.values().forEach(merged::add);
-        return Pair.of(finalJson.set("results", merged), nextPageTokens);
+        finalJson.set("results", merged);
+        JsonNode root = mapper.readTree(finalJson.toString());
+        JsonNode results = root.get("results");
+        return Pair.of(results, nextPageTokens);
     }
 
     private Pair<JsonNode, List<String>> searchGoogleNextPagePlace(List<String> nextPageTokens, Double minRating) throws IOException {
