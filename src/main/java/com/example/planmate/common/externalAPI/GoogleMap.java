@@ -162,9 +162,29 @@ public class GoogleMap {
         return departures;
     }
 
-//    public List<SearchPlaceVO> getNextPagePlace(List<String> nextPageTokens) throws IOException {
-//
-//    }
+    public Pair<List<SearchPlaceVO>, List<String>> getNextPagePlace(List<String> nextPageTokens) throws IOException {
+        List<SearchPlaceVO> places = new ArrayList<>();
+        Pair<JsonNode, List<String>> pair = searchGoogleNextPagePlace(nextPageTokens, Double.valueOf(0));
+        JsonNode results = pair.getFirst();
+        List<String> nextNextPageTokens = pair.getSecond();
+        if (results != null && results.isArray()) {
+            for (JsonNode result : results) {
+                String placeId = result.path("place_id").asText("");
+                String url = "https://www.google.com/maps/place/?q=place_id:" + placeId;
+                String name = result.path("name").asText("");
+                String formatted_address = result.path("formatted_address").asText("").replaceAll("…", "");
+                float rating = (float) result.path("rating").asDouble(0.0);
+
+                JsonNode location = result.path("geometry").path("location");
+                double xLocation = location.path("lng").asDouble(0.0);
+                double yLocation = location.path("lat").asDouble(0.0);
+                String iconUrl = result.path("icon").asText("");
+
+                places.add(new SearchPlaceVO(placeId, 4, url, name, formatted_address, rating, xLocation, yLocation, iconUrl));
+            }
+        }
+        return Pair.of(places, nextNextPageTokens);
+    }
 
     private String httpGet(String urlStr) throws IOException {
         URL url = new URL(urlStr);
@@ -267,7 +287,7 @@ public class GoogleMap {
         return Pair.of(finalJson.set("results", merged), nextPageTokens);
     }
 
-    private JsonNode searchGoogleNextPagePlace(List<String> nextPageTokens, Double minRating) throws IOException {
+    private Pair<JsonNode, List<String>> searchGoogleNextPagePlace(List<String> nextPageTokens, Double minRating) throws IOException {
 
         final String base = "https://maps.googleapis.com/maps/api/place/textsearch/json";
         ObjectMapper mapper = new ObjectMapper();
@@ -300,7 +320,8 @@ public class GoogleMap {
         ObjectNode finalJson = mapper.createObjectNode();
         ArrayNode merged = mapper.createArrayNode();
         placeMap.values().forEach(merged::add);
-        return finalJson.set("results", merged);
+
+        return Pair.of(finalJson.set("results", merged), nextNextPageTokens);
     }
 
 }

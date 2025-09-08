@@ -109,8 +109,12 @@ public class PlanController {
     }
     @PostMapping("/place")
     public ResponseEntity<PlaceResponse> getPlace(@RequestBody SearchPlaceRequest request) throws IOException {
-        String query = request.getQuery();
-        PlaceResponse response = planService.getSearchPlace(query);
+        PlaceResponse response = planService.getSearchPlace(request.getQuery());
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/nextPlace")
+    public ResponseEntity<PlaceResponse> getNextPlace(@RequestBody NextPlaceRequest request) throws IOException {
+        PlaceResponse response = planService.getNextPlace(request.getNextPageTokens());
         return ResponseEntity.ok(response);
     }
 

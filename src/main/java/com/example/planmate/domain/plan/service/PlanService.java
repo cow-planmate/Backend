@@ -267,6 +267,14 @@ public class PlanService {
         return response;
     }
 
+    public PlaceResponse getNextPlace(List<String> nextPageToken) throws IOException {
+        PlaceResponse response = new PlaceResponse();
+        Pair<List<SearchPlaceVO>, List<String>> pair = googleMap.getNextPagePlace(nextPageToken);
+        response.addPlace(pair.getFirst());
+        response.addNextPageToken(pair.getSecond());
+        return response;
+    }
+
 
     @Transactional
     public SavePlanResponse savePlan(int userId, String departure, int travelId, int transportationCategoryId, int adultCount, int childCount, List<TimetableVO> timetableVOs, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockVOLists) {
