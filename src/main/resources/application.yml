@@ -9,17 +9,18 @@ spring:
     web-application-type: servlet
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
+    url: jdbc:p6spy:postgresql://localhost:5432/planmate
     username: postgres
-    driver-class-name: org.postgresql.Driver
+    driver-class-name: com.p6spy.engine.spy.P6SpyDriver
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
   mail:
     host: smtps.hiworks.com
