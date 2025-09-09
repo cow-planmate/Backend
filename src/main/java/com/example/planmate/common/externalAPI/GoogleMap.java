@@ -43,9 +43,9 @@ public class GoogleMap {
         return response;
     }
 
-    public Pair<List<TourPlaceVO>, List<String>> getTourPlace(String query, List<String> preferredThemeNames) throws IOException {
+    public Pair<List<TourPlaceVO>, List<String>> getTourPlace(String locationText, List<String> preferredThemeNames) throws IOException {
         List<TourPlaceVO> places = new ArrayList<>();
-        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson(query, null, null, null, null, null, 0.0, 0);
+        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson("관광지", preferredThemeNames, locationText, null, null, null, 0.0, 0);
         JsonNode results = pair.getFirst();
         List<String> nextPageTokens = pair.getSecond();
 
@@ -69,9 +69,9 @@ public class GoogleMap {
         return Pair.of(places, nextPageTokens);
     }
 
-    public Pair<List<LodgingPlaceVO>, List<String>> getLodgingPlace(String query, List<String> preferredThemeNames) throws IOException {
+    public Pair<List<LodgingPlaceVO>, List<String>> getLodgingPlace(String locationText, List<String> preferredThemeNames) throws IOException {
         List<LodgingPlaceVO> places = new ArrayList<>();
-        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson(query, null, null, null, null, null, 0.0, 0);
+        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson("숙소", preferredThemeNames, locationText, null, null, null, 0.0, 0);
         JsonNode results = pair.getFirst();
         List<String> nextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
@@ -93,9 +93,9 @@ public class GoogleMap {
         }
         return Pair.of(places, nextPageTokens);
     }
-    public Pair<List<RestaurantPlaceVO>, List<String>> getRestaurantPlace(String query, List<String> preferredThemeNames) throws IOException {
+    public Pair<List<RestaurantPlaceVO>, List<String>> getRestaurantPlace(String locationText, List<String> preferredThemeNames) throws IOException {
         List<RestaurantPlaceVO> places = new ArrayList<>();
-        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson(query, null, null, null, null, null, 0.0, 0);
+        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson("식당", preferredThemeNames, locationText, null, null, null, 0.0, 0);
         JsonNode results = pair.getFirst();
         List<String> nextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
@@ -261,7 +261,7 @@ public class GoogleMap {
                     url.append("&radius=").append(radiusMeters);
                 }
             }
-
+            minRating = 4.0;
 
             String raw = httpGet(url.toString());
             JsonNode root = mapper.readTree(raw);
