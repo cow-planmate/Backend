@@ -1,5 +1,6 @@
 package com.example.planmate.domain.user.service;
 
+import com.example.planmate.common.exception.ResourceConflictException;
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.repository.PlanEditorRepository;
@@ -79,7 +80,21 @@ public class UserService {
 
         return response;
     }
+    @Transactional
+    public ChangeNicknameResponse changeNickname(int userId, String nickname) {
+        ChangeNicknameResponse response = new ChangeNicknameResponse();
 
+        if (userRepository.findByNickname(nickname).isPresent()) {
+            throw new ResourceConflictException("이미 존재하는 닉네임입니다");
+        }
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("존재하지 않는 유저 ID입니다"));
+
+        user.changeNickname(nickname);
+
+        response.setMessage("Nickname changed successfully");
+
+        return response;
+    }
     @Transactional
     public ChangeAgeResponse changeAge(int userId, int age) {
         ChangeAgeResponse response = new ChangeAgeResponse();

@@ -46,7 +46,7 @@ public class RegisterService{
     public NicknameVerificationResponse verifyNickname(String nickname) {
         NicknameVerificationResponse response = new NicknameVerificationResponse();
         if(userRepository.findByNickname(nickname).isPresent()) {
-            response.setMessage("Nickname already exists");
+            response.setMessage("이미 존재하는 닉네임입니다");
             response.setNicknameAvailable(false);
             return response;
         }

@@ -349,6 +349,7 @@ public class PlanService {
         }
         timeTablePlaceBlockRepository.saveAll(timeTablePlaceBlocks);
     }
+    @Transactional
     public DeletePlanResponse deletePlan(int userId, int planId) {
         DeletePlanResponse response = new DeletePlanResponse();
 
@@ -365,6 +366,25 @@ public class PlanService {
             response.setMessage("일정을 삭제했습니다.");
         }
 
+        return response;
+    }
+    @Transactional
+    public DeleteMultiplePlansResponse deleteMultiplePlans(int userId, List<Integer> planIds) {
+        DeleteMultiplePlansResponse response = new DeleteMultiplePlansResponse();
+
+        if (planIds == null || planIds.isEmpty()) {
+            throw new IllegalArgumentException("삭제할 일정 ID가 비어 있습니다.");
+        }
+
+        List<Plan> ownedPlans = planRepository.findAllByPlanIdInAndUserUserId(planIds, userId);
+
+        if (ownedPlans == null || ownedPlans.isEmpty()) {
+            throw new AccessDeniedException("삭제할 권한이 있는 일정이 없습니다.");
+        }
+
+        planRepository.deleteAllInBatch(ownedPlans);
+
+        response.setMessage("일정을 삭제했습니다.");
         return response;
     }
 

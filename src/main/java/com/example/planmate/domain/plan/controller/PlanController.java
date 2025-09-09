@@ -1,18 +1,20 @@
 package com.example.planmate.domain.plan.controller;
 
+import java.io.IOException;
+import java.nio.file.AccessDeniedException;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
 import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanRequest;
 import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanResponse;
 import com.example.planmate.domain.collaborationRequest.dto.RequestEditAccessResponse;
 import com.example.planmate.domain.collaborationRequest.service.CollaborationRequestService;
 import com.example.planmate.domain.plan.dto.*;
 import com.example.planmate.domain.plan.service.PlanService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.nio.file.AccessDeniedException;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @RestController
@@ -56,6 +58,12 @@ public class PlanController {
     public ResponseEntity<SavePlanResponse> savePlan(Authentication authentication, @RequestBody SavePlanRequest request) {
         int userId = Integer.parseInt(authentication.getName());
         SavePlanResponse response = planService.savePlan(userId, request.getDeparture(), request.getTravelId(), request.getTransportationCategoryId(), request.getAdultCount(), request.getChildCount(), request.getTimetables(), request.getTimetablePlaceBlocks());
+        return ResponseEntity.ok(response);
+    }
+    @DeleteMapping("")
+    public ResponseEntity<DeleteMultiplePlansResponse> deleteMultiplePlans(Authentication authentication, @RequestBody DeleteMultiplePlansRequest request) throws AccessDeniedException {
+        int userId = Integer.parseInt(authentication.getName());
+        DeleteMultiplePlansResponse response = planService.deleteMultiplePlans(userId, request.getPlanIds());
         return ResponseEntity.ok(response);
     }
     @PatchMapping("/{planId}/name")
