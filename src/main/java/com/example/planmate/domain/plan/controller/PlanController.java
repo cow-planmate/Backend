@@ -1,20 +1,18 @@
 package com.example.planmate.domain.plan.controller;
 
-import java.io.IOException;
-import java.nio.file.AccessDeniedException;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
-
 import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanRequest;
 import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanResponse;
 import com.example.planmate.domain.collaborationRequest.dto.RequestEditAccessResponse;
 import com.example.planmate.domain.collaborationRequest.service.CollaborationRequestService;
 import com.example.planmate.domain.plan.dto.*;
 import com.example.planmate.domain.plan.service.PlanService;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 
 @RequiredArgsConstructor
 @RestController
@@ -72,25 +70,25 @@ public class PlanController {
         EditPlanNameResponse reponse = planService.EditPlanName(userId, planId, editPlanNameRequest.getPlanName());
         return ResponseEntity.ok(reponse);
     }
-    @GetMapping("/{planId}/lodging")
+    @PostMapping("/{planId}/lodging")
     public ResponseEntity<PlaceResponse> getLodgingPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
         PlaceResponse response = planService.getLodgingPlace(userId, planId);
         return ResponseEntity.ok(response);
     }
-    @GetMapping("/{planId}/tour")
+    @PostMapping("/{planId}/tour")
     public ResponseEntity<PlaceResponse> getTourPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
         PlaceResponse response = planService.getTourPlace(userId, planId);
         return ResponseEntity.ok(response);
     }
-    @GetMapping("/{planId}/restaurant")
+    @PostMapping("/{planId}/restaurant")
     public ResponseEntity<PlaceResponse> getRestaurantPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
         PlaceResponse response = planService.getRestaurantPlace(userId, planId);
         return ResponseEntity.ok(response);
     }
-    @GetMapping("/{planId}/place")
+    @PostMapping("/{planId}/place")
     public ResponseEntity<PlaceResponse> getPlace(Authentication authentication, @PathVariable("planId") int planId, @RequestBody SearchPlaceRequest request) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
         String query = request.getQuery();
@@ -98,27 +96,29 @@ public class PlanController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/lodging")
+
+
+    @PostMapping("/lodging")
     public ResponseEntity<PlaceResponse> getLodgingPlace(@RequestBody PlaceRequest request) throws IOException {
         PlaceResponse response = planService.getLodgingPlace(request.getTravelCategoryName(), request.getTravelName());
         return ResponseEntity.ok(response);
     }
-    @GetMapping("/tour")
+    @PostMapping("/tour")
     public ResponseEntity<PlaceResponse> getTourPlace(@RequestBody PlaceRequest request) throws IOException {
         PlaceResponse response = planService.getTourPlace(request.getTravelCategoryName(), request.getTravelName());
         return ResponseEntity.ok(response);
     }
-    @GetMapping("/restaurant")
+    @PostMapping("/restaurant")
     public ResponseEntity<PlaceResponse> getRestaurantPlace(@RequestBody PlaceRequest request) throws IOException {
         PlaceResponse response = planService.getRestaurantPlace(request.getTravelCategoryName(), request.getTravelName());
         return ResponseEntity.ok(response);
     }
-    @GetMapping("/place")
+    @PostMapping("/place")
     public ResponseEntity<PlaceResponse> getPlace(@RequestBody SearchPlaceRequest request) throws IOException {
         PlaceResponse response = planService.getSearchPlace(request.getQuery());
         return ResponseEntity.ok(response);
     }
-    @GetMapping("/nextplace")
+    @PostMapping("/nextplace")
     public ResponseEntity<PlaceResponse> getNextPlace(@RequestBody NextPlaceRequest request) throws IOException {
         PlaceResponse response = planService.getNextPlace(request.getNextPageTokens());
         return ResponseEntity.ok(response);
