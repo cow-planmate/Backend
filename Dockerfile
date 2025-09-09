@@ -1,9 +1,18 @@
 # 1. JDK 기반 이미지 선택
-FROM openjdk:17-jdk
+FROM openjdk:17-jdk-alpine
 
-# 2. JAR 파일 복사
-ARG JAR_FILE=build/libs/PlanMate-0.0.1-SNAPSHOT.jar
-COPY ${JAR_FILE} app.jar
 
-# 3. 앱 실행 명령어
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+# 필수 OS 패키지 설치
+RUN apk add --no-cache findutils bash
+
+# 2. 작업 디렉토리 생성
+WORKDIR /app
+
+# 3. 소스 코드 복사
+COPY . .
+
+# 5. Gradle 빌드
+RUN ./gradlew build -x test
+
+# 6. 앱 실행
+ENTRYPOINT ["java", "-jar", "build/libs/PlanMate-0.0.1-SNAPSHOT.jar"]
