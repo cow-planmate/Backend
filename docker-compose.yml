@@ -13,7 +13,7 @@ services:
     environment:
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
-      SPRING_DATASOURCE_URL: jdbc:p6spy:postgresql://db:5432/postgres
+      SPRING_DATASOURCE_URL: jdbc:p6spy:postgresql://db:5432/planmate
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: 1234
 
