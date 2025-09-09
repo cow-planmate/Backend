@@ -87,7 +87,7 @@ public class UserService {
         if (userRepository.findByNickname(nickname).isPresent()) {
             throw new ResourceConflictException("이미 존재하는 닉네임입니다");
         }
-        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("존재하지 않는 유저 ID입니다"));
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
         user.changeNickname(nickname);
 
