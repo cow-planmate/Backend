@@ -3,9 +3,10 @@
     <property name="LOG_DIR" value="${LOG_PATH:-logs}"/>
     <property name="SERVER_PATTERN"
               value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"/>
-    <!-- 접근 로그는 더 간결하게 -->
     <property name="ACCESS_PATTERN"
               value="%d{yyyy-MM-dd HH:mm:ss.SSS} INFO [trace=%X{traceId:-} user=%X{userId:-}] %msg%n"/>
+    <property name="SQL_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%X{traceId:-}] %-5level %msg%n"/>
 
     <!-- 콘솔 (선택) -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
@@ -48,27 +49,43 @@
         <encoder><pattern>${ACCESS_PATTERN}</pattern></encoder>
     </appender>
 
+    <!-- SQL 로그 파일 (p6spy) -->
+    <appender name="SQL_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/sql.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/sql.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder><pattern>${SQL_PATTERN}</pattern></encoder>
+    </appender>
 
-    <!-- ROOT: 서버/프레임워크 로그는 여기로 -->
+    <!-- ROOT: 서버/프레임워크 로그 -->
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="SERVER_FILE"/>
     </root>
 
-    <!-- 프레임워크 소음 낮추기(선택) -->
+    <!-- 프레임워크 소음 줄이기 -->
     <logger name="org.springframework" level="WARN"/>
     <logger name="org.hibernate" level="WARN"/>
     <logger name="org.apache.catalina" level="WARN"/>
     <logger name="org.springframework.data" level="WARN"/>
 
-    <!-- 접근 로그 전용 로거: 인터셉터 클래스/패키지 지정 -->
-    <!-- additivity=false: ROOT로 전파 금지 → server.log에 안 섞임 -->
+    <!-- API 접근 로그 -->
     <logger name="com.example.planmate.common.log.AccessLogInterceptor" level="INFO" additivity="false">
         <appender-ref ref="API_ACCESS_FILE"/>
     </logger>
 
-    <!-- WsAccessLogInterceptor의 실제 FQCN에 맞춰 name을 지정 -->
+    <!-- WS 접근 로그 -->
     <logger name="com.example.planmate.common.log.ws.WsAccessLogInterceptor" level="INFO" additivity="false">
         <appender-ref ref="WS_ACCESS_FILE"/>
     </logger>
+
+    <!-- p6spy SQL 로그 -->
+    <logger name="p6spy" level="DEBUG" additivity="false">
+        <appender-ref ref="SQL_FILE"/>
+    </logger>
 </configuration>
+
