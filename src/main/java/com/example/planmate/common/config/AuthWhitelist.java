@@ -21,6 +21,7 @@ public class AuthWhitelist {
             "/api/plan/restaurant",
             "/api/plan/lodging",
             "/api/plan/place",
+            "/api/plan/nextPlace",
             "/logs/**"
     );
 

@@ -31,4 +31,3 @@ services:
       POSTGRES_PASSWORD: 1234
 #    volumes:
 #      - ./postgres_dump.sql:/docker-entrypoint-initdb.d/init.sql
-

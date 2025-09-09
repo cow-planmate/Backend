@@ -299,7 +299,7 @@ public class GoogleMap {
 
         for (String nextPageToken : nextPageTokens) {
             StringBuilder url = new StringBuilder(base)
-                    .append("&language=ko")
+                    .append("?language=ko")
                     .append("&key=").append(enc(googleApiKey))
                     .append("&pagetoken=").append(enc(nextPageToken));
 
@@ -323,8 +323,10 @@ public class GoogleMap {
         ObjectNode finalJson = mapper.createObjectNode();
         ArrayNode merged = mapper.createArrayNode();
         placeMap.values().forEach(merged::add);
-
-        return Pair.of(finalJson.set("results", merged), nextNextPageTokens);
+        finalJson.set("results", merged);
+        JsonNode root = mapper.readTree(finalJson.toString());
+        JsonNode results = root.get("results");
+        return Pair.of(results, nextNextPageTokens);
     }
 
 }
