@@ -42,8 +42,8 @@ public class PlanController {
         return ResponseEntity.ok(response);
     }
     @GetMapping("/{planId}/complete")
-    public ResponseEntity<GetCompletePlanResponse> getCompletePlan(@PathVariable("planId") int planId) throws AccessDeniedException {
-        GetCompletePlanResponse response = planService.getCompletePlan(planId);
+    public ResponseEntity<GetCompletePlanResponse> getCompletePlan(@PathVariable("planId") int planId, @RequestParam(value = "token", required = false) String shareToken) throws AccessDeniedException {
+        GetCompletePlanResponse response = planService.getCompletePlan(planId, shareToken);
         return ResponseEntity.ok(response);
     }
     @DeleteMapping("/{planId}")
@@ -154,6 +154,12 @@ public class PlanController {
     public ResponseEntity<RequestEditAccessResponse> requestEditAccess(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
         RequestEditAccessResponse response = collaborationRequestService.requestEditAccess(userId, planId);
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/{planId}/share")
+    public ResponseEntity<GetShareLinkResponse> getShareLink(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
+        int userId = Integer.parseInt(authentication.getName());
+        GetShareLinkResponse response = planService.getShareLink(userId, planId);
         return ResponseEntity.ok(response);
     }
 
