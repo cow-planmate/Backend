@@ -539,7 +539,7 @@ public class PlanService {
     }
 
     private String buildShareUrl(int planId, String token) {
-        return "https://www.planmate.site/api/plan/" + planId + "/complete?token=" + token;
+        return "https://www.planmate.site/complete?id=" + planId + "&token=" + token;
     }
 
 }
