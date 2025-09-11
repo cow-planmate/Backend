@@ -22,9 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +39,6 @@ public class PlanService {
     private final TravelRepository travelRepository;
     private final PlaceCategoryRepository placeCategoryRepository;
     private final PlanEditorRepository planEditorRepository;
-    private final PlanShareRepository planShareRepository;
     private final RedisService redisService;
     private final GoogleMap googleMap;
 
@@ -388,20 +388,8 @@ public class PlanService {
         return response;
     }
 
-    public GetCompletePlanResponse getCompletePlan(int planId, String shareToken) {
+    public GetCompletePlanResponse getCompletePlan(int planId) {
         GetCompletePlanResponse response = new GetCompletePlanResponse();
-
-        if (shareToken != null && !shareToken.isBlank()) {
-            PlanShare planShare = planShareRepository.findById(planId)
-                    .orElseThrow(() -> new IllegalArgumentException("공유 링크가 존재하지 않습니다."));
-
-            if (!planShare.getIsActive() || !planShare.getShareToken().equals(shareToken)) {
-                throw new IllegalArgumentException("공유 링크가 유효하지 않거나 일정과 일치하지 않습니다.");
-            }
-        } else {
-            throw new IllegalArgumentException("유효한 공유 토큰이 필요합니다.");
-        }
-
         Plan plan = redisService.getPlan(planId);
         List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
@@ -507,39 +495,6 @@ public class PlanService {
 
         response.setMessage("성공적으로 편집자 목록을 가져왔습니다.");
         return response;
-    }
-
-    @Transactional
-    public GetShareLinkResponse getShareLink(int userId, int planId) {
-        GetShareLinkResponse response = new GetShareLinkResponse();
-
-        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-
-        Optional<PlanShare> existingShare = planShareRepository.findById(planId);
-        if (existingShare.isPresent()) {
-            response.setSharedPlanUrl(buildShareUrl(planId, existingShare.get().getShareToken()));
-            response.setMessage("성공적으로 링크를 받아왔습니다");
-            return response;
-        }
-
-        String token = UUID.randomUUID().toString();
-
-        PlanShare planShare = PlanShare.builder()
-                .plan(plan)
-                .shareToken(token)
-                .isActive(true)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        planShareRepository.save(planShare);
-
-        response.setSharedPlanUrl(buildShareUrl(planShare.getPlanId(), planShare.getShareToken()));
-        response.setMessage("성공적으로 링크를 받아왔습니다");
-        return response;
-    }
-
-    private String buildShareUrl(int planId, String token) {
-        return "https://www.planmate.site/api/plan/" + planId + "/complete?token=" + token;
     }
 
 }
