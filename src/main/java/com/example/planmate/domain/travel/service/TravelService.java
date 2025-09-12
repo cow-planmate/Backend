@@ -10,11 +10,19 @@ import org.springframework.stereotype.Service;
 public class TravelService {
     private final TravelRepository travelRepository;
 
-    public GetTravelResponse getTravel(){
+    public GetTravelResponse getTravel() {
         GetTravelResponse response = new GetTravelResponse();
+
         travelRepository.findAll().forEach(travel -> {
-            response.addTravel(travel);
+            response.addTravel(
+                    travel.getTravelId(),
+                    travel.getTravelName(),
+                    travel.getTravelCategory().getTravelCategoryId(),
+                    travel.getTravelCategory().getTravelCategoryName()
+            );
         });
+
         return response;
     }
+
 }
