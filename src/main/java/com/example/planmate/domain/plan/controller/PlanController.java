@@ -4,6 +4,7 @@ import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanRequ
 import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanResponse;
 import com.example.planmate.domain.collaborationRequest.dto.RequestEditAccessResponse;
 import com.example.planmate.domain.collaborationRequest.service.CollaborationRequestService;
+import com.example.planmate.domain.plan.auth.PlanAccessValidator;
 import com.example.planmate.domain.plan.dto.*;
 import com.example.planmate.domain.plan.service.PlanService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.nio.file.AccessDeniedException;
 public class PlanController {
     private final PlanService planService;
     private final CollaborationRequestService collaborationRequestService;
+    private final PlanAccessValidator planAccessValidator;
 
     @PostMapping("")
     public ResponseEntity<MakePlanResponse> makePlan(Authentication authentication, @RequestBody MakePlanRequest makePlanRequest) {
@@ -42,10 +44,29 @@ public class PlanController {
         return ResponseEntity.ok(response);
     }
     @GetMapping("/{planId}/complete")
-    public ResponseEntity<GetCompletePlanResponse> getCompletePlan(@PathVariable("planId") int planId, @RequestParam(value = "token", required = false) String shareToken) throws AccessDeniedException {
-        GetCompletePlanResponse response = planService.getCompletePlan(planId, shareToken);
+    public ResponseEntity<GetCompletePlanResponse> getCompletePlan(
+            @PathVariable("planId") int planId,
+            @RequestParam(value = "token", required = false) String shareToken,
+            Authentication authentication   // 로그인한 사용자 정보, 없으면 null
+    ) throws AccessDeniedException {
+        GetCompletePlanResponse response;
+
+        if (shareToken != null && !shareToken.isBlank()) {
+            // 토큰이 있는 경우 → 인증 없이 처리
+            planService.validateShareToken(planId, shareToken);
+            response = planService.getCompletePlan(planId);
+        } else {
+            // 토큰이 없는 경우 → 인증 필수
+//            if (authentication == null || !authentication.isAuthenticated()) {
+//                throw new AccessDeniedException("로그인이 필요합니다.");
+//            }
+//            int userId = Integer.parseInt(authentication.getName());
+//            planAccessValidator.checkUserAccessToPlan(userId, planId);
+            response = planService.getCompletePlan(planId);
+        }
         return ResponseEntity.ok(response);
     }
+
     @DeleteMapping("/{planId}")
     public ResponseEntity<DeletePlanResponse> deletePlan(Authentication authentication, @PathVariable("planId") int planId) throws AccessDeniedException {
         int userId = Integer.parseInt(authentication.getName());

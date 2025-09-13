@@ -388,19 +388,8 @@ public class PlanService {
         return response;
     }
 
-    public GetCompletePlanResponse getCompletePlan(int planId, String shareToken) {
+    public GetCompletePlanResponse getCompletePlan(int planId) {
         GetCompletePlanResponse response = new GetCompletePlanResponse();
-
-        if (shareToken != null && !shareToken.isBlank()) {
-            PlanShare planShare = planShareRepository.findById(planId)
-                    .orElseThrow(() -> new IllegalArgumentException("공유 링크가 존재하지 않습니다."));
-
-            if (!planShare.getIsActive() || !planShare.getShareToken().equals(shareToken)) {
-                throw new IllegalArgumentException("공유 링크가 유효하지 않거나 일정과 일치하지 않습니다.");
-            }
-        } else {
-            throw new IllegalArgumentException("유효한 공유 토큰이 필요합니다.");
-        }
 
         Plan plan = redisService.getPlan(planId);
         List<TimeTable> timeTables;
@@ -540,6 +529,20 @@ public class PlanService {
 
     private String buildShareUrl(int planId, String token) {
         return "https://www.planmate.site/complete?id=" + planId + "&token=" + token;
+    }
+
+    @Transactional
+    public void validateShareToken(int planId, String shareToken) {
+        if (shareToken == null || shareToken.isBlank()) {
+            throw new IllegalArgumentException("유효한 공유 토큰이 필요합니다.");
+        }
+
+        PlanShare planShare = planShareRepository.findById(planId)
+                .orElseThrow(() -> new IllegalArgumentException("공유 링크가 존재하지 않습니다."));
+
+        if (!planShare.getIsActive() || !planShare.getShareToken().equals(shareToken)) {
+            throw new IllegalArgumentException("공유 링크가 유효하지 않거나 일정과 일치하지 않습니다.");
+        }
     }
 
 }

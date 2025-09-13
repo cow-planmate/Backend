@@ -19,7 +19,7 @@ public class PlanAccessValidator {
 
         if (plan == null) {
             plan = planRepository.findById(planId)
-                    .orElseThrow(() -> new RuntimeException("플랜 없음"));
+                    .orElseThrow(() -> new RuntimeException("없는 일정입니다"));
         }
 
         boolean isOwner = plan.getUser().getUserId() == userId;
@@ -29,5 +29,20 @@ public class PlanAccessValidator {
             throw new AccessDeniedException("요청 권한이 없습니다");
         }
         return plan;
+    }
+    public void checkUserAccessToPlan(int userId, int planId) {
+        Plan plan = redisService.getPlan(planId);
+
+        if (plan == null) {
+            plan = planRepository.findById(planId)
+                    .orElseThrow(() -> new RuntimeException("없는 일정입니다"));
+        }
+
+        boolean isOwner = plan.getUser().getUserId() == userId;
+        boolean isEditor = planEditorRepository.existsByUserUserIdAndPlanPlanId(userId, planId);
+
+        if (!isOwner && !isEditor) {
+            throw new AccessDeniedException("요청 권한이 없습니다");
+        }
     }
 }

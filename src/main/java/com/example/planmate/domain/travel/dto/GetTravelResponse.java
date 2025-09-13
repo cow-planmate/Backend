@@ -1,18 +1,21 @@
 package com.example.planmate.domain.travel.dto;
 
 import com.example.planmate.common.dto.CommonResponse;
-import com.example.planmate.domain.travel.entity.Travel;
+import com.example.planmate.common.valueObject.TravelVO;
 import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
 @Getter
 public class GetTravelResponse extends CommonResponse {
-    private List<Travel> travels;
-    public GetTravelResponse(){
-        travels = new ArrayList<>();
+    private final List<TravelVO> travels;
+
+    public GetTravelResponse() {
+        this.travels = new ArrayList<>();
     }
-    public void addTravel(Travel travel){
-        travels.add(travel);
+
+    public void addTravel(int travelId, String travelName,
+                          int travelCategoryId, String travelCategoryName) {
+        this.travels.add(new TravelVO(travelId, travelName, travelCategoryId, travelCategoryName));
     }
 }
