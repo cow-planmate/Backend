@@ -31,7 +31,6 @@ spring:
           auth: true
           ssl:
             enable: true
-
   data:
     redis:
       host: ${REDIS_HOST:localhost}

@@ -2,6 +2,7 @@ package com.example.planmate.domain.plan.service;
 
 import com.example.planmate.common.exception.UserNotFoundException;
 import com.example.planmate.common.externalAPI.GoogleMap;
+import com.example.planmate.common.externalAPI.GooglePlaceDetails;
 import com.example.planmate.common.valueObject.*;
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
 import com.example.planmate.domain.plan.auth.PlanAccessValidator;
@@ -41,6 +42,7 @@ public class PlanService {
     private final PlanShareRepository planShareRepository;
     private final RedisService redisService;
     private final GoogleMap googleMap;
+    private final GooglePlaceDetails googlePlaceDetails;
 
 
     public MakePlanResponse makeService(int userId, String departure, int travelId, int transportationCategoryId, List<LocalDate> dates, int adultCount, int childCount) {
@@ -189,7 +191,8 @@ public class PlanService {
         }
         String travelName = travelCategoryName + " "+ plan.getTravel().getTravelName();
         Pair<List<TourPlaceVO>, List<String>> pair = googleMap.getTourPlace(travelCategoryName + " "+ travelName, preferredThemeNames);
-        response.addPlace(pair.getFirst());
+        List<TourPlaceVO> tourPlaceVOs = (List<TourPlaceVO>) googlePlaceDetails.searchGooglePlaceDetails(pair.getFirst());
+        response.addPlace(tourPlaceVOs);
         response.addNextPageToken(pair.getSecond());
         return response;
     }
