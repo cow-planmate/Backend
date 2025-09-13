@@ -54,6 +54,10 @@ public class TimeTablePlaceBlock {
     private PlaceCategory placeCategory;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "place_id")
+    private PlacePhoto placePhoto;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "time_table_id", nullable = false)
     private TimeTable timeTable;
 
@@ -123,6 +127,10 @@ public class TimeTablePlaceBlock {
         this.timeTable = timeTable;
     }
 
+    public void assignPlacePhoto(PlacePhoto placePhoto) {
+        this.placePhoto = placePhoto; // null 허용
+    }
+
     public void updateBlockInfo(
             String placeName,
             String placeTheme,
@@ -133,7 +141,8 @@ public class TimeTablePlaceBlock {
             LocalTime blockEndTime,
             double xLocation,
             double yLocation,
-            PlaceCategory placeCategory
+            PlaceCategory placeCategory,
+            PlacePhoto placePhoto
     ) {
         if (blockStartTime != null && blockEndTime != null && blockStartTime.isAfter(blockEndTime)) {
             throw new IllegalArgumentException("블록 시작 시간이 종료 시간보다 늦을 수 없습니다.");
@@ -149,6 +158,7 @@ public class TimeTablePlaceBlock {
         this.xLocation = xLocation;
         this.yLocation = yLocation;
         this.placeCategory = placeCategory;
+        this.placePhoto = placePhoto;
     }
 
     public void copyFrom(TimeTablePlaceBlock other) {
@@ -166,7 +176,8 @@ public class TimeTablePlaceBlock {
                 other.getBlockEndTime(),
                 other.getXLocation(),
                 other.getYLocation(),
-                other.getPlaceCategory()
+                other.getPlaceCategory(),
+                other.getPlacePhoto()
         );
 
         this.assignTimeTable(other.getTimeTable());

@@ -28,4 +28,5 @@ public class TimetablePlaceBlockVO {
     private Double xLocation;
     @JsonProperty("yLocation")
     private Double yLocation;
+    private String placeUrl;
 }

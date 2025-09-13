@@ -1,15 +1,9 @@
 package com.example.planmate.domain.webSocket.service;
 
 import com.example.planmate.common.exception.PlanNotFoundException;
-import com.example.planmate.domain.plan.entity.Plan;
-import com.example.planmate.domain.plan.entity.TimeTable;
-import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
-import com.example.planmate.domain.plan.repository.PlanRepository;
-import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
-import com.example.planmate.domain.plan.repository.PlaceCategoryRepository;
-import com.example.planmate.domain.plan.repository.TimeTableRepository;
+import com.example.planmate.domain.plan.entity.*;
+import com.example.planmate.domain.plan.repository.*;
 
-import com.example.planmate.domain.plan.entity.PlaceCategory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +22,7 @@ public class RedisSyncService {
     private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
     private final RedisService redisService;
     private final PlaceCategoryRepository placeCategoryRepository;
+    private final PlacePhotoRepository placePhotoRepository;
 
     @Transactional
     public void syncPlanToDatabase(int planId) {
@@ -108,6 +103,9 @@ public class RedisSyncService {
                     if(block.getBlockId() >= 0){
                         TimeTablePlaceBlock timeTablePlaceBlock = timeTablePlaceBlockRepository.findById(block.getBlockId()).orElseThrow(() -> new IllegalArgumentException("블록을 찾을 수 없습니다. ID=" + block.getBlockId()));
                         PlaceCategory pc = placeCategoryRepository.getReferenceById(block.getPlaceCategory().getPlaceCategoryId());
+                        String photoId = block.getPlacePhoto() != null ? block.getPlacePhoto().getPlaceId() : null;
+                        PlacePhoto pp = (photoId == null)
+                                ? null : placePhotoRepository.findById(photoId).orElse(null);
                         timeTablePlaceBlock.updateBlockInfo(
                                 block.getPlaceName(),
                                 block.getPlaceTheme(),
@@ -118,7 +116,8 @@ public class RedisSyncService {
                                 block.getBlockEndTime(),
                                 block.getXLocation(),
                                 block.getYLocation(),
-                                pc
+                                pc,
+                                pp
                         );
                         oldBlocks.removeIf(ot ->
                                 ot.getBlockId() != null && ot.getBlockId().equals(timeTablePlaceBlock.getBlockId())

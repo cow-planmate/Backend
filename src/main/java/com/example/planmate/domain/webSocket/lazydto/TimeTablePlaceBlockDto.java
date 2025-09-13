@@ -2,6 +2,7 @@ package com.example.planmate.domain.webSocket.lazydto;
 
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
 import com.example.planmate.domain.plan.entity.PlaceCategory;
+import com.example.planmate.domain.plan.entity.PlacePhoto;
 import com.example.planmate.domain.plan.entity.TimeTable;
 
 import java.time.LocalTime;
@@ -18,6 +19,7 @@ public record TimeTablePlaceBlockDto(
         double xLocation,
         double yLocation,
         Integer placeCategoryId,
+        String placePhotoId,
         Integer timeTableId
 ) {
     public static TimeTablePlaceBlockDto fromEntity(TimeTablePlaceBlock block) {
@@ -33,11 +35,12 @@ public record TimeTablePlaceBlockDto(
                 block.getXLocation(),
                 block.getYLocation(),
                 block.getPlaceCategory().getPlaceCategoryId(),
+                block.getPlacePhoto() != null ? block.getPlacePhoto().getPlaceId() : null,
                 block.getTimeTable().getTimeTableId()
         );
     }
 
-    public TimeTablePlaceBlock toEntity(PlaceCategory placeCategory, TimeTable timeTable) {
+    public TimeTablePlaceBlock toEntity(PlaceCategory placeCategory, PlacePhoto placePhoto, TimeTable timeTable) {
         return TimeTablePlaceBlock.builder()
                 .blockId(this.blockId)
                 .placeName(this.placeName)
@@ -50,6 +53,7 @@ public record TimeTablePlaceBlockDto(
                 .xLocation(this.xLocation)
                 .yLocation(this.yLocation)
                 .placeCategory(placeCategory)
+                .placePhoto(placePhoto)
                 .timeTable(timeTable)
                 .build();
     }
