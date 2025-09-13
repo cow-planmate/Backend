@@ -1,6 +1,5 @@
 package com.example.planmate.domain.login.dto;
 
-import com.example.planmate.common.dto.CommonResponse;
 import com.example.planmate.common.dto.IRequest;
 import lombok.Getter;
 import lombok.Setter;
