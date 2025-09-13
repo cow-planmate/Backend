@@ -18,7 +18,7 @@ public class Travel {
     @Column(nullable = false)
     private String travelName;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "travel_category_id", nullable = false)
     private TravelCategory travelCategory;
 
