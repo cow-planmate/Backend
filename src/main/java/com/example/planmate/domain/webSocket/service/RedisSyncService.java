@@ -1,11 +1,15 @@
 package com.example.planmate.domain.webSocket.service;
 
 import com.example.planmate.common.exception.PlanNotFoundException;
+import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
 import com.example.planmate.domain.plan.repository.PlanRepository;
 import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
+import com.example.planmate.domain.plan.repository.PlaceCategoryRepository;
 import com.example.planmate.domain.plan.repository.TimeTableRepository;
+
+import com.example.planmate.domain.plan.entity.PlaceCategory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +27,7 @@ public class RedisSyncService {
     private final TimeTableRepository timeTableRepository;
     private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
     private final RedisService redisService;
+    private final PlaceCategoryRepository placeCategoryRepository;
 
     @Transactional
     public void syncPlanToDatabase(int planId) {
@@ -30,8 +35,9 @@ public class RedisSyncService {
             //plan이 없을때 예외
             throw new PlanNotFoundException();
         }
-        //plan save
-        planRepository.save(redisService.getPlan(planId));
+        // plan save (엔터티)
+        Plan savedPlan = redisService.getPlan(planId);
+        planRepository.save(savedPlan);
 
         List<TimeTable> timetableList = redisService.deleteTimeTableByPlanId(planId);
         List<TimeTable> newTimetables = new ArrayList<>();
@@ -42,6 +48,14 @@ public class RedisSyncService {
             //새로운 테이블
             if(t.getTimeTableId()<0){
                 t.changeId(null);
+                // ensure plan reference
+                t = TimeTable.builder()
+                        .timeTableId(null)
+                        .date(t.getDate())
+                        .timeTableStartTime(t.getTimeTableStartTime())
+                        .timeTableEndTime(t.getTimeTableEndTime())
+                        .plan(savedPlan)
+                        .build();
                 newTimetables.add(t);
             }
             //기존 테이블
@@ -93,7 +107,19 @@ public class RedisSyncService {
                 for (TimeTablePlaceBlock block : blocks) {
                     if(block.getBlockId() >= 0){
                         TimeTablePlaceBlock timeTablePlaceBlock = timeTablePlaceBlockRepository.findById(block.getBlockId()).orElseThrow(() -> new IllegalArgumentException("블록을 찾을 수 없습니다. ID=" + block.getBlockId()));
-                        timeTablePlaceBlock.copyFrom(block);
+                        PlaceCategory pc = placeCategoryRepository.getReferenceById(block.getPlaceCategory().getPlaceCategoryId());
+                        timeTablePlaceBlock.updateBlockInfo(
+                                block.getPlaceName(),
+                                block.getPlaceTheme(),
+                                block.getPlaceRating(),
+                                block.getPlaceAddress(),
+                                block.getPlaceLink(),
+                                block.getBlockStartTime(),
+                                block.getBlockEndTime(),
+                                block.getXLocation(),
+                                block.getYLocation(),
+                                pc
+                        );
                         oldBlocks.removeIf(ot ->
                                 ot.getBlockId() != null && ot.getBlockId().equals(timeTablePlaceBlock.getBlockId())
                         );

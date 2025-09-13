@@ -11,11 +11,11 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 
-import com.example.planmate.domain.plan.entity.PlaceCategory;
-import com.example.planmate.domain.plan.entity.Plan;
-import com.example.planmate.domain.plan.entity.TimeTable;
-import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
-import com.example.planmate.domain.travel.entity.Travel;
+import com.example.planmate.domain.webSocket.lazydto.PlaceCategoryDto;
+import com.example.planmate.domain.webSocket.lazydto.PlanDto;
+import com.example.planmate.domain.webSocket.lazydto.TimeTableDto;
+import com.example.planmate.domain.webSocket.lazydto.TimeTablePlaceBlockDto;
+import com.example.planmate.domain.webSocket.lazydto.TravelDto;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -32,8 +32,8 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, Plan> planRedis(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Plan> template = new RedisTemplate<>();
+    public RedisTemplate<String, PlanDto> planRedis(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, PlanDto> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         template.afterPropertiesSet();
@@ -41,8 +41,8 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, TimeTable> timeTableRedis(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, TimeTable> template = new RedisTemplate<>();
+    public RedisTemplate<String, TimeTableDto> timeTableRedis(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, TimeTableDto> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -73,8 +73,8 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, TimeTablePlaceBlock> timeTablePlaceBlockRedis(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, TimeTablePlaceBlock> template = new RedisTemplate<>();
+    public RedisTemplate<String, TimeTablePlaceBlockDto> timeTablePlaceBlockRedis(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, TimeTablePlaceBlockDto> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -111,8 +111,8 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, Travel> travelRedis(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Travel> template = new RedisTemplate<>();
+    public RedisTemplate<String, TravelDto> travelRedis(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, TravelDto> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         template.afterPropertiesSet();
@@ -120,8 +120,8 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, PlaceCategory> placeCategoryRedis(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, PlaceCategory> template = new RedisTemplate<>();
+    public RedisTemplate<String, PlaceCategoryDto> placeCategoryRedis(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, PlaceCategoryDto> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         template.afterPropertiesSet();
