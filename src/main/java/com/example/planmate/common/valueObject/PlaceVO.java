@@ -8,7 +8,7 @@ import lombok.Getter;
 public abstract class PlaceVO {
     private String placeId;
     private int categoryId;
-    private String url;
+    private String placeLink;
     private String name;
     private String formatted_address;
     private float rating;

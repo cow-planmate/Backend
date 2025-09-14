@@ -57,6 +57,10 @@ public class TimeTablePlaceBlock {
     @JoinColumn(name = "time_table_id", nullable = false)
     private TimeTable timeTable;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "place_id", nullable = false)
+    private PlacePhoto placePhoto;
+
     public void changeId(Integer newId) {
         this.blockId = newId;
     }

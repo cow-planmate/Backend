@@ -16,6 +16,8 @@ import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
 import com.example.planmate.domain.webSocket.service.RedisService;
 import lombok.RequiredArgsConstructor;
+
+import org.checkerframework.checker.units.qual.t;
 import org.springframework.data.util.Pair;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -191,7 +193,7 @@ public class PlanService {
         }
         String travelName = travelCategoryName + " "+ plan.getTravel().getTravelName();
         Pair<List<TourPlaceVO>, List<String>> pair = googleMap.getTourPlace(travelCategoryName + " "+ travelName, preferredThemeNames);
-        List<TourPlaceVO> tourPlaceVOs = (List<TourPlaceVO>) googlePlaceDetails.searchGooglePlaceDetails(pair.getFirst());
+        List<TourPlaceVO> tourPlaceVOs = (List<TourPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
         response.addPlace(tourPlaceVOs);
         response.addNextPageToken(pair.getSecond());
         return response;
@@ -346,6 +348,7 @@ public class PlanService {
                         .blockEndTime(timeTablePlaceBlockVO.getEndTime())
                         .xLocation(timeTablePlaceBlockVO.getXLocation())
                         .yLocation(timeTablePlaceBlockVO.getYLocation())
+                        .placePhoto(new PlacePhoto(timeTablePlaceBlockVO.getPlaceId(), timeTablePlaceBlockVO.getPlaceId()))
                         .placeCategory(placeCategory)
                         .build());
             }
