@@ -12,7 +12,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.mail.javamail.JavaMailSender;
 
 import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
@@ -21,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class EmailVerificationService {
     private final UserRepository userRepository;
-    private final JavaMailSender mailSender;
     private final SecureRandom secureRandom;
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomMailService customMailService;

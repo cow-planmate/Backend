@@ -9,8 +9,6 @@ import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.common.exception.UserNotFoundException;
 import com.example.planmate.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

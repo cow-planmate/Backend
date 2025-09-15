@@ -25,7 +25,7 @@ public class TimeTable {
 
     private LocalTime timeTableEndTime;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plan_id", nullable = false)
     private Plan plan;
 
