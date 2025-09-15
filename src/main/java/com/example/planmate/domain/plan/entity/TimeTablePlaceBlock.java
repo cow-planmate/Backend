@@ -1,5 +1,6 @@
 package com.example.planmate.domain.plan.entity;
 
+import com.example.planmate.domain.image.entity.PlacePhoto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;

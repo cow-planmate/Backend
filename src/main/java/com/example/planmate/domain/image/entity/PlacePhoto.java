@@ -1,4 +1,4 @@
-package com.example.planmate.domain.plan.entity;
+package com.example.planmate.domain.image.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

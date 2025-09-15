@@ -16,11 +16,7 @@ import com.example.planmate.common.log.AccessLogInterceptor;
 public class CorsGlobalConfig implements WebMvcConfigurer {
     @Value("${LOG_PATH:logs}")
     private String logPath;
-    // 이미지가 저장된 로컬 디렉터리 (예: C:/data/images/)
-    // application.yml 에 spring.img.url 로 지정. (기존 명칭 유지)
-    @Value("${spring.img.url:C:/data/images/}")
-    private String imgUrl;
-
+    
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
@@ -53,29 +49,5 @@ public class CorsGlobalConfig implements WebMvcConfigurer {
             registry.addResourceHandler("/logs/**")
                     .addResourceLocations(logLocation);
         }
-
-        // 2) 이미지 디렉터리 매핑 (/images/**)
-        int oneYearSeconds = (int) Duration.ofDays(365).getSeconds();
-        String normalizedImg = ensureTrailingSlash(imgUrl);
-        String imgLocation = toFileLocation(normalizedImg);
-        if (!registry.hasMappingForPattern("/images/googleplace/**")) {
-            registry.addResourceHandler("/images/googleplace/**")
-                .addResourceLocations(imgLocation)
-                .setCachePeriod(oneYearSeconds);
-        }
-    }
-
-    private String ensureTrailingSlash(String path) {
-        if (path == null || path.isBlank()) return null; // 안전 기본값
-        return path.endsWith("/") || path.endsWith("\\") ? path : path + "/";
-    }
-
-    private String toFileLocation(String dir) {
-        // 이미 file: 로 시작하면 그대로 사용
-        if (dir.startsWith("file:")) {
-            return dir;
-        }
-        // 절대 경로로 변환 후 file: URI 문자열 반환
-        return Path.of(dir).toAbsolutePath().toUri().toString();
     }
 }

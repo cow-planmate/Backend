@@ -8,8 +8,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.example.planmate.common.valueObject.PlaceVO;
-import com.example.planmate.domain.plan.entity.PlacePhoto;
-import com.example.planmate.domain.plan.repository.PlacePhotoRepository;
+import com.example.planmate.domain.image.entity.PlacePhoto;
+import com.example.planmate.domain.image.repository.PlacePhotoRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,7 +35,7 @@ public class GooglePlaceDetails {
      */
     public List<? extends PlaceVO> searchGooglePlaceDetailsAsyncBlocking(List<? extends PlaceVO> placeVOs) {
     List<CompletableFuture<PlacePhoto>> futures = placeVOs.stream()
-                .map(googlePlaceImageWorker::fetchSinglePlaceImageAsync)
+                .map(vo -> googlePlaceImageWorker.fetchSinglePlaceImageAsync(vo.getPlaceId()))
                 .collect(Collectors.toList());
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     List<PlacePhoto> photos = futures.stream()
@@ -53,7 +53,7 @@ public class GooglePlaceDetails {
      */
     public CompletableFuture<List<? extends PlaceVO>> searchGooglePlaceDetailsAsync(List<? extends PlaceVO> placeVOs) {
     List<CompletableFuture<PlacePhoto>> futures = placeVOs.stream()
-                .map(googlePlaceImageWorker::fetchSinglePlaceImageAsync)
+                .map(vo -> googlePlaceImageWorker.fetchSinglePlaceImageAsync(vo.getPlaceId()))
                 .toList();
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
         .thenApply(v -> {

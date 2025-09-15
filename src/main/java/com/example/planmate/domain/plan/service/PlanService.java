@@ -5,6 +5,7 @@ import com.example.planmate.common.externalAPI.GoogleMap;
 import com.example.planmate.common.externalAPI.GooglePlaceDetails;
 import com.example.planmate.common.valueObject.*;
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
+import com.example.planmate.domain.image.entity.PlacePhoto;
 import com.example.planmate.domain.plan.auth.PlanAccessValidator;
 import com.example.planmate.domain.plan.dto.*;
 import com.example.planmate.domain.plan.entity.*;
@@ -17,7 +18,6 @@ import com.example.planmate.domain.user.repository.UserRepository;
 import com.example.planmate.domain.webSocket.service.RedisService;
 import lombok.RequiredArgsConstructor;
 
-import org.checkerframework.checker.units.qual.t;
 import org.springframework.data.util.Pair;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;

@@ -15,17 +15,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.planmate.common.valueObject.PlaceVO;
-import com.example.planmate.domain.plan.entity.PlacePhoto;
-import com.example.planmate.domain.plan.repository.PlacePhotoRepository;
+import com.example.planmate.domain.image.entity.PlacePhoto;
+import com.example.planmate.domain.image.repository.PlacePhotoRepository;
 import com.sksamuel.scrimage.ImmutableImage;
 import com.sksamuel.scrimage.webp.WebpWriter;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * Worker bean that performs per-place image retrieval & conversion asynchronously.
- * Separated from GooglePlaceDetails to avoid self-invocation issues with @Async.
- */
+
 @Component
 @RequiredArgsConstructor
 public class GooglePlaceImageWorker {
@@ -41,9 +38,7 @@ public class GooglePlaceImageWorker {
 
     @SuppressWarnings("unchecked")
     @Async("placeExecutor")
-    public CompletableFuture<PlacePhoto> fetchSinglePlaceImageAsync(PlaceVO placeVO) {
-        String placeId = placeVO.getPlaceId();
-    System.out.println("[ASYNC_START] placeId=" + placeId + " thread=" + Thread.currentThread().getName());
+    public CompletableFuture<PlacePhoto> fetchSinglePlaceImageAsync(String placeId) {
         try {
             
             if (placePhotoRepository.existsById(placeId)) {
