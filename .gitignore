@@ -41,3 +41,5 @@ out/
 
 # 환경 설정 파일 무시
 **/application-secret.yml
+# 이미지
+*.webp
