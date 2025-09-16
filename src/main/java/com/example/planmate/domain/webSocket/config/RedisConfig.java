@@ -104,8 +104,8 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, String> planTrackerRedis(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, String> template = new RedisTemplate<>();
+    public RedisTemplate<String, Integer> planTrackerRedis(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Integer> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         return template;
     }
