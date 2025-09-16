@@ -1,35 +1,43 @@
 package com.example.planmate.domain.webSocket.service;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+
 import com.example.planmate.common.valueObject.TimetableVO;
+import com.example.planmate.domain.image.entity.PlacePhoto;
+import com.example.planmate.domain.image.repository.PlacePhotoRepository;
 import com.example.planmate.domain.plan.entity.PlaceCategory;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
-import com.example.planmate.domain.webSocket.lazydto.PlaceCategoryDto;
-import com.example.planmate.domain.webSocket.lazydto.PlanDto;
-import com.example.planmate.domain.webSocket.lazydto.TimeTableDto;
-import com.example.planmate.domain.webSocket.lazydto.TimeTablePlaceBlockDto;
-import com.example.planmate.domain.webSocket.lazydto.TravelDto;
 import com.example.planmate.domain.plan.entity.TransportationCategory;
 import com.example.planmate.domain.plan.repository.PlaceCategoryRepository;
 import com.example.planmate.domain.plan.repository.PlanRepository;
 import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
 import com.example.planmate.domain.plan.repository.TimeTableRepository;
-import com.example.planmate.domain.travel.entity.Travel;
-import com.example.planmate.domain.travel.repository.TravelRepository;
 import com.example.planmate.domain.plan.repository.TransportationCategoryRepository;
+import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.travel.repository.TravelCategoryRepository;
+import com.example.planmate.domain.travel.repository.TravelRepository;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
+import com.example.planmate.domain.webSocket.lazydto.PlaceCategoryDto;
+import com.example.planmate.domain.webSocket.lazydto.PlanDto;
+import com.example.planmate.domain.webSocket.lazydto.TimeTableDto;
+import com.example.planmate.domain.webSocket.lazydto.TimeTablePlaceBlockDto;
+import com.example.planmate.domain.webSocket.lazydto.TravelDto;
 import com.example.planmate.domain.webSocket.valueObject.UserDayIndexVO;
+
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
-
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
@@ -71,6 +79,8 @@ public class RedisService {
 
     private final String REFRESHTOKEN_PREFIX = "REFRESHTOKEN";
     private final RedisTemplate<String, Integer> refreshTokenRedis;
+
+    private final PlacePhotoRepository placePhotoRepository;
 
     @PostConstruct
     public void init() {
@@ -234,7 +244,8 @@ public class RedisService {
             for (TimeTablePlaceBlockDto dto : dtos) {
                 if (dto != null) {
                     PlaceCategory pcRef = placeCategoryRepository.getReferenceById(dto.placeCategoryId());
-                    result.add(dto.toEntity(pcRef, timeTableRef));
+                    PlacePhoto ppRef = dto.placeId() != null ? placePhotoRepository.getReferenceById(dto.placeId()) : null;
+                    result.add(dto.toEntity(pcRef, timeTableRef, ppRef));
                 }
             }
             return result;
@@ -256,7 +267,8 @@ public class RedisService {
             for (TimeTablePlaceBlockDto dto : dtos) {
                 if (dto != null) {
                     PlaceCategory pcRef = placeCategoryRepository.getReferenceById(dto.placeCategoryId());
-                    result.add(dto.toEntity(pcRef, timeTableRef));
+                    PlacePhoto ppRef = dto.placeId() != null ? placePhotoRepository.getReferenceById(dto.placeId()) : null;
+                    result.add(dto.toEntity(pcRef, timeTableRef, ppRef));
                 }
             }
             return result;
@@ -271,7 +283,8 @@ public class RedisService {
         }
         PlaceCategory pcRef = placeCategoryRepository.getReferenceById(cached.placeCategoryId());
         TimeTable ttRef = timeTableRepository.getReferenceById(cached.timeTableId());
-        return cached.toEntity(pcRef, ttRef);
+        PlacePhoto ppRef = cached.placeId() != null ? placePhotoRepository.getReferenceById(cached.placeId()) : null;
+        return cached.toEntity(pcRef, ttRef, ppRef);
     }
 
 

@@ -8,7 +8,7 @@ import com.example.planmate.domain.plan.repository.PlanRepository;
 import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
 import com.example.planmate.domain.plan.repository.PlaceCategoryRepository;
 import com.example.planmate.domain.plan.repository.TimeTableRepository;
-
+import com.example.planmate.domain.image.entity.PlacePhoto;
 import com.example.planmate.domain.plan.entity.PlaceCategory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -108,6 +108,7 @@ public class RedisSyncService {
                     if(block.getBlockId() >= 0){
                         TimeTablePlaceBlock timeTablePlaceBlock = timeTablePlaceBlockRepository.findById(block.getBlockId()).orElseThrow(() -> new IllegalArgumentException("블록을 찾을 수 없습니다. ID=" + block.getBlockId()));
                         PlaceCategory pc = placeCategoryRepository.getReferenceById(block.getPlaceCategory().getPlaceCategoryId());
+                        PlacePhoto placePhoto = p
                         timeTablePlaceBlock.updateBlockInfo(
                                 block.getPlaceName(),
                                 block.getPlaceTheme(),
