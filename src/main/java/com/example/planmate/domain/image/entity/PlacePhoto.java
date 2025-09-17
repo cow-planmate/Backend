@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PlacePhoto {
     @Id
+    @Column(name = "place_id", length = 100)
     private String placeId;
     @Column(nullable = false, unique = true)
     private String photoURL;
