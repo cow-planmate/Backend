@@ -1,6 +1,7 @@
 package com.example.planmate.common.auth;
 
 import com.example.planmate.common.config.AuthWhitelist;
+import com.example.planmate.common.config.OptionalAuthWhitelist;
 import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -35,6 +36,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (AuthWhitelist.isWhitelisted(uri)) {
             filterChain.doFilter(request, response);
             return;
+        }
+
+        if (OptionalAuthWhitelist.isWhitelisted(uri)) {
+            String shareToken = request.getParameter("token");
+            if (shareToken != null && !shareToken.isBlank()) {
+                filterChain.doFilter(request, response);
+                return;
+            }
         }
 
         String token = resolveToken(request);

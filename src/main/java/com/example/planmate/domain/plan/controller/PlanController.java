@@ -1,5 +1,6 @@
 package com.example.planmate.domain.plan.controller;
 
+import com.example.planmate.common.exception.UnauthorizedException;
 import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanRequest;
 import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanResponse;
 import com.example.planmate.domain.collaborationRequest.dto.RequestEditAccessResponse;
@@ -45,25 +46,23 @@ public class PlanController {
     }
     @GetMapping("/{planId}/complete")
     public ResponseEntity<GetCompletePlanResponse> getCompletePlan(
+            Authentication authentication,
             @PathVariable("planId") int planId,
-            @RequestParam(value = "token", required = false) String shareToken,
-            Authentication authentication   // 로그인한 사용자 정보, 없으면 null
-    ) throws AccessDeniedException {
+            @RequestParam(value = "token", required = false) String shareToken
+    ) {
         GetCompletePlanResponse response;
-
         if (shareToken != null && !shareToken.isBlank()) {
             // 토큰이 있는 경우 → 인증 없이 처리
             planService.validateShareToken(planId, shareToken);
-            response = planService.getCompletePlan(planId);
         } else {
             // 토큰이 없는 경우 → 인증 필수
-//            if (authentication == null || !authentication.isAuthenticated()) {
-//                throw new AccessDeniedException("로그인이 필요합니다.");
-//            }
-//            int userId = Integer.parseInt(authentication.getName());
-//            planAccessValidator.checkUserAccessToPlan(userId, planId);
-            response = planService.getCompletePlan(planId);
+            if (authentication == null) {
+                throw new UnauthorizedException("로그인이 필요합니다.");
+            }
+            int userId = Integer.parseInt(authentication.getName());
+            planAccessValidator.checkUserAccessToPlan(userId, planId);
         }
+        response = planService.getCompletePlan(planId);
         return ResponseEntity.ok(response);
     }
 
