@@ -244,7 +244,8 @@ public class PlanService {
         }
         String travelName = travelCategoryName + " "+ plan.getTravel().getTravelName();
         Pair<List<LodgingPlaceVO>, List<String>> pair = googleMap.getLodgingPlace(travelCategoryName + " "+ travelName, preferredThemeNames);
-        response.addPlace(pair.getFirst());
+        List<LodgingPlaceVO> lodgingPlaceVOs = (List<LodgingPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
+        response.addPlace(lodgingPlaceVOs);
         response.addNextPageToken(pair.getSecond());
         return response;
     }
@@ -261,7 +262,8 @@ public class PlanService {
         }
         String travelName = travelCategoryName + " "+ plan.getTravel().getTravelName();
         Pair<List<RestaurantPlaceVO>, List<String>> pair = googleMap.getRestaurantPlace(travelCategoryName + " "+ travelName, preferredThemeNames);
-        response.addPlace(pair.getFirst());
+        List<RestaurantPlaceVO> restaurantPlaceVOs = (List<RestaurantPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
+        response.addPlace(restaurantPlaceVOs);
         response.addNextPageToken(pair.getSecond());
         return response;
     }
@@ -270,7 +272,8 @@ public class PlanService {
         PlaceResponse response = new PlaceResponse();
         planAccessValidator.validateUserHasAccessToPlan(userId, planId);
         Pair<List<SearchPlaceVO>, List<String>> pair = googleMap.getSearchPlace(query);
-        response.addPlace(pair.getFirst());
+        List<SearchPlaceVO> searchPlaceVOs = (List<SearchPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
+        response.addPlace(searchPlaceVOs);
         response.addNextPageToken(pair.getSecond());
         return response;
     }
