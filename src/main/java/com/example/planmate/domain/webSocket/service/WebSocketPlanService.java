@@ -2,7 +2,6 @@ package com.example.planmate.domain.webSocket.service;
 
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
-import com.example.planmate.domain.image.repository.PlacePhotoRepository;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
@@ -19,7 +18,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class WebSocketPlanService {
     private final RedisService redisService;
-    private final PlacePhotoRepository placePhotoRepository;
 
     public WPlanResponse updatePlan(int planId, WPlanRequest request) {
         WPlanResponse response = new WPlanResponse();
@@ -86,7 +84,6 @@ public class WebSocketPlanService {
                 .placeRating(timetablePlaceBlockVO.getPlaceRating())
                 .placeAddress(timetablePlaceBlockVO.getPlaceAddress())
                 .placeLink(timetablePlaceBlockVO.getPlaceLink())
-                .placePhoto(placePhotoRepository.getReferenceById(timetablePlaceBlockVO.getPlaceId()))
                 .blockStartTime(timetablePlaceBlockVO.getStartTime())
                 .blockEndTime(timetablePlaceBlockVO.getEndTime())
                 .xLocation(timetablePlaceBlockVO.getXLocation())

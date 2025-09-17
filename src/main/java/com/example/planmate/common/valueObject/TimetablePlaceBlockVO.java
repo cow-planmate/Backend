@@ -20,7 +20,6 @@ public class TimetablePlaceBlockVO {
     private Float placeRating;
     private String placeAddress;
     private String placeLink;
-    private String placeId;
     private String date;
     private LocalTime startTime;
     @JsonDeserialize(using = LocalTime24Deserializer.class)

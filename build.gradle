@@ -15,9 +15,6 @@ java {
 
 repositories {
     mavenCentral()
-    maven {
-        url "https://repo.luciad.com/maven2"
-    }
 }
 
 dependencies {
@@ -41,8 +38,6 @@ dependencies {
     implementation 'org.webjars:stomp-websocket:2.3.4'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'p6spy:p6spy:3.9.1'
-    implementation 'com.sksamuel.scrimage:scrimage-core:4.0.33'
-    implementation 'com.sksamuel.scrimage:scrimage-webp:4.0.33'
 }
 
 tasks.named('test') {

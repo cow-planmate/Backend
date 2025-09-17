@@ -1,6 +1,5 @@
 package com.example.planmate.domain.plan.entity;
 
-import com.example.planmate.domain.image.entity.PlacePhoto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -57,10 +56,6 @@ public class TimeTablePlaceBlock {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "time_table_id", nullable = false)
     private TimeTable timeTable;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "place_id", nullable = false)
-    private PlacePhoto placePhoto;
 
     public void changeId(Integer newId) {
         this.blockId = newId;
@@ -138,8 +133,7 @@ public class TimeTablePlaceBlock {
             LocalTime blockEndTime,
             double xLocation,
             double yLocation,
-            PlaceCategory placeCategory,
-            PlacePhoto placePhoto
+            PlaceCategory placeCategory
     ) {
         if (blockStartTime != null && blockEndTime != null && blockStartTime.isAfter(blockEndTime)) {
             throw new IllegalArgumentException("블록 시작 시간이 종료 시간보다 늦을 수 없습니다.");
@@ -155,8 +149,6 @@ public class TimeTablePlaceBlock {
         this.xLocation = xLocation;
         this.yLocation = yLocation;
         this.placeCategory = placeCategory;
-        this.placePhoto = placePhoto;
-
     }
 
     public void copyFrom(TimeTablePlaceBlock other) {
@@ -174,8 +166,7 @@ public class TimeTablePlaceBlock {
                 other.getBlockEndTime(),
                 other.getXLocation(),
                 other.getYLocation(),
-                other.getPlaceCategory(),
-                other.getPlacePhoto()
+                other.getPlaceCategory()
         );
 
         this.assignTimeTable(other.getTimeTable());

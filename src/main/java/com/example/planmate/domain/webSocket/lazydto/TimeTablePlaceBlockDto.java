@@ -1,11 +1,10 @@
 package com.example.planmate.domain.webSocket.lazydto;
 
-import java.time.LocalTime;
-
-import com.example.planmate.domain.image.entity.PlacePhoto;
+import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
 import com.example.planmate.domain.plan.entity.PlaceCategory;
 import com.example.planmate.domain.plan.entity.TimeTable;
-import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
+
+import java.time.LocalTime;
 
 public record TimeTablePlaceBlockDto(
         Integer blockId,
@@ -18,7 +17,6 @@ public record TimeTablePlaceBlockDto(
         LocalTime blockEndTime,
         double xLocation,
         double yLocation,
-        String placeId,
         Integer placeCategoryId,
         Integer timeTableId
 ) {
@@ -34,13 +32,12 @@ public record TimeTablePlaceBlockDto(
                 block.getBlockEndTime(),
                 block.getXLocation(),
                 block.getYLocation(),
-                block.getPlacePhoto() != null ? block.getPlacePhoto().getPlaceId() : null,
                 block.getPlaceCategory().getPlaceCategoryId(),
                 block.getTimeTable().getTimeTableId()
         );
     }
 
-        public TimeTablePlaceBlock toEntity(PlaceCategory placeCategory, TimeTable timeTable, PlacePhoto placePhoto) {
+    public TimeTablePlaceBlock toEntity(PlaceCategory placeCategory, TimeTable timeTable) {
         return TimeTablePlaceBlock.builder()
                 .blockId(this.blockId)
                 .placeName(this.placeName)
@@ -52,7 +49,6 @@ public record TimeTablePlaceBlockDto(
                 .blockEndTime(this.blockEndTime)
                 .xLocation(this.xLocation)
                 .yLocation(this.yLocation)
-                .placePhoto(placePhoto)
                 .placeCategory(placeCategory)
                 .timeTable(timeTable)
                 .build();
