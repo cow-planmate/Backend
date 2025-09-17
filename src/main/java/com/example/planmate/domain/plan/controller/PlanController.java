@@ -1,5 +1,6 @@
 package com.example.planmate.domain.plan.controller;
 
+import com.example.planmate.common.exception.UnauthorizedException;
 import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanRequest;
 import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanResponse;
 import com.example.planmate.domain.collaborationRequest.dto.RequestEditAccessResponse;
@@ -9,6 +10,7 @@ import com.example.planmate.domain.plan.dto.*;
 import com.example.planmate.domain.plan.service.PlanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,8 +59,9 @@ public class PlanController {
             response = planService.getCompletePlan(planId);
         } else {
             // 토큰이 없는 경우 → 인증 필수
-            if (authentication == null || !authentication.isAuthenticated()) {
-                throw new AccessDeniedException("로그인이 필요합니다.");
+            if (authentication == null ||
+                    authentication instanceof AnonymousAuthenticationToken) {
+                throw new UnauthorizedException("로그인이 필요합니다.");
             }
             int userId = Integer.parseInt(authentication.getName());
             planAccessValidator.checkUserAccessToPlan(userId, planId);
