@@ -57,11 +57,11 @@ public class PlanController {
             response = planService.getCompletePlan(planId);
         } else {
             // 토큰이 없는 경우 → 인증 필수
-//            if (authentication == null || !authentication.isAuthenticated()) {
-//                throw new AccessDeniedException("로그인이 필요합니다.");
-//            }
-//            int userId = Integer.parseInt(authentication.getName());
-//            planAccessValidator.checkUserAccessToPlan(userId, planId);
+            if (authentication == null || !authentication.isAuthenticated()) {
+                throw new AccessDeniedException("로그인이 필요합니다.");
+            }
+            int userId = Integer.parseInt(authentication.getName());
+            planAccessValidator.checkUserAccessToPlan(userId, planId);
             response = planService.getCompletePlan(planId);
         }
         return ResponseEntity.ok(response);
