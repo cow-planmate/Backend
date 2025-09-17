@@ -1,4 +1,3 @@
-
 package com.example.planmate.domain.image.entity;
 
 import jakarta.persistence.Column;

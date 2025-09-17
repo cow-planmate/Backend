@@ -1,23 +1,24 @@
 package com.example.planmate.domain.webSocket.service;
 
-import com.example.planmate.common.exception.PlanNotFoundException;
-import com.example.planmate.domain.plan.entity.Plan;
-import com.example.planmate.domain.plan.entity.TimeTable;
-import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
-import com.example.planmate.domain.plan.repository.PlanRepository;
-import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
-import com.example.planmate.domain.plan.repository.PlaceCategoryRepository;
-import com.example.planmate.domain.plan.repository.TimeTableRepository;
-
-import com.example.planmate.domain.plan.entity.PlaceCategory;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.planmate.common.exception.PlanNotFoundException;
+import com.example.planmate.domain.image.repository.PlacePhotoRepository;
+import com.example.planmate.domain.plan.entity.Plan;
+import com.example.planmate.domain.plan.entity.TimeTable;
+import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
+import com.example.planmate.domain.plan.repository.PlaceCategoryRepository;
+import com.example.planmate.domain.plan.repository.PlanRepository;
+import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
+import com.example.planmate.domain.plan.repository.TimeTableRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +29,7 @@ public class RedisSyncService {
     private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
     private final RedisService redisService;
     private final PlaceCategoryRepository placeCategoryRepository;
+    private final PlacePhotoRepository placePhotoRepository;
 
     @Transactional
     public void syncPlanToDatabase(int planId) {
@@ -107,19 +109,7 @@ public class RedisSyncService {
                 for (TimeTablePlaceBlock block : blocks) {
                     if(block.getBlockId() >= 0){
                         TimeTablePlaceBlock timeTablePlaceBlock = timeTablePlaceBlockRepository.findById(block.getBlockId()).orElseThrow(() -> new IllegalArgumentException("블록을 찾을 수 없습니다. ID=" + block.getBlockId()));
-                        PlaceCategory pc = placeCategoryRepository.getReferenceById(block.getPlaceCategory().getPlaceCategoryId());
-                        timeTablePlaceBlock.updateBlockInfo(
-                                block.getPlaceName(),
-                                block.getPlaceTheme(),
-                                block.getPlaceRating(),
-                                block.getPlaceAddress(),
-                                block.getPlaceLink(),
-                                block.getBlockStartTime(),
-                                block.getBlockEndTime(),
-                                block.getXLocation(),
-                                block.getYLocation(),
-                                pc
-                        );
+                        timeTablePlaceBlock.copyFrom(block);
                         oldBlocks.removeIf(ot ->
                                 ot.getBlockId() != null && ot.getBlockId().equals(timeTablePlaceBlock.getBlockId())
                         );

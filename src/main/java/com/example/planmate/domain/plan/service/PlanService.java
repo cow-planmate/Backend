@@ -1,30 +1,65 @@
 package com.example.planmate.domain.plan.service;
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.util.Pair;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.planmate.common.exception.UserNotFoundException;
 import com.example.planmate.common.externalAPI.GoogleMap;
-import com.example.planmate.common.valueObject.*;
+import com.example.planmate.common.externalAPI.GooglePlaceDetails;
+import com.example.planmate.common.valueObject.LodgingPlaceVO;
+import com.example.planmate.common.valueObject.RestaurantPlaceVO;
+import com.example.planmate.common.valueObject.SearchPlaceVO;
+import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
+import com.example.planmate.common.valueObject.TimetableVO;
+import com.example.planmate.common.valueObject.TourPlaceVO;
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
+import com.example.planmate.domain.image.entity.PlacePhoto;
 import com.example.planmate.domain.plan.auth.PlanAccessValidator;
-import com.example.planmate.domain.plan.dto.*;
-import com.example.planmate.domain.plan.entity.*;
-import com.example.planmate.domain.plan.repository.*;
+import com.example.planmate.domain.plan.dto.DeleteMultiplePlansResponse;
+import com.example.planmate.domain.plan.dto.DeletePlanResponse;
+import com.example.planmate.domain.plan.dto.EditPlanNameResponse;
+import com.example.planmate.domain.plan.dto.GetCompletePlanResponse;
+import com.example.planmate.domain.plan.dto.GetEditorsResponse;
+import com.example.planmate.domain.plan.dto.GetPlanResponse;
+import com.example.planmate.domain.plan.dto.GetShareLinkResponse;
+import com.example.planmate.domain.plan.dto.MakePlanResponse;
+import com.example.planmate.domain.plan.dto.PlaceResponse;
+import com.example.planmate.domain.plan.dto.RemoveEditorAccessByOwnerResponse;
+import com.example.planmate.domain.plan.dto.ResignEditorAccessResponse;
+import com.example.planmate.domain.plan.dto.SavePlanResponse;
+import com.example.planmate.domain.plan.entity.PlaceCategory;
+import com.example.planmate.domain.plan.entity.Plan;
+import com.example.planmate.domain.plan.entity.PlanShare;
+import com.example.planmate.domain.plan.entity.TimeTable;
+import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
+import com.example.planmate.domain.plan.entity.TransportationCategory;
+import com.example.planmate.domain.plan.repository.PlaceCategoryRepository;
+import com.example.planmate.domain.plan.repository.PlanEditorRepository;
+import com.example.planmate.domain.plan.repository.PlanRepository;
+import com.example.planmate.domain.plan.repository.PlanShareRepository;
+import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
+import com.example.planmate.domain.plan.repository.TimeTableRepository;
+import com.example.planmate.domain.plan.repository.TransportationCategoryRepository;
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.travel.repository.TravelRepository;
 import com.example.planmate.domain.user.entity.PreferredTheme;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
 import com.example.planmate.domain.webSocket.service.RedisService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.util.Pair;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.*;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +76,7 @@ public class PlanService {
     private final PlanShareRepository planShareRepository;
     private final RedisService redisService;
     private final GoogleMap googleMap;
+    private final GooglePlaceDetails googlePlaceDetails;
 
 
     public MakePlanResponse makeService(int userId, String departure, int travelId, int transportationCategoryId, List<LocalDate> dates, int adultCount, int childCount) {
@@ -139,6 +175,7 @@ public class PlanService {
                             timeTablePlaceBlock1.getPlaceRating(),
                             timeTablePlaceBlock1.getPlaceAddress(),
                             timeTablePlaceBlock1.getPlaceLink(),
+                            timeTablePlaceBlock1.getPlacePhoto().getPlaceId(),
                             timeTablePlaceBlock1.getXLocation(),
                             timeTablePlaceBlock1.getYLocation(),
                             timeTablePlaceBlock1.getBlockStartTime(),
@@ -189,7 +226,8 @@ public class PlanService {
         }
         String travelName = travelCategoryName + " "+ plan.getTravel().getTravelName();
         Pair<List<TourPlaceVO>, List<String>> pair = googleMap.getTourPlace(travelCategoryName + " "+ travelName, preferredThemeNames);
-        response.addPlace(pair.getFirst());
+        List<TourPlaceVO> tourPlaceVOs = (List<TourPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
+        response.addPlace(tourPlaceVOs);
         response.addNextPageToken(pair.getSecond());
         return response;
     }
@@ -206,7 +244,8 @@ public class PlanService {
         }
         String travelName = travelCategoryName + " "+ plan.getTravel().getTravelName();
         Pair<List<LodgingPlaceVO>, List<String>> pair = googleMap.getLodgingPlace(travelCategoryName + " "+ travelName, preferredThemeNames);
-        response.addPlace(pair.getFirst());
+        List<LodgingPlaceVO> lodgingPlaceVOs = (List<LodgingPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
+        response.addPlace(lodgingPlaceVOs);
         response.addNextPageToken(pair.getSecond());
         return response;
     }
@@ -223,7 +262,8 @@ public class PlanService {
         }
         String travelName = travelCategoryName + " "+ plan.getTravel().getTravelName();
         Pair<List<RestaurantPlaceVO>, List<String>> pair = googleMap.getRestaurantPlace(travelCategoryName + " "+ travelName, preferredThemeNames);
-        response.addPlace(pair.getFirst());
+        List<RestaurantPlaceVO> restaurantPlaceVOs = (List<RestaurantPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
+        response.addPlace(restaurantPlaceVOs);
         response.addNextPageToken(pair.getSecond());
         return response;
     }
@@ -232,7 +272,8 @@ public class PlanService {
         PlaceResponse response = new PlaceResponse();
         planAccessValidator.validateUserHasAccessToPlan(userId, planId);
         Pair<List<SearchPlaceVO>, List<String>> pair = googleMap.getSearchPlace(query);
-        response.addPlace(pair.getFirst());
+        List<SearchPlaceVO> searchPlaceVOs = (List<SearchPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
+        response.addPlace(searchPlaceVOs);
         response.addNextPageToken(pair.getSecond());
         return response;
     }
@@ -343,6 +384,7 @@ public class PlanService {
                         .blockEndTime(timeTablePlaceBlockVO.getEndTime())
                         .xLocation(timeTablePlaceBlockVO.getXLocation())
                         .yLocation(timeTablePlaceBlockVO.getYLocation())
+                        .placePhoto(new PlacePhoto(timeTablePlaceBlockVO.getPlaceId(), timeTablePlaceBlockVO.getPlaceId()))
                         .placeCategory(placeCategory)
                         .build());
             }
@@ -434,6 +476,7 @@ public class PlanService {
                             timeTablePlaceBlock1.getPlaceRating(),
                             timeTablePlaceBlock1.getPlaceAddress(),
                             timeTablePlaceBlock1.getPlaceLink(),
+                            timeTablePlaceBlock1.getPlacePhoto().getPlaceId(),
                             timeTablePlaceBlock1.getXLocation(),
                             timeTablePlaceBlock1.getYLocation(),
                             timeTablePlaceBlock1.getBlockStartTime(),
