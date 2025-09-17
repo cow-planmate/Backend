@@ -47,7 +47,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity
-                .status(HttpStatus.CONFLICT)
+                .status(HttpStatus.FORBIDDEN)
                 .body(createErrorBody(getErrorMessage(ex, "접근 권한이 없습니다")));
     }
 
