@@ -58,6 +58,10 @@ import com.example.planmate.domain.user.entity.PreferredTheme;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
 import com.example.planmate.domain.webSocket.service.RedisService;
+import com.example.planmate.infrastructure.redis.PlanCacheService;
+import com.example.planmate.infrastructure.redis.PlanTrackerService;
+import com.example.planmate.infrastructure.redis.TimeTableCacheService;
+import com.example.planmate.infrastructure.redis.TimeTablePlaceBlockCacheService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -74,9 +78,13 @@ public class PlanService {
     private final PlaceCategoryRepository placeCategoryRepository;
     private final PlanEditorRepository planEditorRepository;
     private final PlanShareRepository planShareRepository;
-    private final RedisService redisService;
+    private final RedisService redisService; // still used for Travel/PlaceCategory cache lookups
+    private final PlanTrackerService planTrackerService;
     private final GoogleMap googleMap;
     private final GooglePlaceDetails googlePlaceDetails;
+    private final PlanCacheService planCacheService;
+    private final TimeTableCacheService timeTableCacheService;
+    private final TimeTablePlaceBlockCacheService blockCacheService;
 
 
     public MakePlanResponse makeService(int userId, String departure, int travelId, int transportationCategoryId, List<LocalDate> dates, int adultCount, int childCount) {
@@ -132,13 +140,15 @@ public class PlanService {
 
     public GetPlanResponse getPlan(int userId, int planId) {
         GetPlanResponse response = new GetPlanResponse();
-        Plan plan = redisService.getPlan(planId);
+        Plan plan = planCacheService.get(planId);
         List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
         if(plan != null) {
-            timeTables = redisService.getTimeTableByPlanId(planId);
-            for(TimeTable timeTable : timeTables) {
-                timeTablePlaceBlocks.add(redisService.getTimeTablePlaceBlockByTimeTableId(timeTable.getTimeTableId()));
+            timeTables = timeTableCacheService.getByPlan(planId);
+            if(timeTables != null){
+                for(TimeTable timeTable : timeTables) {
+                    timeTablePlaceBlocks.add(blockCacheService.getByTimeTable(timeTable.getTimeTableId()));
+                }
             }
         }
         else {
@@ -146,6 +156,12 @@ public class PlanService {
             timeTables = timeTableRepository.findByPlanPlanId(planId);
             for (TimeTable timeTable : timeTables) {
                 timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
+            }
+            // warm cache for future
+            planCacheService.loadPlan(planId);
+            timeTableCacheService.loadForPlan(planId);
+            for(TimeTable tt: timeTables){
+                blockCacheService.loadForTimeTable(tt.getTimeTableId());
             }
         }
         response.addPlanFrame(
@@ -184,7 +200,7 @@ public class PlanService {
                 }
             }
         }
-        response.setUserDayIndexes(redisService.getPlanTracker(planId));
+        response.setUserDayIndexes(planTrackerService.get(planId));
         return response; // DTO 변환
     }
 
@@ -433,13 +449,15 @@ public class PlanService {
     public GetCompletePlanResponse getCompletePlan(int planId) {
         GetCompletePlanResponse response = new GetCompletePlanResponse();
 
-        Plan plan = redisService.getPlan(planId);
+        Plan plan = planCacheService.get(planId);
         List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
         if(plan != null) {
-            timeTables = redisService.getTimeTableByPlanId(planId);
-            for(TimeTable timeTable : timeTables) {
-                timeTablePlaceBlocks.add(redisService.getTimeTablePlaceBlockByTimeTableId(timeTable.getTimeTableId()));
+            timeTables = timeTableCacheService.getByPlan(planId);
+            if(timeTables != null){
+                for(TimeTable timeTable : timeTables) {
+                    timeTablePlaceBlocks.add(blockCacheService.getByTimeTable(timeTable.getTimeTableId()));
+                }
             }
         }
         else {
@@ -447,6 +465,11 @@ public class PlanService {
             timeTables = timeTableRepository.findByPlanPlanId(planId);
             for (TimeTable timeTable : timeTables) {
                 timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
+            }
+            planCacheService.loadPlan(planId);
+            timeTableCacheService.loadForPlan(planId);
+            for(TimeTable tt: timeTables){
+                blockCacheService.loadForTimeTable(tt.getTimeTableId());
             }
         }
         response.addPlanFrame(

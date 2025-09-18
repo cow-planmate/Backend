@@ -1,7 +1,14 @@
 package com.example.planmate.common.auth;
 
+import java.security.Key;
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
-import com.example.planmate.domain.webSocket.service.RedisService;
+import com.example.planmate.infrastructure.redis.RefreshTokenCacheService;
+
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -9,11 +16,6 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import java.security.Key;
-import java.util.Date;
 
 @Component
 @RequiredArgsConstructor
@@ -25,7 +27,7 @@ public class JwtTokenProvider {
     private final long refreshTtlMillis = 14L * 24 * 60 * 60 * 1000;
     private long emailVerificationTokenExpirationMs = 600_000;
 
-    private final RedisService redisService;
+    private final RefreshTokenCacheService refreshTokenCacheService;
 
     @Value("${jwt.access secret}")
     private String accessSecret;
@@ -60,7 +62,7 @@ public class JwtTokenProvider {
                 .setExpiration(expiryDate)
                 .signWith(refreshKey, SignatureAlgorithm.HS256)
                 .compact();
-        redisService.registerRefreshToken(token, userId);
+    refreshTokenCacheService.store(token, userId);
         return token;
     }
     public String generateEmailToken(String email, EmailVerificationPurpose purpose) {
