@@ -1,5 +1,11 @@
 package com.example.planmate.domain.login.service;
 
+import com.example.planmate.common.auth.JwtTokenProvider;
+import com.example.planmate.domain.login.dto.LoginResponse;
+import com.example.planmate.domain.login.dto.LogoutResponse;
+import com.example.planmate.domain.user.CustomUserDetails;
+import com.example.planmate.domain.webSocket.service.RedisService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -7,21 +13,13 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.example.planmate.common.auth.JwtTokenProvider;
-import com.example.planmate.domain.login.dto.LoginResponse;
-import com.example.planmate.domain.login.dto.LogoutResponse;
-import com.example.planmate.domain.user.CustomUserDetails;
-import com.example.planmate.infrastructure.redis.RefreshTokenCacheService;
-
-import lombok.RequiredArgsConstructor;
-
 @Service
 @RequiredArgsConstructor
 public class LoginService {
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
-    private final RefreshTokenCacheService refreshTokenCacheService;
+    private final RedisService redisService;
 
     public LoginResponse login(String email, String password) {
         LoginResponse response = new LoginResponse();
@@ -50,13 +48,13 @@ public class LoginService {
     }
 
     public LogoutResponse logout(String refreshToken) {
-    Integer userId1 = refreshTokenCacheService.findUserId(refreshToken);
+        Integer userId1 = redisService.findUserIdByRefreshToken(refreshToken);
         if(userId1 == null) {
             LogoutResponse response = new LogoutResponse(false);
             response.setMessage("Invalid refresh token");
             return response;
         }
-    refreshTokenCacheService.delete(refreshToken);
+        redisService.deleteRefreshToken(refreshToken);
         return new LogoutResponse(true);
     }
 }

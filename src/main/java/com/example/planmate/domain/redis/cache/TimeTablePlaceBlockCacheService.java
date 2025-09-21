@@ -5,9 +5,8 @@ import java.util.Collections;
 import java.util.List;
 
 import org.springframework.data.redis.core.RedisTemplate;
-// @Service removed to avoid duplicate bean with infrastructure.redis.TimeTablePlaceBlockCacheService
+import org.springframework.stereotype.Service;
 
-import com.example.planmate.domain.image.repository.PlacePhotoRepository;
 import com.example.planmate.domain.plan.entity.PlaceCategory;
 import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
@@ -15,11 +14,13 @@ import com.example.planmate.domain.plan.repository.PlaceCategoryRepository;
 import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
 import com.example.planmate.domain.plan.repository.TimeTableRepository;
 import com.example.planmate.domain.webSocket.lazydto.TimeTablePlaceBlockDto;
+import com.example.planmate.domain.image.repository.PlacePhotoRepository;
 
 import lombok.RequiredArgsConstructor;
 
+@Service
 @RequiredArgsConstructor
-class TimeTablePlaceBlockCacheService {
+public class TimeTablePlaceBlockCacheService {
     private final RedisTemplate<String, TimeTablePlaceBlockDto> timeTablePlaceBlockRedis;
     private final RedisTemplate<String, List<Integer>> timeTableToTimeTablePlaceBlockRedis;
     private static final String TIMETABLEPLACEBLOCK_PREFIX = "TIMETABLEPLACEBLOCK";

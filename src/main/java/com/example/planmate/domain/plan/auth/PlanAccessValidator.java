@@ -1,23 +1,21 @@
 package com.example.planmate.domain.plan.auth;
 
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.stereotype.Component;
-
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.repository.PlanEditorRepository;
 import com.example.planmate.domain.plan.repository.PlanRepository;
-import com.example.planmate.infrastructure.redis.PlanCacheService;
-
+import com.example.planmate.domain.webSocket.service.RedisService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class PlanAccessValidator {
     private final PlanRepository planRepository;
     private final PlanEditorRepository planEditorRepository;
-    private final PlanCacheService planCacheService;
+    private final RedisService redisService;
     public Plan validateUserHasAccessToPlan(int userId, int planId) {
-        Plan plan = planCacheService.get(planId);
+        Plan plan = redisService.getPlan(planId);
 
         if (plan == null) {
             plan = planRepository.findById(planId)
@@ -33,7 +31,7 @@ public class PlanAccessValidator {
         return plan;
     }
     public void checkUserAccessToPlan(int userId, int planId) {
-        Plan plan = planCacheService.get(planId);
+        Plan plan = redisService.getPlan(planId);
 
         if (plan == null) {
             plan = planRepository.findById(planId)
