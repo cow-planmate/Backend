@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
-import com.example.planmate.domain.webSocket.service.RedisService;
+import com.example.planmate.domain.refreshToken.service.RefreshTokenStore;
 
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -27,7 +27,7 @@ public class JwtTokenProvider {
     private final long refreshTtlMillis = 14L * 24 * 60 * 60 * 1000;
     private long emailVerificationTokenExpirationMs = 600_000;
 
-    private final RedisService redisService;
+    private final RefreshTokenStore refreshTokenStore;
 
     @Value("${jwt.access secret}")
     private String accessSecret;
@@ -62,7 +62,7 @@ public class JwtTokenProvider {
                 .setExpiration(expiryDate)
                 .signWith(refreshKey, SignatureAlgorithm.HS256)
                 .compact();
-        redisService.registerRefreshToken(token, userId);
+        refreshTokenStore.insertRefreshToken(token, userId);
         return token;
     }
     public String generateEmailToken(String email, EmailVerificationPurpose purpose) {

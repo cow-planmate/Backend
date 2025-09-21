@@ -1,6 +1,8 @@
 package com.example.planmate.common.externalAPI;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -34,17 +36,27 @@ public class GooglePlaceDetails {
      * Async bulk fetch that blocks until all individual async tasks complete.
      */
     public List<? extends PlaceVO> searchGooglePlaceDetailsAsyncBlocking(List<? extends PlaceVO> placeVOs) {
-    List<CompletableFuture<PlacePhoto>> futures = placeVOs.stream()
+        List<CompletableFuture<PlacePhoto>> futures = placeVOs.stream()
                 .map(vo -> googlePlaceImageWorker.fetchSinglePlaceImageAsync(vo.getPlaceId()))
                 .collect(Collectors.toList());
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-    List<PlacePhoto> photos = futures.stream()
-        .map(CompletableFuture::join)
-        .filter(p -> p != null)
-        .toList();
-    if (!photos.isEmpty()) {
-        placePhotoRepository.saveAll(photos);
-    }
+        List<PlacePhoto> photos = futures.stream()
+            .map(CompletableFuture::join)
+            .filter(p -> p != null)
+            .toList();
+        if (!photos.isEmpty()) {
+            // Deduplicate by placeId and avoid saving already-existing rows to reduce race/conflicts
+            Map<String, PlacePhoto> unique = new LinkedHashMap<>();
+            for (PlacePhoto p : photos) {
+                unique.putIfAbsent(p.getPlaceId(), p);
+            }
+            List<PlacePhoto> toSave = unique.values().stream()
+                .filter(p -> !placePhotoRepository.existsById(p.getPlaceId()))
+                .toList();
+            if (!toSave.isEmpty()) {
+                placePhotoRepository.saveAll(toSave);
+            }
+        }
         return placeVOs;
     }
 
@@ -52,7 +64,7 @@ public class GooglePlaceDetails {
      * Fully async aggregate method returning a CompletableFuture.
      */
     public CompletableFuture<List<? extends PlaceVO>> searchGooglePlaceDetailsAsync(List<? extends PlaceVO> placeVOs) {
-    List<CompletableFuture<PlacePhoto>> futures = placeVOs.stream()
+        List<CompletableFuture<PlacePhoto>> futures = placeVOs.stream()
                 .map(vo -> googlePlaceImageWorker.fetchSinglePlaceImageAsync(vo.getPlaceId()))
                 .toList();
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
@@ -62,7 +74,16 @@ public class GooglePlaceDetails {
                 .filter(p -> p != null)
                 .toList();
             if (!photos.isEmpty()) {
-            placePhotoRepository.saveAll(photos);
+                Map<String, PlacePhoto> unique = new LinkedHashMap<>();
+                for (PlacePhoto p : photos) {
+                    unique.putIfAbsent(p.getPlaceId(), p);
+                }
+                List<PlacePhoto> toSave = unique.values().stream()
+                    .filter(p -> !placePhotoRepository.existsById(p.getPlaceId()))
+                    .toList();
+                if (!toSave.isEmpty()) {
+                    placePhotoRepository.saveAll(toSave);
+                }
             }
             return placeVOs;
         });

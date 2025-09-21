@@ -1,7 +1,5 @@
 package com.example.planmate.domain.webSocket.config;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -64,8 +62,8 @@ public class RedisConfig {
 
 
     @Bean
-    public RedisTemplate<String, List<Integer>> planToTimeTableRedis(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, List<Integer>> template = new RedisTemplate<>();
+    public RedisTemplate<String, Integer> planToTimeTableRedis(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Integer> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         template.afterPropertiesSet();
@@ -95,8 +93,8 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, List<Integer>> timeTableToTimeTablePlaceBlockRedis(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, List<Integer>> template = new RedisTemplate<>();
+    public RedisTemplate<String, Integer> timeTableToTimeTablePlaceBlockRedis(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Integer> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         template.afterPropertiesSet();

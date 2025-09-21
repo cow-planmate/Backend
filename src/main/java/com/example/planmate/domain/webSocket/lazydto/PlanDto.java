@@ -13,7 +13,7 @@ public record PlanDto(
         int childCount,
         Integer userId,
         Integer transportationCategoryId,
-        Integer travelId
+        Integer travelId    
 ) {
     public static PlanDto fromEntity(Plan plan) {
         return new PlanDto(

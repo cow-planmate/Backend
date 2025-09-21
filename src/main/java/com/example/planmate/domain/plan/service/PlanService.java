@@ -25,7 +25,7 @@ import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.common.valueObject.TourPlaceVO;
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
-import com.example.planmate.domain.image.entity.PlacePhoto;
+import com.example.planmate.domain.image.repository.PlacePhotoRepository;
 import com.example.planmate.domain.plan.auth.PlanAccessValidator;
 import com.example.planmate.domain.plan.dto.DeleteMultiplePlansResponse;
 import com.example.planmate.domain.plan.dto.DeletePlanResponse;
@@ -77,6 +77,8 @@ public class PlanService {
     private final RedisService redisService;
     private final GoogleMap googleMap;
     private final GooglePlaceDetails googlePlaceDetails;
+    private final PlacePhotoRepository placePhotoRepository;
+    private final com.example.planmate.domain.webSocket.service.PresenceTrackingService presenceTrackingService;
 
 
     public MakePlanResponse makeService(int userId, String departure, int travelId, int transportationCategoryId, List<LocalDate> dates, int adultCount, int childCount) {
@@ -132,13 +134,13 @@ public class PlanService {
 
     public GetPlanResponse getPlan(int userId, int planId) {
         GetPlanResponse response = new GetPlanResponse();
-        Plan plan = redisService.getPlan(planId);
+    Plan plan = redisService.findPlanByPlanId(planId);
         List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
         if(plan != null) {
-            timeTables = redisService.getTimeTableByPlanId(planId);
+            timeTables = redisService.findTimeTablesByPlanId(planId);
             for(TimeTable timeTable : timeTables) {
-                timeTablePlaceBlocks.add(redisService.getTimeTablePlaceBlockByTimeTableId(timeTable.getTimeTableId()));
+                timeTablePlaceBlocks.add(redisService.findTimeTablePlaceBlocksByTimeTableId(timeTable.getTimeTableId()));
             }
         }
         else {
@@ -184,7 +186,7 @@ public class PlanService {
                 }
             }
         }
-        response.setUserDayIndexes(redisService.getPlanTracker(planId));
+    response.setUserDayIndexes(presenceTrackingService.getPlanTracker(planId));
         return response; // DTO 변환
     }
 
@@ -373,7 +375,7 @@ public class PlanService {
             for(int j = 0; j < timetablePlaceBlockVOLists.get(i).size(); j++){
                 TimetablePlaceBlockVO timeTablePlaceBlockVO = timetablePlaceBlockVOLists.get(i).get(j);
                 PlaceCategory placeCategory = placeCategoryRepository.getReferenceById(timeTablePlaceBlockVO.getPlaceCategoryId());
-                timeTablePlaceBlocks.add(TimeTablePlaceBlock.builder()
+        timeTablePlaceBlocks.add(TimeTablePlaceBlock.builder()
                         .timeTable(timetable)
                         .placeName(timeTablePlaceBlockVO.getPlaceName())
                         .placeTheme("")
@@ -384,7 +386,7 @@ public class PlanService {
                         .blockEndTime(timeTablePlaceBlockVO.getEndTime())
                         .xLocation(timeTablePlaceBlockVO.getXLocation())
                         .yLocation(timeTablePlaceBlockVO.getYLocation())
-                        .placePhoto(new PlacePhoto(timeTablePlaceBlockVO.getPlaceId(), timeTablePlaceBlockVO.getPlaceId()))
+            .placePhoto(placePhotoRepository.getReferenceById(timeTablePlaceBlockVO.getPlaceId()))
                         .placeCategory(placeCategory)
                         .build());
             }
@@ -433,13 +435,13 @@ public class PlanService {
     public GetCompletePlanResponse getCompletePlan(int planId) {
         GetCompletePlanResponse response = new GetCompletePlanResponse();
 
-        Plan plan = redisService.getPlan(planId);
+    Plan plan = redisService.findPlanByPlanId(planId);
         List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
         if(plan != null) {
-            timeTables = redisService.getTimeTableByPlanId(planId);
+            timeTables = redisService.findTimeTablesByPlanId(planId);
             for(TimeTable timeTable : timeTables) {
-                timeTablePlaceBlocks.add(redisService.getTimeTablePlaceBlockByTimeTableId(timeTable.getTimeTableId()));
+                timeTablePlaceBlocks.add(redisService.findTimeTablePlaceBlocksByTimeTableId(timeTable.getTimeTableId()));
             }
         }
         else {

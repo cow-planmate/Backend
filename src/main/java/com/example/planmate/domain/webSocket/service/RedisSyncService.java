@@ -9,11 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.planmate.common.exception.PlanNotFoundException;
-import com.example.planmate.domain.image.repository.PlacePhotoRepository;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
-import com.example.planmate.domain.plan.repository.PlaceCategoryRepository;
 import com.example.planmate.domain.plan.repository.PlanRepository;
 import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
 import com.example.planmate.domain.plan.repository.TimeTableRepository;
@@ -28,8 +26,6 @@ public class RedisSyncService {
     private final TimeTableRepository timeTableRepository;
     private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
     private final RedisService redisService;
-    private final PlaceCategoryRepository placeCategoryRepository;
-    private final PlacePhotoRepository placePhotoRepository;
 
     @Transactional
     public void syncPlanToDatabase(int planId) {
@@ -38,7 +34,7 @@ public class RedisSyncService {
             throw new PlanNotFoundException();
         }
         // plan save (엔터티)
-        Plan savedPlan = redisService.getPlan(planId);
+    Plan savedPlan = redisService.findPlanByPlanId(planId);
         planRepository.save(savedPlan);
 
         List<TimeTable> timetableList = redisService.deleteTimeTableByPlanId(planId);

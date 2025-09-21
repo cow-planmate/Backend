@@ -1,5 +1,10 @@
 package com.example.planmate.domain.webSocket.service;
 
+import java.util.List;
+
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.image.repository.PlacePhotoRepository;
@@ -8,22 +13,27 @@ import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
 import com.example.planmate.domain.plan.entity.TransportationCategory;
 import com.example.planmate.domain.travel.entity.Travel;
-import com.example.planmate.domain.webSocket.dto.*;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.stereotype.Service;
+import com.example.planmate.domain.webSocket.dto.WPlanRequest;
+import com.example.planmate.domain.webSocket.dto.WPlanResponse;
+import com.example.planmate.domain.webSocket.dto.WPresencesRequest;
+import com.example.planmate.domain.webSocket.dto.WPresencesResponse;
+import com.example.planmate.domain.webSocket.dto.WTimeTablePlaceBlockRequest;
+import com.example.planmate.domain.webSocket.dto.WTimeTablePlaceBlockResponse;
+import com.example.planmate.domain.webSocket.dto.WTimetableRequest;
+import com.example.planmate.domain.webSocket.dto.WTimetableResponse;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class WebSocketPlanService {
     private final RedisService redisService;
     private final PlacePhotoRepository placePhotoRepository;
+    private final PresenceTrackingService presenceTrackingService;
 
     public WPlanResponse updatePlan(int planId, WPlanRequest request) {
         WPlanResponse response = new WPlanResponse();
-        Plan plan = redisService.getPlan(planId);
+    Plan plan = redisService.findPlanByPlanId(planId);
 
         if(request.getPlanName() != null) {
             plan.changePlanName(request.getPlanName());
@@ -31,7 +41,7 @@ public class WebSocketPlanService {
         }
 
         if(request.getTravelId() != null) {
-            Travel travel = redisService.getTravelByTravelId(request.getTravelId());
+            Travel travel = redisService.findTravelByTravelId(request.getTravelId());
             plan.changeTravel(travel);
             response.setTravelId(travel.getTravelId());
             response.setTravelName(travel.getTravelName());
@@ -60,7 +70,7 @@ public class WebSocketPlanService {
         WTimetableResponse response = new WTimetableResponse();
         List<TimetableVO> timetableVOs = request.getTimetableVOs();
 
-        Plan plan = redisService.getPlan(planId);
+    Plan plan = redisService.findPlanByPlanId(planId);
         for(TimetableVO timetableVO : timetableVOs) {
             TimeTable timeTable = TimeTable.builder()
                     .plan(plan)
@@ -68,7 +78,7 @@ public class WebSocketPlanService {
                     .timeTableStartTime(timetableVO.getStartTime())
                     .timeTableEndTime(timetableVO.getEndTime())
                     .build();
-            int tempId = redisService.registerNewTimeTable(planId, timeTable);
+            int tempId = redisService.createTimeTable(planId, timeTable);
             timetableVO.setTimetableId(tempId);
             response.addTimetableVO(timetableVO);
         }
@@ -80,7 +90,7 @@ public class WebSocketPlanService {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
         TimetablePlaceBlockVO timetablePlaceBlockVO = request.getTimetablePlaceBlockVO();
         TimeTablePlaceBlock timeTablePlaceBlock = TimeTablePlaceBlock.builder()
-                .timeTable(redisService.getTimeTable(timetablePlaceBlockVO.getTimetableId()))
+                .timeTable(redisService.findTimeTableByTimeTableId(timetablePlaceBlockVO.getTimetableId()))
                 .placeName(timetablePlaceBlockVO.getPlaceName())
                 .placeTheme("")
                 .placeRating(timetablePlaceBlockVO.getPlaceRating())
@@ -91,9 +101,9 @@ public class WebSocketPlanService {
                 .blockEndTime(timetablePlaceBlockVO.getEndTime())
                 .xLocation(timetablePlaceBlockVO.getXLocation())
                 .yLocation(timetablePlaceBlockVO.getYLocation())
-                .placeCategory(redisService.getPlaceCategory(timetablePlaceBlockVO.getPlaceCategoryId()))
+                .placeCategory(redisService.findPlaceCategoryByPlaceCategoryId(timetablePlaceBlockVO.getPlaceCategoryId()))
                 .build();
-        int tempId = redisService.registerNewTimeTablePlaceBlock(timetablePlaceBlockVO.getTimetableId(), timeTablePlaceBlock);
+        int tempId = redisService.createTimeTablePlaceBlock(timetablePlaceBlockVO.getTimetableId(), timeTablePlaceBlock);
         timetablePlaceBlockVO.setTimetablePlaceBlockId(tempId);
         response.setTimetablePlaceBlockVO(timetablePlaceBlockVO);
         return response;
@@ -104,7 +114,7 @@ public class WebSocketPlanService {
         List<TimetableVO> timetableVOs = request.getTimetableVOs();
         for(TimetableVO timetableVO : timetableVOs) {
             int timetableId = timetableVO.getTimetableId();
-            TimeTable timetable = redisService.getTimeTable(timetableId);
+            TimeTable timetable = redisService.findTimeTableByTimeTableId(timetableId);
             if(timetable.getPlan().getPlanId() != planId) {
                 throw new AccessDeniedException("timetable 접근 권한이 없습니다");
             }
@@ -123,7 +133,7 @@ public class WebSocketPlanService {
         if(timetablePlaceBlockVO.getTimetablePlaceBlockId() == null) {
             return response;
         }
-        TimeTablePlaceBlock timetablePlaceBlock = redisService.getTimeTablePlaceBlock(timetablePlaceBlockVO.getTimetablePlaceBlockId());
+    TimeTablePlaceBlock timetablePlaceBlock = redisService.findTimeTablePlaceBlockByBlockId(timetablePlaceBlockVO.getTimetablePlaceBlockId());
         if (timetablePlaceBlockVO.getPlaceName() != null) {
             timetablePlaceBlock.changePlaceName(timetablePlaceBlockVO.getPlaceName());
         }
@@ -150,7 +160,7 @@ public class WebSocketPlanService {
             );
         }
         if (timetablePlaceBlockVO.getPlaceCategoryId() != null) {
-            timetablePlaceBlock.changeCategory(redisService.getPlaceCategory(timetablePlaceBlockVO.getPlaceCategoryId()));
+            timetablePlaceBlock.changeCategory(redisService.findPlaceCategoryByPlaceCategoryId(timetablePlaceBlockVO.getPlaceCategoryId()));
         }
         redisService.updateTimeTablePlaceBlock(timetablePlaceBlock);
         response.setTimetablePlaceBlockVO(timetablePlaceBlockVO);
@@ -174,7 +184,7 @@ public class WebSocketPlanService {
 
     public WPresencesResponse updatePresence(int planId, WPresencesRequest request) {
         WPresencesResponse response = new WPresencesResponse();
-        redisService.registerPlanTracker(planId, request.getUserDayIndexVO());
+        presenceTrackingService.insertPlanTracker(planId, request.getUserDayIndexVO());
         response.setUserDayIndexVOs(request.getUserDayIndexVO());
         return response;
     }
