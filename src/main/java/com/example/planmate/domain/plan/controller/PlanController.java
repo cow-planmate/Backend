@@ -177,7 +177,7 @@ public class PlanController {
         RequestEditAccessResponse response = collaborationRequestService.requestEditAccess(userId, planId);
         return ResponseEntity.ok(response);
     }
-    @PostMapping("/{planId}/share")
+    @GetMapping("/{planId}/share")
     public ResponseEntity<GetShareLinkResponse> getShareLink(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
         GetShareLinkResponse response = planService.getShareLink(userId, planId);
