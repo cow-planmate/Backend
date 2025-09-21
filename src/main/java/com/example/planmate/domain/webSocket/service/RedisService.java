@@ -54,6 +54,7 @@ public class RedisService {
     private final AtomicInteger timeTablePlaceBlockTempIdGenerator = new AtomicInteger(-1);
     private final RedisTemplate<String, Integer> timeTableToTimeTablePlaceBlockRedis;
     private final RedisTemplate<String, TravelDto> travelRedis;
+    private final RedisTemplate<String, PlaceCategoryDto> placeCategoryRedis;
     private final PlaceCategoryRepository placeCategoryRepository;
     private final TransportationCategoryRepository transportationCategoryRepository;
     private final TravelCategoryRepository travelCategoryRepository;
@@ -65,6 +66,10 @@ public class RedisService {
         List<Travel> travels = travelRepository.findAll();
         for(Travel travel : travels) {
             travelRedis.opsForValue().set(ECasheKey.TRAVEL.key(travel.getTravelId()), TravelDto.fromEntity(travel));
+        }
+        List<PlaceCategory> placeCategories = placeCategoryRepository.findAll();
+        for(PlaceCategory placeCategory : placeCategories) {
+            placeCategoryRedis.opsForValue().set(ECasheKey.PLACECATEGORY.key(placeCategory.getPlaceCategoryId()), PlaceCategoryDto.fromEntity(placeCategory));
         }
     }
 
@@ -309,7 +314,7 @@ public class RedisService {
     }
 
     public PlaceCategory findPlaceCategoryByPlaceCategoryId(int placeCategoryId) {
-    PlaceCategoryDto dto = PlaceCategoryDto.fromEntity(placeCategoryRepository.getReferenceById(placeCategoryId));
+    PlaceCategoryDto dto = placeCategoryRedis.opsForValue().get(ECasheKey.PLACECATEGORY.key(placeCategoryId));
         if (dto == null) return placeCategoryRepository.getReferenceById(placeCategoryId);
         return dto.toEntity();
     }
