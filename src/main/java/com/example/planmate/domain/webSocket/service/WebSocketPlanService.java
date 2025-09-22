@@ -70,7 +70,7 @@ public class WebSocketPlanService {
         WTimetableResponse response = new WTimetableResponse();
         List<TimetableVO> timetableVOs = request.getTimetableVOs();
 
-    Plan plan = redisService.findPlanByPlanId(planId);
+        Plan plan = redisService.findPlanByPlanId(planId);
         for(TimetableVO timetableVO : timetableVOs) {
             TimeTable timeTable = TimeTable.builder()
                     .plan(plan)
