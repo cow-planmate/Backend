@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.repository.PlanEditorRepository;
 import com.example.planmate.domain.plan.repository.PlanRepository;
-import com.example.planmate.domain.webSocket.service.RedisService;
+import com.example.planmate.domain.shared.cache.PlanCache;
 
 import lombok.RequiredArgsConstructor;
 
@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 public class PlanAccessValidator {
     private final PlanRepository planRepository;
     private final PlanEditorRepository planEditorRepository;
-    private final RedisService redisService;
+    private final PlanCache redisService;
     public Plan validateUserHasAccessToPlan(int userId, int planId) {
     Plan plan = redisService.findPlanByPlanId(planId);
 

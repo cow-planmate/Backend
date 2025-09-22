@@ -6,9 +6,9 @@ import org.springframework.stereotype.Service;
 import com.example.planmate.domain.register.dto.NicknameVerificationResponse;
 import com.example.planmate.domain.register.dto.RegisterRequest;
 import com.example.planmate.domain.register.dto.RegisterResponse;
+import com.example.planmate.domain.shared.service.PresenceTrackingService;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
-import com.example.planmate.domain.webSocket.service.PresenceTrackingService;
 
 import lombok.RequiredArgsConstructor;
 

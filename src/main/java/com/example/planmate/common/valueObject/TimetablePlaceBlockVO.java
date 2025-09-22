@@ -1,6 +1,6 @@
 package com.example.planmate.common.valueObject;
 
-import com.example.planmate.domain.webSocket.dto.LocalTime24Deserializer;
+import com.example.planmate.domain.shared.dto.LocalTime24Deserializer;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;

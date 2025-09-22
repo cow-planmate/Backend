@@ -52,12 +52,12 @@ import com.example.planmate.domain.plan.repository.PlanShareRepository;
 import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
 import com.example.planmate.domain.plan.repository.TimeTableRepository;
 import com.example.planmate.domain.plan.repository.TransportationCategoryRepository;
+import com.example.planmate.domain.shared.cache.PlanCache;
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.travel.repository.TravelRepository;
 import com.example.planmate.domain.user.entity.PreferredTheme;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
-import com.example.planmate.domain.webSocket.service.RedisService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -74,11 +74,11 @@ public class PlanService {
     private final PlaceCategoryRepository placeCategoryRepository;
     private final PlanEditorRepository planEditorRepository;
     private final PlanShareRepository planShareRepository;
-    private final RedisService redisService;
+    private final PlanCache redisService;
     private final GoogleMap googleMap;
     private final GooglePlaceDetails googlePlaceDetails;
     private final PlacePhotoRepository placePhotoRepository;
-    private final com.example.planmate.domain.webSocket.service.PresenceTrackingService presenceTrackingService;
+    private final com.example.planmate.domain.shared.service.PresenceTrackingService presenceTrackingService;
 
 
     public MakePlanResponse makeService(int userId, String departure, int travelId, int transportationCategoryId, List<LocalDate> dates, int adultCount, int childCount) {

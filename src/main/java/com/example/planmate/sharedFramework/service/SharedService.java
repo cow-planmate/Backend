@@ -1,7 +1,7 @@
 package com.example.planmate.sharedFramework.service;
 
-import com.example.planmate.domain.webSocket.dto.WRequest;
-import com.example.planmate.domain.webSocket.dto.WResponse;
+import com.example.planmate.domain.shared.dto.WRequest;
+import com.example.planmate.domain.shared.dto.WResponse;
 
 /**
  * SharedService

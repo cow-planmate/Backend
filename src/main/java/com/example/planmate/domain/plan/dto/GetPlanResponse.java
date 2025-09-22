@@ -4,7 +4,8 @@ import com.example.planmate.common.dto.CommonResponse;
 import com.example.planmate.common.valueObject.PlaceBlockVO;
 import com.example.planmate.common.valueObject.PlanFrameVO;
 import com.example.planmate.common.valueObject.TimetableVO;
-import com.example.planmate.domain.webSocket.valueObject.UserDayIndexVO;
+import com.example.planmate.domain.shared.valueObject.UserDayIndexVO;
+
 import lombok.Getter;
 import lombok.Setter;
 
