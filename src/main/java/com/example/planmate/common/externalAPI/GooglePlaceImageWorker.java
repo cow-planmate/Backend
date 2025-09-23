@@ -81,7 +81,7 @@ public class GooglePlaceImageWorker {
             }
             PlacePhoto photo = PlacePhoto.builder()
                     .placeId(placeId)
-                    .photoURL(fileLocation)
+                    .photoUrl(fileLocation)
                     .build();
             return CompletableFuture.completedFuture(photo);
         } catch (IOException e) {

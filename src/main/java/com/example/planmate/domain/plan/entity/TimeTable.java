@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "time_table")
@@ -29,6 +31,8 @@ public class TimeTable {
     @JoinColumn(name = "plan_id", nullable = false)
     private Plan plan;
 
+    @OneToMany(mappedBy = "timeTable", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<TimeTablePlaceBlock> placeBlocks = new ArrayList<>();
 
     public void changeId(Integer newId) {
         this.timeTableId = newId;

@@ -22,5 +22,5 @@ public class PlacePhoto {
     @Column(name = "place_id", length = 100)
     private String placeId;
     @Column(name = "photo_url", nullable = false, unique = true)
-    private String photoURL;
+    private String photoUrl;
 }
