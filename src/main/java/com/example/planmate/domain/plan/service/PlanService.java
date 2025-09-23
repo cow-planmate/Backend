@@ -53,6 +53,9 @@ import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository
 import com.example.planmate.domain.plan.repository.TimeTableRepository;
 import com.example.planmate.domain.plan.repository.TransportationCategoryRepository;
 import com.example.planmate.domain.shared.cache.PlanCache;
+import com.example.planmate.domain.shared.cache.TimeTableCache;
+import com.example.planmate.domain.shared.cache.TimeTablePlaceBlockCache;
+import com.example.planmate.domain.shared.service.PresenceTrackingService;
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.travel.repository.TravelRepository;
 import com.example.planmate.domain.user.entity.PreferredTheme;
@@ -74,12 +77,13 @@ public class PlanService {
     private final PlaceCategoryRepository placeCategoryRepository;
     private final PlanEditorRepository planEditorRepository;
     private final PlanShareRepository planShareRepository;
-    private final PlanCache redisService;
+    private final PlanCache planCache;
+    private final TimeTableCache timeTableCache;
+    private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
     private final GoogleMap googleMap;
     private final GooglePlaceDetails googlePlaceDetails;
     private final PlacePhotoRepository placePhotoRepository;
-    private final com.example.planmate.domain.shared.service.PresenceTrackingService presenceTrackingService;
-
+    private final PresenceTrackingService presenceTrackingService;
 
     public MakePlanResponse makeService(int userId, String departure, int travelId, int transportationCategoryId, List<LocalDate> dates, int adultCount, int childCount) {
         User user = userRepository.findById(userId)
@@ -134,13 +138,13 @@ public class PlanService {
 
     public GetPlanResponse getPlan(int userId, int planId) {
         GetPlanResponse response = new GetPlanResponse();
-    Plan plan = redisService.findPlanByPlanId(planId);
+        Plan plan = planCache.findPlanByPlanId(planId);
         List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
         if(plan != null) {
-            timeTables = redisService.findTimeTablesByPlanId(planId);
+            timeTables = timeTableCache.findTimeTablesByPlanId(planId);
             for(TimeTable timeTable : timeTables) {
-                timeTablePlaceBlocks.add(redisService.findTimeTablePlaceBlocksByTimeTableId(timeTable.getTimeTableId()));
+                timeTablePlaceBlocks.add(timeTablePlaceBlockCache.findTimeTablePlaceBlocksByTimeTableId(timeTable.getTimeTableId()));
             }
         }
         else {
@@ -375,7 +379,7 @@ public class PlanService {
             for(int j = 0; j < timetablePlaceBlockVOLists.get(i).size(); j++){
                 TimetablePlaceBlockVO timeTablePlaceBlockVO = timetablePlaceBlockVOLists.get(i).get(j);
                 PlaceCategory placeCategory = placeCategoryRepository.getReferenceById(timeTablePlaceBlockVO.getPlaceCategoryId());
-        timeTablePlaceBlocks.add(TimeTablePlaceBlock.builder()
+                timeTablePlaceBlocks.add(TimeTablePlaceBlock.builder()
                         .timeTable(timetable)
                         .placeName(timeTablePlaceBlockVO.getPlaceName())
                         .placeTheme("")
@@ -386,7 +390,7 @@ public class PlanService {
                         .blockEndTime(timeTablePlaceBlockVO.getEndTime())
                         .xLocation(timeTablePlaceBlockVO.getXLocation())
                         .yLocation(timeTablePlaceBlockVO.getYLocation())
-            .placePhoto(placePhotoRepository.getReferenceById(timeTablePlaceBlockVO.getPlaceId()))
+                        .placePhoto(placePhotoRepository.getReferenceById(timeTablePlaceBlockVO.getPlaceId()))
                         .placeCategory(placeCategory)
                         .build());
             }
@@ -434,14 +438,13 @@ public class PlanService {
 
     public GetCompletePlanResponse getCompletePlan(int planId) {
         GetCompletePlanResponse response = new GetCompletePlanResponse();
-
-    Plan plan = redisService.findPlanByPlanId(planId);
+        Plan plan = planCache.findPlanByPlanId(planId);
         List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
         if(plan != null) {
-            timeTables = redisService.findTimeTablesByPlanId(planId);
+            timeTables = timeTableCache.findTimeTablesByPlanId(planId);
             for(TimeTable timeTable : timeTables) {
-                timeTablePlaceBlocks.add(redisService.findTimeTablePlaceBlocksByTimeTableId(timeTable.getTimeTableId()));
+                timeTablePlaceBlocks.add(timeTablePlaceBlockCache.findTimeTablePlaceBlocksByTimeTableId(timeTable.getTimeTableId()));
             }
         }
         else {

@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import com.example.planmate.common.valueObject.TimetableVO;
@@ -19,7 +20,7 @@ import com.example.planmate.domain.shared.lazydto.TimeTableDto;
 
 import lombok.RequiredArgsConstructor;
 
-@Service
+@Component
 @RequiredArgsConstructor
 public class TimeTableCache {
 
@@ -28,6 +29,8 @@ public class TimeTableCache {
     private final PlanRepository planRepository;
     private final TimeTableRepository timeTableRepository;
     private final AtomicInteger timeTableTempIdGenerator = new AtomicInteger(-1);
+    private final RedisTemplate<String, Integer> timeTableToTimeTablePlaceBlockRedis;
+    private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
     
     public TimeTable findTimeTableByTimeTableId(int timetableId) {
         TimeTableDto cached = timeTableRedis.opsForValue().get(ECasheKey.TIMETABLE.key(timetableId));
@@ -74,7 +77,7 @@ public class TimeTableCache {
         return result;
     }
 
-    public List<TimeTableDto> insertTimeTable(int planId) {
+    public List<TimeTableDto> insertTimeTablesByPlanId(int planId) {
         List<TimeTable> timeTables = timeTableRepository.findByPlanPlanId(planId);
         List<TimeTableDto> result = new ArrayList<>();
         for(TimeTable timeTable : timeTables){
@@ -98,15 +101,13 @@ public class TimeTableCache {
         for(TimetableVO timeTable : timeTableVOs){
             if(timeTable.getTimetableId() != null){
                 timeTableRedis.delete(ECasheKey.TIMETABLE.key(timeTable.getTimetableId()));
-                // Set에서 제거
                 planToTimeTableRedis.opsForSet().remove(ECasheKey.PLANTOTIMETABLE.key(planId), timeTable.getTimetableId());
                 Set<Integer> timeTablePlaceBlocks = timeTableToTimeTablePlaceBlockRedis.opsForSet()
                         .members(ECasheKey.TIMETABLETOTIMETABLEPLACEBLOCK.key(timeTable.getTimetableId()));
                 if(timeTablePlaceBlocks != null && !timeTablePlaceBlocks.isEmpty()) {
                     for(int timeTablePlaceBlockId : timeTablePlaceBlocks){
-                        timeTablePlaceBlockRedis.delete(ECasheKey.TIMETABLEPLACEBLOCK.key(timeTablePlaceBlockId));
+                        timeTablePlaceBlockCache.deleteTimeTablePlaceBlockById(timeTablePlaceBlockId);
                     }
-                    // 해당 타임테이블의 관계(Set) 키 제거
                     timeTableToTimeTablePlaceBlockRedis.delete(ECasheKey.TIMETABLETOTIMETABLEPLACEBLOCK.key(timeTable.getTimetableId()));
                 }
             }
@@ -118,7 +119,7 @@ public class TimeTableCache {
             .map(id -> ECasheKey.TIMETABLE.key(id))
             .toList();
         timeTableRedis.delete(timetableKeys);
-        deleteRedisTimeTableBlockByTimeTableId(timetableIds);
+        timeTablePlaceBlockCache.deleteRedisTimeTableBlockByTimeTableId(timetableIds);
     }
 
 

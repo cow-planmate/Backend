@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TransportationCategory;
 import com.example.planmate.domain.shared.cache.PlanCache;
+import com.example.planmate.domain.shared.cache.TravelCache;
 import com.example.planmate.domain.shared.dto.WPlanRequest;
 import com.example.planmate.domain.shared.dto.WPlanResponse;
 import com.example.planmate.domain.travel.entity.Travel;
@@ -14,11 +15,12 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class SharedPlanService {
-    private final PlanCache redisService;
+    private final PlanCache planCache;
+    private final TravelCache travelCache;
 
     public WPlanResponse updatePlan(int planId, WPlanRequest request) {
         WPlanResponse response = new WPlanResponse();
-        Plan plan = redisService.findPlanByPlanId(planId);
+        Plan plan = planCache.findPlanByPlanId(planId);
 
         if(request.getPlanName() != null) {
             plan.changePlanName(request.getPlanName());
@@ -26,7 +28,7 @@ public class SharedPlanService {
         }
 
         if(request.getTravelId() != null) {
-            Travel travel = redisService.findTravelByTravelId(request.getTravelId());
+            Travel travel = travelCache.findTravelByTravelId(request.getTravelId());
             plan.changeTravel(travel);
             response.setTravelId(travel.getTravelId());
             response.setTravelName(travel.getTravelName());
@@ -47,7 +49,7 @@ public class SharedPlanService {
             plan.changeTransportationCategory(new TransportationCategory(request.getTransportationCategoryId()));
             response.setTransportationCategoryId(request.getTransportationCategoryId());
         }
-        redisService.updatePlan(plan);
+        planCache.updatePlan(plan);
         return response;
     }
 }

@@ -9,8 +9,7 @@ import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.shared.cache.PlanCache;
-import com.example.planmate.domain.shared.dto.WPresencesRequest;
-import com.example.planmate.domain.shared.dto.WPresencesResponse;
+import com.example.planmate.domain.shared.cache.TimeTableCache;
 import com.example.planmate.domain.shared.dto.WTimetableRequest;
 import com.example.planmate.domain.shared.dto.WTimetableResponse;
 
@@ -19,13 +18,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SharedTimeTableService {
 
-    private final PlanCache redisService;
+    private final PlanCache planCache;
+    private final TimeTableCache timeTableCache;
 
     public WTimetableResponse createTimetable(int planId, WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
         List<TimetableVO> timetableVOs = request.getTimetableVOs();
 
-        Plan plan = redisService.findPlanByPlanId(planId);
+        Plan plan = planCache.findPlanByPlanId(planId);
         for(TimetableVO timetableVO : timetableVOs) {
             TimeTable timeTable = TimeTable.builder()
                     .plan(plan)
@@ -33,7 +33,7 @@ public class SharedTimeTableService {
                     .timeTableStartTime(timetableVO.getStartTime())
                     .timeTableEndTime(timetableVO.getEndTime())
                     .build();
-            int tempId = redisService.createTimeTable(planId, timeTable);
+            int tempId = timeTableCache.createTimeTable(planId, timeTable);
             timetableVO.setTimetableId(tempId);
             response.addTimetableVO(timetableVO);
         }
@@ -46,13 +46,13 @@ public class SharedTimeTableService {
         List<TimetableVO> timetableVOs = request.getTimetableVOs();
         for(TimetableVO timetableVO : timetableVOs) {
             int timetableId = timetableVO.getTimetableId();
-            TimeTable timetable = redisService.findTimeTableByTimeTableId(timetableId);
+            TimeTable timetable = timeTableCache.findTimeTableByTimeTableId(timetableId);
             if(timetable.getPlan().getPlanId() != planId) {
                 throw new AccessDeniedException("timetable 접근 권한이 없습니다");
             }
             timetable.changeDate(timetableVO.getDate());
             timetable.changeTime(timetableVO.getStartTime(), timetableVO.getEndTime());
-            redisService.updateTimeTable(timetable);
+            timeTableCache.updateTimeTable(timetable);
             response.addTimetableVO(timetableVO);
         }
         response.sortTimetableVOs();
@@ -61,7 +61,7 @@ public class SharedTimeTableService {
 
     public WTimetableResponse deleteTimetable(int planId, WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
-        redisService.deleteTimeTable(planId, request.getTimetableVOs());
+        timeTableCache.deleteTimeTable(planId, request.getTimetableVOs());
         response.setTimetableVOs(request.getTimetableVOs());
         return response;
     }

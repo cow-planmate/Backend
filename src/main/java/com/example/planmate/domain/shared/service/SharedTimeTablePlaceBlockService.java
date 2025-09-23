@@ -1,11 +1,15 @@
 package com.example.planmate.domain.shared.service;
 
+import org.checkerframework.checker.units.qual.t;
 import org.springframework.stereotype.Service;
 
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.domain.image.repository.PlacePhotoRepository;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
+import com.example.planmate.domain.shared.cache.PlaceCategoryCache;
 import com.example.planmate.domain.shared.cache.PlanCache;
+import com.example.planmate.domain.shared.cache.TimeTableCache;
+import com.example.planmate.domain.shared.cache.TimeTablePlaceBlockCache;
 import com.example.planmate.domain.shared.dto.WTimeTablePlaceBlockRequest;
 import com.example.planmate.domain.shared.dto.WTimeTablePlaceBlockResponse;
 
@@ -14,14 +18,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SharedTimeTablePlaceBlockService {
 
-    private final PlanCache redisService;
+    private final PlanCache planCache;
+    private final TimeTableCache timeTableCache;
     private final PlacePhotoRepository placePhotoRepository;
+    private final PlaceCategoryCache placeCategoryCache;
+    private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
 
     public WTimeTablePlaceBlockResponse createTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
         TimetablePlaceBlockVO timetablePlaceBlockVO = request.getTimetablePlaceBlockVO();
         TimeTablePlaceBlock timeTablePlaceBlock = TimeTablePlaceBlock.builder()
-                .timeTable(redisService.findTimeTableByTimeTableId(timetablePlaceBlockVO.getTimetableId()))
+                .timeTable(timeTableCache.findTimeTableByTimeTableId(timetablePlaceBlockVO.getTimetableId()))
                 .placeName(timetablePlaceBlockVO.getPlaceName())
                 .placeTheme("")
                 .placeRating(timetablePlaceBlockVO.getPlaceRating())
@@ -32,9 +39,9 @@ public class SharedTimeTablePlaceBlockService {
                 .blockEndTime(timetablePlaceBlockVO.getEndTime())
                 .xLocation(timetablePlaceBlockVO.getXLocation())
                 .yLocation(timetablePlaceBlockVO.getYLocation())
-                .placeCategory(redisService.findPlaceCategoryByPlaceCategoryId(timetablePlaceBlockVO.getPlaceCategoryId()))
+                .placeCategory(placeCategoryCache.findPlaceCategoryByPlaceCategoryId(timetablePlaceBlockVO.getPlaceCategoryId()))
                 .build();
-        int tempId = redisService.createTimeTablePlaceBlock(timetablePlaceBlockVO.getTimetableId(), timeTablePlaceBlock);
+        int tempId = timeTablePlaceBlockCache.createTimeTablePlaceBlock(timetablePlaceBlockVO.getTimetableId(), timeTablePlaceBlock);
         timetablePlaceBlockVO.setTimetablePlaceBlockId(tempId);
         response.setTimetablePlaceBlockVO(timetablePlaceBlockVO);
         return response;
@@ -46,7 +53,7 @@ public class SharedTimeTablePlaceBlockService {
         if(timetablePlaceBlockVO.getTimetablePlaceBlockId() == null) {
             return response;
         }
-    TimeTablePlaceBlock timetablePlaceBlock = redisService.findTimeTablePlaceBlockByBlockId(timetablePlaceBlockVO.getTimetablePlaceBlockId());
+        TimeTablePlaceBlock timetablePlaceBlock = timeTablePlaceBlockCache.findTimeTablePlaceBlockByBlockId(timetablePlaceBlockVO.getTimetablePlaceBlockId());
         if (timetablePlaceBlockVO.getPlaceName() != null) {
             timetablePlaceBlock.changePlaceName(timetablePlaceBlockVO.getPlaceName());
         }
@@ -73,9 +80,9 @@ public class SharedTimeTablePlaceBlockService {
             );
         }
         if (timetablePlaceBlockVO.getPlaceCategoryId() != null) {
-            timetablePlaceBlock.changeCategory(redisService.findPlaceCategoryByPlaceCategoryId(timetablePlaceBlockVO.getPlaceCategoryId()));
+            timetablePlaceBlock.changeCategory(placeCategoryCache.findPlaceCategoryByPlaceCategoryId(timetablePlaceBlockVO.getPlaceCategoryId()));
         }
-        redisService.updateTimeTablePlaceBlock(timetablePlaceBlock);
+        timeTablePlaceBlockCache.updateTimeTablePlaceBlock(timetablePlaceBlock);
         response.setTimetablePlaceBlockVO(timetablePlaceBlockVO);
         return response;
     }
@@ -83,7 +90,7 @@ public class SharedTimeTablePlaceBlockService {
     public WTimeTablePlaceBlockResponse deleteTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
         if(request.getTimetablePlaceBlockVO()!=null) {
-            redisService.deleteTimeTablePlaceBlock(request.getTimetablePlaceBlockVO().getTimetableId(), request.getTimetablePlaceBlockVO().getTimetablePlaceBlockId());
+            timeTablePlaceBlockCache.deleteTimeTablePlaceBlock(request.getTimetablePlaceBlockVO().getTimetableId(), request.getTimetablePlaceBlockVO().getTimetablePlaceBlockId());
             response.setTimetablePlaceBlockVO(request.getTimetablePlaceBlockVO());
         }
         return response;
