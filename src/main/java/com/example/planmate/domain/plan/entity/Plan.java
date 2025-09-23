@@ -1,9 +1,14 @@
 package com.example.planmate.domain.plan.entity;
 
+import com.example.planmate.domain.collaborationRequest.entity.CollaborationRequest;
+import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "plan", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "plan_name"}))
@@ -40,6 +45,18 @@ public class Plan {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "travel_id", nullable = false)
     private Travel travel;
+
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<TimeTable> timeTables = new ArrayList<>();
+
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<CollaborationRequest> collaborationRequests = new ArrayList<>();
+
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<PlanEditor> editors = new ArrayList<>();
+
+    @OneToOne(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
+    private PlanShare planShare;
 
     public void assignUser(User user) {
         if (user == null) {

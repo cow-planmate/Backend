@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(
@@ -61,6 +63,9 @@ public class TimeTablePlaceBlock {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "place_id", nullable = false)
     private PlacePhoto placePhoto;
+
+    @OneToMany(mappedBy = "timeTable", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<TimeTablePlaceBlock> placeBlocks = new ArrayList<>();
 
     public void changeId(Integer newId) {
         this.blockId = newId;
