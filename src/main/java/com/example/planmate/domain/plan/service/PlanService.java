@@ -426,7 +426,7 @@ public class PlanService {
             throw new AccessDeniedException("삭제할 권한이 있는 일정이 없습니다.");
         }
 
-        planRepository.deleteAllInBatch(ownedPlans);
+        planRepository.deleteAll(ownedPlans);
 
         response.setMessage("일정을 삭제했습니다.");
         return response;
