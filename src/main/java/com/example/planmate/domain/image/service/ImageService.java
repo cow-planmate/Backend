@@ -39,7 +39,7 @@ public class ImageService {
             return ResponseEntity.notFound().build();
         }
 
-        String photoURL = photo.getPhotoUrl();
+        String photoURL = photo.getPhotoURL();
         if (photoURL == null || photoURL.isBlank()) {
             // Trigger async fetch if not already available
             googlePlaceImageWorker.fetchSinglePlaceImageAsync(placeId);

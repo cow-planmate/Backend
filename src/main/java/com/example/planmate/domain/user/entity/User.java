@@ -1,7 +1,5 @@
 package com.example.planmate.domain.user.entity;
 
-import com.example.planmate.domain.collaborationRequest.entity.CollaborationRequest;
-import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -42,22 +40,12 @@ public class User {
     @Builder.Default
     private List<Plan> plans = new ArrayList<>();
 
-    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<CollaborationRequest> sentRequests = new ArrayList<>();
-
-    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<CollaborationRequest> receivedRequests = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<PlanEditor> planEditors = new ArrayList<>();
-
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_preferred_theme",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "preferred_theme_id")
     )
-
     @JsonIgnore
     @Builder.Default
     private List<PreferredTheme> preferredThemes = new ArrayList<>();
