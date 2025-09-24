@@ -16,16 +16,16 @@ import com.example.planmate.domain.shared.dto.WTimetableResponse;
 import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
-public class SharedTimeTableService implements SharedService {
+public class SharedTimeTableService implements SharedService<WTimetableRequest, WTimetableResponse> {
 
     private final PlanCache planCache;
     private final TimeTableCache timeTableCache;
 
-    public WTimetableResponse createTimetable(int planId, WTimetableRequest request) {
+    public WTimetableResponse create(WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
         List<TimetableVO> timetableVOs = request.getTimetableVOs();
 
-        Plan plan = planCache.findPlanByPlanId(planId);
+        Plan plan = planCache.findPlanByPlanId(request.getPlanId());
         for(TimetableVO timetableVO : timetableVOs) {
             TimeTable timeTable = TimeTable.builder()
                     .plan(plan)
@@ -33,7 +33,7 @@ public class SharedTimeTableService implements SharedService {
                     .timeTableStartTime(timetableVO.getStartTime())
                     .timeTableEndTime(timetableVO.getEndTime())
                     .build();
-            int tempId = timeTableCache.createTimeTable(planId, timeTable);
+            int tempId = timeTableCache.createTimeTable(request.getPlanId(), timeTable);
             timetableVO.setTimetableId(tempId);
             response.addTimetableVO(timetableVO);
         }
@@ -41,13 +41,13 @@ public class SharedTimeTableService implements SharedService {
         return response;
     }
 
-    public WTimetableResponse updateTimetable(int planId, WTimetableRequest request) {
+    public WTimetableResponse update(WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
         List<TimetableVO> timetableVOs = request.getTimetableVOs();
         for(TimetableVO timetableVO : timetableVOs) {
             int timetableId = timetableVO.getTimetableId();
             TimeTable timetable = timeTableCache.findTimeTableByTimeTableId(timetableId);
-            if(timetable.getPlan().getPlanId() != planId) {
+            if(timetable.getPlan().getPlanId() != request.getPlanId()) {
                 throw new AccessDeniedException("timetable 접근 권한이 없습니다");
             }
             timetable.changeDate(timetableVO.getDate());
@@ -59,9 +59,9 @@ public class SharedTimeTableService implements SharedService {
         return response;
     }
 
-    public WTimetableResponse deleteTimetable(int planId, WTimetableRequest request) {
+    public WTimetableResponse delete(WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
-        timeTableCache.deleteTimeTable(planId, request.getTimetableVOs());
+        timeTableCache.deleteTimeTable(request.getPlanId(), request.getTimetableVOs());
         response.setTimetableVOs(request.getTimetableVOs());
         return response;
     }

@@ -9,5 +9,6 @@ import java.util.List;
 @Getter
 @Setter
 public class WTimetableRequest extends WRequest {
+    private Integer planId;
     private List<TimetableVO> timetableVOs;
 }

@@ -14,14 +14,14 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class SharedTimeTablePlaceBlockService implements SharedService {
+public class SharedTimeTablePlaceBlockService implements SharedService<WTimeTablePlaceBlockRequest, WTimeTablePlaceBlockResponse> {
 
     private final TimeTableCache timeTableCache;
     private final PlacePhotoRepository placePhotoRepository;
     private final PlaceCategoryCache placeCategoryCache;
     private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
 
-    public WTimeTablePlaceBlockResponse createTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {
+    public WTimeTablePlaceBlockResponse create(WTimeTablePlaceBlockRequest request) {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
         TimetablePlaceBlockVO timetablePlaceBlockVO = request.getTimetablePlaceBlockVO();
         TimeTablePlaceBlock timeTablePlaceBlock = TimeTablePlaceBlock.builder()
@@ -44,7 +44,7 @@ public class SharedTimeTablePlaceBlockService implements SharedService {
         return response;
     }
 
-    public WTimeTablePlaceBlockResponse updateTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {
+    public WTimeTablePlaceBlockResponse update(WTimeTablePlaceBlockRequest request) {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
         TimetablePlaceBlockVO timetablePlaceBlockVO = request.getTimetablePlaceBlockVO();
         if(timetablePlaceBlockVO.getTimetablePlaceBlockId() == null) {
@@ -84,7 +84,7 @@ public class SharedTimeTablePlaceBlockService implements SharedService {
         return response;
     }
     
-    public WTimeTablePlaceBlockResponse deleteTimetablePlaceBlock(WTimeTablePlaceBlockRequest request) {
+    public WTimeTablePlaceBlockResponse delete(WTimeTablePlaceBlockRequest request) {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
         if(request.getTimetablePlaceBlockVO()!=null) {
             timeTablePlaceBlockCache.deleteTimeTablePlaceBlock(request.getTimetablePlaceBlockVO().getTimetableId(), request.getTimetablePlaceBlockVO().getTimetablePlaceBlockId());

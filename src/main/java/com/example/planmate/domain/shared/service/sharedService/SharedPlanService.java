@@ -8,19 +8,21 @@ import com.example.planmate.domain.shared.cache.PlanCache;
 import com.example.planmate.domain.shared.cache.TravelCache;
 import com.example.planmate.domain.shared.dto.WPlanRequest;
 import com.example.planmate.domain.shared.dto.WPlanResponse;
+import com.example.planmate.domain.shared.dto.WRequest;
+import com.example.planmate.domain.shared.dto.WResponse;
 import com.example.planmate.domain.travel.entity.Travel;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class SharedPlanService implements SharedService {
+public class SharedPlanService implements SharedService<WPlanRequest, WPlanResponse> {
     private final PlanCache planCache;
     private final TravelCache travelCache;
-
-    public WPlanResponse updatePlan(int planId, WPlanRequest request) {
+    @Override
+    public WPlanResponse update(WPlanRequest request) {
         WPlanResponse response = new WPlanResponse();
-        Plan plan = planCache.findPlanByPlanId(planId);
+        Plan plan = planCache.findPlanByPlanId(request.getPlanId());
 
         if(request.getPlanName() != null) {
             plan.changePlanName(request.getPlanName());
@@ -51,5 +53,17 @@ public class SharedPlanService implements SharedService {
         }
         planCache.updatePlan(plan);
         return response;
+    }
+
+    @Override
+    public WPlanResponse create(WPlanRequest request) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'create'");
+    }
+
+    @Override
+    public WPlanResponse delete(WPlanRequest request) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'delete'");
     }
 }

@@ -9,8 +9,6 @@ import org.springframework.stereotype.Controller;
 
 import com.example.planmate.domain.shared.dto.*;
 import com.example.planmate.domain.shared.service.sharedService.SharedPlanService;
-import com.example.planmate.domain.shared.service.sharedService.SharedTimeTablePlaceBlockService;
-import com.example.planmate.domain.shared.service.sharedService.SharedTimeTableService;
 
 @Controller
 @RequiredArgsConstructor
@@ -20,7 +18,8 @@ public class SharedPlanController {
     @MessageMapping("/plan/{planId}/update/plan")
     @SendTo("/topic/plan/{planId}/update/plan")
     public WPlanResponse updatePlan(@DestinationVariable int planId, @Payload WPlanRequest request) {
-        WPlanResponse response = sharedPlanService.updatePlan(planId, request);
+        request.setPlanId(planId);
+        WPlanResponse response = sharedPlanService.update(request);
         response.setEventId(request.getEventId() == null ? "" : request.getEventId());
         return response;
     }

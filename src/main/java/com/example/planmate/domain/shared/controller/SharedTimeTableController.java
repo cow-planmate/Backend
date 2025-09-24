@@ -21,7 +21,8 @@ public class SharedTimeTableController {
     @MessageMapping("/plan/{planId}/create/timetable")
     @SendTo("/topic/plan/{planId}/create/timetable")
     public WTimetableResponse createTimetable(@DestinationVariable int planId, @Payload WTimetableRequest request) {
-        WTimetableResponse response = sharedTimeTableService.createTimetable(planId, request);
+        request.setPlanId(planId);
+        WTimetableResponse response = sharedTimeTableService.create(request);
         response.setEventId(request.getEventId() == null ? "" : request.getEventId());
         return response;
     }
@@ -29,7 +30,8 @@ public class SharedTimeTableController {
     @MessageMapping("/plan/{planId}/update/timetable")
     @SendTo("/topic/plan/{planId}/update/timetable")
     public WTimetableResponse updateTimetable(@DestinationVariable int planId, @Payload WTimetableRequest request) {
-        WTimetableResponse response = sharedTimeTableService.updateTimetable(planId, request);
+        request.setPlanId(planId);
+        WTimetableResponse response = sharedTimeTableService.update(request);
         response.setEventId(request.getEventId() == null ? "" : request.getEventId());
         return response;
     }
@@ -37,7 +39,8 @@ public class SharedTimeTableController {
     @MessageMapping("/plan/{planId}/delete/timetable")
     @SendTo("/topic/plan/{planId}/delete/timetable")
     public WTimetableResponse deleteTimetable(@DestinationVariable int planId, @Payload WTimetableRequest request) {
-        WTimetableResponse response = sharedTimeTableService.deleteTimetable(planId, request);
+        request.setPlanId(planId);
+        WTimetableResponse response = sharedTimeTableService.delete(request);
         response.setEventId(request.getEventId() == null ? "" : request.getEventId());
         return response;
     }

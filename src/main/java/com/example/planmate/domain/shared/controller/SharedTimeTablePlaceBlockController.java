@@ -1,6 +1,5 @@
 package com.example.planmate.domain.shared.controller;
 
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -22,7 +21,7 @@ public class SharedTimeTablePlaceBlockController {
     @MessageMapping("/plan/{planId}/create/timetableplaceblock")
     @SendTo("/topic/plan/{planId}/create/timetableplaceblock")
     public WTimeTablePlaceBlockResponse createTimeTablePlaceBlock(@DestinationVariable int planId, @Payload WTimeTablePlaceBlockRequest request) {
-        WTimeTablePlaceBlockResponse response = sharedTimeTablePlaceBlockService.createTimetablePlaceBlock(request);
+        WTimeTablePlaceBlockResponse response = sharedTimeTablePlaceBlockService.create(request);
         response.setEventId(request.getEventId() == null ? "" : request.getEventId());
         return response;
     }
@@ -30,7 +29,7 @@ public class SharedTimeTablePlaceBlockController {
     @MessageMapping("/plan/{planId}/update/timetableplaceblock")
     @SendTo("/topic/plan/{planId}/update/timetableplaceblock")
     public WTimeTablePlaceBlockResponse updateTimeTablePlaceBlock(@DestinationVariable int planId, @Payload WTimeTablePlaceBlockRequest request) {
-        WTimeTablePlaceBlockResponse response = sharedTimeTablePlaceBlockService.updateTimetablePlaceBlock(request);
+        WTimeTablePlaceBlockResponse response = sharedTimeTablePlaceBlockService.update(request);
         response.setEventId(request.getEventId() == null ? "" : request.getEventId());
         return response;
     }
@@ -38,7 +37,7 @@ public class SharedTimeTablePlaceBlockController {
     @MessageMapping("/plan/{planId}/delete/timetableplaceblock")
     @SendTo("/topic/plan/{planId}/delete/timetableplaceblock")
     public WTimeTablePlaceBlockResponse deleteTimeTablePlaceBlock(@DestinationVariable int planId, @Payload WTimeTablePlaceBlockRequest request) {
-        WTimeTablePlaceBlockResponse response = sharedTimeTablePlaceBlockService.deleteTimetablePlaceBlock(request);
+        WTimeTablePlaceBlockResponse response = sharedTimeTablePlaceBlockService.delete(request);
         response.setEventId(request.getEventId() == null ? "" : request.getEventId());
         return response;
     }
