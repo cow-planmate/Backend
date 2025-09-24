@@ -1,24 +1,21 @@
-package com.example.planmate.domain.shared.service;
+package com.example.planmate.domain.shared.service.sharedService;
 
-import org.checkerframework.checker.units.qual.t;
 import org.springframework.stereotype.Service;
 
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.domain.image.repository.PlacePhotoRepository;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
 import com.example.planmate.domain.shared.cache.PlaceCategoryCache;
-import com.example.planmate.domain.shared.cache.PlanCache;
 import com.example.planmate.domain.shared.cache.TimeTableCache;
 import com.example.planmate.domain.shared.cache.TimeTablePlaceBlockCache;
 import com.example.planmate.domain.shared.dto.WTimeTablePlaceBlockRequest;
 import com.example.planmate.domain.shared.dto.WTimeTablePlaceBlockResponse;
-
 import lombok.RequiredArgsConstructor;
+
 @Service
 @RequiredArgsConstructor
-public class SharedTimeTablePlaceBlockService {
+public class SharedTimeTablePlaceBlockService implements SharedService {
 
-    private final PlanCache planCache;
     private final TimeTableCache timeTableCache;
     private final PlacePhotoRepository placePhotoRepository;
     private final PlaceCategoryCache placeCategoryCache;

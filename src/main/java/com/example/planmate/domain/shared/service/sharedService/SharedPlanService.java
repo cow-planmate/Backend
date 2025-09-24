@@ -1,4 +1,4 @@
-package com.example.planmate.domain.shared.service;
+package com.example.planmate.domain.shared.service.sharedService;
 
 import org.springframework.stereotype.Service;
 
@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class SharedPlanService {
+public class SharedPlanService implements SharedService {
     private final PlanCache planCache;
     private final TravelCache travelCache;
 

@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.plan.entity.Plan;
@@ -22,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-public class TimeTableCache {
+public class TimeTableCache{
 
     private final RedisTemplate<String, TimeTableDto> timeTableRedis;
     private final RedisTemplate<String, Integer> planToTimeTableRedis;

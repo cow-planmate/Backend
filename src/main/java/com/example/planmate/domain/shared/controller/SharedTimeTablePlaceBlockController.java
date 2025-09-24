@@ -9,7 +9,7 @@ import org.springframework.stereotype.Controller;
 
 import com.example.planmate.domain.shared.dto.WTimeTablePlaceBlockRequest;
 import com.example.planmate.domain.shared.dto.WTimeTablePlaceBlockResponse;
-import com.example.planmate.domain.shared.service.SharedTimeTablePlaceBlockService;
+import com.example.planmate.domain.shared.service.sharedService.SharedTimeTablePlaceBlockService;
 
 import lombok.RequiredArgsConstructor;
 

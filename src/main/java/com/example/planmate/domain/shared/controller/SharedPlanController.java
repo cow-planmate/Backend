@@ -8,9 +8,9 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 
 import com.example.planmate.domain.shared.dto.*;
-import com.example.planmate.domain.shared.service.SharedPlanService;
-import com.example.planmate.domain.shared.service.SharedTimeTablePlaceBlockService;
-import com.example.planmate.domain.shared.service.SharedTimeTableService;
+import com.example.planmate.domain.shared.service.sharedService.SharedPlanService;
+import com.example.planmate.domain.shared.service.sharedService.SharedTimeTablePlaceBlockService;
+import com.example.planmate.domain.shared.service.sharedService.SharedTimeTableService;
 
 @Controller
 @RequiredArgsConstructor

@@ -1,4 +1,4 @@
-package com.example.planmate.domain.shared.service;
+package com.example.planmate.domain.shared.service.sharedService;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ import com.example.planmate.domain.shared.dto.WTimetableResponse;
 import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
-public class SharedTimeTableService {
+public class SharedTimeTableService implements SharedService {
 
     private final PlanCache planCache;
     private final TimeTableCache timeTableCache;

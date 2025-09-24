@@ -26,7 +26,6 @@ public class PresenceTrackingService {
     private final RedisTemplate<String, Integer> nicknameUseridRedis;
     private final RedisTemplate<String, Integer> userIdToPlanIdRedis;
     private final UserRepository userRepository;
-    private final PresenceTrackingService presenceTrackingService;
 
     public boolean hasPlanTracker(int planId) {
         return planTrackerRedis.hasKey(ECasheKey.PLANTRACKER.key(planId));
@@ -107,7 +106,7 @@ public class PresenceTrackingService {
 
     public WPresencesResponse updatePresence(int planId, WPresencesRequest request) {
         WPresencesResponse response = new WPresencesResponse();
-        presenceTrackingService.insertPlanTracker(planId, request.getUserDayIndexVO());
+        insertPlanTracker(planId, request.getUserDayIndexVO());
         response.setUserDayIndexVOs(request.getUserDayIndexVO());
         return response;
     }

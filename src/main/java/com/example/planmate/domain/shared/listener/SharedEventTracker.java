@@ -16,7 +16,7 @@ import com.example.planmate.domain.shared.dto.WPresenceResponse;
 import com.example.planmate.domain.shared.enums.EAction;
 import com.example.planmate.domain.shared.lazydto.TimeTableDto;
 import com.example.planmate.domain.shared.service.PresenceTrackingService;
-import com.example.planmate.domain.shared.service.RedisSyncService;
+import com.example.planmate.domain.shared.service.sync.CacheSyncService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,7 +31,7 @@ public class SharedEventTracker {
     private final TimeTableCache timeTableCache;
     private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
     private final PresenceTrackingService presenceTrackingService;
-    private final RedisSyncService redisSyncService;
+    private final CacheSyncService redisSyncService;
     private final SimpMessagingTemplate messaging;
 
     @EventListener
@@ -59,7 +59,7 @@ public class SharedEventTracker {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
         Object v = accessor.getSessionAttributes().get(USER_ID);
         Integer userId = Integer.valueOf(String.valueOf(v));
-    int planId = presenceTrackingService.removeUserIdToPlanId(userId);
+        int planId = presenceTrackingService.removeUserIdToPlanId(userId);
         removeSessionFromAllTopics(planId, userId);
 
     }
