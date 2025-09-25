@@ -23,7 +23,7 @@ public class JwtTokenProvider {
 
     private Key accessKey;
     private Key refreshKey;
-    private final long accessTtlMillis = 14L * 24 * 60 * 60 * 1000;
+    private final long accessTtlMillis = 15 * 60 * 1000;
     private final long refreshTtlMillis = 14L * 24 * 60 * 60 * 1000;
     private long emailVerificationTokenExpirationMs = 600_000;
 
