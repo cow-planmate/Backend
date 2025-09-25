@@ -1,21 +1,44 @@
 package com.example.planmate.domain.plan.controller;
 
+import java.io.IOException;
+import java.nio.file.AccessDeniedException;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.example.planmate.common.exception.UnauthorizedException;
 import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanRequest;
 import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanResponse;
 import com.example.planmate.domain.collaborationRequest.dto.RequestEditAccessResponse;
 import com.example.planmate.domain.collaborationRequest.service.CollaborationRequestService;
 import com.example.planmate.domain.plan.auth.PlanAccessValidator;
-import com.example.planmate.domain.plan.dto.*;
+import com.example.planmate.domain.plan.dto.DeleteMultiplePlansRequest;
+import com.example.planmate.domain.plan.dto.DeleteMultiplePlansResponse;
+import com.example.planmate.domain.plan.dto.DeletePlanResponse;
+import com.example.planmate.domain.plan.dto.EditPlanNameRequest;
+import com.example.planmate.domain.plan.dto.EditPlanNameResponse;
+import com.example.planmate.domain.plan.dto.GetCompletePlanResponse;
+import com.example.planmate.domain.plan.dto.GetEditorsResponse;
+import com.example.planmate.domain.plan.dto.GetPlanResponse;
+import com.example.planmate.domain.plan.dto.GetShareLinkResponse;
+import com.example.planmate.domain.plan.dto.MakePlanRequest;
+import com.example.planmate.domain.plan.dto.MakePlanResponse;
+import com.example.planmate.domain.plan.dto.RemoveEditorAccessByOwnerResponse;
+import com.example.planmate.domain.plan.dto.ResignEditorAccessResponse;
+import com.example.planmate.domain.plan.dto.SavePlanRequest;
+import com.example.planmate.domain.plan.dto.SavePlanResponse;
 import com.example.planmate.domain.plan.service.PlanService;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.nio.file.AccessDeniedException;
 
 @RequiredArgsConstructor
 @RestController
@@ -90,59 +113,6 @@ public class PlanController {
         int userId = Integer.parseInt(authentication.getName());
         EditPlanNameResponse reponse = planService.EditPlanName(userId, planId, editPlanNameRequest.getPlanName());
         return ResponseEntity.ok(reponse);
-    }
-    @PostMapping("/{planId}/lodging")
-    public ResponseEntity<PlaceResponse> getLodgingPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
-        int userId = Integer.parseInt(authentication.getName());
-        PlaceResponse response = planService.getLodgingPlace(userId, planId);
-        return ResponseEntity.ok(response);
-    }
-    @PostMapping("/{planId}/tour")
-    public ResponseEntity<PlaceResponse> getTourPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
-        int userId = Integer.parseInt(authentication.getName());
-        PlaceResponse response = planService.getTourPlace(userId, planId);
-        return ResponseEntity.ok(response);
-    }
-    @PostMapping("/{planId}/restaurant")
-    public ResponseEntity<PlaceResponse> getRestaurantPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
-        int userId = Integer.parseInt(authentication.getName());
-        PlaceResponse response = planService.getRestaurantPlace(userId, planId);
-        return ResponseEntity.ok(response);
-    }
-    @PostMapping("/{planId}/place")
-    public ResponseEntity<PlaceResponse> getPlace(Authentication authentication, @PathVariable("planId") int planId, @RequestBody SearchPlaceRequest request) throws IOException {
-        int userId = Integer.parseInt(authentication.getName());
-        String query = request.getQuery();
-        PlaceResponse response = planService.getSearchPlace(userId, planId, query);
-        return ResponseEntity.ok(response);
-    }
-
-
-
-    @PostMapping("/lodging")
-    public ResponseEntity<PlaceResponse> getLodgingPlace(@RequestBody PlaceRequest request) throws IOException {
-        PlaceResponse response = planService.getLodgingPlace(request.getTravelCategoryName(), request.getTravelName());
-        return ResponseEntity.ok(response);
-    }
-    @PostMapping("/tour")
-    public ResponseEntity<PlaceResponse> getTourPlace(@RequestBody PlaceRequest request) throws IOException {
-        PlaceResponse response = planService.getTourPlace(request.getTravelCategoryName(), request.getTravelName());
-        return ResponseEntity.ok(response);
-    }
-    @PostMapping("/restaurant")
-    public ResponseEntity<PlaceResponse> getRestaurantPlace(@RequestBody PlaceRequest request) throws IOException {
-        PlaceResponse response = planService.getRestaurantPlace(request.getTravelCategoryName(), request.getTravelName());
-        return ResponseEntity.ok(response);
-    }
-    @PostMapping("/place")
-    public ResponseEntity<PlaceResponse> getPlace(@RequestBody SearchPlaceRequest request) throws IOException {
-        PlaceResponse response = planService.getSearchPlace(request.getQuery());
-        return ResponseEntity.ok(response);
-    }
-    @PostMapping("/nextplace")
-    public ResponseEntity<PlaceResponse> getNextPlace(@RequestBody NextPlaceRequest request) throws IOException {
-        PlaceResponse response = planService.getNextPlace(request.getNextPageTokens());
-        return ResponseEntity.ok(response);
     }
 
 

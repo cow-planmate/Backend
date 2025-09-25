@@ -1,6 +1,4 @@
 package com.example.planmate.domain.plan.service;
-
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -10,20 +8,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.data.util.Pair;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.planmate.common.exception.UserNotFoundException;
-import com.example.planmate.common.externalAPI.GoogleMap;
-import com.example.planmate.common.externalAPI.GooglePlaceDetails;
-import com.example.planmate.common.valueObject.LodgingPlaceVO;
-import com.example.planmate.common.valueObject.RestaurantPlaceVO;
-import com.example.planmate.common.valueObject.SearchPlaceVO;
+// removed: place search dependencies after extraction
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
-import com.example.planmate.common.valueObject.TourPlaceVO;
+// removed: TourPlaceVO not used in this class anymore
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
 import com.example.planmate.domain.image.repository.PlacePhotoRepository;
 import com.example.planmate.domain.plan.auth.PlanAccessValidator;
@@ -35,7 +28,7 @@ import com.example.planmate.domain.plan.dto.GetEditorsResponse;
 import com.example.planmate.domain.plan.dto.GetPlanResponse;
 import com.example.planmate.domain.plan.dto.GetShareLinkResponse;
 import com.example.planmate.domain.plan.dto.MakePlanResponse;
-import com.example.planmate.domain.plan.dto.PlaceResponse;
+// removed: PlaceResponse after extraction
 import com.example.planmate.domain.plan.dto.RemoveEditorAccessByOwnerResponse;
 import com.example.planmate.domain.plan.dto.ResignEditorAccessResponse;
 import com.example.planmate.domain.plan.dto.SavePlanResponse;
@@ -54,7 +47,7 @@ import com.example.planmate.domain.plan.repository.TimeTableRepository;
 import com.example.planmate.domain.plan.repository.TransportationCategoryRepository;
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.travel.repository.TravelRepository;
-import com.example.planmate.domain.user.entity.PreferredTheme;
+// removed: PreferredTheme not used in this class anymore
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
 import com.example.planmate.domain.webSocket.service.RedisService;
@@ -75,8 +68,6 @@ public class PlanService {
     private final PlanEditorRepository planEditorRepository;
     private final PlanShareRepository planShareRepository;
     private final RedisService redisService;
-    private final GoogleMap googleMap;
-    private final GooglePlaceDetails googlePlaceDetails;
     private final PlacePhotoRepository placePhotoRepository;
     private final com.example.planmate.domain.webSocket.service.PresenceTrackingService presenceTrackingService;
 
@@ -215,108 +206,7 @@ public class PlanService {
         return response;
     }
 
-    public PlaceResponse getTourPlace(int userId, int planId) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-        String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
-        List<PreferredTheme> preferredThemes = userRepository.findById(userId).get().getPreferredThemes();
-        preferredThemes.removeIf(preferredTheme -> preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId() != 0);
-
-        List<String> preferredThemeNames = new ArrayList<>();
-        for (PreferredTheme preferredTheme : preferredThemes) {
-            preferredThemeNames.add(preferredTheme.getPreferredThemeName());
-        }
-        String travelName = travelCategoryName + " "+ plan.getTravel().getTravelName();
-        Pair<List<TourPlaceVO>, List<String>> pair = googleMap.getTourPlace(travelCategoryName + " "+ travelName, preferredThemeNames);
-        List<TourPlaceVO> tourPlaceVOs = (List<TourPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
-        response.addPlace(tourPlaceVOs);
-        response.addNextPageToken(pair.getSecond());
-        return response;
-    }
-    public PlaceResponse getLodgingPlace(int userId, int planId) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-        String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
-        List<PreferredTheme> preferredThemes = userRepository.findById(userId).get().getPreferredThemes();
-        preferredThemes.removeIf(preferredTheme -> preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId() != 1);
-
-        List<String> preferredThemeNames = new ArrayList<>();
-        for (PreferredTheme preferredTheme : preferredThemes) {
-            preferredThemeNames.add(preferredTheme.getPreferredThemeName());
-        }
-        String travelName = travelCategoryName + " "+ plan.getTravel().getTravelName();
-        Pair<List<LodgingPlaceVO>, List<String>> pair = googleMap.getLodgingPlace(travelCategoryName + " "+ travelName, preferredThemeNames);
-        List<LodgingPlaceVO> lodgingPlaceVOs = (List<LodgingPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
-        response.addPlace(lodgingPlaceVOs);
-        response.addNextPageToken(pair.getSecond());
-        return response;
-    }
-    public PlaceResponse getRestaurantPlace(int userId, int planId) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-        String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
-        List<PreferredTheme> preferredThemes = userRepository.findById(userId).get().getPreferredThemes();
-        preferredThemes.removeIf(preferredTheme -> preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId() != 2);
-
-        List<String> preferredThemeNames = new ArrayList<>();
-        for (PreferredTheme preferredTheme : preferredThemes) {
-            preferredThemeNames.add(preferredTheme.getPreferredThemeName());
-        }
-        String travelName = travelCategoryName + " "+ plan.getTravel().getTravelName();
-        Pair<List<RestaurantPlaceVO>, List<String>> pair = googleMap.getRestaurantPlace(travelCategoryName + " "+ travelName, preferredThemeNames);
-        List<RestaurantPlaceVO> restaurantPlaceVOs = (List<RestaurantPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
-        response.addPlace(restaurantPlaceVOs);
-        response.addNextPageToken(pair.getSecond());
-        return response;
-    }
-
-    public PlaceResponse getSearchPlace(int userId, int planId, String query) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-        Pair<List<SearchPlaceVO>, List<String>> pair = googleMap.getSearchPlace(query);
-        List<SearchPlaceVO> searchPlaceVOs = (List<SearchPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
-        response.addPlace(searchPlaceVOs);
-        response.addNextPageToken(pair.getSecond());
-        return response;
-    }
-
-    public PlaceResponse getTourPlace(String travelCategoryName, String travelName) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        Pair<List<TourPlaceVO>, List<String>> pair = googleMap.getTourPlace(travelCategoryName + " "+ travelName, new ArrayList<>());
-        response.addPlace(pair.getFirst());
-        response.addNextPageToken(pair.getSecond());
-        return response;
-    }
-    public PlaceResponse getLodgingPlace(String travelCategoryName, String travelName) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        Pair<List<LodgingPlaceVO>, List<String>> pair = googleMap.getLodgingPlace(travelCategoryName + " "+ travelName, new ArrayList<>());
-        response.addPlace(pair.getFirst());
-        response.addNextPageToken(pair.getSecond());
-        return response;
-    }
-    public PlaceResponse getRestaurantPlace(String travelCategoryName, String travelName) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        Pair<List<RestaurantPlaceVO>, List<String>> pair = googleMap.getRestaurantPlace(travelCategoryName + " "+ travelName, new ArrayList<>());
-        response.addPlace(pair.getFirst());
-        response.addNextPageToken(pair.getSecond());
-        return response;
-    }
-
-    public PlaceResponse getSearchPlace(String query) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        Pair<List<SearchPlaceVO>, List<String>> pair = googleMap.getSearchPlace(query);
-        response.addPlace(pair.getFirst());
-        response.addNextPageToken(pair.getSecond());
-        return response;
-    }
-
-    public PlaceResponse getNextPlace(List<String> nextPageToken) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        Pair<List<SearchPlaceVO>, List<String>> pair = googleMap.getNextPagePlace(nextPageToken);
-        response.addPlace(pair.getFirst());
-        response.addNextPageToken(pair.getSecond());
-        return response;
-    }
+    // removed: place search method moved to PlaceService
 
 
     @Transactional
@@ -375,7 +265,7 @@ public class PlanService {
             for(int j = 0; j < timetablePlaceBlockVOLists.get(i).size(); j++){
                 TimetablePlaceBlockVO timeTablePlaceBlockVO = timetablePlaceBlockVOLists.get(i).get(j);
                 PlaceCategory placeCategory = placeCategoryRepository.getReferenceById(timeTablePlaceBlockVO.getPlaceCategoryId());
-        timeTablePlaceBlocks.add(TimeTablePlaceBlock.builder()
+                timeTablePlaceBlocks.add(TimeTablePlaceBlock.builder()
                         .timeTable(timetable)
                         .placeName(timeTablePlaceBlockVO.getPlaceName())
                         .placeTheme("")
@@ -386,7 +276,7 @@ public class PlanService {
                         .blockEndTime(timeTablePlaceBlockVO.getEndTime())
                         .xLocation(timeTablePlaceBlockVO.getXLocation())
                         .yLocation(timeTablePlaceBlockVO.getYLocation())
-            .placePhoto(placePhotoRepository.getReferenceById(timeTablePlaceBlockVO.getPlaceId()))
+                        .placePhoto(placePhotoRepository.getReferenceById(timeTablePlaceBlockVO.getPlaceId()))
                         .placeCategory(placeCategory)
                         .build());
             }
