@@ -16,7 +16,7 @@ import com.example.planmate.domain.shared.dto.WPresenceResponse;
 import com.example.planmate.domain.shared.enums.EAction;
 import com.example.planmate.domain.shared.lazydto.TimeTableDto;
 import com.example.planmate.domain.shared.service.PresenceTrackingService;
-import com.example.planmate.domain.shared.service.sync.CacheSyncService;
+import com.example.planmate.domain.shared.sync.CacheSyncService;
 
 import lombok.RequiredArgsConstructor;
 
