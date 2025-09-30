@@ -47,7 +47,7 @@ public class WebSocketEventTracker {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
         Object v = accessor.getSessionAttributes().get(USER_ID);
         Integer userId = Integer.valueOf(String.valueOf(v));
-    int planId = presenceTrackingService.removeUserIdToPlanId(userId);
+        int planId = presenceTrackingService.removeUserIdToPlanId(userId);
         removeSessionFromAllTopics(planId, userId);
 
     }

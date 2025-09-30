@@ -29,5 +29,8 @@ services:
       POSTGRES_DB: planmate
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
-#    volumes:
-#      - ./postgres_dump.sql:/docker-entrypoint-initdb.d/init.sql
+    volumes:
+      - pg_data:/var/lib/postgresql/data  # <- DB 데이터 영구 저장
+
+  volumes:
+    pg_data:
