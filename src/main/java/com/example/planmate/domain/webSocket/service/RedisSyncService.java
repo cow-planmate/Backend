@@ -1,13 +1,5 @@
 package com.example.planmate.domain.webSocket.service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.example.planmate.common.exception.PlanNotFoundException;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TimeTable;
@@ -15,8 +7,13 @@ import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
 import com.example.planmate.domain.plan.repository.PlanRepository;
 import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
 import com.example.planmate.domain.plan.repository.TimeTableRepository;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -27,15 +24,22 @@ public class RedisSyncService {
     private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
     private final RedisService redisService;
 
-    @Transactional
     public void syncPlanToDatabase(int planId) {
         if(!planRepository.existsById(planId)) {
             //plan이 없을때 예외
             throw new PlanNotFoundException();
         }
-        // plan save (엔터티)
-    Plan savedPlan = redisService.findPlanByPlanId(planId);
-        planRepository.save(savedPlan);
+        
+        // Redis에서 Plan 데이터 가져오기
+        Plan redisPlan = redisService.findPlanByPlanId(planId);
+        
+        // 기존 DB Plan 조회 후 필드만 업데이트 (cascade 문제 방지)
+        Plan existingPlan = planRepository.findById(planId)
+            .orElseThrow(() -> new PlanNotFoundException());
+        
+        // Plan 필드들만 업데이트 (TimeTable 컬렉션은 건드리지 않음)
+        existingPlan.updateFromRedis(redisPlan);
+        Plan savedPlan = planRepository.save(existingPlan);
 
         List<TimeTable> timetableList = redisService.deleteTimeTableByPlanId(planId);
         List<TimeTable> newTimetables = new ArrayList<>();

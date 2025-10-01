@@ -1,14 +1,31 @@
 package com.example.planmate.domain.plan.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.example.planmate.domain.collaborationRequest.entity.CollaborationRequest;
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.user.entity.User;
-import jakarta.persistence.*;
-import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "plan", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "plan_name"}))
@@ -95,5 +112,31 @@ public class Plan {
             throw new IllegalArgumentException("출발지는 비어 있을 수 없습니다.");
         }
         this.departure = newDeparture;
+    }
+    
+    /**
+     * Redis에서 가져온 Plan 데이터로 필드만 업데이트 (연관관계 컬렉션은 건드리지 않음)
+     */
+    public void updateFromRedis(Plan redisPlan) {
+        if (redisPlan == null) return;
+        
+        // 기본 필드들만 업데이트
+        if (redisPlan.getPlanName() != null) {
+            this.planName = redisPlan.getPlanName();
+        }
+        if (redisPlan.getDeparture() != null) {
+            this.departure = redisPlan.getDeparture();
+        }
+        this.adultCount = redisPlan.getAdultCount();
+        this.childCount = redisPlan.getChildCount();
+        
+        // 연관관계는 null이 아닐 때만 업데이트
+        if (redisPlan.getTransportationCategory() != null) {
+            this.transportationCategory = redisPlan.getTransportationCategory();
+        }
+        if (redisPlan.getTravel() != null) {
+            this.travel = redisPlan.getTravel();
+        }
+        // timeTables, collaborationRequests, editors는 의도적으로 업데이트하지 않음
     }
 }

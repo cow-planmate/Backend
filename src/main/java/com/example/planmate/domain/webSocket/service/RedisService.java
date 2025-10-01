@@ -1,42 +1,24 @@
 package com.example.planmate.domain.webSocket.service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
-
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.image.entity.PlacePhoto;
 import com.example.planmate.domain.image.repository.PlacePhotoRepository;
-import com.example.planmate.domain.plan.entity.PlaceCategory;
-import com.example.planmate.domain.plan.entity.Plan;
-import com.example.planmate.domain.plan.entity.TimeTable;
-import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
-import com.example.planmate.domain.plan.entity.TransportationCategory;
-import com.example.planmate.domain.plan.repository.PlaceCategoryRepository;
-import com.example.planmate.domain.plan.repository.PlanRepository;
-import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
-import com.example.planmate.domain.plan.repository.TimeTableRepository;
-import com.example.planmate.domain.plan.repository.TransportationCategoryRepository;
+import com.example.planmate.domain.plan.entity.*;
+import com.example.planmate.domain.plan.repository.*;
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.travel.repository.TravelCategoryRepository;
 import com.example.planmate.domain.travel.repository.TravelRepository;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
 import com.example.planmate.domain.webSocket.enums.ECasheKey;
-import com.example.planmate.domain.webSocket.lazydto.PlaceCategoryDto;
-import com.example.planmate.domain.webSocket.lazydto.PlanDto;
-import com.example.planmate.domain.webSocket.lazydto.TimeTableDto;
-import com.example.planmate.domain.webSocket.lazydto.TimeTablePlaceBlockDto;
-import com.example.planmate.domain.webSocket.lazydto.TravelDto;
-
+import com.example.planmate.domain.webSocket.lazydto.*;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
@@ -125,8 +107,8 @@ public class RedisService {
     }
 
     public List<TimeTable> deleteTimeTableByPlanId(int planId) {
-    Set<Integer> timeTableIds = planToTimeTableRedis.opsForSet().members(ECasheKey.PLANTOTIMETABLE.key(planId));
-    planToTimeTableRedis.delete(ECasheKey.PLANTOTIMETABLE.key(planId));
+        Set<Integer> timeTableIds = planToTimeTableRedis.opsForSet().members(ECasheKey.PLANTOTIMETABLE.key(planId));
+        planToTimeTableRedis.delete(ECasheKey.PLANTOTIMETABLE.key(planId));
         if (timeTableIds == null || timeTableIds.isEmpty()) return Collections.emptyList();
         List<String> keys = new ArrayList<>(timeTableIds.size());
         for(Integer timeTableId : timeTableIds){
