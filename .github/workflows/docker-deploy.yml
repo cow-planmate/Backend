@@ -1,14 +1,14 @@
-name: Deploy Docker Image
+name: Build and Deploy
 
 on:
   push:
     branches:
-      - main  # main 브랜치에 push될 때만 실행
+      - main  # main 브랜치에 푸시될 때 실행
 
 jobs:
+  # 1번 Job: Docker 이미지 빌드 및 푸시 (CI)
   build-and-push:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
@@ -35,3 +35,30 @@ jobs:
         run: |
           docker build -t cycle123/planmate:latest .
           docker push cycle123/planmate:latest
+
+  # 2번 Job: 서버에 배포 (CD)
+  deploy-to-server:
+    runs-on: ubuntu-latest
+    needs: build-and-push  # build-and-push Job이 성공해야만 이 Job이 실행됩니다.
+    steps:
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # 서버의 프로젝트 경로를 확인된 /root로 수정했습니다.
+            cd /root 
+            
+            # main 브랜치의 최신 코드를 pull (docker-compose.yml 업데이트)
+            git pull origin main
+            
+            # Docker Hub에서 최신 이미지를 pull
+            docker pull cycle123/planmate:latest
+            
+            # docker-compose로 재시작
+            docker-compose up -d --build
+            
+            # 불필요한 Docker 이미지 정리 (선택 사항)
+            docker image prune -f
