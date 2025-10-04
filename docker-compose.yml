@@ -2,8 +2,7 @@ version: '3.8'
 
 services:
   app:
-    build:
-      context: .
+    image: cycle123/planmate:latest
     container_name: planmate-app
     ports:
       - "8080:8080"
