@@ -103,6 +103,7 @@ public class RedisSyncService {
             int timeTableId = entry.getKey();
             deletTimeTableIds.add(timeTableId);
             TimeTable realTimetable = timeTableRepository.findById(timeTableId).orElse(null);
+            List<TimeTablePlaceBlock> oldBlocks = timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTableId);
             List<Integer> blockIds = new ArrayList<>();
             List<TimeTablePlaceBlock> blocks = redisService.deleteTimeTablePlaceBlockByTimeTableId(timeTableId);
             if(blocks != null && !blocks.isEmpty()) {
@@ -111,7 +112,9 @@ public class RedisSyncService {
                         TimeTablePlaceBlock timeTablePlaceBlock = timeTablePlaceBlockRepository.findById(block.getBlockId()).orElseThrow(() -> new IllegalArgumentException("블록을 찾을 수 없습니다. ID=" + block.getBlockId()));
                         timeTablePlaceBlock.copyFrom(block);
                         blockIds.add(block.getBlockId());
-
+                        oldBlocks.removeIf(ot ->
+                                ot.getBlockId() != null && ot.getBlockId().equals(timeTablePlaceBlock.getBlockId())
+                        );
                     }
                     else {
                         block.assignTimeTable(realTimetable);
@@ -120,13 +123,6 @@ public class RedisSyncService {
                     }
                 }
             }
-            List<TimeTablePlaceBlock> oldBlocks = timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTableId);
-            for(int blockId : blockIds){
-                o
-            }
-            oldBlocks.removeIf(ot ->
-                    ot.getBlockId() != null && ot.getBlockId().equals(timeTablePlaceBlock.getBlockId())
-            );
             deletedBlocks.addAll(oldBlocks);
         }
         timeTablePlaceBlockRepository.deleteAll(deletedBlocks);
