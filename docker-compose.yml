@@ -22,7 +22,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: 1234
     volumes:
       - ./application-secret.yml:/config/application.yml
-      - ./images/googleplace:/config/images/googleplace
+      - ./images/googleplace:/images/googleplace
     restart: unless-stopped
 
   redis:
