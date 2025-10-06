@@ -31,7 +31,7 @@ public class TimeTable {
     @JoinColumn(name = "plan_id", nullable = false)
     private Plan plan;
 
-    @OneToMany(mappedBy = "timeTable", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToMany(mappedBy = "timeTable", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = false)
     private List<TimeTablePlaceBlock> placeBlocks = new ArrayList<>();
 
     public void changeId(Integer newId) {

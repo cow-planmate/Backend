@@ -9,7 +9,6 @@ import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository
 import com.example.planmate.domain.plan.repository.TimeTableRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,7 +23,7 @@ public class RedisSyncService {
     private final TimeTableRepository timeTableRepository;
     private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
     private final RedisService redisService;
-    @Transactional
+
     public void syncPlanToDatabase(int planId) {
         if(!planRepository.existsById(planId)) {
             //plan이 없을때 예외
@@ -48,6 +47,7 @@ public class RedisSyncService {
         for (TimeTable t : timetableList) {
              // 기존 ID 보관
             //새로운 테이블
+            int tempId = t.getTimeTableId();
             if(t.getTimeTableId()<0){
                 t.changeId(null);
                 // ensure plan reference
@@ -71,7 +71,7 @@ public class RedisSyncService {
                 }
             }
             timeTableRepository.save(t);
-            tempIdToEntity.put(t.getTimeTableId(), t);
+            tempIdToEntity.put(tempId, t);
         }
         timeTableRepository.deleteAll(oldTimetables);
 
@@ -103,7 +103,6 @@ public class RedisSyncService {
             int timeTableId = entry.getKey();
             deletTimeTableIds.add(timeTableId);
             TimeTable realTimetable = timeTableRepository.findById(timeTableId).orElse(null);
-            List<TimeTablePlaceBlock> oldBlocks = timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTableId);
             List<Integer> blockIds = new ArrayList<>();
             List<TimeTablePlaceBlock> blocks = redisService.deleteTimeTablePlaceBlockByTimeTableId(timeTableId);
             if(blocks != null && !blocks.isEmpty()) {
@@ -112,9 +111,7 @@ public class RedisSyncService {
                         TimeTablePlaceBlock timeTablePlaceBlock = timeTablePlaceBlockRepository.findById(block.getBlockId()).orElseThrow(() -> new IllegalArgumentException("블록을 찾을 수 없습니다. ID=" + block.getBlockId()));
                         timeTablePlaceBlock.copyFrom(block);
                         blockIds.add(block.getBlockId());
-                        oldBlocks.removeIf(ot ->
-                                ot.getBlockId() != null && ot.getBlockId().equals(timeTablePlaceBlock.getBlockId())
-                        );
+
                     }
                     else {
                         block.assignTimeTable(realTimetable);
@@ -122,6 +119,10 @@ public class RedisSyncService {
                         newBlocks.add(block);
                     }
                 }
+            }
+            List<TimeTablePlaceBlock> oldBlocks = timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTableId);
+            for(int blockId : blockIds){
+                oldBlocks.removeIf(oldBlock -> oldBlock.getBlockId() == blockId);
             }
             deletedBlocks.addAll(oldBlocks);
         }
