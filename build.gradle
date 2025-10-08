@@ -43,6 +43,8 @@ dependencies {
     implementation 'p6spy:p6spy:3.9.1'
     implementation 'com.sksamuel.scrimage:scrimage-core:4.0.33'
     implementation 'com.sksamuel.scrimage:scrimage-webp:4.0.33'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-hibernate6'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 }
 
 tasks.named('test') {

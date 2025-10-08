@@ -75,7 +75,6 @@ public class WebSocketController {
     public WPresencesResponse updatePresence(@DestinationVariable int planId, @Payload WPresencesRequest request) {
         WPresencesResponse response = webSocketPlanService.updatePresence(planId, request);
         response.setUserDayIndexVOs(request.getUserDayIndexVO());
-
         return response;
     }
 
