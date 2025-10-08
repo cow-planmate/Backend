@@ -13,16 +13,13 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class PlanAccessValidator {
+
     private final PlanRepository planRepository;
     private final PlanEditorRepository planEditorRepository;
-    private final RedisService redisService;
-    public Plan validateUserHasAccessToPlan(int userId, int planId) {
-    Plan plan = redisService.findPlanByPlanId(planId);
 
-        if (plan == null) {
-            plan = planRepository.findById(planId)
-                    .orElseThrow(() -> new RuntimeException("없는 일정입니다"));
-        }
+    public Plan validateUserHasAccessToPlan(int userId, int planId) {
+        Plan plan = planRepository.findById(planId)
+                .orElseThrow(() -> new RuntimeException("없는 일정입니다"));
 
         boolean isOwner = plan.getUser().getUserId() == userId;
         boolean isEditor = planEditorRepository.existsByUserUserIdAndPlanPlanId(userId, planId);
@@ -32,13 +29,10 @@ public class PlanAccessValidator {
         }
         return plan;
     }
-    public void checkUserAccessToPlan(int userId, int planId) {
-    Plan plan = redisService.findPlanByPlanId(planId);
 
-        if (plan == null) {
-            plan = planRepository.findById(planId)
-                    .orElseThrow(() -> new RuntimeException("없는 일정입니다"));
-        }
+    public void checkUserAccessToPlan(int userId, int planId) {
+        Plan plan = planRepository.findById(planId)
+                .orElseThrow(() -> new RuntimeException("없는 일정입니다"));
 
         boolean isOwner = plan.getUser().getUserId() == userId;
         boolean isEditor = planEditorRepository.existsByUserUserIdAndPlanPlanId(userId, planId);
@@ -48,3 +42,4 @@ public class PlanAccessValidator {
         }
     }
 }
+
