@@ -1,12 +1,10 @@
 package com.example.planmate.common.externalAPI;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
+import com.example.planmate.domain.image.entity.PlacePhoto;
+import com.example.planmate.domain.image.repository.PlacePhotoRepository;
+import com.sksamuel.scrimage.ImmutableImage;
+import com.sksamuel.scrimage.webp.WebpWriter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
@@ -14,13 +12,12 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import com.example.planmate.common.valueObject.PlaceVO;
-import com.example.planmate.domain.image.entity.PlacePhoto;
-import com.example.planmate.domain.image.repository.PlacePhotoRepository;
-import com.sksamuel.scrimage.ImmutableImage;
-import com.sksamuel.scrimage.webp.WebpWriter;
-
-import lombok.RequiredArgsConstructor;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 
 @Component
@@ -40,9 +37,8 @@ public class GooglePlaceImageWorker {
     @Async("placeExecutor")
     public CompletableFuture<PlacePhoto> fetchSinglePlaceImageAsync(String placeId) {
         try {
-            
-            if (placePhotoRepository.existsById(placeId)) {
-                return CompletableFuture.completedFuture(null);
+            if(placePhotoRepository.existsById(placeId)) {
+                return CompletableFuture.completedFuture(placePhotoRepository.findById(placeId).get());
             }
 
             String detailsUrl = "https://maps.googleapis.com/maps/api/place/details/json?placeid=" + placeId + "&fields=photos&key=" + googleApiKey;
@@ -83,12 +79,14 @@ public class GooglePlaceImageWorker {
                     .placeId(placeId)
                     .photoUrl(fileLocation)
                     .build();
+            placePhotoRepository.save(photo);
             return CompletableFuture.completedFuture(photo);
         } catch (IOException e) {
             System.err.println("[ASYNC_IO_ERROR] placeId=" + placeId + " msg=" + e.getMessage());
         } catch (Exception e) {
             System.err.println("[ASYNC_ERROR] placeId=" + placeId + " msg=" + e.getMessage());
         }
+
         return CompletableFuture.completedFuture(null);
     }
 }

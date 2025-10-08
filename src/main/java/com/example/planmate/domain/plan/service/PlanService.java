@@ -1,58 +1,28 @@
 package com.example.planmate.domain.plan.service;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
+import com.example.planmate.common.exception.UserNotFoundException;
+import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
+import com.example.planmate.common.valueObject.TimetableVO;
+import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
+import com.example.planmate.domain.image.repository.PlacePhotoRepository;
+import com.example.planmate.domain.plan.auth.PlanAccessValidator;
+import com.example.planmate.domain.plan.dto.*;
+import com.example.planmate.domain.plan.entity.*;
+import com.example.planmate.domain.plan.repository.*;
+import com.example.planmate.domain.travel.entity.Travel;
+import com.example.planmate.domain.travel.repository.TravelRepository;
+import com.example.planmate.domain.user.entity.User;
+import com.example.planmate.domain.user.repository.UserRepository;
+import com.example.planmate.domain.webSocket.service.RedisService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.planmate.common.exception.UserNotFoundException;
-// removed: place search dependencies after extraction
-import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
-import com.example.planmate.common.valueObject.TimetableVO;
-// removed: TourPlaceVO not used in this class anymore
-import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
-import com.example.planmate.domain.image.repository.PlacePhotoRepository;
-import com.example.planmate.domain.plan.auth.PlanAccessValidator;
-import com.example.planmate.domain.plan.dto.DeleteMultiplePlansResponse;
-import com.example.planmate.domain.plan.dto.DeletePlanResponse;
-import com.example.planmate.domain.plan.dto.EditPlanNameResponse;
-import com.example.planmate.domain.plan.dto.GetCompletePlanResponse;
-import com.example.planmate.domain.plan.dto.GetEditorsResponse;
-import com.example.planmate.domain.plan.dto.GetPlanResponse;
-import com.example.planmate.domain.plan.dto.GetShareLinkResponse;
-import com.example.planmate.domain.plan.dto.MakePlanResponse;
-// removed: PlaceResponse after extraction
-import com.example.planmate.domain.plan.dto.RemoveEditorAccessByOwnerResponse;
-import com.example.planmate.domain.plan.dto.ResignEditorAccessResponse;
-import com.example.planmate.domain.plan.dto.SavePlanResponse;
-import com.example.planmate.domain.plan.entity.PlaceCategory;
-import com.example.planmate.domain.plan.entity.Plan;
-import com.example.planmate.domain.plan.entity.PlanShare;
-import com.example.planmate.domain.plan.entity.TimeTable;
-import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
-import com.example.planmate.domain.plan.entity.TransportationCategory;
-import com.example.planmate.domain.plan.repository.PlaceCategoryRepository;
-import com.example.planmate.domain.plan.repository.PlanEditorRepository;
-import com.example.planmate.domain.plan.repository.PlanRepository;
-import com.example.planmate.domain.plan.repository.PlanShareRepository;
-import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
-import com.example.planmate.domain.plan.repository.TimeTableRepository;
-import com.example.planmate.domain.plan.repository.TransportationCategoryRepository;
-import com.example.planmate.domain.travel.entity.Travel;
-import com.example.planmate.domain.travel.repository.TravelRepository;
-// removed: PreferredTheme not used in this class anymore
-import com.example.planmate.domain.user.entity.User;
-import com.example.planmate.domain.user.repository.UserRepository;
-import com.example.planmate.domain.webSocket.service.RedisService;
-
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -125,7 +95,7 @@ public class PlanService {
 
     public GetPlanResponse getPlan(int userId, int planId) {
         GetPlanResponse response = new GetPlanResponse();
-    Plan plan = redisService.findPlanByPlanId(planId);
+        Plan plan = redisService.findPlanByPlanId(planId);
         List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
         if(plan != null) {
@@ -325,7 +295,7 @@ public class PlanService {
     public GetCompletePlanResponse getCompletePlan(int planId) {
         GetCompletePlanResponse response = new GetCompletePlanResponse();
 
-    Plan plan = redisService.findPlanByPlanId(planId);
+        Plan plan = redisService.findPlanByPlanId(planId);
         List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
         if(plan != null) {
