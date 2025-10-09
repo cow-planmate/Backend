@@ -1,5 +1,21 @@
 package com.example.planmate.domain.chatbot.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
 import com.example.planmate.domain.chatbot.dto.AIResponse;
 import com.example.planmate.domain.chatbot.dto.ActionData;
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
@@ -10,19 +26,10 @@ import com.example.planmate.domain.webSocket.service.RedisService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -141,7 +148,6 @@ public class ChatBotService {
                 ### 🔹 역할
                 - 사용자의 여행 계획 데이터를 분석하고, 필요시 수정 제안을 합니다.
                 - 사용자의 요청에 따라 계획, 타임테이블, 또는 장소 블록을 생성/수정/삭제할 수 있습니다.
-                - 응답은 항상 친근하고 자연스러운 메시지를 포함해야 합니다.
                 
                 ---
                 ### 🔹 입력 데이터 (JSON)
@@ -160,6 +166,8 @@ public class ChatBotService {
                 ### 🔹 응답 형식 (ChatBotActionResponse)
                 AI의 응답은 반드시 아래 형식을 따라야 합니다.
                 **중요** 반드시 JSON으로 반환을 해야 합니다
+                delete 빼고는 target의 모든 값을 다 반환해야 합니다
+                timeTablePlaceBlock은 생성하거나 수정할때 같은 timeTable안에 있는 다른 timeTablePlaceBlock과 시간이 겹치면 안됩니다.
                 {
                   "userMessage": "사용자에게 보여줄 친근한 메시지",
                   "hasAction": true or false,
@@ -248,57 +256,111 @@ public class ChatBotService {
             String targetName = actionData.getTargetName();
             Object target = actionData.getTarget();
             
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.registerModule(new JavaTimeModule());
-            
             switch (targetName) {
                 case "plan":
-                    if ("update".equals(action)) {
-                        // target을 Map으로 변환 후 필요한 필드들 추출
-                        @SuppressWarnings("unchecked")
-                        Map<String, Object> planMap = (Map<String, Object>) target;
-                        
-                        // planName 변경
-                        if (planMap.containsKey("planName")) {
-                            String newName = (String) planMap.get("planName");
-                            return chatBotPlanService.changePlanName(planId, newName);
-                        }
-                        
-                        // departure 변경
-                        if (planMap.containsKey("departure")) {
-                            String newDeparture = (String) planMap.get("departure");
-                            return chatBotPlanService.changeDeparture(planId, newDeparture);
-                        }
-                        
-                        // 인원 수 변경
-                        if (planMap.containsKey("adultCount") || planMap.containsKey("childCount")) {
-                            Integer adultCount = (Integer) planMap.get("adultCount");
-                            Integer childCount = (Integer) planMap.get("childCount");
-                            return chatBotPlanService.changePersonCount(planId, adultCount, childCount);
-                        }
-                        
-                        // 교통수단 변경
-                        if (planMap.containsKey("transportationCategoryId")) {
-                            Integer transportId = (Integer) planMap.get("transportationCategoryId");
-                            return chatBotPlanService.changeTransportation(planId, transportId);
-                        }
-                    }
-                    break;
+                    return executePlanAction(action, target, planId);
                     
                 case "timeTable":
-                    // timeTable 관련 액션 처리
-                    // TODO: timeTable CRUD 액션 구현
-                    break;
+                    return executeTimeTableAction(action, target, planId);
                     
                 case "timeTablePlaceBlock":
-                    // timeTablePlaceBlock 관련 액션 처리
-                    // TODO: timeTablePlaceBlock CRUD 액션 구현
-                    break;
+                    return executeTimeTablePlaceBlockAction(action, target, planId);
             }
             
             return null;
         } catch (Exception e) {
             log.error("Error executing action: {}", e.getMessage());
+            return null;
+        }
+    }
+    
+    private ChatBotActionResponse executePlanAction(String action, Object target, int planId) {
+        try {
+            if ("update".equals(action)) {
+                ObjectMapper objectMapper = new ObjectMapper();
+                objectMapper.registerModule(new JavaTimeModule());
+                
+                // 전체 plan 객체를 한 번에 처리
+                @SuppressWarnings("unchecked")
+                Map<String, Object> planMap = (Map<String, Object>) target;
+                
+                // Map을 JSON 문자열로 변환 후 다시 객체로 파싱하여 전체 업데이트
+                String planJson = objectMapper.writeValueAsString(planMap);
+                
+                // 전체 plan 데이터를 ChatBotPlanService로 전달하여 업데이트
+                return chatBotPlanService.updateFullPlan(planId, planJson);
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("Error executing plan action: {}", e.getMessage());
+            return null;
+        }
+    }
+    
+    private ChatBotActionResponse executeTimeTableAction(String action, Object target, int planId) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JavaTimeModule());
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> timeTableMap = (Map<String, Object>) target;
+            String timeTableJson = objectMapper.writeValueAsString(timeTableMap);
+            
+            switch (action) {
+                case "create":
+                    return chatBotPlanService.createTimeTable(planId, timeTableJson);
+                case "update":
+                    Integer timeTableId = (Integer) timeTableMap.get("timeTableId");
+                    if (timeTableId != null) {
+                        return chatBotPlanService.updateTimeTable(timeTableId, timeTableJson);
+                    }
+                    break;
+                case "delete":
+                    Integer deleteTimeTableId = (Integer) timeTableMap.get("timeTableId");
+                    if (deleteTimeTableId != null) {
+                        return chatBotPlanService.deleteTimeTable(deleteTimeTableId);
+                    }
+                    break;
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("Error executing timeTable action: {}", e.getMessage());
+            return null;
+        }
+    }
+    
+    private ChatBotActionResponse executeTimeTablePlaceBlockAction(String action, Object target, int planId) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JavaTimeModule());
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> placeBlockMap = (Map<String, Object>) target;
+            String placeBlockJson = objectMapper.writeValueAsString(placeBlockMap);
+            
+            switch (action) {
+                case "create":
+                    Integer timeTableId = (Integer) placeBlockMap.get("timeTableId");
+                    if (timeTableId != null) {
+                        return chatBotPlanService.createTimeTablePlaceBlock(timeTableId, placeBlockJson);
+                    }
+                    break;
+                case "update":
+                    Integer placeBlockId = (Integer) placeBlockMap.get("timeTablePlaceBlockId");
+                    if (placeBlockId != null) {
+                        return chatBotPlanService.updateTimeTablePlaceBlock(placeBlockId, placeBlockJson);
+                    }
+                    break;
+                case "delete":
+                    Integer deletePlaceBlockId = (Integer) placeBlockMap.get("timeTablePlaceBlockId");
+                    if (deletePlaceBlockId != null) {
+                        return chatBotPlanService.deleteTimeTablePlaceBlock(deletePlaceBlockId);
+                    }
+                    break;
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("Error executing timeTablePlaceBlock action: {}", e.getMessage());
             return null;
         }
     }
