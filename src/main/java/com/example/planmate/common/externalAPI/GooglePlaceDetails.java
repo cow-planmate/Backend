@@ -36,27 +36,45 @@ public class GooglePlaceDetails {
      * Async bulk fetch that blocks until all individual async tasks complete.
      */
     public List<? extends PlaceVO> searchGooglePlaceDetailsAsyncBlocking(List<? extends PlaceVO> placeVOs) {
-        List<CompletableFuture<PlacePhoto>> futures = placeVOs.stream()
-                .map(vo -> googlePlaceImageWorker.fetchSinglePlaceImageAsync(vo.getPlaceId()))
-                .collect(Collectors.toList());
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        List<PlacePhoto> photos = futures.stream()
-            .map(CompletableFuture::join)
-            .filter(p -> p != null)
+        
+        // placePhotoRepository에서 기존 데이터 먼저 조회
+        List<String> placeIds = placeVOs.stream()
+            .map(PlaceVO::getPlaceId)
             .toList();
-        if (!photos.isEmpty()) {
-            // Deduplicate by placeId and avoid saving already-existing rows to reduce race/conflicts
-            Map<String, PlacePhoto> unique = new LinkedHashMap<>();
-            for (PlacePhoto p : photos) {
-                unique.putIfAbsent(p.getPlaceId(), p);
-            }
-            List<PlacePhoto> toSave = unique.values().stream()
-                .filter(p -> !placePhotoRepository.existsById(p.getPlaceId()))
+        List<PlacePhoto> existingPhotos = placePhotoRepository.findAllById(placeIds);
+        Map<String, PlacePhoto> existingPhotoMap = existingPhotos.stream()
+            .collect(Collectors.toMap(PlacePhoto::getPlaceId, p -> p));
+        
+        // 기존에 없는 placeId만 API 호출
+        List<? extends PlaceVO> missingPlaceVOs = placeVOs.stream()
+            .filter(vo -> !existingPhotoMap.containsKey(vo.getPlaceId()))
+            .toList();
+        
+        if (!missingPlaceVOs.isEmpty()) {
+            List<CompletableFuture<PlacePhoto>> futures = missingPlaceVOs.stream()
+                    .map(vo -> googlePlaceImageWorker.fetchSinglePlaceImageAsync(vo.getPlaceId()))
+                    .collect(Collectors.toList());
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            List<PlacePhoto> newPhotos = futures.stream()
+                .map(CompletableFuture::join)
+                .filter(p -> p != null)
                 .toList();
-            if (!toSave.isEmpty()) {
-                placePhotoRepository.saveAll(toSave);
+            
+            if (!newPhotos.isEmpty()) {
+                // Deduplicate by placeId and save new photos
+                Map<String, PlacePhoto> unique = new LinkedHashMap<>();
+                for (PlacePhoto p : newPhotos) {
+                    unique.putIfAbsent(p.getPlaceId(), p);
+                }
+                List<PlacePhoto> toSave = unique.values().stream()
+                    .filter(p -> !placePhotoRepository.existsById(p.getPlaceId()))
+                    .toList();
+                if (!toSave.isEmpty()) {
+                    placePhotoRepository.saveAll(toSave);
+                }
             }
         }
+        
         return placeVOs;
     }
 
@@ -64,18 +82,36 @@ public class GooglePlaceDetails {
      * Fully async aggregate method returning a CompletableFuture.
      */
     public CompletableFuture<List<? extends PlaceVO>> searchGooglePlaceDetailsAsync(List<? extends PlaceVO> placeVOs) {
-        List<CompletableFuture<PlacePhoto>> futures = placeVOs.stream()
+        // placePhotoRepository에서 기존 데이터 먼저 조회
+        List<String> placeIds = placeVOs.stream()
+            .map(PlaceVO::getPlaceId)
+            .toList();
+        List<PlacePhoto> existingPhotos = placePhotoRepository.findAllById(placeIds);
+        Map<String, PlacePhoto> existingPhotoMap = existingPhotos.stream()
+            .collect(Collectors.toMap(PlacePhoto::getPlaceId, p -> p));
+        
+        // 기존에 없는 placeId만 API 호출
+        List<? extends PlaceVO> missingPlaceVOs = placeVOs.stream()
+            .filter(vo -> !existingPhotoMap.containsKey(vo.getPlaceId()))
+            .toList();
+        
+        if (missingPlaceVOs.isEmpty()) {
+            // 모든 데이터가 이미 존재하면 바로 반환
+            return CompletableFuture.completedFuture(placeVOs);
+        }
+        
+        List<CompletableFuture<PlacePhoto>> futures = missingPlaceVOs.stream()
                 .map(vo -> googlePlaceImageWorker.fetchSinglePlaceImageAsync(vo.getPlaceId()))
                 .toList();
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
         .thenApply(v -> {
-            List<PlacePhoto> photos = futures.stream()
+            List<PlacePhoto> newPhotos = futures.stream()
                 .map(CompletableFuture::join)
                 .filter(p -> p != null)
                 .toList();
-            if (!photos.isEmpty()) {
+            if (!newPhotos.isEmpty()) {
                 Map<String, PlacePhoto> unique = new LinkedHashMap<>();
-                for (PlacePhoto p : photos) {
+                for (PlacePhoto p : newPhotos) {
                     unique.putIfAbsent(p.getPlaceId(), p);
                 }
                 List<PlacePhoto> toSave = unique.values().stream()
