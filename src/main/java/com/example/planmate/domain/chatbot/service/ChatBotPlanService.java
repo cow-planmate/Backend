@@ -382,13 +382,21 @@ public class ChatBotPlanService {
                 String dateStr = (String) timeTableMap.get("date");
                 timetableVO.setDate(LocalDate.parse(dateStr));
             }
+            
+            // startTime 처리 - 없으면 기본값 09:00
             if (timeTableMap.containsKey("startTime")) {
                 String startTimeStr = (String) timeTableMap.get("startTime");
                 timetableVO.setStartTime(LocalTime.parse(startTimeStr));
+            } else {
+                timetableVO.setStartTime(LocalTime.of(9, 0)); // 기본값: 09:00
             }
+            
+            // endTime 처리 - 없으면 기본값 20:00
             if (timeTableMap.containsKey("endTime")) {
                 String endTimeStr = (String) timeTableMap.get("endTime");
                 timetableVO.setEndTime(LocalTime.parse(endTimeStr));
+            } else {
+                timetableVO.setEndTime(LocalTime.of(20, 0)); // 기본값: 20:00
             }
             
             request.setTimetableVOs(java.util.List.of(timetableVO));
@@ -427,13 +435,21 @@ public class ChatBotPlanService {
                 String dateStr = (String) timeTableMap.get("date");
                 timetableVO.setDate(LocalDate.parse(dateStr));
             }
+            
+            // startTime 처리 - 없으면 기본값 09:00
             if (timeTableMap.containsKey("startTime")) {
                 String startTimeStr = (String) timeTableMap.get("startTime");
                 timetableVO.setStartTime(LocalTime.parse(startTimeStr));
+            } else {
+                timetableVO.setStartTime(LocalTime.of(9, 0)); // 기본값: 09:00
             }
+            
+            // endTime 처리 - 없으면 기본값 20:00
             if (timeTableMap.containsKey("endTime")) {
                 String endTimeStr = (String) timeTableMap.get("endTime");
                 timetableVO.setEndTime(LocalTime.parse(endTimeStr));
+            } else {
+                timetableVO.setEndTime(LocalTime.of(20, 0)); // 기본값: 20:00
             }
             
             request.setTimetableVOs(java.util.List.of(timetableVO));
