@@ -130,23 +130,27 @@ public class TimeTablePlaceBlockCache {
         return result;
     }
 
-    public int createTimeTablePlaceBlock(int timeTableId, TimeTablePlaceBlock block) {
+
+    public TimeTablePlaceBlockDto createTimeTablePlaceBlock(TimeTablePlaceBlockDto timeTablePlaceBlockDto) {
         int tempId = timeTablePlaceBlockTempIdGenerator.getAndDecrement();
-        block.changeId(tempId);
-        timeTablePlaceBlockRedis.opsForValue().set(ECasheKey.TIMETABLEPLACEBLOCK.key(block.getBlockId()), TimeTablePlaceBlockDto.fromEntity(block));
-        timeTableToTimeTablePlaceBlockRedis.opsForSet().add(ECasheKey.TIMETABLETOTIMETABLEPLACEBLOCK.key(timeTableId), block.getBlockId());
-        return tempId;
+        TimeTablePlaceBlockDto updatedDto = timeTablePlaceBlockDto.withBlockId(tempId);
+        timeTablePlaceBlockRedis.opsForValue().set(ECasheKey.TIMETABLEPLACEBLOCK.key(tempId), updatedDto);
+        timeTableToTimeTablePlaceBlockRedis.opsForSet().add(ECasheKey.TIMETABLETOTIMETABLEPLACEBLOCK.key(updatedDto.timeTableId()), tempId);
+        return updatedDto;
     }
-
-    public void deleteTimeTablePlaceBlock(int timeTableId, int blockId) {
-        timeTablePlaceBlockRedis.delete(ECasheKey.TIMETABLEPLACEBLOCK.key(blockId));
+    public TimeTablePlaceBlockDto updateTimeTablePlaceBlock(TimeTablePlaceBlockDto timeTablePlaceBlockDto) {
+        timeTablePlaceBlockRedis.opsForValue().set(ECasheKey.TIMETABLEPLACEBLOCK.key(timeTablePlaceBlockDto.blockId()), timeTablePlaceBlockDto);
+        return timeTablePlaceBlockDto;
+    }
+    public TimeTablePlaceBlockDto deleteTimeTablePlaceBlock(TimeTablePlaceBlockDto timeTablePlaceBlockDto) {
+        timeTablePlaceBlockRedis.delete(ECasheKey.TIMETABLEPLACEBLOCK.key(timeTablePlaceBlockDto.blockId()));
         timeTableToTimeTablePlaceBlockRedis.opsForSet()
-        .remove(ECasheKey.TIMETABLETOTIMETABLEPLACEBLOCK.key(timeTableId), blockId);
+        .remove(ECasheKey.TIMETABLETOTIMETABLEPLACEBLOCK.key(timeTablePlaceBlockDto.timeTableId()), timeTablePlaceBlockDto.blockId());
+        return timeTablePlaceBlockDto;
     }
 
-    public void updateTimeTablePlaceBlock(TimeTablePlaceBlock block) {
-        timeTablePlaceBlockRedis.opsForValue().set(ECasheKey.TIMETABLEPLACEBLOCK.key(block.getBlockId()), TimeTablePlaceBlockDto.fromEntity(block));
-    }
+    
+
 
     public void deleteTimeTablePlaceBlockById(int timeTablePlaceBlockId) {
         timeTablePlaceBlockRedis.delete(ECasheKey.TIMETABLEPLACEBLOCK.key(timeTablePlaceBlockId));

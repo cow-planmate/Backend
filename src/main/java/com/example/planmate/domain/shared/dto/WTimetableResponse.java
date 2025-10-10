@@ -1,6 +1,7 @@
 package com.example.planmate.domain.shared.dto;
 
-import com.example.planmate.common.valueObject.TimetableVO;
+import com.example.planmate.domain.shared.lazydto.TimeTableDto;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,15 +12,12 @@ import java.util.List;
 @Getter
 @Setter
 public class WTimetableResponse extends WResponse {
-    private List<TimetableVO> timetableVOs;
+    private List<TimeTableDto> tableDtos;
     public WTimetableResponse() {
-        timetableVOs = new ArrayList<>();
+        tableDtos = new ArrayList<>();
     }
-    public void addTimetableVO(TimetableVO timetableVO) {
-        timetableVOs.add(timetableVO);
-    }
-    public void sortTimetableVOs() {
-        timetableVOs.sort(Comparator.comparing(TimetableVO::getDate));
+    public void addTimetableVO(TimeTableDto timeTableDto) {
+        tableDtos.add(timeTableDto);
     }
 
 }

@@ -20,21 +20,18 @@ public class SharedTimeTableController extends SharedContoller<WTimetableRequest
     @MessageMapping("/{roomId}/create/timetable")
     @SendTo("/topic/{roomId}/create/timetable")
     public WTimetableResponse createTimetable(@DestinationVariable int roomId, @Payload WTimetableRequest request) {
-        request.setPlanId(roomId);
         return handleCreate(roomId, request);
     }
 
     @MessageMapping("/{roomId}/update/timetable")
     @SendTo("/topic/{roomId}/update/timetable")
     public WTimetableResponse updateTimetable(@DestinationVariable int roomId, @Payload WTimetableRequest request) {
-        request.setPlanId(roomId);
         return handleUpdate(roomId, request);
     }
 
     @MessageMapping("/{roomId}/delete/timetable")
     @SendTo("/topic/{roomId}/delete/timetable")
     public WTimetableResponse deleteTimetable(@DestinationVariable int roomId, @Payload WTimetableRequest request) {
-        request.setPlanId(roomId);
         return handleDelete(roomId, request);
     }
 }

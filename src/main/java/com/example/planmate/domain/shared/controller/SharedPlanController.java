@@ -20,7 +20,6 @@ public class SharedPlanController extends SharedContoller<WPlanRequest, WPlanRes
     @MessageMapping("/{roomId}/update/plan")
     @SendTo("/topic/{roomId}/update/plan")
     public WPlanResponse update(@DestinationVariable int roomId, @Payload WPlanRequest request) {
-        request.setPlanId(roomId);
         return handleUpdate(roomId, request);
     }
 }

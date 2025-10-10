@@ -40,7 +40,7 @@ public record TimeTablePlaceBlockDto(
         );
     }
 
-        public TimeTablePlaceBlock toEntity(PlaceCategory placeCategory, TimeTable timeTable, PlacePhoto placePhoto) {
+    public TimeTablePlaceBlock toEntity(PlaceCategory placeCategory, TimeTable timeTable, PlacePhoto placePhoto) {
         return TimeTablePlaceBlock.builder()
                 .blockId(this.blockId)
                 .placeName(this.placeName)
@@ -56,5 +56,28 @@ public record TimeTablePlaceBlockDto(
                 .placeCategory(placeCategory)
                 .timeTable(timeTable)
                 .build();
+    }
+
+    /**
+     * ID만 변경된 새로운 TimeTablePlaceBlockDto 객체를 생성합니다.
+     * @param newBlockId 새로운 블록 ID
+     * @return ID가 변경된 새로운 DTO 객체
+     */
+    public TimeTablePlaceBlockDto withBlockId(Integer newBlockId) {
+        return new TimeTablePlaceBlockDto(
+                newBlockId,
+                this.placeName,
+                this.placeTheme,
+                this.placeRating,
+                this.placeAddress,
+                this.placeLink,
+                this.blockStartTime,
+                this.blockEndTime,
+                this.xLocation,
+                this.yLocation,
+                this.placeId,
+                this.placeCategoryId,
+                this.timeTableId
+        );
     }
 }

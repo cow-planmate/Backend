@@ -1,10 +1,10 @@
 package com.example.planmate.domain.shared.lazydto;
 
-import com.example.planmate.domain.plan.entity.TimeTable;
-import com.example.planmate.domain.plan.entity.Plan;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
+
+import com.example.planmate.domain.plan.entity.Plan;
+import com.example.planmate.domain.plan.entity.TimeTable;
 
 public record TimeTableDto(
         Integer timeTableId,
@@ -31,5 +31,20 @@ public record TimeTableDto(
                 .timeTableEndTime(this.timeTableEndTime)
                 .plan(plan)
                 .build();
+    }
+
+    /**
+     * ID만 변경된 새로운 TimeTableDto 객체를 생성합니다.
+     * @param newTimeTableId 새로운 타임테이블 ID
+     * @return ID가 변경된 새로운 DTO 객체
+     */
+    public TimeTableDto withTimeTableId(Integer newTimeTableId) {
+        return new TimeTableDto(
+                newTimeTableId,
+                this.date,
+                this.timeTableStartTime,
+                this.timeTableEndTime,
+                this.planId
+        );
     }
 }

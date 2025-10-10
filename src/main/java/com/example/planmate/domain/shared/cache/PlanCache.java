@@ -45,12 +45,10 @@ public class PlanCache {
     public void updatePlan(Plan plan) {
         planRedis.opsForValue().set(ECasheKey.PLAN.key(plan.getPlanId()), PlanDto.fromEntity(plan));
     }
+    public void updatePlan(PlanDto planDto) {
+        planRedis.opsForValue().set(ECasheKey.PLAN.key(planDto.planId()), planDto);
+    }
     public void deletePlan(int planId) {
         planRedis.delete(ECasheKey.PLAN.key(planId));
     }
-
-
-    
-
-
 }

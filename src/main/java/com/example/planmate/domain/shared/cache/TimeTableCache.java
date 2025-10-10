@@ -96,21 +96,28 @@ public class TimeTableCache{
         return tempId;
     }
 
-    public void deleteTimeTable(int planId, List<TimetableVO> timeTableVOs) {
-        for(TimetableVO timeTable : timeTableVOs){
-            if(timeTable.getTimetableId() != null){
-                timeTableRedis.delete(ECasheKey.TIMETABLE.key(timeTable.getTimetableId()));
-                planToTimeTableRedis.opsForSet().remove(ECasheKey.PLANTOTIMETABLE.key(planId), timeTable.getTimetableId());
-                Set<Integer> timeTablePlaceBlocks = timeTableToTimeTablePlaceBlockRedis.opsForSet()
-                        .members(ECasheKey.TIMETABLETOTIMETABLEPLACEBLOCK.key(timeTable.getTimetableId()));
-                if(timeTablePlaceBlocks != null && !timeTablePlaceBlocks.isEmpty()) {
-                    for(int timeTablePlaceBlockId : timeTablePlaceBlocks){
-                        timeTablePlaceBlockCache.deleteTimeTablePlaceBlockById(timeTablePlaceBlockId);
-                    }
-                    timeTableToTimeTablePlaceBlockRedis.delete(ECasheKey.TIMETABLETOTIMETABLEPLACEBLOCK.key(timeTable.getTimetableId()));
+    public TimeTableDto createTimeTable(TimeTableDto timeTableDto) {
+        int tempId = timeTableTempIdGenerator.getAndDecrement();
+        TimeTableDto updatedDto = timeTableDto.withTimeTableId(tempId);
+        timeTableRedis.opsForValue().set(ECasheKey.TIMETABLE.key(tempId), updatedDto);
+        planToTimeTableRedis.opsForSet().add(ECasheKey.PLANTOTIMETABLE.key(updatedDto.planId()), tempId);
+        return updatedDto;
+    }
+
+    public TimeTableDto deleteTimeTable(TimeTableDto timeTableDto) {
+        if(timeTableDto.timeTableId() != null){
+            timeTableRedis.delete(ECasheKey.TIMETABLE.key(timeTableDto.timeTableId()));
+            planToTimeTableRedis.opsForSet().remove(ECasheKey.PLANTOTIMETABLE.key(timeTableDto.planId()), timeTableDto.timeTableId());
+            Set<Integer> timeTablePlaceBlocks = timeTableToTimeTablePlaceBlockRedis.opsForSet()
+                    .members(ECasheKey.TIMETABLETOTIMETABLEPLACEBLOCK.key(timeTableDto.timeTableId()));
+            if(timeTablePlaceBlocks != null && !timeTablePlaceBlocks.isEmpty()) {
+                for(int timeTablePlaceBlockId : timeTablePlaceBlocks){
+                    timeTablePlaceBlockCache.deleteTimeTablePlaceBlockById(timeTablePlaceBlockId);
                 }
+                timeTableToTimeTablePlaceBlockRedis.delete(ECasheKey.TIMETABLETOTIMETABLEPLACEBLOCK.key(timeTableDto.timeTableId()));
             }
         }
+        return timeTableDto;
     }
 
     public void deleteRedisTimeTable(List<Integer> timetableIds) {
@@ -124,6 +131,10 @@ public class TimeTableCache{
 
     public void updateTimeTable(TimeTable timeTable) {
         timeTableRedis.opsForValue().set(ECasheKey.TIMETABLE.key(timeTable.getTimeTableId()), TimeTableDto.fromEntity(timeTable));
+    }
+    public TimeTableDto updateTimeTable(TimeTableDto timeTableDto) {
+        timeTableRedis.opsForValue().set(ECasheKey.TIMETABLE.key(timeTableDto.timeTableId()), timeTableDto);
+        return timeTableDto;
     }
 
 }
