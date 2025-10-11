@@ -169,26 +169,60 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
             String repoName = entityConverterRepositories[i];
             Object repository = applicationContext.getBean(repoName);
             
-            // 실제로는 DTO에서 적절한 ID를 추출해서 getReferenceById 호출
-            // 여기서는 간단한 예시
-            Method getReferenceMethod = repository.getClass().getMethod("getReferenceById", Object.class);
-            Object entityRef = getReferenceMethod.invoke(repository, extractRelatedId(dto, i));
-            params[i] = entityRef;
+            // DTO에서 적절한 ID를 추출
+            Object relatedId = extractRelatedId(dto, i);
+            
+            // ID가 null이면 null 반환 (0 또는 null인 경우)
+            if (relatedId == null) {
+                params[i] = null;
+            } else {
+                Method getReferenceMethod = repository.getClass().getMethod("getReferenceById", Object.class);
+                Object entityRef = getReferenceMethod.invoke(repository, relatedId);
+                params[i] = entityRef;
+            }
         }
         
         return params;
     }
 
     private Object extractRelatedId(DTO dto, int parameterIndex) {
-        // 실제 구현에서는 DTO의 필드에서 관련 ID들을 추출
-        // 지금은 간단한 예시로 parentId 반환
+        // 리포지토리 이름에서 엔티티 이름 추출 (예: userRepository -> User)
+        String repoName = entityConverterRepositories[parameterIndex];
+        String entityName = repoName.replace("Repository", "");
+        
+        // DTO에서 해당 엔티티의 ID 필드 찾기 (예: userId, transportationCategoryId)
+        String idFieldName = entityName + "Id";
+        
         try {
-            if (parentIdField != null) {
-                return parentIdField.get(dto);
+            Field idField = findFieldInHierarchy(dtoClass, idFieldName);
+            if (idField != null) {
+                idField.setAccessible(true);
+                Object idValue = idField.get(dto);
+                
+                // ID 값을 그대로 반환 (0도 유효한 ID로 처리)
+                return idValue;
             }
             return null;
         } catch (IllegalAccessException e) {
-            throw new RuntimeException("관련 ID 추출 실패", e);
+            throw new RuntimeException("관련 ID 추출 실패: " + idFieldName, e);
+        }
+    }
+    
+    private Field findFieldInHierarchy(Class<?> clazz, String fieldName) {
+        try {
+            return clazz.getDeclaredField(fieldName);
+        } catch (NoSuchFieldException e) {
+            // Record의 경우 컴포넌트 확인
+            for (java.lang.reflect.RecordComponent component : clazz.getRecordComponents()) {
+                if (component.getName().equals(fieldName)) {
+                    try {
+                        return clazz.getDeclaredField(fieldName);
+                    } catch (NoSuchFieldException ex) {
+                        return null;
+                    }
+                }
+            }
+            return null;
         }
     }
 
