@@ -18,7 +18,7 @@ import com.example.planmate.domain.shared.enums.EAction;
 import com.example.planmate.domain.shared.lazydto.PlanDto;
 import com.example.planmate.domain.shared.lazydto.TimeTableDto;
 import com.example.planmate.domain.shared.service.PresenceTrackingService;
-import com.example.planmate.domain.shared.sync.CacheSyncService;
+import com.example.planmate.domain.shared.sync.RedisSyncService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,7 +34,7 @@ public class SharedEventTracker {
     private final TimeTableCache timeTableCache;
     private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
     private final PresenceTrackingService presenceTrackingService;
-    private final CacheSyncService redisSyncService;
+    private final RedisSyncService redisSyncService;
     private final SimpMessagingTemplate messaging;
 
     @EventListener
