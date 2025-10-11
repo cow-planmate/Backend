@@ -91,6 +91,60 @@ public class PlanController {
         EditPlanNameResponse reponse = planService.EditPlanName(userId, planId, editPlanNameRequest.getPlanName());
         return ResponseEntity.ok(reponse);
     }
+    @PostMapping("/{planId}/lodging")
+    public ResponseEntity<PlaceResponse> getLodgingPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
+        int userId = Integer.parseInt(authentication.getName());
+        PlaceResponse response = planService.getLodgingPlace(userId, planId);
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/{planId}/tour")
+    public ResponseEntity<PlaceResponse> getTourPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
+        int userId = Integer.parseInt(authentication.getName());
+        PlaceResponse response = planService.getTourPlace(userId, planId);
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/{planId}/restaurant")
+    public ResponseEntity<PlaceResponse> getRestaurantPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
+        int userId = Integer.parseInt(authentication.getName());
+        PlaceResponse response = planService.getRestaurantPlace(userId, planId);
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/{planId}/place")
+    public ResponseEntity<PlaceResponse> getPlace(Authentication authentication, @PathVariable("planId") int planId, @RequestBody SearchPlaceRequest request) throws IOException {
+        int userId = Integer.parseInt(authentication.getName());
+        String query = request.getQuery();
+        PlaceResponse response = planService.getSearchPlace(userId, planId, query);
+        return ResponseEntity.ok(response);
+    }
+
+
+
+    @PostMapping("/lodging")
+    public ResponseEntity<PlaceResponse> getLodgingPlace(@RequestBody PlaceRequest request) throws IOException {
+        PlaceResponse response = planService.getLodgingPlace(request.getTravelCategoryName(), request.getTravelName());
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/tour")
+    public ResponseEntity<PlaceResponse> getTourPlace(@RequestBody PlaceRequest request) throws IOException {
+        PlaceResponse response = planService.getTourPlace(request.getTravelCategoryName(), request.getTravelName());
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/restaurant")
+    public ResponseEntity<PlaceResponse> getRestaurantPlace(@RequestBody PlaceRequest request) throws IOException {
+        PlaceResponse response = planService.getRestaurantPlace(request.getTravelCategoryName(), request.getTravelName());
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/place")
+    public ResponseEntity<PlaceResponse> getPlace(@RequestBody SearchPlaceRequest request) throws IOException {
+        PlaceResponse response = planService.getSearchPlace(request.getQuery());
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/nextplace")
+    public ResponseEntity<PlaceResponse> getNextPlace(@RequestBody NextPlaceRequest request) throws IOException {
+        PlaceResponse response = planService.getNextPlace(request.getNextPageTokens());
+        return ResponseEntity.ok(response);
+    }
+
 
 
     @DeleteMapping("/{planId}/editor/me")
