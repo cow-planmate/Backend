@@ -1,5 +1,10 @@
 package com.example.planmate.domain.shared.cache;
 
+import com.example.planmate.domain.shared.cache.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.data.redis.core.RedisTemplate;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -7,18 +12,6 @@ import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.data.redis.core.RedisTemplate;
-
-import com.example.planmate.domain.shared.cache.annotation.AutoDatabaseLoader;
-import com.example.planmate.domain.shared.cache.annotation.AutoEntityConverter;
-import com.example.planmate.domain.shared.cache.annotation.AutoRedisTemplate;
-import com.example.planmate.domain.shared.cache.annotation.CacheEntity;
-import com.example.planmate.domain.shared.cache.annotation.CacheId;
-import com.example.planmate.domain.shared.cache.annotation.EntityConverter;
-import com.example.planmate.domain.shared.cache.annotation.ParentId;
 
 public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCacheRepository<T, ID, DTO> {
 
@@ -233,6 +226,19 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
      */
     @Override
     public List<T> findByParentId(ID parentId) {
+        List<DTO> dtos = findDtosByParentId(parentId);
+        
+        // Entity로 변환
+        return dtos.stream()
+            .map(this::convertToEntity)
+            .toList();
+    }
+
+    /**
+     * ParentId로 캐시에서 DTO 리스트 조회
+     * Redis에 이미 저장된 DTO를 직접 반환 (Entity 변환 없음)
+     */
+    public List<DTO> findDtosByParentId(ID parentId) {
         if (parentIdField == null) {
             throw new UnsupportedOperationException("ParentId 필드가 없습니다.");
         }
@@ -252,7 +258,7 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
         }
         
         // parentId로 필터링
-        List<DTO> filteredDtos = allDtos.stream()
+        return allDtos.stream()
             .filter(dto -> dto != null)
             .filter(dto -> {
                 try {
@@ -262,11 +268,6 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
                     return false;
                 }
             })
-            .toList();
-        
-        // Entity로 변환
-        return filteredDtos.stream()
-            .map(this::convertToEntity)
             .toList();
     }
 
@@ -280,13 +281,17 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
             // DTO에서 적절한 ID를 추출
             Object relatedId = extractRelatedId(dto, i);
             
-            // ID가 null이면 null 반환 (0 또는 null인 경우)
+            // ID가 null이면 null 반환
             if (relatedId == null) {
                 params[i] = null;
             } else {
-                Method getReferenceMethod = repository.getClass().getMethod("getReferenceById", Object.class);
-                Object entityRef = getReferenceMethod.invoke(repository, relatedId);
-                params[i] = entityRef;
+                try {
+                    Method getReferenceMethod = repository.getClass().getMethod("getReferenceById", Object.class);
+                    Object entityRef = getReferenceMethod.invoke(repository, relatedId);
+                    params[i] = entityRef;
+                } catch (Exception e) {
+                    params[i] = null;
+                }
             }
         }
         
@@ -294,26 +299,87 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
     }
 
     private Object extractRelatedId(DTO dto, int parameterIndex) {
-        // 리포지토리 이름에서 엔티티 이름 추출 (예: userRepository -> User)
         String repoName = entityConverterRepositories[parameterIndex];
-        String entityName = repoName.replace("Repository", "");
-        
-        // DTO에서 해당 엔티티의 ID 필드 찾기 (예: userId, transportationCategoryId)
-        String idFieldName = entityName + "Id";
         
         try {
-            Field idField = findFieldInHierarchy(dtoClass, idFieldName);
-            if (idField != null) {
-                idField.setAccessible(true);
-                Object idValue = idField.get(dto);
-                
-                // ID 값을 그대로 반환 (0도 유효한 ID로 처리)
+            // Repository에서 엔티티 클래스 타입 가져오기
+            Object repository = applicationContext.getBean(repoName);
+            Class<?> entityClass = getEntityClassFromRepository(repository);
+            
+            if (entityClass == null) {
+                return null;
+            }
+            
+            // 엔티티에서 @Id 어노테이션이 붙은 필드 찾기
+            String idFieldName = findIdFieldNameInEntity(entityClass);
+            
+            if (idFieldName == null) {
+                return null;
+            }
+            
+            // DTO에서 같은 이름의 필드 찾기
+            Field dtoIdField = findFieldInHierarchy(dtoClass, idFieldName);
+            if (dtoIdField != null) {
+                dtoIdField.setAccessible(true);
+                Object idValue = dtoIdField.get(dto);
                 return idValue;
             }
+            
             return null;
         } catch (IllegalAccessException e) {
-            throw new RuntimeException("관련 ID 추출 실패: " + idFieldName, e);
+            throw new RuntimeException("관련 ID 추출 실패: " + repoName, e);
         }
+    }
+    
+    /**
+     * Repository에서 엔티티 클래스 타입 추출
+     */
+    private Class<?> getEntityClassFromRepository(Object repository) {
+        try {
+            // Spring Data JPA Repository는 프록시 객체이므로 인터페이스를 찾아야 함
+            Class<?>[] interfaces = repository.getClass().getInterfaces();
+            
+            for (Class<?> iface : interfaces) {
+                // Repository 인터페이스 찾기
+                if (iface.getName().endsWith("Repository")) {
+                    // 인터페이스의 제네릭 타입 추출
+                    Type[] genericInterfaces = iface.getGenericInterfaces();
+                    for (Type genericInterface : genericInterfaces) {
+                        if (genericInterface instanceof ParameterizedType) {
+                            ParameterizedType parameterizedType = (ParameterizedType) genericInterface;
+                            Type rawType = parameterizedType.getRawType();
+                            
+                            // JpaRepository 인터페이스 확인
+                            if (rawType.getTypeName().contains("JpaRepository")) {
+                                Type[] typeArguments = parameterizedType.getActualTypeArguments();
+                                if (typeArguments.length > 0) {
+                                    if (typeArguments[0] instanceof Class) {
+                                        return (Class<?>) typeArguments[0]; // 첫 번째 제네릭 타입이 엔티티
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // 실패 시 null 반환
+        }
+        return null;
+    }
+    
+    /**
+     * 엔티티 클래스에서 @Id 어노테이션이 붙은 필드 이름 찾기
+     */
+    private String findIdFieldNameInEntity(Class<?> entityClass) {
+        // 모든 필드 순회
+        for (Field field : entityClass.getDeclaredFields()) {
+            // @Id 어노테이션 확인
+            if (field.isAnnotationPresent(jakarta.persistence.Id.class)) {
+                return field.getName();
+            }
+        }
+        return null;
     }
     
     private Field findFieldInHierarchy(Class<?> clazz, String fieldName) {

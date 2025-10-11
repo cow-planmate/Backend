@@ -1,11 +1,32 @@
 package com.example.planmate.domain.user.controller;
 
-import com.example.planmate.domain.user.dto.*;
-import com.example.planmate.domain.user.service.UserService;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.planmate.domain.user.dto.ChangeAgeRequest;
+import com.example.planmate.domain.user.dto.ChangeAgeResponse;
+import com.example.planmate.domain.user.dto.ChangeGenderRequest;
+import com.example.planmate.domain.user.dto.ChangeGenderResponse;
+import com.example.planmate.domain.user.dto.ChangeNicknameRequest;
+import com.example.planmate.domain.user.dto.ChangeNicknameResponse;
+import com.example.planmate.domain.user.dto.ChangePreferredThemesRequest;
+import com.example.planmate.domain.user.dto.ChangePreferredThemesResponse;
+import com.example.planmate.domain.user.dto.GetPreferredThemeResponse;
+import com.example.planmate.domain.user.dto.MoveMypageResponse;
+import com.example.planmate.domain.user.dto.ResignAccountResponse;
+import com.example.planmate.domain.user.dto.SavePreferredThemeRequest;
+import com.example.planmate.domain.user.dto.SavePreferredThemeResponse;
+import com.example.planmate.domain.user.service.UserService;
+
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @RestController

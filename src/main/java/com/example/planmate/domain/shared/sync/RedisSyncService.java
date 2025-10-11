@@ -181,8 +181,8 @@ public class RedisSyncService {
         planCache.deleteById(planId);
         for (Integer timeTableId : tempIdToEntity.keySet()) {
             timeTableCache.deleteById(timeTableId);
-            // TimeTablePlaceBlock도 같이 정리
-            timeTablePlaceBlockCache.loadFromDatabase(timeTableId).forEach(dto -> {
+            // TimeTablePlaceBlock 캐시도 같이 정리 (Redis에서 DTO만 조회)
+            timeTablePlaceBlockCache.findDtosByParentId(timeTableId).forEach(dto -> {
                 if (dto.blockId() != null) {
                     timeTablePlaceBlockCache.deleteById(dto.blockId());
                 }

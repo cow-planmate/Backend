@@ -1,20 +1,14 @@
 package com.example.planmate.domain.shared.lazydto;
 
-import java.time.LocalTime;
-
 import com.example.planmate.domain.image.entity.PlacePhoto;
 import com.example.planmate.domain.plan.entity.PlaceCategory;
 import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
-import com.example.planmate.domain.shared.cache.annotation.AutoDatabaseLoader;
-import com.example.planmate.domain.shared.cache.annotation.AutoEntityConverter;
-import com.example.planmate.domain.shared.cache.annotation.AutoRedisTemplate;
-import com.example.planmate.domain.shared.cache.annotation.CacheEntity;
-import com.example.planmate.domain.shared.cache.annotation.CacheId;
-import com.example.planmate.domain.shared.cache.annotation.EntityConverter;
-import com.example.planmate.domain.shared.cache.annotation.ParentId;
+import com.example.planmate.domain.shared.cache.annotation.*;
 
-@CacheEntity // keyType 생략 -> 자동으로 "timetableplaceblock" 생성
+import java.time.LocalTime;
+
+@CacheEntity
 @AutoRedisTemplate("timeTablePlaceBlockRedis")
 @AutoDatabaseLoader(repository = "timeTablePlaceBlockRepository", method = "findByTimeTableTimeTableId")
 @AutoEntityConverter(repositories = {"placeCategoryRepository", "timeTableRepository", "placePhotoRepository"})

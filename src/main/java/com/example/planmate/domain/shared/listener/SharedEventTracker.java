@@ -1,14 +1,5 @@
 package com.example.planmate.domain.shared.listener;
 
-import java.util.List;
-
-import org.springframework.context.event.EventListener;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
-import org.springframework.stereotype.Component;
-import org.springframework.web.socket.messaging.SessionDisconnectEvent;
-import org.springframework.web.socket.messaging.SessionSubscribeEvent;
-
 import com.example.planmate.domain.plan.repository.PlanRepository;
 import com.example.planmate.domain.shared.cache.PlanCache;
 import com.example.planmate.domain.shared.cache.TimeTableCache;
@@ -19,8 +10,15 @@ import com.example.planmate.domain.shared.lazydto.PlanDto;
 import com.example.planmate.domain.shared.lazydto.TimeTableDto;
 import com.example.planmate.domain.shared.service.PresenceTrackingService;
 import com.example.planmate.domain.shared.sync.RedisSyncService;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.event.EventListener;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.stereotype.Component;
+import org.springframework.web.socket.messaging.SessionDisconnectEvent;
+import org.springframework.web.socket.messaging.SessionSubscribeEvent;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -51,9 +49,15 @@ public class SharedEventTracker {
             PlanDto planDto = PlanDto.fromEntity(plan);
             planCache.save(planDto);
             
+            // TimeTable 로드 후 캐시에 저장
             List<TimeTableDto> timeTables = timeTableCache.loadFromDatabase(planId);
             for(TimeTableDto timeTable : timeTables){
-                timeTablePlaceBlockCache.loadFromDatabase(timeTable.timeTableId());
+                timeTableCache.save(timeTable);
+                
+                // TimeTablePlaceBlock 로드 후 캐시에 저장
+                timeTablePlaceBlockCache.loadFromDatabase(timeTable.timeTableId()).forEach(block -> {
+                    timeTablePlaceBlockCache.save(block);
+                });
             }
         }
         presenceTrackingService.insertPlanTracker(planId, userId, 0);
