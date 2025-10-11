@@ -27,7 +27,7 @@ public class JpaPlanCommandAdapter implements PlanCommandPort {
         String travelName = null;
         Integer adult = null;
         Integer child = null;
-        var departure = request.departure();
+        String departure = request.departure();
         Integer transportationCategoryId = null;
 
         if (request.planName() != null) {
