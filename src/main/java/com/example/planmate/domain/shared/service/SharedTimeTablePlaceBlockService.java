@@ -17,27 +17,27 @@ public class SharedTimeTablePlaceBlockService implements SharedService<WTimeTabl
     @Override
     public WTimeTablePlaceBlockResponse create(WTimeTablePlaceBlockRequest request) {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
-        TimeTablePlaceBlockDto timeTablePlaceBlockDto = request.getTablePlaceBlockDto();
+        TimeTablePlaceBlockDto timeTablePlaceBlockDto = request.getTimetablePlaceBlockDto();
         TimeTablePlaceBlockDto tempTimeTablePlaceBlockDto = timeTablePlaceBlockCache.save(timeTablePlaceBlockDto);
-        response.setTablePlaceBlockDto(tempTimeTablePlaceBlockDto);
+        response.setTimetablePlaceBlockDto(tempTimeTablePlaceBlockDto);
         return response;
     }
 
     @Override
     public WTimeTablePlaceBlockResponse update(WTimeTablePlaceBlockRequest request) {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
-        TimeTablePlaceBlockDto timeTablePlaceBlockDto = request.getTablePlaceBlockDto();
+        TimeTablePlaceBlockDto timeTablePlaceBlockDto = request.getTimetablePlaceBlockDto();
         TimeTablePlaceBlockDto tempTimeTablePlaceBlockDto = timeTablePlaceBlockCache.save(timeTablePlaceBlockDto);
-        response.setTablePlaceBlockDto(tempTimeTablePlaceBlockDto);
+        response.setTimetablePlaceBlockDto(tempTimeTablePlaceBlockDto);
         return response;
     }
 
     @Override
     public WTimeTablePlaceBlockResponse delete(WTimeTablePlaceBlockRequest request) {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
-        TimeTablePlaceBlockDto timeTablePlaceBlockDto = request.getTablePlaceBlockDto();
+        TimeTablePlaceBlockDto timeTablePlaceBlockDto = request.getTimetablePlaceBlockDto();
         timeTablePlaceBlockCache.deleteById(timeTablePlaceBlockDto.blockId());
-        response.setTablePlaceBlockDto(timeTablePlaceBlockDto);
+        response.setTimetablePlaceBlockDto(timeTablePlaceBlockDto);
         return response;
     }
 

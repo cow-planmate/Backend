@@ -4,7 +4,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -17,19 +19,14 @@ import com.example.planmate.domain.shared.cache.annotation.CacheEntity;
 import com.example.planmate.domain.shared.cache.annotation.CacheId;
 import com.example.planmate.domain.shared.cache.annotation.EntityConverter;
 import com.example.planmate.domain.shared.cache.annotation.ParentId;
-import com.example.planmate.domain.shared.enums.ECasheKey;
 
-/**
- * 100% 자동화된 캐시 리포지토리
- * DTO에 어노테이션만 붙이면 모든 메서드가 자동으로 구현됩니다!
- */
 public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCacheRepository<T, ID, DTO> {
 
     @Autowired
     private ApplicationContext applicationContext;
 
     private final Class<DTO> dtoClass;
-    private final ECasheKey cacheKey;
+    private final String cacheKeyPrefix;
     private final Field idField;
     private final Field parentIdField;
     private final Method entityConverterMethod;
@@ -54,7 +51,15 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
         if (cacheEntityAnnotation == null) {
             throw new IllegalStateException(dtoClass.getSimpleName() + "에 @CacheEntity 어노테이션이 없습니다.");
         }
-        this.cacheKey = cacheEntityAnnotation.keyType();
+        
+        // keyType이 빈 문자열이면 클래스 이름에서 자동 생성
+        String annotationKeyType = cacheEntityAnnotation.keyType();
+        if (annotationKeyType == null || annotationKeyType.isEmpty()) {
+            // PlanDto -> "plan"
+            this.cacheKeyPrefix = dtoClass.getSimpleName().replace("Dto", "").toLowerCase();
+        } else {
+            this.cacheKeyPrefix = annotationKeyType.toLowerCase();
+        }
 
         // @AutoRedisTemplate 어노테이션에서 Redis 템플릿 이름 추출
         AutoRedisTemplate redisTemplateAnnotation = dtoClass.getAnnotation(AutoRedisTemplate.class);
@@ -107,7 +112,7 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
 
     @Override
     protected final String getRedisKey(ID id) {
-        return cacheKey.key(id);
+        return cacheKeyPrefix + ":" + id;
     }
 
     @Override
@@ -123,6 +128,66 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
             return (ID) idField.get(dto);
         } catch (IllegalAccessException e) {
             throw new RuntimeException("ID 필드에 접근할 수 없습니다: " + idField.getName(), e);
+        }
+    }
+
+    /**
+     * ID가 null일 경우 임시 음수 ID를 생성하여 저장
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public DTO save(DTO dto) {
+        ID id = extractId(dto);
+        
+        // ID가 null이면 임시 음수 ID 생성
+        if (id == null) {
+            Integer temporaryId = generateTemporaryId();
+            dto = updateDtoWithId(dto, (ID) temporaryId);
+            id = extractId(dto);
+        }
+        
+        getRedisTemplate().opsForValue().set(getRedisKey(id), dto);
+        return dto;
+    }
+
+    /**
+     * Redis DECR을 사용하여 원자적으로 임시 음수 ID 생성
+     * Redis의 카운터를 사용하므로 동시성 문제 없이 고유한 음수 ID 보장
+     * 각 엔티티 타입별로 별도의 카운터 사용
+     */
+    private Integer generateTemporaryId() {
+        // 엔티티 타입별로 별도의 카운터 키 사용 (예: "temporary:timetableplaceblock:counter")
+        String counterKey = "temporary:" + cacheKeyPrefix + ":counter";
+        // DECR 명령으로 바로 음수 카운터 생성 (-1, -2, -3, ...)
+        Long counter = getRedisTemplate().opsForValue().decrement(counterKey);
+        
+        // counter가 null일 경우 -1로 시작
+        if (counter == null) {
+            counter = -1L;
+        }
+        
+        return counter.intValue();
+    }
+
+    /**
+     * DTO의 ID 필드를 업데이트 (Record는 새 인스턴스 생성)
+     */
+    @SuppressWarnings("unchecked")
+    private DTO updateDtoWithId(DTO dto, ID newId) {
+        try {
+            // Record 타입인 경우 withXXX 메서드 찾기
+            String idFieldName = idField.getName();
+            String withMethodName = "with" + Character.toUpperCase(idFieldName.charAt(0)) + idFieldName.substring(1);
+            
+            try {
+                Method withMethod = dtoClass.getMethod(withMethodName, idField.getType());
+                return (DTO) withMethod.invoke(dto, newId);
+            } catch (NoSuchMethodException e) {
+                // withXXX 메서드가 없으면 리플렉션으로 직접 설정 시도
+                throw new RuntimeException("DTO에 " + withMethodName + " 메서드가 없습니다. Record에 withBlockId 메서드를 추가해주세요.", e);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("DTO ID 업데이트 실패: " + dto, e);
         }
     }
 
@@ -160,6 +225,49 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
         } catch (Exception e) {
             throw new RuntimeException("데이터베이스 로딩 실패: " + parentId, e);
         }
+    }
+
+    /**
+     * ParentId로 캐시에서 Entity 리스트 조회
+     * Redis에 이미 저장된 데이터를 조회 (DB가 아닌 캐시에서)
+     */
+    @Override
+    public List<T> findByParentId(ID parentId) {
+        if (parentIdField == null) {
+            throw new UnsupportedOperationException("ParentId 필드가 없습니다.");
+        }
+        
+        // Redis에서 패턴으로 모든 키 찾기 (예: "plan:*")
+        String pattern = cacheKeyPrefix + ":*";
+        Set<String> keys = getRedisTemplate().keys(pattern);
+        
+        if (keys == null || keys.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        // 모든 DTO 가져오기
+        List<DTO> allDtos = getRedisTemplate().opsForValue().multiGet(keys);
+        if (allDtos == null) {
+            return Collections.emptyList();
+        }
+        
+        // parentId로 필터링
+        List<DTO> filteredDtos = allDtos.stream()
+            .filter(dto -> dto != null)
+            .filter(dto -> {
+                try {
+                    Object dtoParentId = parentIdField.get(dto);
+                    return parentId.equals(dtoParentId);
+                } catch (IllegalAccessException e) {
+                    return false;
+                }
+            })
+            .toList();
+        
+        // Entity로 변환
+        return filteredDtos.stream()
+            .map(this::convertToEntity)
+            .toList();
     }
 
     private Object[] buildEntityConverterParameters(DTO dto) throws Exception {

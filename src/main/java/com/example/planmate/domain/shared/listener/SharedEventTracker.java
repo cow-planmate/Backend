@@ -43,7 +43,7 @@ public class SharedEventTracker {
         Object v = accessor.getSessionAttributes().get(USER_ID);
         Integer userId = Integer.valueOf(String.valueOf(v));
         String destination = accessor.getDestination();
-        int planId = Integer.parseInt(destination.split("/")[3]);
+        int planId = Integer.parseInt(destination.split("/")[2]);
         if(!presenceTrackingService.hasPlanTracker(planId)) {
             // JPA 스타일로 변경: Repository에서 로드하고 캐시에 저장
             var plan = planRepository.findById(planId)

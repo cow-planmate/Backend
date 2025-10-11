@@ -1,15 +1,14 @@
 package com.example.planmate.domain.shared.dto;
 
-import com.example.planmate.common.valueObject.TimetableVO;
+import java.util.List;
+
 import com.example.planmate.domain.shared.lazydto.TimeTableDto;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
-
 @Getter
 @Setter
 public class WTimetableRequest extends WRequest {
-    private List<TimeTableDto> timeTableDto;
+    private List<TimeTableDto> timetableDtos;
 }

@@ -1,10 +1,8 @@
 package com.example.planmate.domain.shared.enums;
 
 public enum ECasheKey {
-    PLAN("PLAN"),
-    TIMETABLE("TIMETABLE"),
+    // 특수 용도 키들 (수동 관리)
     PLANTOTIMETABLE("PLANTOTIMETABLE"),
-    TIMETABLEPLACEBLOCK("TIMETABLEPLACEBLOCK"),
     TIMETABLETOTIMETABLEPLACEBLOCK("TIMETABLETOTIMETABLEPLACEBLOCK"),
     TRAVEL("TRAVEL"),
     PLACECATEGORY("PLACECATEGORY"),
@@ -20,5 +18,9 @@ public enum ECasheKey {
 
     public String key(Object suffix) {
         return value + suffix;
+    }
+    
+    public String getValue() {
+        return value;
     }
 }

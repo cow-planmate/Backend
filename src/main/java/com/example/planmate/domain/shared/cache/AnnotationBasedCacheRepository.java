@@ -9,7 +9,6 @@ import com.example.planmate.domain.shared.cache.annotation.CacheEntity;
 import com.example.planmate.domain.shared.cache.annotation.CacheId;
 import com.example.planmate.domain.shared.cache.annotation.EntityConverter;
 import com.example.planmate.domain.shared.cache.annotation.ParentId;
-import com.example.planmate.domain.shared.enums.ECasheKey;
 
 /**
  * 어노테이션 기반으로 자동화된 캐시 리포지토리
@@ -18,7 +17,7 @@ import com.example.planmate.domain.shared.enums.ECasheKey;
 public abstract class AnnotationBasedCacheRepository<T, ID, DTO> extends AbstractCacheRepository<T, ID, DTO> {
 
     private final Class<DTO> dtoClass;
-    private final ECasheKey cacheKey;
+    private final String cacheKeyPrefix;
     private final Field idField;
     private final Field parentIdField;
     private final Method entityConverterMethod;
@@ -39,7 +38,15 @@ public abstract class AnnotationBasedCacheRepository<T, ID, DTO> extends Abstrac
         if (cacheEntityAnnotation == null) {
             throw new IllegalStateException(dtoClass.getSimpleName() + "에 @CacheEntity 어노테이션이 없습니다.");
         }
-        this.cacheKey = cacheEntityAnnotation.keyType();
+        
+        // keyType이 빈 문자열이면 클래스 이름에서 자동 생성
+        String annotationKeyType = cacheEntityAnnotation.keyType();
+        if (annotationKeyType == null || annotationKeyType.isEmpty()) {
+            // PlanDto -> "plan"
+            this.cacheKeyPrefix = dtoClass.getSimpleName().replace("Dto", "").toUpperCase();
+        } else {
+            this.cacheKeyPrefix = annotationKeyType.toUpperCase();
+        }
 
         // @CacheId 필드 찾기
         this.idField = findFieldWithAnnotation(dtoClass, CacheId.class);
@@ -64,7 +71,7 @@ public abstract class AnnotationBasedCacheRepository<T, ID, DTO> extends Abstrac
 
     @Override
     protected final String getRedisKey(ID id) {
-        return cacheKey.key(id);
+        return cacheKeyPrefix + ":" + id;
     }
 
     @Override

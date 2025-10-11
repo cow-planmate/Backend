@@ -1,5 +1,13 @@
 package com.example.planmate.domain.shared.sync;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
 import com.example.planmate.common.exception.PlanNotFoundException;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TimeTable;
@@ -10,10 +18,8 @@ import com.example.planmate.domain.plan.repository.TimeTableRepository;
 import com.example.planmate.domain.shared.cache.PlanCache;
 import com.example.planmate.domain.shared.cache.TimeTableCache;
 import com.example.planmate.domain.shared.cache.TimeTablePlaceBlockCache;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
-import java.util.*;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -121,12 +127,8 @@ public class RedisSyncService {
             int timeTableId = entry.getKey();
             TimeTable realTimetable = entry.getValue();
             
-            // Cache에서 블록들 가져오기 (findByParentId는 Entity 리스트 반환)
-            List<TimeTablePlaceBlock> blocks = timeTablePlaceBlockCache.findAllById(
-                timeTablePlaceBlockCache.loadFromDatabase(timeTableId).stream()
-                    .map(dto -> dto.blockId())
-                    .toList()
-            );
+            // Cache에서 블록들 가져오기 (이미 캐시에 로드되어 있음)
+            List<TimeTablePlaceBlock> blocks = timeTablePlaceBlockCache.findByParentId(timeTableId);
             
             if(blocks != null && !blocks.isEmpty()) {
                 for (TimeTablePlaceBlock block : blocks) {
@@ -144,12 +146,8 @@ public class RedisSyncService {
             int timeTableId = entry.getKey();
             List<Integer> blockIds = new ArrayList<>();
             
-            // Cache에서 블록들 가져오기
-            List<TimeTablePlaceBlock> blocks = timeTablePlaceBlockCache.findAllById(
-                timeTablePlaceBlockCache.loadFromDatabase(timeTableId).stream()
-                    .map(dto -> dto.blockId())
-                    .toList()
-            );
+            // Cache에서 블록들 가져오기 (이미 캐시에 로드되어 있음)
+            List<TimeTablePlaceBlock> blocks = timeTablePlaceBlockCache.findByParentId(timeTableId);
             
             if(blocks != null && !blocks.isEmpty()) {
                 for (TimeTablePlaceBlock block : blocks) {

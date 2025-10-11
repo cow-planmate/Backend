@@ -1,23 +1,22 @@
 package com.example.planmate.domain.shared.dto;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.example.planmate.domain.shared.lazydto.TimeTableDto;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-
 @Getter
 @Setter
 public class WTimetableResponse extends WResponse {
-    private List<TimeTableDto> tableDtos;
+    private List<TimeTableDto> timetableDtos;
     public WTimetableResponse() {
-        tableDtos = new ArrayList<>();
+        timetableDtos = new ArrayList<>();
     }
     public void addTimetableVO(TimeTableDto timeTableDto) {
-        tableDtos.add(timeTableDto);
+        timetableDtos.add(timeTableDto);
     }
 
 }

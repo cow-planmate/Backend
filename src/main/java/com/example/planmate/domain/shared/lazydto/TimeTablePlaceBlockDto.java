@@ -13,9 +13,8 @@ import com.example.planmate.domain.shared.cache.annotation.CacheEntity;
 import com.example.planmate.domain.shared.cache.annotation.CacheId;
 import com.example.planmate.domain.shared.cache.annotation.EntityConverter;
 import com.example.planmate.domain.shared.cache.annotation.ParentId;
-import com.example.planmate.domain.shared.enums.ECasheKey;
 
-@CacheEntity(keyType = ECasheKey.TIMETABLEPLACEBLOCK)
+@CacheEntity // keyType 생략 -> 자동으로 "timetableplaceblock" 생성
 @AutoRedisTemplate("timeTablePlaceBlockRedis")
 @AutoDatabaseLoader(repository = "timeTablePlaceBlockRepository", method = "findByTimeTableTimeTableId")
 @AutoEntityConverter(repositories = {"placeCategoryRepository", "timeTableRepository", "placePhotoRepository"})

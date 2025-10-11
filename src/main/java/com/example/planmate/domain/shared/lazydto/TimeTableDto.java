@@ -12,9 +12,8 @@ import com.example.planmate.domain.shared.cache.annotation.CacheEntity;
 import com.example.planmate.domain.shared.cache.annotation.CacheId;
 import com.example.planmate.domain.shared.cache.annotation.EntityConverter;
 import com.example.planmate.domain.shared.cache.annotation.ParentId;
-import com.example.planmate.domain.shared.enums.ECasheKey;
 
-@CacheEntity(keyType = ECasheKey.TIMETABLE)
+@CacheEntity // keyType 생략 -> 자동으로 "timetable" 생성
 @AutoRedisTemplate("timeTableRedis")
 @AutoDatabaseLoader(repository = "timeTableRepository", method = "findByPlanPlanId")
 @AutoEntityConverter(repositories = {"planRepository"})
