@@ -6,6 +6,7 @@ import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TransportationCategory;
 import com.example.planmate.domain.shared.cache.PlanCache;
 import com.example.planmate.domain.shared.cache.TravelCache;
+import com.example.planmate.domain.shared.lazydto.PlanDto;
 import com.example.planmate.domain.shared.sync.ports.PlanCommandPort;
 import com.example.planmate.domain.travel.entity.Travel;
 
@@ -19,7 +20,8 @@ public class JpaPlanCommandAdapter implements PlanCommandPort {
 
     @Override
     public UpdateResult update(UpdateRequest request) {
-        Plan plan = planCache.findPlanByPlanId(request.planId());
+        Plan plan = planCache.findById(request.planId()) // JPA 스타일로 변경!
+            .orElseThrow(() -> new IllegalStateException("Plan not found in cache: " + request.planId()));
         String planName = null;
         Integer travelId = null;
         String travelName = null;
@@ -52,7 +54,7 @@ public class JpaPlanCommandAdapter implements PlanCommandPort {
             plan.changeTransportationCategory(new TransportationCategory(request.transportationCategoryId()));
             transportationCategoryId = request.transportationCategoryId();
         }
-        planCache.updatePlan(plan);
+        planCache.save(PlanDto.fromEntity(plan));
 
         return new UpdateResult(planName, travelId, travelName, adult, child, departure, transportationCategoryId);
     }

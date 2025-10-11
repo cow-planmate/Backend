@@ -18,7 +18,7 @@ public class SharedTimeTablePlaceBlockService implements SharedService<WTimeTabl
     public WTimeTablePlaceBlockResponse create(WTimeTablePlaceBlockRequest request) {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
         TimeTablePlaceBlockDto timeTablePlaceBlockDto = request.getTablePlaceBlockDto();
-        TimeTablePlaceBlockDto tempTimeTablePlaceBlockDto = timeTablePlaceBlockCache.createTimeTablePlaceBlock(timeTablePlaceBlockDto);
+        TimeTablePlaceBlockDto tempTimeTablePlaceBlockDto = timeTablePlaceBlockCache.save(timeTablePlaceBlockDto);
         response.setTablePlaceBlockDto(tempTimeTablePlaceBlockDto);
         return response;
     }
@@ -27,7 +27,7 @@ public class SharedTimeTablePlaceBlockService implements SharedService<WTimeTabl
     public WTimeTablePlaceBlockResponse update(WTimeTablePlaceBlockRequest request) {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
         TimeTablePlaceBlockDto timeTablePlaceBlockDto = request.getTablePlaceBlockDto();
-        TimeTablePlaceBlockDto tempTimeTablePlaceBlockDto = timeTablePlaceBlockCache.updateTimeTablePlaceBlock(timeTablePlaceBlockDto);
+        TimeTablePlaceBlockDto tempTimeTablePlaceBlockDto = timeTablePlaceBlockCache.save(timeTablePlaceBlockDto);
         response.setTablePlaceBlockDto(tempTimeTablePlaceBlockDto);
         return response;
     }
@@ -36,8 +36,8 @@ public class SharedTimeTablePlaceBlockService implements SharedService<WTimeTabl
     public WTimeTablePlaceBlockResponse delete(WTimeTablePlaceBlockRequest request) {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
         TimeTablePlaceBlockDto timeTablePlaceBlockDto = request.getTablePlaceBlockDto();
-        TimeTablePlaceBlockDto tempTimeTablePlaceBlockDto = timeTablePlaceBlockCache.deleteTimeTablePlaceBlock(timeTablePlaceBlockDto);
-        response.setTablePlaceBlockDto(tempTimeTablePlaceBlockDto);
+        timeTablePlaceBlockCache.deleteById(timeTablePlaceBlockDto.blockId());
+        response.setTablePlaceBlockDto(timeTablePlaceBlockDto);
         return response;
     }
 

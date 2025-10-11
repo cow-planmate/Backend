@@ -21,8 +21,8 @@ public class CleanupCacheStep implements SyncStep<PlanSyncContext> {
     public void execute(PlanSyncContext ctx) {
         List<Integer> deleteIds = ctx.getDeletedTimeTableRedisKeys();
         if (deleteIds != null && !deleteIds.isEmpty()) {
-            timeTableCache.deleteRedisTimeTable(deleteIds);
+            timeTableCache.deleteAllById(deleteIds);
         }
-        planCache.deletePlan(ctx.getPlanId());
+        planCache.deleteById(ctx.getPlanId()); // JPA 스타일로 변경!
     }
 }

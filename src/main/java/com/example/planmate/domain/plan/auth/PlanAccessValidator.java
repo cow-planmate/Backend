@@ -17,7 +17,7 @@ public class PlanAccessValidator {
     private final PlanEditorRepository planEditorRepository;
     private final PlanCache redisService;
     public Plan validateUserHasAccessToPlan(int userId, int planId) {
-    Plan plan = redisService.findPlanByPlanId(planId);
+    Plan plan = redisService.findById(planId).orElse(null); // JPA 스타일로 변경!
 
         if (plan == null) {
             plan = planRepository.findById(planId)
@@ -33,7 +33,7 @@ public class PlanAccessValidator {
         return plan;
     }
     public void checkUserAccessToPlan(int userId, int planId) {
-    Plan plan = redisService.findPlanByPlanId(planId);
+    Plan plan = redisService.findById(planId).orElse(null); // JPA 스타일로 변경!
 
         if (plan == null) {
             plan = planRepository.findById(planId)

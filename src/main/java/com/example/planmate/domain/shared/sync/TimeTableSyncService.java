@@ -32,7 +32,7 @@ public class TimeTableSyncService {
     public TimeTableSyncResult syncTimeTables(int planId) {
         // Use a lightweight reference to avoid loading the full Plan entity
         Plan planRef = entityManager.getReference(Plan.class, planId);
-        List<TimeTable> cachedTimetables = timeTableCache.deleteTimeTableByPlanId(planId);
+        List<TimeTable> cachedTimetables = timeTableCache.deleteByParentId(planId);
 
         List<TimeTable> newTimetables = new ArrayList<>();
         List<TimeTable> oldTimetables = timeTableRepository.findByPlanPlanId(planId);

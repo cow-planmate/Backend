@@ -33,7 +33,7 @@ public class TimeTablePlaceBlockSyncService {
             TimeTable realTimetable = entry.getValue();
 
             List<TimeTablePlaceBlock> blocks =
-                    timeTablePlaceBlockCache.deleteTimeTablePlaceBlockByTimeTableId(tempId);
+                    timeTablePlaceBlockCache.deleteByParentId(tempId);
 
             if (blocks != null) {
                 for (TimeTablePlaceBlock block : blocks) {
@@ -54,7 +54,7 @@ public class TimeTablePlaceBlockSyncService {
                     timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTableId);
 
             List<TimeTablePlaceBlock> blocks =
-                    timeTablePlaceBlockCache.deleteTimeTablePlaceBlockByTimeTableId(timeTableId);
+                    timeTablePlaceBlockCache.deleteByParentId(timeTableId);
 
             if (blocks != null) {
                 for (TimeTablePlaceBlock block : blocks) {

@@ -9,11 +9,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 
+import com.example.planmate.domain.plan.repository.PlanRepository;
 import com.example.planmate.domain.shared.cache.PlanCache;
 import com.example.planmate.domain.shared.cache.TimeTableCache;
 import com.example.planmate.domain.shared.cache.TimeTablePlaceBlockCache;
 import com.example.planmate.domain.shared.dto.WPresenceResponse;
 import com.example.planmate.domain.shared.enums.EAction;
+import com.example.planmate.domain.shared.lazydto.PlanDto;
 import com.example.planmate.domain.shared.lazydto.TimeTableDto;
 import com.example.planmate.domain.shared.service.PresenceTrackingService;
 import com.example.planmate.domain.shared.sync.CacheSyncService;
@@ -27,6 +29,7 @@ public class SharedEventTracker {
 
     private final String USER_ID = "userId";
 
+    private final PlanRepository planRepository;
     private final PlanCache planCache;
     private final TimeTableCache timeTableCache;
     private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
@@ -42,10 +45,15 @@ public class SharedEventTracker {
         String destination = accessor.getDestination();
         int planId = Integer.parseInt(destination.split("/")[3]);
         if(!presenceTrackingService.hasPlanTracker(planId)) {
-            planCache.insertPlanByKey(planId);
-            List<TimeTableDto> timeTables = timeTableCache.insertTimeTablesByPlanId(planId);
+            // JPA 스타일로 변경: Repository에서 로드하고 캐시에 저장
+            var plan = planRepository.findById(planId)
+                .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
+            PlanDto planDto = PlanDto.fromEntity(plan);
+            planCache.save(planDto);
+            
+            List<TimeTableDto> timeTables = timeTableCache.loadFromDatabase(planId);
             for(TimeTableDto timeTable : timeTables){
-                timeTablePlaceBlockCache.insertTimeTablePlaceBlock(timeTable.timeTableId());
+                timeTablePlaceBlockCache.loadFromDatabase(timeTable.timeTableId());
             }
         }
         presenceTrackingService.insertPlanTracker(planId, userId, 0);

@@ -1,6 +1,5 @@
 package com.example.planmate.domain.shared.dto;
 
-import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.domain.shared.lazydto.TimeTablePlaceBlockDto;
 
 import lombok.Getter;

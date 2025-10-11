@@ -16,7 +16,8 @@ public class PlanSyncService {
     private final PlanCache planCache;
 
     public Plan syncPlan(int planId) {
-        Plan cached = planCache.findPlanByPlanId(planId);
+        Plan cached = planCache.findById(planId) // JPA 스타일로 변경!
+            .orElseThrow(() -> new IllegalStateException("Plan not found in cache: " + planId));
         return planRepository.save(cached);
     }
 }

@@ -138,13 +138,13 @@ public class PlanService {
 
     public GetPlanResponse getPlan(int userId, int planId) {
         GetPlanResponse response = new GetPlanResponse();
-        Plan plan = planCache.findPlanByPlanId(planId);
+        Plan plan = planCache.findById(planId).orElse(null); // JPA 스타일로 변경!
         List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
         if(plan != null) {
-            timeTables = timeTableCache.findTimeTablesByPlanId(planId);
+            timeTables = timeTableCache.findByParentId(planId);
             for(TimeTable timeTable : timeTables) {
-                timeTablePlaceBlocks.add(timeTablePlaceBlockCache.findTimeTablePlaceBlocksByTimeTableId(timeTable.getTimeTableId()));
+                timeTablePlaceBlocks.add(timeTablePlaceBlockCache.findByParentId(timeTable.getTimeTableId()));
             }
         }
         else {
@@ -438,13 +438,13 @@ public class PlanService {
 
     public GetCompletePlanResponse getCompletePlan(int planId) {
         GetCompletePlanResponse response = new GetCompletePlanResponse();
-        Plan plan = planCache.findPlanByPlanId(planId);
+        Plan plan = planCache.findById(planId).orElse(null); // JPA 스타일로 변경!
         List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
         if(plan != null) {
-            timeTables = timeTableCache.findTimeTablesByPlanId(planId);
+            timeTables = timeTableCache.findByParentId(planId);
             for(TimeTable timeTable : timeTables) {
-                timeTablePlaceBlocks.add(timeTablePlaceBlockCache.findTimeTablePlaceBlocksByTimeTableId(timeTable.getTimeTableId()));
+                timeTablePlaceBlocks.add(timeTablePlaceBlockCache.findByParentId(timeTable.getTimeTableId()));
             }
         }
         else {

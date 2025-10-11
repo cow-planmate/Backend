@@ -6,8 +6,21 @@ import com.example.planmate.domain.image.entity.PlacePhoto;
 import com.example.planmate.domain.plan.entity.PlaceCategory;
 import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
+import com.example.planmate.domain.shared.cache.annotation.AutoDatabaseLoader;
+import com.example.planmate.domain.shared.cache.annotation.AutoEntityConverter;
+import com.example.planmate.domain.shared.cache.annotation.AutoRedisTemplate;
+import com.example.planmate.domain.shared.cache.annotation.CacheEntity;
+import com.example.planmate.domain.shared.cache.annotation.CacheId;
+import com.example.planmate.domain.shared.cache.annotation.EntityConverter;
+import com.example.planmate.domain.shared.cache.annotation.ParentId;
+import com.example.planmate.domain.shared.enums.ECasheKey;
 
+@CacheEntity(keyType = ECasheKey.TIMETABLEPLACEBLOCK)
+@AutoRedisTemplate("timeTablePlaceBlockRedis")
+@AutoDatabaseLoader(repository = "timeTablePlaceBlockRepository", method = "findByTimeTableTimeTableId")
+@AutoEntityConverter(repositories = {"placeCategoryRepository", "timeTableRepository", "placePhotoRepository"})
 public record TimeTablePlaceBlockDto(
+        @CacheId
         Integer blockId,
         String placeName,
         String placeTheme,
@@ -20,6 +33,7 @@ public record TimeTablePlaceBlockDto(
         double yLocation,
         String placeId,
         Integer placeCategoryId,
+        @ParentId
         Integer timeTableId
 ) {
     public static TimeTablePlaceBlockDto fromEntity(TimeTablePlaceBlock block) {
@@ -40,6 +54,7 @@ public record TimeTablePlaceBlockDto(
         );
     }
 
+    @EntityConverter
     public TimeTablePlaceBlock toEntity(PlaceCategory placeCategory, TimeTable timeTable, PlacePhoto placePhoto) {
         return TimeTablePlaceBlock.builder()
                 .blockId(this.blockId)
