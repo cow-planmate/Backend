@@ -1,4 +1,4 @@
-package com.example.planmate.domain.shared.cache.annotation;
+package com.example.planmate.domain.shared.framework.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,9 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 부모 ID를 나타내는 어노테이션 (findByParentId 등에서 사용)
+ * DTO에서 Entity로 변환하는 메서드를 지정하는 어노테이션
  */
-@Target(ElementType.FIELD)
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ParentId {
+public @interface EntityConverter {
 }

@@ -5,13 +5,13 @@ import java.time.LocalTime;
 
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TimeTable;
-import com.example.planmate.domain.shared.cache.annotation.AutoDatabaseLoader;
-import com.example.planmate.domain.shared.cache.annotation.AutoEntityConverter;
-import com.example.planmate.domain.shared.cache.annotation.AutoRedisTemplate;
-import com.example.planmate.domain.shared.cache.annotation.CacheEntity;
-import com.example.planmate.domain.shared.cache.annotation.CacheId;
-import com.example.planmate.domain.shared.cache.annotation.EntityConverter;
-import com.example.planmate.domain.shared.cache.annotation.ParentId;
+import com.example.planmate.domain.shared.framework.annotation.AutoDatabaseLoader;
+import com.example.planmate.domain.shared.framework.annotation.AutoEntityConverter;
+import com.example.planmate.domain.shared.framework.annotation.AutoRedisTemplate;
+import com.example.planmate.domain.shared.framework.annotation.CacheEntity;
+import com.example.planmate.domain.shared.framework.annotation.CacheId;
+import com.example.planmate.domain.shared.framework.annotation.EntityConverter;
+import com.example.planmate.domain.shared.framework.annotation.ParentId;
 
 @CacheEntity // keyType 생략 -> 자동으로 "timetable" 생성
 @AutoRedisTemplate("timeTableRedis")

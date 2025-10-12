@@ -1,10 +1,10 @@
-package com.example.planmate.domain.shared.controller;
+package com.example.planmate.domain.shared.framework.contoller;
 
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.Payload;
 
-import com.example.planmate.domain.shared.dto.WRequest;
-import com.example.planmate.domain.shared.dto.WResponse;
+import com.example.planmate.domain.shared.framework.dto.WRequest;
+import com.example.planmate.domain.shared.framework.dto.WResponse;
 import com.example.planmate.domain.shared.service.SharedService;
 
 import lombok.RequiredArgsConstructor;

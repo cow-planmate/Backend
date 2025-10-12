@@ -2,11 +2,11 @@ package com.example.planmate.domain.shared.lazydto;
 
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TransportationCategory;
-import com.example.planmate.domain.shared.cache.annotation.AutoEntityConverter;
-import com.example.planmate.domain.shared.cache.annotation.AutoRedisTemplate;
-import com.example.planmate.domain.shared.cache.annotation.CacheEntity;
-import com.example.planmate.domain.shared.cache.annotation.CacheId;
-import com.example.planmate.domain.shared.cache.annotation.EntityConverter;
+import com.example.planmate.domain.shared.framework.annotation.AutoEntityConverter;
+import com.example.planmate.domain.shared.framework.annotation.AutoRedisTemplate;
+import com.example.planmate.domain.shared.framework.annotation.CacheEntity;
+import com.example.planmate.domain.shared.framework.annotation.CacheId;
+import com.example.planmate.domain.shared.framework.annotation.EntityConverter;
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.user.entity.User;
 

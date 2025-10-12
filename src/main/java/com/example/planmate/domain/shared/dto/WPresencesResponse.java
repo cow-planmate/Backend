@@ -6,6 +6,7 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.planmate.domain.shared.framework.dto.WResponse;
 import com.example.planmate.domain.shared.valueObject.UserDayIndexVO;
 
 @Getter

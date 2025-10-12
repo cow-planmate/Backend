@@ -5,6 +5,7 @@ import lombok.Setter;
 
 import java.util.List;
 
+import com.example.planmate.domain.shared.framework.dto.WRequest;
 import com.example.planmate.domain.shared.valueObject.UserDayIndexVO;
 
 @Getter

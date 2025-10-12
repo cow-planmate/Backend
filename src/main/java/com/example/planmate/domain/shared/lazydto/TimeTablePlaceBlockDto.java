@@ -4,7 +4,7 @@ import com.example.planmate.domain.image.entity.PlacePhoto;
 import com.example.planmate.domain.plan.entity.PlaceCategory;
 import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
-import com.example.planmate.domain.shared.cache.annotation.*;
+import com.example.planmate.domain.shared.framework.annotation.*;
 
 import java.time.LocalTime;
 

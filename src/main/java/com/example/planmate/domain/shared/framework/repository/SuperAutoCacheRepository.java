@@ -1,4 +1,4 @@
-package com.example.planmate.domain.shared.cache;
+package com.example.planmate.domain.shared.framework.repository;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -12,13 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.redis.core.RedisTemplate;
 
-import com.example.planmate.domain.shared.cache.annotation.AutoDatabaseLoader;
-import com.example.planmate.domain.shared.cache.annotation.AutoEntityConverter;
-import com.example.planmate.domain.shared.cache.annotation.AutoRedisTemplate;
-import com.example.planmate.domain.shared.cache.annotation.CacheEntity;
-import com.example.planmate.domain.shared.cache.annotation.CacheId;
-import com.example.planmate.domain.shared.cache.annotation.EntityConverter;
-import com.example.planmate.domain.shared.cache.annotation.ParentId;
+import com.example.planmate.domain.shared.framework.annotation.AutoDatabaseLoader;
+import com.example.planmate.domain.shared.framework.annotation.AutoEntityConverter;
+import com.example.planmate.domain.shared.framework.annotation.AutoRedisTemplate;
+import com.example.planmate.domain.shared.framework.annotation.CacheEntity;
+import com.example.planmate.domain.shared.framework.annotation.CacheId;
+import com.example.planmate.domain.shared.framework.annotation.EntityConverter;
+import com.example.planmate.domain.shared.framework.annotation.ParentId;
 
 public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCacheRepository<T, ID, DTO> {
 

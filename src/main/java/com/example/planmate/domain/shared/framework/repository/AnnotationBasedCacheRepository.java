@@ -1,14 +1,14 @@
-package com.example.planmate.domain.shared.cache;
+package com.example.planmate.domain.shared.framework.repository;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
-import com.example.planmate.domain.shared.cache.annotation.CacheEntity;
-import com.example.planmate.domain.shared.cache.annotation.CacheId;
-import com.example.planmate.domain.shared.cache.annotation.EntityConverter;
-import com.example.planmate.domain.shared.cache.annotation.ParentId;
+import com.example.planmate.domain.shared.framework.annotation.CacheEntity;
+import com.example.planmate.domain.shared.framework.annotation.CacheId;
+import com.example.planmate.domain.shared.framework.annotation.EntityConverter;
+import com.example.planmate.domain.shared.framework.annotation.ParentId;
 
 /**
  * 어노테이션 기반으로 자동화된 캐시 리포지토리

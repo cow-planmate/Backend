@@ -3,6 +3,7 @@ package com.example.planmate.domain.shared.dto;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.planmate.domain.shared.framework.dto.WResponse;
 import com.example.planmate.domain.shared.lazydto.TimeTableDto;
 
 import lombok.Getter;

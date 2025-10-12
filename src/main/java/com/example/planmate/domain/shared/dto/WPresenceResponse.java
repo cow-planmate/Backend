@@ -1,5 +1,6 @@
 package com.example.planmate.domain.shared.dto;
 
+import com.example.planmate.domain.shared.framework.dto.WResponse;
 import com.example.planmate.domain.shared.valueObject.UserDayIndexVO;
 
 import lombok.Getter;

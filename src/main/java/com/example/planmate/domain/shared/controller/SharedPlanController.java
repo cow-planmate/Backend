@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 
 import com.example.planmate.domain.shared.dto.WPlanRequest;
 import com.example.planmate.domain.shared.dto.WPlanResponse;
+import com.example.planmate.domain.shared.framework.contoller.SharedContoller;
 import com.example.planmate.domain.shared.service.SharedPlanService;
 
 @Controller

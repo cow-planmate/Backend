@@ -1,4 +1,4 @@
-package com.example.planmate.domain.shared.cache;
+package com.example.planmate.domain.shared.framework.repository;
 
 import java.util.List;
 import java.util.Optional;

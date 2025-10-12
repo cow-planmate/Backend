@@ -1,7 +1,7 @@
 package com.example.planmate.domain.shared.service;
 
-import com.example.planmate.domain.shared.dto.WRequest;
-import com.example.planmate.domain.shared.dto.WResponse;
+import com.example.planmate.domain.shared.framework.dto.WRequest;
+import com.example.planmate.domain.shared.framework.dto.WResponse;
 
 public interface SharedService<Req extends WRequest, Res extends WResponse> {
 

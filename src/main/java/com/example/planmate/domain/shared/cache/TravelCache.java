@@ -19,7 +19,8 @@ import lombok.RequiredArgsConstructor;
 public class TravelCache {
     private final RedisTemplate<String, TravelDto> travelRedis;
     private final TravelRepository travelRepository;
-     private final TravelCategoryRepository travelCategoryRepository;    
+    private final TravelCategoryRepository travelCategoryRepository;
+        
     @PostConstruct
     public void init() {
         List<Travel> travels = travelRepository.findAll();

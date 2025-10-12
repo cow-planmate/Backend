@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 
 import com.example.planmate.domain.shared.dto.WTimetableRequest;
 import com.example.planmate.domain.shared.dto.WTimetableResponse;
+import com.example.planmate.domain.shared.framework.contoller.SharedContoller;
 import com.example.planmate.domain.shared.service.SharedTimeTableService;
 
 @Controller

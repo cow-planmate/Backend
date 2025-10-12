@@ -1,4 +1,4 @@
-package com.example.planmate.domain.shared.dto;
+package com.example.planmate.domain.shared.framework.dto;
 
 import lombok.Getter;
 import lombok.Setter;
