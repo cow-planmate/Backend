@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class RedisSyncService {
+public class CacheSyncService {
 
     private final PlanRepository planRepository;
     private final TimeTableRepository timeTableRepository;
@@ -32,22 +32,18 @@ public class RedisSyncService {
     private final TimeTableCache timeTableCache;
     private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
 
-    public void syncPlanToDatabase(int planId) {
-        if(!planRepository.existsById(planId)) {
-            throw new PlanNotFoundException();
-        }
-        
+    public void syncToDatabase(int planId) {
         // Cache에서 Plan 데이터 가져오기
         Optional<Plan> cachedPlanOpt = planCache.findById(planId);
+        planCache.deleteById(planId);
         if (cachedPlanOpt.isEmpty()) {
-            return; // 캐시에 없으면 동기화할 것이 없음
+            return; // 캐시에 데이터가 없으면 동기화할 필요 없음                                                    
         }
         
         // 기존 DB Plan 조회 후 필드만 업데이트 (cascade 문제 방지)
         Plan existingPlan = planRepository.findById(planId)
             .orElseThrow(() -> new PlanNotFoundException());
         
-        // Cache의 데이터로 Plan 업데이트 (기존 메서드 사용)
         Plan cachedPlan = cachedPlanOpt.get();
         if (cachedPlan.getPlanName() != null) {
             existingPlan.changePlanName(cachedPlan.getPlanName());
@@ -70,6 +66,7 @@ public class RedisSyncService {
         
         // Cache에서 TimeTable 가져오기 (DB가 아닌 캐시에서)
         List<TimeTable> cachedTimeTables = timeTableCache.findByParentId(planId);
+        timeTableCache.deleteByParentId(planId);
         
         for (TimeTable t : cachedTimeTables) {
             int tempId = t.getTimeTableId();
@@ -165,23 +162,12 @@ public class RedisSyncService {
             }
             deletedBlocks.addAll(oldBlocks);
         }
-        
+
         timeTablePlaceBlockRepository.deleteAll(deletedBlocks);
         timeTablePlaceBlockRepository.saveAll(newBlocks);
         
-        // 캐시 정리
-        planCache.deleteById(planId);
         for (Integer timeTableId : tempIdToEntity.keySet()) {
-            timeTableCache.deleteById(timeTableId);
-            // TimeTablePlaceBlock도 같이 정리
-            List<TimeTablePlaceBlock> blocksToDelete = timeTablePlaceBlockCache.findByParentId(timeTableId);
-            if (blocksToDelete != null) {
-                blocksToDelete.forEach(block -> {
-                    if (block.getBlockId() != null) {
-                        timeTablePlaceBlockCache.deleteById(block.getBlockId());
-                    }
-                });
-            }
+            timeTablePlaceBlockCache.deleteByParentId(timeTableId);
         }
     }
 }

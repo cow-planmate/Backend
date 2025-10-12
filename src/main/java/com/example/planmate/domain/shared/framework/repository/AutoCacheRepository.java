@@ -4,8 +4,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +22,15 @@ import com.example.planmate.domain.shared.framework.annotation.CacheId;
 import com.example.planmate.domain.shared.framework.annotation.EntityConverter;
 import com.example.planmate.domain.shared.framework.annotation.ParentId;
 
-public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCacheRepository<T, ID, DTO> {
+/**
+ * 완전 자동화된 캐시 리포지토리
+ * DTO에 어노테이션만 추가하면 모든 CRUD 및 DB 동기화 기능이 자동으로 구현됩니다.
+ * 
+ * @param <T> 엔티티 타입
+ * @param <ID> ID 타입  
+ * @param <DTO> DTO 타입
+ */
+public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository<T, ID, DTO> {
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -36,7 +46,7 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
     private final String[] entityConverterRepositories;
 
     @SuppressWarnings("unchecked")
-    public SuperAutoCacheRepository() {
+    public AutoCacheRepository() {
         // 제네릭 타입에서 DTO 클래스 추출
         Type superClass = getClass().getGenericSuperclass();
         if (superClass instanceof ParameterizedType) {
@@ -110,18 +120,80 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
         this.entityConverterMethod.setAccessible(true);
     }
 
+    // ==== CacheRepository 인터페이스 기본 CRUD 구현 ====
+    
     @Override
+    public Optional<T> findById(ID id) {
+        DTO dto = getRedisTemplate().opsForValue().get(getRedisKey(id));
+        if (dto == null) {
+            return Optional.empty();
+        }
+        return Optional.of(convertToEntity(dto));
+    }
+    
+    @Override
+    public T getReferenceById(ID id) {
+        return findById(id).orElseThrow(() -> 
+            new IllegalStateException("캐시에서 데이터를 찾을 수 없습니다: " + id));
+    }
+    
+    @Override
+    public void deleteById(ID id) {
+        getRedisTemplate().delete(getRedisKey(id));
+    }
+    
+    @Override
+    public boolean existsById(ID id) {
+        return Boolean.TRUE.equals(getRedisTemplate().hasKey(getRedisKey(id)));
+    }
+    
+    @Override
+    public List<T> findAllById(Iterable<ID> ids) {
+        List<String> keys = new ArrayList<>();
+        ids.forEach(id -> keys.add(getRedisKey(id)));
+        
+        List<DTO> dtos = getRedisTemplate().opsForValue().multiGet(keys);
+        if (dtos == null) {
+            return Collections.emptyList();
+        }
+        
+        return dtos.stream()
+            .filter(dto -> dto != null)
+            .map(this::convertToEntity)
+            .toList();
+    }
+    
+    @Override
+    public List<DTO> saveAll(List<DTO> dtos) {
+        dtos.forEach(dto -> {
+            ID id = extractId(dto);
+            if (id == null) {
+                Integer temporaryId = generateTemporaryId();
+                dto = updateDtoWithId(dto, (ID) temporaryId);
+            }
+            getRedisTemplate().opsForValue().set(getRedisKey(extractId(dto)), dto);
+        });
+        return dtos;
+    }
+    
+    @Override
+    public void deleteAllById(Iterable<ID> ids) {
+        List<String> keys = new ArrayList<>();
+        ids.forEach(id -> keys.add(getRedisKey(id)));
+        getRedisTemplate().delete(keys);
+    }
+    
+    // ==== 내부 헬퍼 메서드 ====
+    
     protected final String getRedisKey(ID id) {
         return cacheKeyPrefix + ":" + id;
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     protected final RedisTemplate<String, DTO> getRedisTemplate() {
         return (RedisTemplate<String, DTO>) applicationContext.getBean(redisTemplateBeanName);
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     protected final ID extractId(DTO dto) {
         try {
@@ -134,7 +206,6 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
     /**
      * ID가 null일 경우 임시 음수 ID를 생성하여 저장
      */
-    @Override
     @SuppressWarnings("unchecked")
     public DTO save(DTO dto) {
         ID id = extractId(dto);
@@ -251,7 +322,6 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
         }
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     protected final T convertToEntity(DTO dto) {
         try {
@@ -263,8 +333,8 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
         }
     }
 
-    @Override
     @SuppressWarnings("unchecked")
+    @Override
     public final List<DTO> loadFromDatabase(ID parentId) {
         try {
             Object repository = applicationContext.getBean(repositoryBeanName);
@@ -297,6 +367,37 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
         
         // Entity로 변환
         return dtos.stream()
+            .map(this::convertToEntity)
+            .toList();
+    }
+
+    /**
+     * ParentId로 캐시에서 Entity 리스트 삭제
+     * Redis에 저장된 해당 ParentId를 가진 모든 데이터를 삭제하고 삭제된 Entity 리스트 반환
+     */
+    @Override
+    public List<T> deleteByParentId(ID parentId) {
+        if (parentIdField == null) {
+            throw new UnsupportedOperationException("ParentId 필드가 없습니다.");
+        }
+        
+        // 먼저 삭제할 DTO들을 조회
+        List<DTO> dtosToDelete = findDtosByParentId(parentId);
+        
+        if (dtosToDelete.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        // 삭제할 키들 수집
+        List<String> keysToDelete = dtosToDelete.stream()
+            .map(dto -> getRedisKey(extractId(dto)))
+            .toList();
+        
+        // Redis에서 삭제
+        getRedisTemplate().delete(keysToDelete);
+        
+        // 삭제된 Entity 리스트 반환
+        return dtosToDelete.stream()
             .map(this::convertToEntity)
             .toList();
     }
