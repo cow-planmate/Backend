@@ -14,13 +14,13 @@ import org.springframework.stereotype.Controller;
 public class WebSocketController {
     private final WebSocketPlanService webSocketPlanService;
 
-    @MessageMapping("/plan/{planId}/update/plan")
-    @SendTo("/topic/plan/{planId}/update/plan")
-    public WPlanResponse updatePlan(@DestinationVariable int planId, @Payload WPlanRequest request) {
-        WPlanResponse response = webSocketPlanService.updatePlan(planId, request);
-        response.setEventId(request.getEventId() == null ? "" : request.getEventId());
-        return response;
-    }
+//    @MessageMapping("/plan/{planId}/update/plan")
+//    @SendTo("/topic/plan/{planId}/update/plan")
+//    public WPlanResponse updatePlan(@DestinationVariable int planId, @Payload WPlanRequest request) {
+//        WPlanResponse response = webSocketPlanService.updatePlan(planId, request);
+//        response.setEventId(request.getEventId() == null ? "" : request.getEventId());
+//        return response;
+//    }
 
     @MessageMapping("/plan/{planId}/create/timetable")
     @SendTo("/topic/plan/{planId}/create/timetable")
