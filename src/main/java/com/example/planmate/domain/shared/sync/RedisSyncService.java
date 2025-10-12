@@ -127,7 +127,7 @@ public class RedisSyncService {
             int timeTableId = entry.getKey();
             TimeTable realTimetable = entry.getValue();
             
-            // Cache에서 블록들 가져오기 (이미 캐시에 로드되어 있음)
+            // Cache에서 부모 ID로 블록들 가져오기
             List<TimeTablePlaceBlock> blocks = timeTablePlaceBlockCache.findByParentId(timeTableId);
             
             if(blocks != null && !blocks.isEmpty()) {
@@ -146,7 +146,7 @@ public class RedisSyncService {
             int timeTableId = entry.getKey();
             List<Integer> blockIds = new ArrayList<>();
             
-            // Cache에서 블록들 가져오기 (이미 캐시에 로드되어 있음)
+            // Cache에서 부모 ID로 블록들 가져오기
             List<TimeTablePlaceBlock> blocks = timeTablePlaceBlockCache.findByParentId(timeTableId);
             
             if(blocks != null && !blocks.isEmpty()) {
@@ -181,12 +181,15 @@ public class RedisSyncService {
         planCache.deleteById(planId);
         for (Integer timeTableId : tempIdToEntity.keySet()) {
             timeTableCache.deleteById(timeTableId);
-            // TimeTablePlaceBlock 캐시도 같이 정리 (Redis에서 DTO만 조회)
-            timeTablePlaceBlockCache.findDtosByParentId(timeTableId).forEach(dto -> {
-                if (dto.blockId() != null) {
-                    timeTablePlaceBlockCache.deleteById(dto.blockId());
-                }
-            });
+            // TimeTablePlaceBlock도 같이 정리
+            List<TimeTablePlaceBlock> blocksToDelete = timeTablePlaceBlockCache.findByParentId(timeTableId);
+            if (blocksToDelete != null) {
+                blocksToDelete.forEach(block -> {
+                    if (block.getBlockId() != null) {
+                        timeTablePlaceBlockCache.deleteById(block.getBlockId());
+                    }
+                });
+            }
         }
     }
 }

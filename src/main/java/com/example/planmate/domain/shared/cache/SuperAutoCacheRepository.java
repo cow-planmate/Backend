@@ -1,10 +1,5 @@
 package com.example.planmate.domain.shared.cache;
 
-import com.example.planmate.domain.shared.cache.annotation.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.data.redis.core.RedisTemplate;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -12,6 +7,18 @@ import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.data.redis.core.RedisTemplate;
+
+import com.example.planmate.domain.shared.cache.annotation.AutoDatabaseLoader;
+import com.example.planmate.domain.shared.cache.annotation.AutoEntityConverter;
+import com.example.planmate.domain.shared.cache.annotation.AutoRedisTemplate;
+import com.example.planmate.domain.shared.cache.annotation.CacheEntity;
+import com.example.planmate.domain.shared.cache.annotation.CacheId;
+import com.example.planmate.domain.shared.cache.annotation.EntityConverter;
+import com.example.planmate.domain.shared.cache.annotation.ParentId;
 
 public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCacheRepository<T, ID, DTO> {
 
@@ -151,13 +158,9 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
     private Integer generateTemporaryId() {
         // 엔티티 타입별로 별도의 카운터 키 사용 (예: "temporary:timetableplaceblock:counter")
         String counterKey = "temporary:" + cacheKeyPrefix + ":counter";
-        // DECR 명령으로 바로 음수 카운터 생성 (-1, -2, -3, ...)
-        Long counter = getRedisTemplate().opsForValue().decrement(counterKey);
         
-        // counter가 null일 경우 -1로 시작
-        if (counter == null) {
-            counter = -1L;
-        }
+        // Redis의 DECR 명령: 키가 없으면 0에서 시작해서 -1 반환, 이후 -2, -3, ...
+        Long counter = getRedisTemplate().opsForValue().decrement(counterKey);
         
         return counter.intValue();
     }

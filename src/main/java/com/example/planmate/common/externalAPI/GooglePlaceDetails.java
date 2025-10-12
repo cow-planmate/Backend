@@ -54,7 +54,14 @@ public class GooglePlaceDetails {
                 .filter(p -> !placePhotoRepository.existsById(p.getPlaceId()))
                 .toList();
             if (!toSave.isEmpty()) {
-                placePhotoRepository.saveAll(toSave);
+                try {
+                    placePhotoRepository.saveAll(toSave);
+                } catch (Exception e) {
+                    // Ignore duplicate key exceptions - photos may have been saved by concurrent request
+                    if (!e.getMessage().contains("duplicate key") && !e.getMessage().contains("중복된 키")) {
+                        throw e;
+                    }
+                }
             }
         }
         return placeVOs;
@@ -82,7 +89,14 @@ public class GooglePlaceDetails {
                     .filter(p -> !placePhotoRepository.existsById(p.getPlaceId()))
                     .toList();
                 if (!toSave.isEmpty()) {
-                    placePhotoRepository.saveAll(toSave);
+                    try {
+                        placePhotoRepository.saveAll(toSave);
+                    } catch (Exception e) {
+                        // Ignore duplicate key exceptions - photos may have been saved by concurrent request
+                        if (!e.getMessage().contains("duplicate key") && !e.getMessage().contains("중복된 키")) {
+                            throw e;
+                        }
+                    }
                 }
             }
             return placeVOs;

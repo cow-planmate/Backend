@@ -17,7 +17,7 @@ public class SharedTimeTableService implements SharedService<WTimetableRequest, 
     @Override
     public WTimetableResponse create(WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
-        List<TimeTableDto> timeTableDtos = request.getTimetableDtos();
+        List<TimeTableDto> timeTableDtos = request.getTimeTableDtos();
         for(TimeTableDto timeTableDto : timeTableDtos) {
             TimeTableDto tempTableDto = timeTableCache.save(timeTableDto);
             response.addTimetableVO(tempTableDto);
@@ -29,7 +29,7 @@ public class SharedTimeTableService implements SharedService<WTimetableRequest, 
     @Override
     public WTimetableResponse update(WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
-        List<TimeTableDto> timeTableDtos = request.getTimetableDtos();
+        List<TimeTableDto> timeTableDtos = request.getTimeTableDtos();
         for(TimeTableDto timeTableDto : timeTableDtos) {
             TimeTableDto tempTableDto = timeTableCache.save(timeTableDto);
             response.addTimetableVO(tempTableDto);
@@ -40,7 +40,7 @@ public class SharedTimeTableService implements SharedService<WTimetableRequest, 
     @Override
     public WTimetableResponse delete(WTimetableRequest request) {
         WTimetableResponse response = new WTimetableResponse();
-        List<TimeTableDto> timeTableDtos = request.getTimetableDtos();
+        List<TimeTableDto> timeTableDtos = request.getTimeTableDtos();
         for(TimeTableDto timeTableDto : timeTableDtos) {
             timeTableCache.deleteById(timeTableDto.timeTableId());
             response.addTimetableVO(timeTableDto);

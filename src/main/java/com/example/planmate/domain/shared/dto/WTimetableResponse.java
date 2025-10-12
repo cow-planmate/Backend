@@ -11,12 +11,12 @@ import lombok.Setter;
 @Getter
 @Setter
 public class WTimetableResponse extends WResponse {
-    private List<TimeTableDto> timetableDtos;
+    private List<TimeTableDto> timeTableDtos;
     public WTimetableResponse() {
-        timetableDtos = new ArrayList<>();
+        timeTableDtos = new ArrayList<>();
     }
     public void addTimetableVO(TimeTableDto timeTableDto) {
-        timetableDtos.add(timeTableDto);
+        timeTableDtos.add(timeTableDto);
     }
 
 }

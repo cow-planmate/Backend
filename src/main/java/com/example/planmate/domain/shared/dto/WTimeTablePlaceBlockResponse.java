@@ -8,5 +8,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class WTimeTablePlaceBlockResponse extends WResponse {
-    private TimeTablePlaceBlockDto timetablePlaceBlockDto;
+    private TimeTablePlaceBlockDto timeTablePlaceBlockDto;
 }

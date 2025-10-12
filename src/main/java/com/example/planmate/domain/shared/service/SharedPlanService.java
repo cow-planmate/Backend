@@ -16,9 +16,8 @@ public class SharedPlanService implements SharedService<WPlanRequest, WPlanRespo
     @Override
     public WPlanResponse update(WPlanRequest request) {
         WPlanResponse response = new WPlanResponse();
-        PlanDto planDto = request.getPlanDto();
-        PlanDto savedPlanDto = planCache.save(planDto);
-        response.setPlanDto(savedPlanDto);
+        PlanDto planDto = response.getPlanDto();
+        planCache.save(planDto); // JPA 스타일로 변경!
         return response;
     }
 
