@@ -19,7 +19,9 @@ public class SharedTimeTableService implements SharedService<WTimetableRequest, 
         WTimetableResponse response = new WTimetableResponse();
         List<TimeTableDto> timeTableDtos = request.getTimeTableDtos();
         for(TimeTableDto timeTableDto : timeTableDtos) {
-            TimeTableDto tempTableDto = timeTableCache.save(timeTableDto);
+            // create에서는 무조건 ID를 null로 설정하여 백엔드에서 음수 ID 자동 생성
+            TimeTableDto dtoWithNullId = timeTableDto.withTimeTableId(null);
+            TimeTableDto tempTableDto = timeTableCache.save(dtoWithNullId);
             response.addTimetableVO(tempTableDto);
         }
         return response;

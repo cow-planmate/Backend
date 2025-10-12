@@ -68,16 +68,8 @@ public class RedisSyncService {
         List<TimeTable> oldTimetables = timeTableRepository.findByPlanPlanId(planId);
         Map<Integer, TimeTable> tempIdToEntity = new HashMap<>();
         
-        // Cache에서 TimeTable DTO 로드 후 Entity로 변환
-        List<TimeTable> cachedTimeTables = timeTableCache.loadFromDatabase(planId).stream()
-            .map(dto -> TimeTable.builder()
-                .timeTableId(dto.timeTableId())
-                .date(dto.date())
-                .timeTableStartTime(dto.timeTableStartTime())
-                .timeTableEndTime(dto.timeTableEndTime())
-                .plan(savedPlan)
-                .build())
-            .toList();
+        // Cache에서 TimeTable 가져오기 (DB가 아닌 캐시에서)
+        List<TimeTable> cachedTimeTables = timeTableCache.findByParentId(planId);
         
         for (TimeTable t : cachedTimeTables) {
             int tempId = t.getTimeTableId();
