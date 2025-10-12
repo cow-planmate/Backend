@@ -1,13 +1,5 @@
 package com.example.planmate.domain.shared.sync;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import org.springframework.stereotype.Service;
-
 import com.example.planmate.common.exception.PlanNotFoundException;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TimeTable;
@@ -18,8 +10,10 @@ import com.example.planmate.domain.plan.repository.TimeTableRepository;
 import com.example.planmate.domain.shared.cache.PlanCache;
 import com.example.planmate.domain.shared.cache.TimeTableCache;
 import com.example.planmate.domain.shared.cache.TimeTablePlaceBlockCache;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -40,24 +34,9 @@ public class CacheSyncService {
             return; // 캐시에 데이터가 없으면 동기화할 필요 없음                                                    
         }
         
-        // 기존 DB Plan 조회 후 필드만 업데이트 (cascade 문제 방지)
         Plan existingPlan = planRepository.findById(planId)
             .orElseThrow(() -> new PlanNotFoundException());
-        
-        Plan cachedPlan = cachedPlanOpt.get();
-        if (cachedPlan.getPlanName() != null) {
-            existingPlan.changePlanName(cachedPlan.getPlanName());
-        }
-        if (cachedPlan.getDeparture() != null) {
-            existingPlan.changeDeparture(cachedPlan.getDeparture());
-        }
-        existingPlan.updateCounts(cachedPlan.getAdultCount(), cachedPlan.getChildCount());
-        if (cachedPlan.getTransportationCategory() != null) {
-            existingPlan.changeTransportationCategory(cachedPlan.getTransportationCategory());
-        }
-        if (cachedPlan.getTravel() != null) {
-            existingPlan.changeTravel(cachedPlan.getTravel());
-        }
+        planCache.mergeEntityFields(existingPlan, cachedPlanOpt.get());
         Plan savedPlan = planRepository.save(existingPlan);
 
         // TimeTable 동기화
@@ -68,33 +47,27 @@ public class CacheSyncService {
         List<TimeTable> cachedTimeTables = timeTableCache.findByParentId(planId);
         timeTableCache.deleteByParentId(planId);
         
-        for (TimeTable t : cachedTimeTables) {
-            int tempId = t.getTimeTableId();
+        for (TimeTable cached : cachedTimeTables) {
+            int tempId = cached.getTimeTableId();
             TimeTable timeTable;
             
-            // 새로운 테이블 (음수 ID)
-            if(tempId < 0){
+            if (tempId < 0) {
+                // 새로운 테이블 (음수 ID)
                 timeTable = TimeTable.builder()
                         .timeTableId(null)
-                        .date(t.getDate())
-                        .timeTableStartTime(t.getTimeTableStartTime())
-                        .timeTableEndTime(t.getTimeTableEndTime())
+                        .date(cached.getDate())
+                        .timeTableStartTime(cached.getTimeTableStartTime())
+                        .timeTableEndTime(cached.getTimeTableEndTime())
                         .plan(savedPlan)
                         .build();
-            }
-            // 기존 테이블 (양수 ID)
-            else{
-                TimeTable existingTimeTable = timeTableRepository.findById(tempId).orElse(null);
-                if(existingTimeTable != null){
-                    existingTimeTable.changeDate(t.getDate());
-                    existingTimeTable.changeTime(t.getTimeTableStartTime(), t.getTimeTableEndTime());
-                    oldTimetables.removeIf(ot ->
-                            ot.getTimeTableId() != null && ot.getTimeTableId().equals(existingTimeTable.getTimeTableId())
-                    );
-                    timeTable = existingTimeTable;
-                } else {
-                    continue;
-                }
+            } else {
+                // 기존 테이블 (양수 ID) - mergeEntityFields로 자동 병합
+                TimeTable existing = timeTableRepository.findById(tempId).orElse(null);
+                if (existing == null) continue;
+                
+                timeTableCache.mergeEntityFields(existing, cached);
+                oldTimetables.removeIf(ot -> ot.getTimeTableId() != null && ot.getTimeTableId().equals(tempId));
+                timeTable = existing;
             }
             timeTableRepository.save(timeTable);
             tempIdToEntity.put(tempId, timeTable);
@@ -102,72 +75,52 @@ public class CacheSyncService {
         timeTableRepository.deleteAll(oldTimetables);
 
         // TimeTablePlaceBlock 동기화
-        Map<Integer, TimeTable> changeTimeTable = new HashMap<>();
-        Map<Integer, TimeTable> notChangeTimeTable = new HashMap<>();
-        tempIdToEntity.forEach((tempId, oldT) -> {
-            (tempId >= 0 ? notChangeTimeTable : changeTimeTable).put(tempId, oldT);
-        });
-
         List<TimeTablePlaceBlock> newBlocks = new ArrayList<>();
         List<TimeTablePlaceBlock> deletedBlocks = new ArrayList<>();
         
-        // 새로 생성된 TimeTable의 블록들 처리
-        for (Map.Entry<Integer, TimeTable> entry : changeTimeTable.entrySet()) {
-            int timeTableId = entry.getKey();
-            TimeTable realTimetable = entry.getValue();
+        for (Map.Entry<Integer, TimeTable> entry : tempIdToEntity.entrySet()) {
+            int tempTimeTableId = entry.getKey();
+            TimeTable realTimeTable = entry.getValue();
             
-            // Cache에서 부모 ID로 블록들 가져오기
-            List<TimeTablePlaceBlock> blocks = timeTablePlaceBlockCache.findByParentId(timeTableId);
+            // Cache에서 블록들 가져오기
+            List<TimeTablePlaceBlock> cachedBlocks = timeTablePlaceBlockCache.findByParentId(tempTimeTableId);
             
-            if(blocks != null && !blocks.isEmpty()) {
-                for (TimeTablePlaceBlock block : blocks) {
-                    if(block != null) {
-                        block.assignTimeTable(realTimetable);
-                        block.changeId(null);
-                        newBlocks.add(block);
-                    }
-                }
-            }
-        }
-        
-        // 기존 TimeTable의 블록들 처리
-        for (Map.Entry<Integer, TimeTable> entry : notChangeTimeTable.entrySet()) {
-            int timeTableId = entry.getKey();
-            List<Integer> blockIds = new ArrayList<>();
-            
-            // Cache에서 부모 ID로 블록들 가져오기
-            List<TimeTablePlaceBlock> blocks = timeTablePlaceBlockCache.findByParentId(timeTableId);
-            
-            if(blocks != null && !blocks.isEmpty()) {
-                for (TimeTablePlaceBlock block : blocks) {
-                    if(block.getBlockId() >= 0){
-                        TimeTablePlaceBlock timeTablePlaceBlock = timeTablePlaceBlockRepository.findById(block.getBlockId())
-                            .orElseThrow(() -> new IllegalArgumentException("블록을 찾을 수 없습니다. ID=" + block.getBlockId()));
-                        timeTablePlaceBlock.copyFrom(block);
-                        blockIds.add(block.getBlockId());
+            if (tempTimeTableId < 0) {
+                // 새로 생성된 TimeTable의 블록들
+                cachedBlocks.forEach(block -> {
+                    block.assignTimeTable(realTimeTable);
+                    block.changeId(null);
+                    newBlocks.add(block);
+                });
+            } else {
+                // 기존 TimeTable의 블록들
+                List<Integer> updatedBlockIds = new ArrayList<>();
+                
+                for (TimeTablePlaceBlock cached : cachedBlocks) {
+                    if (cached.getBlockId() >= 0) {
+                        // 기존 블록 업데이트 - mergeEntityFields로 자동 병합
+                        TimeTablePlaceBlock existing = timeTablePlaceBlockRepository.findById(cached.getBlockId())
+                            .orElseThrow(() -> new IllegalArgumentException("블록을 찾을 수 없습니다. ID=" + cached.getBlockId()));
+                        timeTablePlaceBlockCache.mergeEntityFields(existing, cached);
+                        updatedBlockIds.add(cached.getBlockId());
                     } else {
-                        TimeTable realTimetable = timeTableRepository.findById(timeTableId).orElse(null);
-                        if (realTimetable != null) {
-                            block.assignTimeTable(realTimetable);
-                            block.changeId(null);
-                            newBlocks.add(block);
-                        }
+                        // 새 블록 추가
+                        cached.assignTimeTable(realTimeTable);
+                        cached.changeId(null);
+                        newBlocks.add(cached);
                     }
                 }
+                
+                // 삭제된 블록 수집
+                List<TimeTablePlaceBlock> oldBlocks = timeTablePlaceBlockRepository.findByTimeTableTimeTableId(tempTimeTableId);
+                oldBlocks.removeIf(old -> updatedBlockIds.contains(old.getBlockId()));
+                deletedBlocks.addAll(oldBlocks);
             }
-            
-            List<TimeTablePlaceBlock> oldBlocks = timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTableId);
-            for(int blockId : blockIds){
-                oldBlocks.removeIf(oldBlock -> oldBlock.getBlockId() == blockId);
-            }
-            deletedBlocks.addAll(oldBlocks);
         }
 
         timeTablePlaceBlockRepository.deleteAll(deletedBlocks);
         timeTablePlaceBlockRepository.saveAll(newBlocks);
         
-        for (Integer timeTableId : tempIdToEntity.keySet()) {
-            timeTablePlaceBlockCache.deleteByParentId(timeTableId);
-        }
+        tempIdToEntity.keySet().forEach(timeTablePlaceBlockCache::deleteByParentId);
     }
 }

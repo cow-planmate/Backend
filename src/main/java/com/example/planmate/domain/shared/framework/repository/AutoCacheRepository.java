@@ -241,6 +241,56 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
     }
     
     /**
+     * Entity의 필드를 다른 Entity의 null이 아닌 값으로 업데이트
+     * 리플렉션을 사용하여 범용적으로 처리
+     * 
+     * @param target 업데이트할 대상 Entity
+     * @param source 데이터를 가져올 소스 Entity (null이 아닌 값만 복사)
+     */
+    @SuppressWarnings("unchecked")
+    public void mergeEntityFields(T target, T source) {
+        if (target == null || source == null) {
+            throw new IllegalArgumentException("target과 source는 null일 수 없습니다.");
+        }
+        
+        try {
+            Class<?> entityClass = target.getClass();
+            
+            // 모든 필드를 순회하며 업데이트
+            for (Field field : entityClass.getDeclaredFields()) {
+                field.setAccessible(true);
+                
+                // ID 필드는 건너뛰기
+                if (field.isAnnotationPresent(jakarta.persistence.Id.class)) {
+                    continue;
+                }
+                
+                // @ManyToOne, @OneToMany 등 관계 필드는 건너뛰기 (선택적)
+                if (field.isAnnotationPresent(jakarta.persistence.ManyToOne.class) ||
+                    field.isAnnotationPresent(jakarta.persistence.OneToMany.class) ||
+                    field.isAnnotationPresent(jakarta.persistence.OneToOne.class) ||
+                    field.isAnnotationPresent(jakarta.persistence.ManyToMany.class)) {
+                    
+                    // 관계 필드도 null이 아니면 업데이트
+                    Object sourceValue = field.get(source);
+                    if (sourceValue != null) {
+                        field.set(target, sourceValue);
+                    }
+                    continue;
+                }
+                
+                // source의 값이 null이 아니면 target에 설정
+                Object sourceValue = field.get(source);
+                if (sourceValue != null) {
+                    field.set(target, sourceValue);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Entity 필드 병합 실패", e);
+        }
+    }
+    
+    /**
      * 기존 DTO와 새 DTO를 병합
      * 새 DTO의 null이 아닌 값들로 기존 DTO를 업데이트 (ID 제외)
      */
