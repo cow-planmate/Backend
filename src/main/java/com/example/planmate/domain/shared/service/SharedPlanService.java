@@ -17,7 +17,7 @@ public class SharedPlanService implements SharedService<WPlanRequest, WPlanRespo
     public WPlanResponse update(WPlanRequest request) {
         WPlanResponse response = new WPlanResponse();
         PlanDto planDto = request.getPlanDto();
-        planCache.save(planDto); // JPA 스타일로 변경!
+        planCache.update(planDto); // JPA 스타일로 변경!
         return response;
     }
 

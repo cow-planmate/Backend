@@ -27,7 +27,7 @@ public class SharedTimeTablePlaceBlockService implements SharedService<WTimeTabl
     public WTimeTablePlaceBlockResponse update(WTimeTablePlaceBlockRequest request) {
         WTimeTablePlaceBlockResponse response = new WTimeTablePlaceBlockResponse();
         TimeTablePlaceBlockDto timeTablePlaceBlockDto = request.getTimeTablePlaceBlockDto();
-        TimeTablePlaceBlockDto tempTimeTablePlaceBlockDto = timeTablePlaceBlockCache.save(timeTablePlaceBlockDto);
+        TimeTablePlaceBlockDto tempTimeTablePlaceBlockDto = timeTablePlaceBlockCache.update(timeTablePlaceBlockDto);
         response.setTimeTablePlaceBlockDto(tempTimeTablePlaceBlockDto);
         return response;
     }

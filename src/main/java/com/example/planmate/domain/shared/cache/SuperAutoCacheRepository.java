@@ -149,6 +149,70 @@ public abstract class SuperAutoCacheRepository<T, ID, DTO> extends AbstractCache
         getRedisTemplate().opsForValue().set(getRedisKey(id), dto);
         return dto;
     }
+    
+    /**
+     * 기존 데이터를 불러와서 null이 아닌 값만 업데이트 (ID 제외)
+     */
+    public DTO update(DTO dto) {
+        ID id = extractId(dto);
+        
+        if (id == null) {
+            throw new IllegalArgumentException("update는 ID가 필수입니다. save를 사용하세요.");
+        }
+        
+        DTO existingDto = getRedisTemplate().opsForValue().get(getRedisKey(id));
+        if (existingDto != null) {
+            dto = mergeDto(existingDto, dto);
+        }
+        
+        getRedisTemplate().opsForValue().set(getRedisKey(id), dto);
+        return dto;
+    }
+    
+    /**
+     * 기존 DTO와 새 DTO를 병합
+     * 새 DTO의 null이 아닌 값들로 기존 DTO를 업데이트 (ID 제외)
+     */
+    @SuppressWarnings("unchecked")
+    private DTO mergeDto(DTO existingDto, DTO newDto) {
+        try {
+            // Record의 모든 컴포넌트를 순회하며 새 값으로 업데이트
+            java.lang.reflect.RecordComponent[] components = dtoClass.getRecordComponents();
+            Object[] mergedValues = new Object[components.length];
+            
+            for (int i = 0; i < components.length; i++) {
+                java.lang.reflect.RecordComponent component = components[i];
+                Method accessor = component.getAccessor();
+                
+                Object newValue = accessor.invoke(newDto);
+                Object existingValue = accessor.invoke(existingDto);
+                
+                // ID 필드는 기존 값 유지
+                if (component.getName().equals(idField.getName())) {
+                    mergedValues[i] = existingValue;
+                }
+                // 새 값이 null이 아니면 새 값 사용, null이면 기존 값 유지
+                else if (newValue != null) {
+                    mergedValues[i] = newValue;
+                } else {
+                    mergedValues[i] = existingValue;
+                }
+            }
+            
+            // Record 생성자로 새 인스턴스 생성
+            Class<?>[] paramTypes = new Class<?>[components.length];
+            for (int i = 0; i < components.length; i++) {
+                paramTypes[i] = components[i].getType();
+            }
+            
+            java.lang.reflect.Constructor<DTO> constructor = 
+                (java.lang.reflect.Constructor<DTO>) dtoClass.getDeclaredConstructor(paramTypes);
+            return constructor.newInstance(mergedValues);
+            
+        } catch (Exception e) {
+            throw new RuntimeException("DTO 병합 실패: " + newDto, e);
+        }
+    }
 
     /**
      * Redis DECR을 사용하여 원자적으로 임시 음수 ID 생성

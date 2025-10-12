@@ -33,7 +33,7 @@ public class SharedTimeTableService implements SharedService<WTimetableRequest, 
         WTimetableResponse response = new WTimetableResponse();
         List<TimeTableDto> timeTableDtos = request.getTimeTableDtos();
         for(TimeTableDto timeTableDto : timeTableDtos) {
-            TimeTableDto tempTableDto = timeTableCache.save(timeTableDto);
+            TimeTableDto tempTableDto = timeTableCache.update(timeTableDto);
             response.addTimetableVO(tempTableDto);
         }
         return response;
