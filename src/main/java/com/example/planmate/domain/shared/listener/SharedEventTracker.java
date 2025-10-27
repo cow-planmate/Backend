@@ -1,23 +1,10 @@
 package com.example.planmate.domain.shared.listener;
 
-import java.util.List;
-
 import org.springframework.context.event.EventListener;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
-
-import com.example.planmate.domain.shared.cache.PlanCache;
-import com.example.planmate.domain.shared.cache.TimeTableCache;
-import com.example.planmate.domain.shared.cache.TimeTablePlaceBlockCache;
-import com.example.planmate.domain.shared.dto.WPresenceResponse;
-import com.example.planmate.domain.shared.enums.EAction;
-import com.example.planmate.domain.shared.lazydto.PlanDto;
-import com.example.planmate.domain.shared.lazydto.TimeTableDto;
-import com.example.planmate.domain.shared.service.PresenceTrackingService;
-import com.example.planmate.domain.shared.sync.CacheSyncService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,62 +12,54 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SharedEventTracker {
 
-
-    private final String USER_ID = "userId";
-
-    private final PlanCache planCache;
-    private final TimeTableCache timeTableCache;
-    private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
-    private final PresenceTrackingService presenceTrackingService;
-    private final CacheSyncService redisSyncService;
-    private final SimpMessagingTemplate messaging;
+    private static final String USER_ID = "userId";
+    private final PresenceSessionManager presenceSessionManager;
 
     @EventListener
     public void handleSubscribeEvent(SessionSubscribeEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        Object v = accessor.getSessionAttributes().get(USER_ID);
-        Integer userId = Integer.valueOf(String.valueOf(v));
-        String destination = accessor.getDestination();
-        int planId = Integer.parseInt(destination.split("/")[2]);
-        if(!presenceTrackingService.hasPlanTracker(planId)) {
-            PlanDto planDto = planCache.loadFromDatabaseById(planId);
-            planCache.save(planDto);
-            
-            List<TimeTableDto> timeTables = timeTableCache.loadFromDatabaseByParentId(planId);
-            for(TimeTableDto timeTable : timeTables){
-                timeTableCache.save(timeTable);
-                timeTablePlaceBlockCache.loadFromDatabaseByParentId(timeTable.timeTableId()).forEach(block -> {
-                    timeTablePlaceBlockCache.save(block);
-                });
-            }
+        Integer userId = extractUserId(accessor);
+        Integer roomId = parseRoomId(accessor.getDestination());
+
+        if (userId != null && roomId != null) {
+            presenceSessionManager.handleSubscribe(roomId, userId);
         }
-        presenceTrackingService.insertPlanTracker(planId, userId, 0);
-        presenceTrackingService.insertNickname(userId);
-        presenceTrackingService.insertUserIdToPlanId(planId, userId);
-        broadcastPresence(planId, userId, EAction.CREATE);
     }
 
     @EventListener
     public void handleDisconnectEvent(SessionDisconnectEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        Object v = accessor.getSessionAttributes().get(USER_ID);
-        Integer userId = Integer.valueOf(String.valueOf(v));
-        int planId = presenceTrackingService.removeUserIdToPlanId(userId);
-        removeSessionFromAllTopics(planId, userId);
-    }
+        Integer userId = extractUserId(accessor);
 
-    private void removeSessionFromAllTopics(int planId, int userId) {
-        presenceTrackingService.removePlanTracker(planId, userId);
-        presenceTrackingService.removeNickname(userId);
-        if(!presenceTrackingService.hasPlanTracker(planId)){
-            redisSyncService.syncToDatabase(planId);
+        if (userId != null) {
+            presenceSessionManager.handleDisconnect(userId);
         }
-        broadcastPresence(planId, userId, EAction.DELETE);
     }
 
-    private void broadcastPresence(int planId, int userId, EAction action) {
-        String nickname = presenceTrackingService.getNicknameByUserId(userId);
-        WPresenceResponse response = new WPresenceResponse(nickname, userId);
-        messaging.convertAndSend("/topic/plan/" + planId + action.getValue() + "/presence", response);
+    private Integer extractUserId(StompHeaderAccessor accessor) {
+        Object value = accessor.getSessionAttributes().get(USER_ID);
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private Integer parseRoomId(String destination) {
+        if (destination == null) {
+            return null;
+        }
+        String[] tokens = destination.split("/");
+        if (tokens.length <= 2) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(tokens[2]);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
     }
 }
