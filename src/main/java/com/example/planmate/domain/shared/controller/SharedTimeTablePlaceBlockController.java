@@ -24,6 +24,12 @@ public class SharedTimeTablePlaceBlockController extends SharedContoller<WTimeTa
         return handleCreate(roomId, request);
     }
 
+    @MessageMapping("/{roomId}/read/timetableplaceblock")
+    @SendTo("/topic/{roomId}/read/timetableplaceblock")
+    public WTimeTablePlaceBlockResponse read(@DestinationVariable int roomId, @Payload WTimeTablePlaceBlockRequest request) {
+        return handleRead(roomId, request);
+    }
+
     @MessageMapping("/{roomId}/update/timetableplaceblock")
     @SendTo("/topic/{roomId}/update/timetableplaceblock")
     public WTimeTablePlaceBlockResponse update(@DestinationVariable int roomId, @Payload WTimeTablePlaceBlockRequest request) {

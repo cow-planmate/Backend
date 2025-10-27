@@ -11,7 +11,7 @@ import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.user.entity.User;
 
 @CacheEntity 
-@AutoRedisTemplate("planRedis")
+@AutoRedisTemplate("planRedis") //이름매칭으로 대체 가능할듯
 @AutoEntityConverter(repositories = {"userRepository", "transportationCategoryRepository", "travelRepository"})
 public record PlanDto(
         @CacheId
@@ -49,5 +49,21 @@ public record PlanDto(
                 .transportationCategory(transportationCategory)
                 .travel(travel)
                 .build();
+    }
+
+    /**
+     * ID만 변경된 새로운 PlanDto 객체를 생성합니다.
+     */
+    public PlanDto withPlanId(Integer newPlanId) {
+        return new PlanDto(
+                newPlanId,
+                this.planName,
+                this.departure,
+                this.adultCount,
+                this.childCount,
+                this.userId,
+                this.transportationCategoryId,
+                this.travelId
+        );
     }
 }

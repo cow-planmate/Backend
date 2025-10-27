@@ -45,18 +45,14 @@ public class SharedEventTracker {
         String destination = accessor.getDestination();
         int planId = Integer.parseInt(destination.split("/")[2]);
         if(!presenceTrackingService.hasPlanTracker(planId)) {
-            // JPA 스타일로 변경: Repository에서 로드하고 캐시에 저장
             var plan = planRepository.findById(planId)
                 .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
             PlanDto planDto = PlanDto.fromEntity(plan);
             planCache.save(planDto);
             
-            // TimeTable 로드 후 캐시에 저장
             List<TimeTableDto> timeTables = timeTableCache.loadFromDatabase(planId);
             for(TimeTableDto timeTable : timeTables){
                 timeTableCache.save(timeTable);
-                
-                // TimeTablePlaceBlock 로드 후 캐시에 저장
                 timeTablePlaceBlockCache.loadFromDatabase(timeTable.timeTableId()).forEach(block -> {
                     timeTablePlaceBlockCache.save(block);
                 });
@@ -75,7 +71,6 @@ public class SharedEventTracker {
         Integer userId = Integer.valueOf(String.valueOf(v));
         int planId = presenceTrackingService.removeUserIdToPlanId(userId);
         removeSessionFromAllTopics(planId, userId);
-
     }
 
     private void removeSessionFromAllTopics(int planId, int userId) {
@@ -93,4 +88,3 @@ public class SharedEventTracker {
         messaging.convertAndSend("/topic/plan/" + planId + action.getValue() + "/presence", response);
     }
 }
-

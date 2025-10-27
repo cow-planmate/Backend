@@ -45,6 +45,10 @@ dependencies {
     implementation 'com.sksamuel.scrimage:scrimage-webp:4.0.33'
 }
 
+dependencies {
+    testImplementation 'it.ozimov:embedded-redis:0.7.2'
+}
+
 tasks.named('test') {
     useJUnitPlatform()
 }

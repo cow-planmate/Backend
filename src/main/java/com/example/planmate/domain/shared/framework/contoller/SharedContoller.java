@@ -20,6 +20,12 @@ public abstract class SharedContoller <req extends WRequest, res extends WRespon
         return response;
     }
 
+    protected res handleRead(@DestinationVariable int rootEntityId, @Payload req request) {
+        res response = service.read(request);
+        response.setEventId(request.getEventId() == null ? "" : request.getEventId());
+        return response;
+    }
+
     protected res handleUpdate(@DestinationVariable int rootEntityId, @Payload req request) {
         res response = service.update(request);
         response.setEventId(request.getEventId() == null ? "" : request.getEventId());

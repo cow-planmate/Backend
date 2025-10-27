@@ -44,7 +44,6 @@ public class WsAuthChannelInterceptor implements ChannelInterceptor {
         if (!jwtTokenProvider.validateToken(token)) {
             throw new AccessDeniedException("Invalid token");
         }
-
         int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
         // STOMP 세션의 사용자 주체 설정
         acc.setUser(new StompPrincipal(userId));
