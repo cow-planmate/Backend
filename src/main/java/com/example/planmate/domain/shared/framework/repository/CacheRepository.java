@@ -76,7 +76,7 @@ public interface CacheRepository<T, ID, DTO> {
     /**
      * DB에서 데이터를 로드하여 캐시에 저장
      */
-    default List<DTO> loadFromDatabase(ID parentId) {
+    default List<DTO> loadFromDatabaseByParentId(ID parentId) {
         throw new UnsupportedOperationException("loadFromDatabase not implemented");
     }
     

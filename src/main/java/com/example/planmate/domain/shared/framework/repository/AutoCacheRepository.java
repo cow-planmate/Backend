@@ -385,7 +385,7 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
 
     @SuppressWarnings("unchecked")
     @Override
-    public final List<DTO> loadFromDatabase(ID parentId) {
+    public final List<DTO> loadFromDatabaseByParentId(ID parentId) {
         try {
             Object repository = applicationContext.getBean(repositoryBeanName);
             Method loadMethod = findLoadMethod(repository, parentId);
@@ -404,6 +404,37 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
                 .toList();
         } catch (Exception e) {
             throw new RuntimeException("데이터베이스 로딩 실패: " + parentId, e);
+        }
+    }
+
+    public final DTO loadFromDatabaseById(ID id){
+        try {
+            Object repository = applicationContext.getBean(repositoryBeanName);
+            Method findByIdMethod = resolveFindByIdMethod(repository);
+
+            Object result = findByIdMethod.invoke(repository, id);
+
+            Object entity;
+            if (result instanceof java.util.Optional<?> optional) {
+                if (optional.isEmpty()) {
+                    return null;
+                }
+                entity = optional.get();
+            } else {
+                entity = result;
+            }
+
+            if (entity == null) {
+                return null;
+            }
+
+            Method fromEntityMethod = dtoClass.getMethod("fromEntity", getEntityClass());
+            @SuppressWarnings("unchecked")
+            DTO dto = (DTO) fromEntityMethod.invoke(null, entity);
+            return dto;
+
+        } catch (Exception e) {
+            throw new RuntimeException("ID로 데이터베이스 로딩 실패: " + id, e);
         }
     }
 
@@ -632,6 +663,15 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
 
     private Method findLoadMethod(Object repository, ID parentId) throws NoSuchMethodException {
         return repository.getClass().getMethod(loadMethodName, parentId.getClass());
+    }
+
+    private Method resolveFindByIdMethod(Object repository) throws NoSuchMethodException {
+        for (Method method : repository.getClass().getMethods()) {
+            if ("findById".equals(method.getName()) && method.getParameterCount() == 1) {
+                return method;
+            }
+        }
+        throw new NoSuchMethodException("findById method not found on repository " + repository.getClass());
     }
 
     @SuppressWarnings("unchecked")

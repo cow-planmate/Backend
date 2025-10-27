@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 
-import com.example.planmate.domain.plan.repository.PlanRepository;
 import com.example.planmate.domain.shared.cache.PlanCache;
 import com.example.planmate.domain.shared.cache.TimeTableCache;
 import com.example.planmate.domain.shared.cache.TimeTablePlaceBlockCache;
@@ -29,7 +28,6 @@ public class SharedEventTracker {
 
     private final String USER_ID = "userId";
 
-    private final PlanRepository planRepository;
     private final PlanCache planCache;
     private final TimeTableCache timeTableCache;
     private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
@@ -45,15 +43,13 @@ public class SharedEventTracker {
         String destination = accessor.getDestination();
         int planId = Integer.parseInt(destination.split("/")[2]);
         if(!presenceTrackingService.hasPlanTracker(planId)) {
-            var plan = planRepository.findById(planId)
-                .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
-            PlanDto planDto = PlanDto.fromEntity(plan);
+            PlanDto planDto = planCache.loadFromDatabaseById(planId);
             planCache.save(planDto);
             
-            List<TimeTableDto> timeTables = timeTableCache.loadFromDatabase(planId);
+            List<TimeTableDto> timeTables = timeTableCache.loadFromDatabaseByParentId(planId);
             for(TimeTableDto timeTable : timeTables){
                 timeTableCache.save(timeTable);
-                timeTablePlaceBlockCache.loadFromDatabase(timeTable.timeTableId()).forEach(block -> {
+                timeTablePlaceBlockCache.loadFromDatabaseByParentId(timeTable.timeTableId()).forEach(block -> {
                     timeTablePlaceBlockCache.save(block);
                 });
             }
