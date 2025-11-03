@@ -7,11 +7,14 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import com.example.planmate.domain.shared.framework.annotation.AutoDatabaseLoader;
@@ -39,7 +42,9 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
     private final String cacheKeyPrefix;
     private final Field idField;
     private final Field parentIdField;
+    private final Class<?> parentEntityClass;
     private final Method entityConverterMethod;
+    private final Field entityIdField;
     private final String redisTemplateBeanName;
     private final String repositoryBeanName;
     private final String loadMethodName;
@@ -111,6 +116,14 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         this.parentIdField = findFieldWithAnnotation(dtoClass, ParentId.class);
         if (this.parentIdField != null) {
             this.parentIdField.setAccessible(true);
+            ParentId parentIdAnnotation = this.parentIdField.getAnnotation(ParentId.class);
+            if (parentIdAnnotation != null && parentIdAnnotation.value() != Object.class) {
+                this.parentEntityClass = parentIdAnnotation.value();
+            } else {
+                this.parentEntityClass = null;
+            }
+        } else {
+            this.parentEntityClass = null;
         }
 
         this.entityConverterMethod = findMethodWithAnnotation(dtoClass, EntityConverter.class);
@@ -118,6 +131,13 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
             throw new IllegalStateException(dtoClass.getSimpleName() + "에 @EntityConverter 어노테이션이 붙은 메서드가 없습니다.");
         }
         this.entityConverterMethod.setAccessible(true);
+
+        Field detectedEntityIdField = locateEntityIdField(getEntityClass());
+        if (detectedEntityIdField == null) {
+            throw new IllegalStateException("@Id 필드를 찾을 수 없습니다: " + getEntityClass().getSimpleName());
+        }
+        detectedEntityIdField.setAccessible(true);
+        this.entityIdField = detectedEntityIdField;
     }
 
     // ==== CacheRepository 인터페이스 기본 CRUD 구현 ====
@@ -163,6 +183,7 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
             .toList();
     }
     
+    @SuppressWarnings("unchecked")
     @Override
     public List<DTO> saveAll(List<DTO> dtos) {
         dtos.forEach(dto -> {
@@ -247,7 +268,6 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
      * @param target 업데이트할 대상 Entity
      * @param source 데이터를 가져올 소스 Entity (null이 아닌 값만 복사)
      */
-    @SuppressWarnings("unchecked")
     public void mergeEntityFields(T target, T source) {
         if (target == null || source == null) {
             throw new IllegalArgumentException("target과 source는 null일 수 없습니다.");
@@ -294,7 +314,6 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
      * 기존 DTO와 새 DTO를 병합
      * 새 DTO의 null이 아닌 값들로 기존 DTO를 업데이트 (ID 제외)
      */
-    @SuppressWarnings("unchecked")
     private DTO mergeDto(DTO existingDto, DTO newDto) {
         try {
             // Record의 모든 컴포넌트를 순회하며 새 값으로 업데이트
@@ -384,29 +403,37 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
     }
 
     @SuppressWarnings("unchecked")
+    protected final DTO convertToDto(T entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        try {
+            Method fromEntityMethod = dtoClass.getMethod("fromEntity", getEntityClass());
+            return (DTO) fromEntityMethod.invoke(null, entity);
+        } catch (NoSuchMethodException e) {
+            throw new IllegalStateException(dtoClass.getSimpleName() + "에 fromEntity 메서드가 필요합니다.", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Entity를 DTO로 변환하는 데 실패했습니다.", e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     @Override
     public final List<DTO> loadFromDatabaseByParentId(ID parentId) {
         try {
             Object repository = applicationContext.getBean(repositoryBeanName);
             Method loadMethod = findLoadMethod(repository, parentId);
             List<T> entities = (List<T>) loadMethod.invoke(repository, parentId);
-            
-            // Entity를 DTO로 변환
-            Method fromEntityMethod = dtoClass.getMethod("fromEntity", getEntityClass());
             return entities.stream()
-                .map(entity -> {
-                    try {
-                        return (DTO) fromEntityMethod.invoke(null, entity);
-                    } catch (Exception e) {
-                        throw new RuntimeException("DTO 변환 실패: " + entity, e);
-                    }
-                })
+                .map(this::convertToDto)
                 .toList();
         } catch (Exception e) {
             throw new RuntimeException("데이터베이스 로딩 실패: " + parentId, e);
         }
     }
 
+    @SuppressWarnings("unchecked")
     public final DTO loadFromDatabaseById(ID id){
         try {
             Object repository = applicationContext.getBean(repositoryBeanName);
@@ -428,10 +455,7 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
                 return null;
             }
 
-            Method fromEntityMethod = dtoClass.getMethod("fromEntity", getEntityClass());
-            @SuppressWarnings("unchecked")
-            DTO dto = (DTO) fromEntityMethod.invoke(null, entity);
-            return dto;
+            return convertToDto((T) entity);
 
         } catch (Exception e) {
             throw new RuntimeException("ID로 데이터베이스 로딩 실패: " + id, e);
@@ -700,5 +724,204 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
             }
         }
         return null;
+    }
+
+    private Field locateEntityIdField(Class<?> entityClass) {
+        Class<?> current = entityClass;
+        while (current != null && current != Object.class) {
+            for (Field field : current.getDeclaredFields()) {
+                if (field.isAnnotationPresent(jakarta.persistence.Id.class)) {
+                    return field;
+                }
+            }
+            current = current.getSuperclass();
+        }
+        return null;
+    }
+
+    // ==== 동기화 메소드 ====
+
+    public void syncToDatabase(DTO dto) {
+        if (dto == null) {
+            return;
+        }
+        // 부모가 없을 때 
+        if (parentIdField == null) {
+            saveToDatabase(dto);
+            return;
+        }
+        // 부모가 있을 때
+        Object parentIdValue = getParentIdValue(dto);
+        if (parentIdValue instanceof Number number && number.longValue() <0) {
+            System.out.println("부모키가 음수라 저장할 수 없습니다");
+            return;
+        }
+
+        saveToDatabase(dto);
+        return;
+    }
+
+    private void saveToDatabase(DTO dto) {
+        JpaRepository<T, ID> repository = getJpaRepository();
+        T entity = convertToEntity(dto);
+
+        ID previousId = extractEntityId(entity);
+        T savedEntity;
+        if(repository.existsById(previousId)){
+            T origin = repository.findById(previousId).get();
+            mergeEntityFields(origin, entity);
+            savedEntity = repository.save(origin);
+        }
+        else{
+            savedEntity = repository.save(entity);
+        }
+        
+        DTO updatedDto = convertToDto(savedEntity);
+        ID cacheId = extractId(updatedDto);
+        //아이디가 음수일때 
+        if (previousId != null && !Objects.equals(previousId, cacheId)) {
+            getRedisTemplate().delete(getRedisKey(previousId));
+        }
+
+        getRedisTemplate().opsForValue().set(getRedisKey(cacheId), updatedDto);
+
+        if (parentIdField == null && isTemporaryId(previousId) && !isTemporaryId(cacheId)) {
+            propagateParentIdChange(previousId, cacheId);
+        }
+    }
+        
+
+    private Object getParentIdValue(DTO dto) {
+        if (parentIdField == null) {
+            return null;
+        }
+        try {
+            return parentIdField.get(dto);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("ParentId 필드 접근 실패", e);
+        }
+    }
+
+    private boolean isTemporaryId(Object id) {
+        if (id == null) {
+            return false;
+        }
+        if (id instanceof Number number) {
+            return number.longValue() < 0L;
+        }
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void propagateParentIdChange(ID temporaryParentId, ID persistedParentId) {
+        if (temporaryParentId == null || persistedParentId == null) {
+            return;
+        }
+
+        Map<String, AutoCacheRepository<?, ?, ?>> repositories =
+            (Map<String, AutoCacheRepository<?, ?, ?>>) (Map<?, ?>) applicationContext.getBeansOfType(AutoCacheRepository.class);
+        Class<T> entityClass = getEntityClass();
+        for (AutoCacheRepository<?, ?, ?> repository : repositories.values()) {
+            if (repository == this) {
+                continue;
+            }
+            if (repository.parentEntityClass == null) {
+                continue;
+            }
+            if (!repository.parentEntityClass.isAssignableFrom(entityClass)) {
+                continue;
+            }
+            repository.updateParentReferenceInternal(temporaryParentId, persistedParentId);
+        }
+    }
+
+    private void updateParentReferenceInternal(Object oldParentId, Object newParentId) {
+        if (parentEntityClass == null) {
+            return;
+        }
+        if (parentIdField == null) {
+            return;
+        }
+        if (oldParentId == null || newParentId == null) {
+            return;
+        }
+        if (!parentIdField.getType().isInstance(oldParentId) || !parentIdField.getType().isInstance(newParentId)) {
+            return;
+        }
+
+        String pattern = cacheKeyPrefix + ":*";
+        Set<String> keys = getRedisTemplate().keys(pattern);
+        if (keys == null || keys.isEmpty()) {
+            return;
+        }
+
+        List<DTO> dtos = getRedisTemplate().opsForValue().multiGet(keys);
+        if (dtos == null || dtos.isEmpty()) {
+            return;
+        }
+
+        for (DTO dto : dtos) {
+            if (dto == null) {
+                continue;
+            }
+            try {
+                Object parentValue = parentIdField.get(dto);
+                if (Objects.equals(parentValue, oldParentId)) {
+                    DTO updated = updateDtoParentId(dto, newParentId);
+                    ID dtoId = extractId(updated);
+                    getRedisTemplate().opsForValue().set(getRedisKey(dtoId), updated);
+                }
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException("ParentId 필드 접근 실패", e);
+            }
+        }
+    }
+
+    private DTO updateDtoParentId(DTO dto, Object newParentId) {
+        if (parentIdField == null) {
+            return dto;
+        }
+
+        try {
+            java.lang.reflect.RecordComponent[] components = dtoClass.getRecordComponents();
+            Object[] values = new Object[components.length];
+            Class<?>[] paramTypes = new Class<?>[components.length];
+
+            for (int i = 0; i < components.length; i++) {
+                java.lang.reflect.RecordComponent component = components[i];
+                Method accessor = component.getAccessor();
+                paramTypes[i] = component.getType();
+
+                Object currentValue = accessor.invoke(dto);
+                if (component.getName().equals(parentIdField.getName())) {
+                    values[i] = newParentId;
+                } else {
+                    values[i] = currentValue;
+                }
+            }
+
+            java.lang.reflect.Constructor<DTO> constructor =
+                (java.lang.reflect.Constructor<DTO>) dtoClass.getDeclaredConstructor(paramTypes);
+            return constructor.newInstance(values);
+        } catch (Exception e) {
+            throw new RuntimeException("DTO 부모 ID 업데이트 실패", e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private ID extractEntityId(T entity) {
+        if (entity == null) {
+            return null;
+        }
+        try {
+            return (ID) entityIdField.get(entity);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("엔티티 ID 접근 실패", e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private JpaRepository<T, ID> getJpaRepository() {
+        return (JpaRepository<T, ID>) applicationContext.getBean(repositoryBeanName);
     }
 }

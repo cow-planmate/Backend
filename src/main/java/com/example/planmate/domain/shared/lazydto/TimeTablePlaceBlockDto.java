@@ -1,12 +1,18 @@
 package com.example.planmate.domain.shared.lazydto;
 
+import java.time.LocalTime;
+
 import com.example.planmate.domain.image.entity.PlacePhoto;
 import com.example.planmate.domain.plan.entity.PlaceCategory;
 import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
-import com.example.planmate.domain.shared.framework.annotation.*;
-
-import java.time.LocalTime;
+import com.example.planmate.domain.shared.framework.annotation.AutoDatabaseLoader;
+import com.example.planmate.domain.shared.framework.annotation.AutoEntityConverter;
+import com.example.planmate.domain.shared.framework.annotation.AutoRedisTemplate;
+import com.example.planmate.domain.shared.framework.annotation.CacheEntity;
+import com.example.planmate.domain.shared.framework.annotation.CacheId;
+import com.example.planmate.domain.shared.framework.annotation.EntityConverter;
+import com.example.planmate.domain.shared.framework.annotation.ParentId;
 
 @CacheEntity
 @AutoRedisTemplate("timeTablePlaceBlockRedis")
@@ -26,7 +32,7 @@ public record TimeTablePlaceBlockDto(
         double yLocation,
         String placeId,
         Integer placeCategoryId,
-        @ParentId
+    @ParentId(TimeTable.class)
         Integer timeTableId
 ) {
     public static TimeTablePlaceBlockDto fromEntity(TimeTablePlaceBlock block) {

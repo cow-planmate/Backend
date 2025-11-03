@@ -13,7 +13,7 @@ import com.example.planmate.domain.shared.framework.annotation.CacheId;
 import com.example.planmate.domain.shared.framework.annotation.EntityConverter;
 import com.example.planmate.domain.shared.framework.annotation.ParentId;
 
-@CacheEntity // keyType 생략 -> 자동으로 "timetable" 생성
+@CacheEntity
 @AutoRedisTemplate("timeTableRedis")
 @AutoDatabaseLoader(repository = "timeTableRepository", method = "findByPlanPlanId")
 @AutoEntityConverter(repositories = {"planRepository"})
@@ -23,7 +23,7 @@ public record TimeTableDto(
         LocalDate date,
         LocalTime timeTableStartTime,
         LocalTime timeTableEndTime,
-        @ParentId
+    @ParentId(Plan.class)
         Integer planId
 ) {
     public static TimeTableDto fromEntity(TimeTable timeTable) {

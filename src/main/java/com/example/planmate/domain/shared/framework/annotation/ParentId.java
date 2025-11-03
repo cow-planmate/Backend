@@ -11,4 +11,10 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ParentId {
+
+	/**
+	 * Declares the entity type that owns this parent identifier.
+	 * Defaults to {@link Object} meaning "unspecified".
+	 */
+	Class<?> value() default Object.class;
 }
