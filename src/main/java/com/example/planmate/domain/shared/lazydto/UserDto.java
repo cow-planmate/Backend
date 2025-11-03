@@ -2,23 +2,35 @@ package com.example.planmate.domain.shared.lazydto;
 
 import com.example.planmate.domain.user.entity.User;
 
-public record UserDto(
-        Integer userId,
-        String email,
-        String password,
-        String nickname,
-        int age,
-        int gender
-) {
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
+@EqualsAndHashCode
+public class UserDto {
+
+    private Integer userId;
+    private String email;
+    private String password;
+    private String nickname;
+    private int age;
+    private int gender;
+
     public static UserDto fromEntity(User user) {
-        return new UserDto(
-                user.getUserId(),
-                user.getEmail(),
-                user.getPassword(),
-                user.getNickname(),
-                user.getAge(),
-                user.getGender()
-        );
+        return UserDto.builder()
+                .userId(user.getUserId())
+                .email(user.getEmail())
+                .password(user.getPassword())
+                .nickname(user.getNickname())
+                .age(user.getAge())
+                .gender(user.getGender())
+                .build();
     }
 
     public User toEntity(String encodedPassword) {

@@ -120,7 +120,6 @@ public class CacheSyncService {
 
         timeTablePlaceBlockRepository.deleteAll(deletedBlocks);
         timeTablePlaceBlockRepository.saveAll(newBlocks);
-        
         tempIdToEntity.keySet().forEach(timeTablePlaceBlockCache::deleteByParentId);
     }
 }

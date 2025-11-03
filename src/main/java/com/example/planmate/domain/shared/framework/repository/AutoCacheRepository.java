@@ -2,6 +2,7 @@ package com.example.planmate.domain.shared.framework.repository;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -297,39 +298,50 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
     @SuppressWarnings("unchecked")
     private DTO mergeDto(DTO existingDto, DTO newDto) {
         try {
-            // Record의 모든 컴포넌트를 순회하며 새 값으로 업데이트
-            java.lang.reflect.RecordComponent[] components = dtoClass.getRecordComponents();
-            Object[] mergedValues = new Object[components.length];
-            
-            for (int i = 0; i < components.length; i++) {
-                java.lang.reflect.RecordComponent component = components[i];
-                Method accessor = component.getAccessor();
-                
-                Object newValue = accessor.invoke(newDto);
-                Object existingValue = accessor.invoke(existingDto);
-                
-                // ID 필드는 기존 값 유지
-                if (component.getName().equals(idField.getName())) {
-                    mergedValues[i] = existingValue;
+            if (dtoClass.isRecord()) {
+                java.lang.reflect.RecordComponent[] components = dtoClass.getRecordComponents();
+                Object[] mergedValues = new Object[components.length];
+
+                for (int i = 0; i < components.length; i++) {
+                    java.lang.reflect.RecordComponent component = components[i];
+                    Method accessor = component.getAccessor();
+
+                    Object newValue = accessor.invoke(newDto);
+                    Object existingValue = accessor.invoke(existingDto);
+
+                    if (component.getName().equals(idField.getName())) {
+                        mergedValues[i] = existingValue;
+                    } else if (newValue != null) {
+                        mergedValues[i] = newValue;
+                    } else {
+                        mergedValues[i] = existingValue;
+                    }
                 }
-                // 새 값이 null이 아니면 새 값 사용, null이면 기존 값 유지
-                else if (newValue != null) {
-                    mergedValues[i] = newValue;
-                } else {
-                    mergedValues[i] = existingValue;
+
+                Class<?>[] paramTypes = new Class<?>[components.length];
+                for (int i = 0; i < components.length; i++) {
+                    paramTypes[i] = components[i].getType();
+                }
+
+                java.lang.reflect.Constructor<DTO> constructor =
+                        (java.lang.reflect.Constructor<DTO>) dtoClass.getDeclaredConstructor(paramTypes);
+                return constructor.newInstance(mergedValues);
+            }
+
+            // 클래스 기반 DTO는 기존 인스턴스를 직접 수정하여 재사용
+            for (Field field : getAllInstanceFields(dtoClass)) {
+                if (field.getName().equals(idField.getName())) {
+                    continue;
+                }
+
+                field.setAccessible(true);
+                Object newValue = field.get(newDto);
+                if (newValue != null) {
+                    field.set(existingDto, newValue);
                 }
             }
-            
-            // Record 생성자로 새 인스턴스 생성
-            Class<?>[] paramTypes = new Class<?>[components.length];
-            for (int i = 0; i < components.length; i++) {
-                paramTypes[i] = components[i].getType();
-            }
-            
-            java.lang.reflect.Constructor<DTO> constructor = 
-                (java.lang.reflect.Constructor<DTO>) dtoClass.getDeclaredConstructor(paramTypes);
-            return constructor.newInstance(mergedValues);
-            
+            return existingDto;
+
         } catch (Exception e) {
             throw new RuntimeException("DTO 병합 실패: " + newDto, e);
         }
@@ -364,12 +376,31 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
                 Method withMethod = dtoClass.getMethod(withMethodName, idField.getType());
                 return (DTO) withMethod.invoke(dto, newId);
             } catch (NoSuchMethodException e) {
-                // withXXX 메서드가 없으면 리플렉션으로 직접 설정 시도
+                if (!dtoClass.isRecord()) {
+                    idField.setAccessible(true);
+                    idField.set(dto, newId);
+                    return dto;
+                }
                 throw new RuntimeException("DTO에 " + withMethodName + " 메서드가 없습니다. Record에 withBlockId 메서드를 추가해주세요.", e);
             }
         } catch (Exception e) {
             throw new RuntimeException("DTO ID 업데이트 실패: " + dto, e);
         }
+    }
+
+    private List<Field> getAllInstanceFields(Class<?> targetClass) {
+        List<Field> fields = new ArrayList<>();
+        Class<?> current = targetClass;
+        while (current != null && !current.equals(Object.class)) {
+            for (Field field : current.getDeclaredFields()) {
+                if (Modifier.isStatic(field.getModifiers())) {
+                    continue;
+                }
+                fields.add(field);
+            }
+            current = current.getSuperclass();
+        }
+        return fields;
     }
 
     @SuppressWarnings("unchecked")

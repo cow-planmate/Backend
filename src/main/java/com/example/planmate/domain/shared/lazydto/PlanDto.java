@@ -10,31 +10,43 @@ import com.example.planmate.domain.shared.framework.annotation.EntityConverter;
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.user.entity.User;
 
-@CacheEntity 
-@AutoRedisTemplate("planRedis") //이름매칭으로 대체 가능할듯
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@CacheEntity
+@AutoRedisTemplate("planRedis")
 @AutoEntityConverter(repositories = {"userRepository", "transportationCategoryRepository", "travelRepository"})
-public record PlanDto(
-        @CacheId
-        Integer planId,
-        String planName,
-        String departure,
-        int adultCount,
-        int childCount,
-        Integer userId,
-        Integer transportationCategoryId,
-        Integer travelId    
-) {
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
+@EqualsAndHashCode
+public class PlanDto {
+
+    @CacheId
+    private Integer planId;
+    private String planName;
+    private String departure;
+    private int adultCount;
+    private int childCount;
+    private Integer userId;
+    private Integer transportationCategoryId;
+    private Integer travelId;
+
     public static PlanDto fromEntity(Plan plan) {
-        return new PlanDto(
-                plan.getPlanId(),
-                plan.getPlanName(),
-                plan.getDeparture(),
-                plan.getAdultCount(),
-                plan.getChildCount(),
-                plan.getUser().getUserId(),
-                plan.getTransportationCategory().getTransportationCategoryId(),
-                plan.getTravel().getTravelId()
-        );
+        return PlanDto.builder()
+                .planId(plan.getPlanId())
+                .planName(plan.getPlanName())
+                .departure(plan.getDeparture())
+                .adultCount(plan.getAdultCount())
+                .childCount(plan.getChildCount())
+                .userId(plan.getUser().getUserId())
+                .transportationCategoryId(plan.getTransportationCategory().getTransportationCategoryId())
+                .travelId(plan.getTravel().getTravelId())
+                .build();
     }
 
     @EntityConverter
@@ -51,19 +63,9 @@ public record PlanDto(
                 .build();
     }
 
-    /**
-     * ID만 변경된 새로운 PlanDto 객체를 생성합니다.
-     */
     public PlanDto withPlanId(Integer newPlanId) {
-        return new PlanDto(
-                newPlanId,
-                this.planName,
-                this.departure,
-                this.adultCount,
-                this.childCount,
-                this.userId,
-                this.transportationCategoryId,
-                this.travelId
-        );
+        return this.toBuilder()
+                .planId(newPlanId)
+                .build();
     }
 }

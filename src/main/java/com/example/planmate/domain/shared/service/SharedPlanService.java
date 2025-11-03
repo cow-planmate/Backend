@@ -50,8 +50,8 @@ public class SharedPlanService implements SharedService<WPlanRequest, WPlanRespo
             return response;
         }
 
-        List<Integer> ids = payload.stream()
-                .map(PlanDto::planId)
+    List<Integer> ids = payload.stream()
+        .map(PlanDto::getPlanId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
@@ -98,8 +98,8 @@ public class SharedPlanService implements SharedService<WPlanRequest, WPlanRespo
             return response;
         }
 
-        List<Integer> ids = payload.stream()
-                .map(PlanDto::planId)
+    List<Integer> ids = payload.stream()
+        .map(PlanDto::getPlanId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 

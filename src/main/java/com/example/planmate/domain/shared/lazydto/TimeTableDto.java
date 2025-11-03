@@ -13,27 +13,39 @@ import com.example.planmate.domain.shared.framework.annotation.CacheId;
 import com.example.planmate.domain.shared.framework.annotation.EntityConverter;
 import com.example.planmate.domain.shared.framework.annotation.ParentId;
 
-@CacheEntity // keyType 생략 -> 자동으로 "timetable" 생성
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@CacheEntity
 @AutoRedisTemplate("timeTableRedis")
 @AutoDatabaseLoader(repository = "timeTableRepository", method = "findByPlanPlanId")
 @AutoEntityConverter(repositories = {"planRepository"})
-public record TimeTableDto(
-        @CacheId
-        Integer timeTableId,
-        LocalDate date,
-        LocalTime timeTableStartTime,
-        LocalTime timeTableEndTime,
-        @ParentId
-        Integer planId
-) {
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
+@EqualsAndHashCode
+public class TimeTableDto {
+
+    @CacheId
+    private Integer timeTableId;
+    private LocalDate date;
+    private LocalTime timeTableStartTime;
+    private LocalTime timeTableEndTime;
+    @ParentId
+    private Integer planId;
+
     public static TimeTableDto fromEntity(TimeTable timeTable) {
-        return new TimeTableDto(
-                timeTable.getTimeTableId(),
-                timeTable.getDate(),
-                timeTable.getTimeTableStartTime(),
-                timeTable.getTimeTableEndTime(),
-                timeTable.getPlan().getPlanId()
-        );
+        return TimeTableDto.builder()
+                .timeTableId(timeTable.getTimeTableId())
+                .date(timeTable.getDate())
+                .timeTableStartTime(timeTable.getTimeTableStartTime())
+                .timeTableEndTime(timeTable.getTimeTableEndTime())
+                .planId(timeTable.getPlan().getPlanId())
+                .build();
     }
 
     @EntityConverter
@@ -47,18 +59,9 @@ public record TimeTableDto(
                 .build();
     }
 
-    /**
-     * ID만 변경된 새로운 TimeTableDto 객체를 생성합니다.
-     * @param newTimeTableId 새로운 타임테이블 ID
-     * @return ID가 변경된 새로운 DTO 객체
-     */
     public TimeTableDto withTimeTableId(Integer newTimeTableId) {
-        return new TimeTableDto(
-                newTimeTableId,
-                this.date,
-                this.timeTableStartTime,
-                this.timeTableEndTime,
-                this.planId
-        );
+        return this.toBuilder()
+                .timeTableId(newTimeTableId)
+                .build();
     }
 }
