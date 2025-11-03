@@ -51,8 +51,8 @@ public class SharedTimeTableService implements SharedService<WTimetableRequest, 
             return response;
         }
 
-    Integer parentPlanId = payload.stream()
-        .map(TimeTableDto::getPlanId)
+        Integer parentPlanId = payload.stream()
+                .map(TimeTableDto::planId)
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElse(null);
@@ -97,8 +97,8 @@ public class SharedTimeTableService implements SharedService<WTimetableRequest, 
             return response;
         }
 
-    List<Integer> ids = payload.stream()
-        .map(TimeTableDto::getTimeTableId)
+        List<Integer> ids = payload.stream()
+                .map(TimeTableDto::timeTableId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 

@@ -28,11 +28,11 @@ public class CacheInitializer {
         }
         planCache.save(planDto);
 
-    List<TimeTableDto> timeTables = timeTableCache.loadFromDatabaseByParentId(planId);
-    for (TimeTableDto timeTable : timeTables) {
+        List<TimeTableDto> timeTables = timeTableCache.loadFromDatabaseByParentId(planId);
+        for (TimeTableDto timeTable : timeTables) {
             timeTableCache.save(timeTable);
             List<TimeTablePlaceBlockDto> blocks = timeTablePlaceBlockCache
-            .loadFromDatabaseByParentId(timeTable.getTimeTableId());
+                    .loadFromDatabaseByParentId(timeTable.timeTableId());
             blocks.forEach(timeTablePlaceBlockCache::save);
         }
     }

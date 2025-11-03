@@ -31,6 +31,6 @@ public class TravelCache {
     public Travel findTravelByTravelId(int travelId) {
         TravelDto dto = travelRedis.opsForValue().get(ECasheKey.TRAVEL.key(travelId));
         if (dto == null) return null;
-        return dto.toEntity(travelCategoryRepository.getReferenceById(dto.getTravelCategoryId()));
+        return dto.toEntity(travelCategoryRepository.getReferenceById(dto.travelCategoryId()));
     }
 }

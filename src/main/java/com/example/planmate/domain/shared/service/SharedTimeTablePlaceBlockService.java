@@ -54,8 +54,8 @@ public class SharedTimeTablePlaceBlockService
             return response;
         }
 
-    Integer parentTimeTableId = payload.stream()
-        .map(TimeTablePlaceBlockDto::getTimeTableId)
+        Integer parentTimeTableId = payload.stream()
+                .map(TimeTablePlaceBlockDto::timeTableId)
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElse(null);
@@ -102,8 +102,8 @@ public class SharedTimeTablePlaceBlockService
             return response;
         }
 
-    List<Integer> ids = payload.stream()
-        .map(TimeTablePlaceBlockDto::getBlockId)
+        List<Integer> ids = payload.stream()
+                .map(TimeTablePlaceBlockDto::blockId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
