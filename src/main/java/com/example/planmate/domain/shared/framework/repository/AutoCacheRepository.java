@@ -7,6 +7,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -186,14 +187,19 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
     @SuppressWarnings("unchecked")
     @Override
     public List<DTO> saveAll(List<DTO> dtos) {
-        dtos.forEach(dto -> {
+        for (ListIterator<DTO> iterator = dtos.listIterator(); iterator.hasNext();) {
+            DTO dto = iterator.next();
             ID id = extractId(dto);
+
             if (id == null) {
                 Integer temporaryId = generateTemporaryId();
                 dto = updateDtoWithId(dto, (ID) temporaryId);
+                iterator.set(dto); // 리스트 내부 DTO도 갱신
+                id = extractId(dto);
             }
-            getRedisTemplate().opsForValue().set(getRedisKey(extractId(dto)), dto);
-        });
+
+            getRedisTemplate().opsForValue().set(getRedisKey(id), dto);
+        }
         return dtos;
     }
     
@@ -739,6 +745,13 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         return null;
     }
 
+    public DTO findDtoById(ID id){
+        return getRedisTemplate().opsForValue().get(getRedisKey(id));
+    }
+    public List<DTO> findDtoListByParentID(ID parentId){
+        return findDtosByParentId(parentId);
+    }
+
     // ==== 동기화 메소드 ====
 
     public void syncToDatabase(DTO dto) {
@@ -766,27 +779,33 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         T entity = convertToEntity(dto);
 
         ID previousId = extractEntityId(entity);
-        T savedEntity;
-        if(repository.existsById(previousId)){
-            T origin = repository.findById(previousId).get();
-            mergeEntityFields(origin, entity);
-            savedEntity = repository.save(origin);
+        boolean hasPersistentId = previousId != null && !isTemporaryId(previousId);
+
+        if (!hasPersistentId) {
+            setEntityId(entity, null);
         }
-        else{
+
+        T savedEntity;
+        if (hasPersistentId && repository.existsById(previousId)) {
+            T origin = repository.findById(previousId).orElse(null);
+            if (origin != null) {
+                mergeEntityFields(origin, entity);
+                savedEntity = repository.save(origin);
+            } else {
+                savedEntity = repository.save(entity);
+            }
+        } else {
             savedEntity = repository.save(entity);
         }
         
         DTO updatedDto = convertToDto(savedEntity);
         ID cacheId = extractId(updatedDto);
-        //아이디가 음수일때 
-        if (previousId != null && !Objects.equals(previousId, cacheId)) {
-            getRedisTemplate().delete(getRedisKey(previousId));
-        }
-
-        getRedisTemplate().opsForValue().set(getRedisKey(cacheId), updatedDto);
-
+        // 아이디가 음수일때 
         if (parentIdField == null && isTemporaryId(previousId) && !isTemporaryId(cacheId)) {
             propagateParentIdChange(previousId, cacheId);
+        }
+        if (previousId != null) {
+            getRedisTemplate().delete(getRedisKey(previousId));
         }
     }
         
@@ -917,6 +936,17 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
             return (ID) entityIdField.get(entity);
         } catch (IllegalAccessException e) {
             throw new RuntimeException("엔티티 ID 접근 실패", e);
+        }
+    }
+
+    private void setEntityId(T entity, Object value) {
+        if (entity == null) {
+            return;
+        }
+        try {
+            entityIdField.set(entity, value);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("엔티티 ID 설정 실패", e);
         }
     }
 

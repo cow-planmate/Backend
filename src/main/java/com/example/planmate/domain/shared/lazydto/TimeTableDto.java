@@ -23,7 +23,7 @@ public record TimeTableDto(
         LocalDate date,
         LocalTime timeTableStartTime,
         LocalTime timeTableEndTime,
-    @ParentId(Plan.class)
+        @ParentId(Plan.class)
         Integer planId
 ) {
     public static TimeTableDto fromEntity(TimeTable timeTable) {
