@@ -1,15 +1,58 @@
 package com.example.planmate.domain.plan.service;
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.util.Pair;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.planmate.common.exception.UserNotFoundException;
 import com.example.planmate.common.externalAPI.GoogleMap;
 import com.example.planmate.common.externalAPI.GooglePlaceDetails;
-import com.example.planmate.common.valueObject.*;
+import com.example.planmate.common.valueObject.LodgingPlaceVO;
+import com.example.planmate.common.valueObject.RestaurantPlaceVO;
+import com.example.planmate.common.valueObject.SearchPlaceVO;
+import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
+import com.example.planmate.common.valueObject.TimetableVO;
+import com.example.planmate.common.valueObject.TourPlaceVO;
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
 import com.example.planmate.domain.image.repository.PlacePhotoRepository;
 import com.example.planmate.domain.plan.auth.PlanAccessValidator;
-import com.example.planmate.domain.plan.dto.*;
-import com.example.planmate.domain.plan.entity.*;
-import com.example.planmate.domain.plan.repository.*;
+import com.example.planmate.domain.plan.dto.DeleteMultiplePlansResponse;
+import com.example.planmate.domain.plan.dto.DeletePlanResponse;
+import com.example.planmate.domain.plan.dto.EditPlanNameResponse;
+import com.example.planmate.domain.plan.dto.GetCompletePlanResponse;
+import com.example.planmate.domain.plan.dto.GetEditorsResponse;
+import com.example.planmate.domain.plan.dto.GetPlanResponse;
+import com.example.planmate.domain.plan.dto.GetShareLinkResponse;
+import com.example.planmate.domain.plan.dto.MakePlanResponse;
+import com.example.planmate.domain.plan.dto.PlaceResponse;
+import com.example.planmate.domain.plan.dto.RemoveEditorAccessByOwnerResponse;
+import com.example.planmate.domain.plan.dto.ResignEditorAccessResponse;
+import com.example.planmate.domain.plan.dto.SavePlanResponse;
+import com.example.planmate.domain.plan.entity.PlaceCategory;
+import com.example.planmate.domain.plan.entity.Plan;
+import com.example.planmate.domain.plan.entity.PlanShare;
+import com.example.planmate.domain.plan.entity.TimeTable;
+import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
+import com.example.planmate.domain.plan.entity.TransportationCategory;
+import com.example.planmate.domain.plan.repository.PlaceCategoryRepository;
+import com.example.planmate.domain.plan.repository.PlanEditorRepository;
+import com.example.planmate.domain.plan.repository.PlanRepository;
+import com.example.planmate.domain.plan.repository.PlanShareRepository;
+import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
+import com.example.planmate.domain.plan.repository.TimeTableRepository;
+import com.example.planmate.domain.plan.repository.TransportationCategoryRepository;
 import com.example.planmate.domain.shared.cache.PlanCache;
 import com.example.planmate.domain.shared.cache.TimeTableCache;
 import com.example.planmate.domain.shared.cache.TimeTablePlaceBlockCache;
@@ -19,17 +62,8 @@ import com.example.planmate.domain.travel.repository.TravelRepository;
 import com.example.planmate.domain.user.entity.PreferredTheme;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.util.Pair;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.*;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -109,14 +143,19 @@ public class PlanService {
         List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
         if(plan != null) {
-            timeTables = timeTableCache.findByParentId(planId);
+            // 가져온 timetable을 날짜 기준으로 정렬하기 위해 안전하게 리스트 복사 및 정렬
+            List<TimeTable> fetched = timeTableCache.findByParentId(planId);
+            timeTables = new ArrayList<>(fetched == null ? Collections.emptyList() : fetched);
+            timeTables.sort(Comparator.comparing(TimeTable::getDate));
             for(TimeTable timeTable : timeTables) {
                 timeTablePlaceBlocks.add(timeTablePlaceBlockCache.findByParentId(timeTable.getTimeTableId()));
             }
         }
         else {
             plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-            timeTables = timeTableRepository.findByPlanPlanId(planId);
+            List<TimeTable> fetched = timeTableRepository.findByPlanPlanId(planId);
+            timeTables = new ArrayList<>(fetched == null ? Collections.emptyList() : fetched);
+            timeTables.sort(Comparator.comparing(TimeTable::getDate));
             for (TimeTable timeTable : timeTables) {
                 timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
             }
@@ -135,6 +174,7 @@ public class PlanService {
         for (TimeTable timeTable : timeTables){
             response.addTimetable(timeTable.getTimeTableId(), timeTable.getDate(), timeTable.getTimeTableStartTime(), timeTable.getTimeTableEndTime());
         }
+
 
         for (List<TimeTablePlaceBlock> timeTablePlaceBlock : timeTablePlaceBlocks) {
             if(timeTablePlaceBlock!=null){
@@ -157,7 +197,7 @@ public class PlanService {
                 }
             }
         }
-    response.setUserDayIndexes(presenceTrackingService.getPlanTracker(planId));
+        response.setUserDayIndexes(presenceTrackingService.getPlanTracker(planId));
         return response; // DTO 변환
     }
 
@@ -409,14 +449,19 @@ public class PlanService {
         List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
         if(plan != null) {
-            timeTables = timeTableCache.findByParentId(planId);
+            // 캐시에서 가져온 timetable을 날짜 기준으로 정렬
+            List<TimeTable> fetched = timeTableCache.findByParentId(planId);
+            timeTables = new ArrayList<>(fetched == null ? Collections.emptyList() : fetched);
+            timeTables.sort(Comparator.comparing(TimeTable::getDate));
             for(TimeTable timeTable : timeTables) {
                 timeTablePlaceBlocks.add(timeTablePlaceBlockCache.findByParentId(timeTable.getTimeTableId()));
             }
         }
         else {
             plan = planRepository.findById(planId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
-            timeTables = timeTableRepository.findByPlanPlanId(planId);
+            List<TimeTable> fetched = timeTableRepository.findByPlanPlanId(planId);
+            timeTables = new ArrayList<>(fetched == null ? Collections.emptyList() : fetched);
+            timeTables.sort(Comparator.comparing(TimeTable::getDate));
             for (TimeTable timeTable : timeTables) {
                 timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
             }

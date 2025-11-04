@@ -1,19 +1,14 @@
 package com.example.planmate.domain.shared.sync;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.example.planmate.domain.plan.repository.PlanRepository;
-import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
-import com.example.planmate.domain.plan.repository.TimeTableRepository;
 import com.example.planmate.domain.shared.cache.PlanCache;
 import com.example.planmate.domain.shared.cache.TimeTableCache;
 import com.example.planmate.domain.shared.cache.TimeTablePlaceBlockCache;
 import com.example.planmate.domain.shared.lazydto.PlanDto;
 import com.example.planmate.domain.shared.lazydto.TimeTableDto;
-import com.example.planmate.domain.shared.lazydto.TimeTablePlaceBlockDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,9 +16,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CacheSyncService {
 
-    private final PlanRepository planRepository;
-    private final TimeTableRepository timeTableRepository;
-    private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
     private final PlanCache planCache;
     private final TimeTableCache timeTableCache;
     private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
@@ -31,15 +23,21 @@ public class CacheSyncService {
 
     public void syncToDatabase(int planId) {
         PlanDto planDto = planCache.findDtoById(planId);
-        planCache.syncToDatabase(planDto);
-        List<TimeTableDto> timeTableDtos = timeTableCache.findDtoListByParentID(planId);
-        timeTableDtos.forEach(timeTableDto -> timeTableCache.syncToDatabase(timeTableDto));
-        List<TimeTablePlaceBlockDto> blockDtos = new ArrayList<>();
-        for (TimeTableDto timeTableDto : timeTableDtos) {
-            List<TimeTablePlaceBlockDto> dtos = timeTablePlaceBlockCache.findDtoListByParentID(timeTableDto.timeTableId());
-            blockDtos.addAll(dtos);
+        if (planDto != null) {
+            planCache.syncToDatabase(planDto);
         }
-        blockDtos.forEach(blockDto -> timeTablePlaceBlockCache.syncToDatabase(blockDto));
+
+        // 타임테이블 동기화 및 삭제 반영
+        timeTableCache.syncCollectionByParentId(planId);
+
+        // 최신 타임테이블 목록 기준으로 장소 블록 동기화 및 삭제 반영
+        List<TimeTableDto> refreshedTimeTables = timeTableCache.findDtoListByParentID(planId);
+        for (TimeTableDto timeTableDto : refreshedTimeTables) {
+            Integer timeTableId = timeTableDto.timeTableId();
+            if (timeTableId != null && timeTableId > 0) {
+                timeTablePlaceBlockCache.syncCollectionByParentId(timeTableId);
+            }
+        }
     }
 
     // public void syncToDatabase(int planId) {

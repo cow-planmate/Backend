@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -425,18 +426,21 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public final List<DTO> loadFromDatabaseByParentId(ID parentId) {
+    private List<T> loadEntitiesByParentId(ID parentId) {
         try {
             Object repository = applicationContext.getBean(repositoryBeanName);
             Method loadMethod = findLoadMethod(repository, parentId);
-            List<T> entities = (List<T>) loadMethod.invoke(repository, parentId);
-            return entities.stream()
-                .map(this::convertToDto)
-                .toList();
+            return (List<T>) loadMethod.invoke(repository, parentId);
         } catch (Exception e) {
             throw new RuntimeException("데이터베이스 로딩 실패: " + parentId, e);
         }
+    }
+
+    @Override
+    public final List<DTO> loadFromDatabaseByParentId(ID parentId) {
+        return loadEntitiesByParentId(parentId).stream()
+            .map(this::convertToDto)
+            .toList();
     }
 
     @SuppressWarnings("unchecked")
@@ -774,6 +778,49 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         return;
     }
 
+    /**
+     * 캐시에 존재하는 ParentId 하위 DTO들을 DB와 동기화하며, 캐시에 없어진 엔티티는 DB에서도 삭제합니다.
+     */
+    public void syncCollectionByParentId(ID parentId) {
+        if (parentIdField == null) {
+            throw new UnsupportedOperationException("ParentId 필드가 없습니다.");
+        }
+        if (parentId == null) {
+            return;
+        }
+        if (parentId instanceof Number number && number.longValue() < 0L) {
+            return; // 아직 영속화되지 않은 부모
+        }
+
+        List<DTO> cachedDtos = findDtoListByParentID(parentId);
+        if (!cachedDtos.isEmpty()) {
+            cachedDtos.forEach(this::syncToDatabase);
+        }
+
+        List<DTO> refreshedDtos = findDtoListByParentID(parentId);
+        Set<ID> cachedPersistentIds = refreshedDtos.stream()
+            .map(this::extractId)
+            .filter(Objects::nonNull)
+            .filter(id -> !isTemporaryId(id))
+            .collect(Collectors.toSet());
+
+        List<T> persistedEntities = loadEntitiesByParentId(parentId);
+        if (persistedEntities == null || persistedEntities.isEmpty()) {
+            return;
+        }
+
+        List<T> entitiesToDelete = persistedEntities.stream()
+            .filter(entity -> {
+                ID entityId = extractEntityId(entity);
+                return entityId != null && !cachedPersistentIds.contains(entityId);
+            })
+            .collect(Collectors.toList());
+
+        if (!entitiesToDelete.isEmpty()) {
+            getJpaRepository().deleteAll(entitiesToDelete);
+        }
+    }
+
     private void saveToDatabase(DTO dto) {
         JpaRepository<T, ID> repository = getJpaRepository();
         T entity = convertToEntity(dto);
@@ -800,11 +847,16 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         
         DTO updatedDto = convertToDto(savedEntity);
         ID cacheId = extractId(updatedDto);
-        // 아이디가 음수일때 
-        if (parentIdField == null && isTemporaryId(previousId) && !isTemporaryId(cacheId)) {
+
+        if (cacheId != null) {
+            getRedisTemplate().opsForValue().set(getRedisKey(cacheId), updatedDto);
+        }
+
+        // 새로 영속화된 ID를 모든 하위 캐시에 전파
+        if (isTemporaryId(previousId) && !isTemporaryId(cacheId)) {
             propagateParentIdChange(previousId, cacheId);
         }
-        if (previousId != null) {
+        if (previousId != null && !Objects.equals(previousId, cacheId)) {
             getRedisTemplate().delete(getRedisKey(previousId));
         }
     }
