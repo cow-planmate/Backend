@@ -1,31 +1,38 @@
 plugins {
-    id 'java'
-    id 'org.springframework.boot' version '3.5.3' apply false
-    id 'io.spring.dependency-management' version '1.1.7' apply false
+    id 'java-library'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
-group = 'com.example'
-version = '0.0.1-SNAPSHOT'
-
-dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter:3.5.3'
-    implementation 'org.springframework.boot:spring-boot-starter-websocket:3.5.3'
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis:3.5.3'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.0'
-}
+group = 'com.sharedsync'
+version = '1.0.0'
 
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
     }
+    withSourcesJar()
+    withJavadocJar()
 }
 
-allprojects {
-    repositories {
-        mavenCentral()
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api 'org.springframework.boot:spring-boot-starter'
+    api 'org.springframework.boot:spring-boot-starter-websocket'
+    api 'org.springframework.boot:spring-boot-starter-data-redis'
+    api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.0'
+    api 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:3.5.3"
     }
-}
-
-subprojects {
-    apply plugin: 'io.spring.dependency-management'
 }
