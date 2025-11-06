@@ -1,8 +1,8 @@
 package com.sharedsync.framework.shared.auth;
 
-import com.example.planmate.common.auth.JwtTokenProvider;
-import com.example.planmate.domain.plan.auth.PlanAccessValidator;
-import lombok.RequiredArgsConstructor;
+import java.security.Principal;
+import java.util.List;
+
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
@@ -11,15 +11,16 @@ import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
-import java.security.Principal;
-import java.util.List;
+import com.example.planmate.common.auth.JwtTokenProvider;
+
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
 public class WsAuthChannelInterceptor implements ChannelInterceptor {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final PlanAccessValidator planAccessValidator;
+    private final List<StompAccessValidator> accessValidators;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -65,8 +66,18 @@ public class WsAuthChannelInterceptor implements ChannelInterceptor {
         if (p == null) throw new AccessDeniedException("Unauthenticated");
 
         Integer userId = ((StompPrincipal) p).userId();
-        Integer planId = extractPlanId(dest);
-        if (planId != null && planAccessValidator.validateUserHasAccessToPlan(userId, planId) == null) {
+        boolean validated = false;
+        boolean matched = false;
+        for (StompAccessValidator validator : accessValidators) {
+            if (validator.supports(dest)) {
+                matched = true;
+                validator.validate(userId, dest);
+                validated = true;
+                break;
+            }
+        }
+
+        if (matched && !validated) {
             throw new AccessDeniedException(msg);
         }
     }
@@ -74,16 +85,6 @@ public class WsAuthChannelInterceptor implements ChannelInterceptor {
     private String firstNative(StompHeaderAccessor acc, String key) {
         List<String> values = acc.getNativeHeader(key);
         return (values == null || values.isEmpty()) ? null : values.get(0);
-    }
-
-    private Integer extractPlanId(String dest) {
-        String[] parts = dest.split("/");
-        for (int i = 0; i < parts.length; i++) {
-            if ("plan".equals(parts[i]) && i + 1 < parts.length) {
-                try { return Integer.parseInt(parts[i + 1]); } catch (NumberFormatException ignore) {}
-            }
-        }
-        return null;
     }
 
     private record StompPrincipal(Integer userId) implements Principal {
