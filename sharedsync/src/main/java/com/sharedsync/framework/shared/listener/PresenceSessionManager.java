@@ -2,7 +2,6 @@ package com.sharedsync.framework.shared.listener;
 
 import org.springframework.stereotype.Service;
 
-import com.sharedsync.framework.shared.enums.EAction;
 import com.sharedsync.framework.shared.service.PresenceTrackingService;
 import com.sharedsync.framework.shared.sync.CacheSyncService;
 
@@ -13,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 public class PresenceSessionManager {
 
     private static final int DEFAULT_DAY_INDEX = 0;
+    private static final String ACTION_CREATE = "create";
+    private static final String ACTION_DELETE = "delete";
 
     private final PresenceTrackingService presenceTrackingService;
     private final CacheSyncService cacheSyncService;
@@ -28,7 +29,7 @@ public class PresenceSessionManager {
         presenceTrackingService.insertNickname(userId);
         presenceTrackingService.insertUserIdToPlanId(planId, userId);
 
-        broadcast(planId, userId, EAction.CREATE);
+        broadcast(planId, userId, ACTION_CREATE);
     }
 
     public void handleDisconnect(int userId) {
@@ -44,10 +45,10 @@ public class PresenceSessionManager {
             cacheSyncService.syncToDatabase(planId);
         }
 
-        broadcast(planId, userId, EAction.DELETE);
+        broadcast(planId, userId, ACTION_DELETE);
     }
 
-    private void broadcast(int planId, int userId, EAction action) {
+    private void broadcast(int planId, int userId, String action) {
         String nickname = presenceTrackingService.getNicknameByUserId(userId);
         presenceBroadcaster.broadcast(planId, userId, nickname, action);
     }
