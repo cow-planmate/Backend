@@ -18,6 +18,7 @@ import com.example.planmate.domain.plan.auth.PlanAccessValidator;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.user.entity.PreferredTheme;
 import com.example.planmate.domain.user.repository.UserRepository;
+import com.example.planmate.domain.webSocket.service.RedisService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,11 +30,18 @@ public class PlaceService {
     private final UserRepository userRepository;
     private final GoogleMap googleMap;
     private final GooglePlaceDetails googlePlaceDetails;
+    private final RedisService redisService;
 
     public PlaceResponse getTourPlace(int userId, int planId) throws IOException {
         PlaceResponse response = new PlaceResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-        String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
+        Plan cachePlan = redisService.findPlanByPlanId(planId);
+        String travelCategoryName;
+        if(cachePlan!=null){
+            travelCategoryName = cachePlan.getTravel().getTravelCategory().getTravelCategoryName();
+        } else {
+            travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
+        }
         List<PreferredTheme> preferredThemes = userRepository.findById(userId).get().getPreferredThemes();
         preferredThemes.removeIf(preferredTheme -> preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId() != 0);
 
@@ -52,7 +60,13 @@ public class PlaceService {
     public PlaceResponse getLodgingPlace(int userId, int planId) throws IOException {
         PlaceResponse response = new PlaceResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-        String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
+        Plan cachePlan = redisService.findPlanByPlanId(planId);
+        String travelCategoryName;
+        if(cachePlan!=null){
+            travelCategoryName = cachePlan.getTravel().getTravelCategory().getTravelCategoryName();
+        } else {
+            travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
+        }
         List<PreferredTheme> preferredThemes = userRepository.findById(userId).get().getPreferredThemes();
         preferredThemes.removeIf(preferredTheme -> preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId() != 1);
 
@@ -71,7 +85,13 @@ public class PlaceService {
     public PlaceResponse getRestaurantPlace(int userId, int planId) throws IOException {
         PlaceResponse response = new PlaceResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-        String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
+        Plan cachePlan = redisService.findPlanByPlanId(planId);
+        String travelCategoryName;
+        if(cachePlan!=null){
+            travelCategoryName = cachePlan.getTravel().getTravelCategory().getTravelCategoryName();
+        } else {
+            travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
+        }
         List<PreferredTheme> preferredThemes = userRepository.findById(userId).get().getPreferredThemes();
         preferredThemes.removeIf(preferredTheme -> preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId() != 2);
 
