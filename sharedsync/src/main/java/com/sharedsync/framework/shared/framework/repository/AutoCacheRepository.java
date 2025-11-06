@@ -30,7 +30,7 @@ import com.sharedsync.framework.shared.framework.annotation.ParentId;
 /**
  * 완전 자동화된 캐시 리포지토리
  * DTO에 어노테이션만 추가하면 모든 CRUD 및 DB 동기화 기능이 자동으로 구현됩니다.
- * 
+ *
  * @param <T> 엔티티 타입
  * @param <ID> ID 타입  
  * @param <DTO> DTO 타입
@@ -68,7 +68,7 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         if (cacheEntityAnnotation == null) {
             throw new IllegalStateException(dtoClass.getSimpleName() + "에 @CacheEntity 어노테이션이 없습니다.");
         }
-        
+
         // keyType이 빈 문자열이면 클래스 이름에서 자동 생성
         String annotationKeyType = cacheEntityAnnotation.keyType();
         if (annotationKeyType == null || annotationKeyType.isEmpty()) {
@@ -91,10 +91,10 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         // @AutoDatabaseLoader 어노테이션에서 Repository와 메서드 정보 추출
         AutoDatabaseLoader dbLoaderAnnotation = dtoClass.getAnnotation(AutoDatabaseLoader.class);
         if (dbLoaderAnnotation != null) {
-            this.repositoryBeanName = dbLoaderAnnotation.repository().isEmpty() ? 
-                generateRepositoryName() : dbLoaderAnnotation.repository();
+            this.repositoryBeanName = dbLoaderAnnotation.repository().isEmpty() ?
+                    generateRepositoryName() : dbLoaderAnnotation.repository();
             this.loadMethodName = dbLoaderAnnotation.method().isEmpty() ?
-                generateLoadMethodName() : dbLoaderAnnotation.method();
+                    generateLoadMethodName() : dbLoaderAnnotation.method();
         } else {
             this.repositoryBeanName = generateRepositoryName();
             this.loadMethodName = generateLoadMethodName();
@@ -143,7 +143,7 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
     }
 
     // ==== CacheRepository 인터페이스 기본 CRUD 구현 ====
-    
+
     @Override
     public Optional<T> findById(ID id) {
         DTO dto = getRedisTemplate().opsForValue().get(getRedisKey(id));
@@ -152,39 +152,39 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         }
         return Optional.of(convertToEntity(dto));
     }
-    
+
     @Override
     public T getReferenceById(ID id) {
-        return findById(id).orElseThrow(() -> 
-            new IllegalStateException("캐시에서 데이터를 찾을 수 없습니다: " + id));
+        return findById(id).orElseThrow(() ->
+                new IllegalStateException("캐시에서 데이터를 찾을 수 없습니다: " + id));
     }
-    
+
     @Override
     public void deleteById(ID id) {
-        getRedisTemplate().delete(getRedisKey(id));
+        deleteCacheCascade(id);
     }
-    
+
     @Override
     public boolean existsById(ID id) {
         return Boolean.TRUE.equals(getRedisTemplate().hasKey(getRedisKey(id)));
     }
-    
+
     @Override
     public List<T> findAllById(Iterable<ID> ids) {
         List<String> keys = new ArrayList<>();
         ids.forEach(id -> keys.add(getRedisKey(id)));
-        
+
         List<DTO> dtos = getRedisTemplate().opsForValue().multiGet(keys);
         if (dtos == null) {
             return Collections.emptyList();
         }
-        
+
         return dtos.stream()
-            .filter(dto -> dto != null)
-            .map(this::convertToEntity)
-            .toList();
+                .filter(dto -> dto != null)
+                .map(this::convertToEntity)
+                .toList();
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public List<DTO> saveAll(List<DTO> dtos) {
@@ -203,16 +203,17 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         }
         return dtos;
     }
-    
+
     @Override
     public void deleteAllById(Iterable<ID> ids) {
-        List<String> keys = new ArrayList<>();
-        ids.forEach(id -> keys.add(getRedisKey(id)));
-        getRedisTemplate().delete(keys);
+        if (ids == null) {
+            return;
+        }
+        ids.forEach(this::deleteCacheCascade);
     }
-    
+
     // ==== 내부 헬퍼 메서드 ====
-    
+
     protected final String getRedisKey(ID id) {
         return cacheKeyPrefix + ":" + id;
     }
@@ -237,41 +238,41 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
     @SuppressWarnings("unchecked")
     public DTO save(DTO dto) {
         ID id = extractId(dto);
-        
+
         // ID가 null이면 임시 음수 ID 생성
         if (id == null) {
             Integer temporaryId = generateTemporaryId();
             dto = updateDtoWithId(dto, (ID) temporaryId);
             id = extractId(dto);
         }
-        
+
         getRedisTemplate().opsForValue().set(getRedisKey(id), dto);
         return dto;
     }
-    
+
     /**
      * 기존 데이터를 불러와서 null이 아닌 값만 업데이트 (ID 제외)
      */
     public DTO update(DTO dto) {
         ID id = extractId(dto);
-        
+
         if (id == null) {
             throw new IllegalArgumentException("update는 ID가 필수입니다. save를 사용하세요.");
         }
-        
+
         DTO existingDto = getRedisTemplate().opsForValue().get(getRedisKey(id));
         if (existingDto != null) {
             dto = mergeDto(existingDto, dto);
         }
-        
+
         getRedisTemplate().opsForValue().set(getRedisKey(id), dto);
         return dto;
     }
-    
+
     /**
      * Entity의 필드를 다른 Entity의 null이 아닌 값으로 업데이트
      * 리플렉션을 사용하여 범용적으로 처리
-     * 
+     *
      * @param target 업데이트할 대상 Entity
      * @param source 데이터를 가져올 소스 Entity (null이 아닌 값만 복사)
      */
@@ -279,25 +280,25 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         if (target == null || source == null) {
             throw new IllegalArgumentException("target과 source는 null일 수 없습니다.");
         }
-        
+
         try {
             Class<?> entityClass = target.getClass();
-            
+
             // 모든 필드를 순회하며 업데이트
             for (Field field : entityClass.getDeclaredFields()) {
                 field.setAccessible(true);
-                
+
                 // ID 필드는 건너뛰기
                 if (field.isAnnotationPresent(jakarta.persistence.Id.class)) {
                     continue;
                 }
-                
+
                 // @ManyToOne, @OneToMany 등 관계 필드는 건너뛰기 (선택적)
                 if (field.isAnnotationPresent(jakarta.persistence.ManyToOne.class) ||
-                    field.isAnnotationPresent(jakarta.persistence.OneToMany.class) ||
-                    field.isAnnotationPresent(jakarta.persistence.OneToOne.class) ||
-                    field.isAnnotationPresent(jakarta.persistence.ManyToMany.class)) {
-                    
+                        field.isAnnotationPresent(jakarta.persistence.OneToMany.class) ||
+                        field.isAnnotationPresent(jakarta.persistence.OneToOne.class) ||
+                        field.isAnnotationPresent(jakarta.persistence.ManyToMany.class)) {
+
                     // 관계 필드도 null이 아니면 업데이트
                     Object sourceValue = field.get(source);
                     if (sourceValue != null) {
@@ -305,7 +306,7 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
                     }
                     continue;
                 }
-                
+
                 // source의 값이 null이 아니면 target에 설정
                 Object sourceValue = field.get(source);
                 if (sourceValue != null) {
@@ -316,7 +317,7 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
             throw new RuntimeException("Entity 필드 병합 실패", e);
         }
     }
-    
+
     /**
      * 기존 DTO와 새 DTO를 병합
      * 새 DTO의 null이 아닌 값들로 기존 DTO를 업데이트 (ID 제외)
@@ -326,14 +327,14 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
             // Record의 모든 컴포넌트를 순회하며 새 값으로 업데이트
             java.lang.reflect.RecordComponent[] components = dtoClass.getRecordComponents();
             Object[] mergedValues = new Object[components.length];
-            
+
             for (int i = 0; i < components.length; i++) {
                 java.lang.reflect.RecordComponent component = components[i];
                 Method accessor = component.getAccessor();
-                
+
                 Object newValue = accessor.invoke(newDto);
                 Object existingValue = accessor.invoke(existingDto);
-                
+
                 // ID 필드는 기존 값 유지
                 if (component.getName().equals(idField.getName())) {
                     mergedValues[i] = existingValue;
@@ -345,17 +346,17 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
                     mergedValues[i] = existingValue;
                 }
             }
-            
+
             // Record 생성자로 새 인스턴스 생성
             Class<?>[] paramTypes = new Class<?>[components.length];
             for (int i = 0; i < components.length; i++) {
                 paramTypes[i] = components[i].getType();
             }
-            
-            java.lang.reflect.Constructor<DTO> constructor = 
-                (java.lang.reflect.Constructor<DTO>) dtoClass.getDeclaredConstructor(paramTypes);
+
+            java.lang.reflect.Constructor<DTO> constructor =
+                    (java.lang.reflect.Constructor<DTO>) dtoClass.getDeclaredConstructor(paramTypes);
             return constructor.newInstance(mergedValues);
-            
+
         } catch (Exception e) {
             throw new RuntimeException("DTO 병합 실패: " + newDto, e);
         }
@@ -369,10 +370,10 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
     private Integer generateTemporaryId() {
         // 엔티티 타입별로 별도의 카운터 키 사용 (예: "temporary:timetableplaceblock:counter")
         String counterKey = "temporary:" + cacheKeyPrefix + ":counter";
-        
+
         // Redis의 DECR 명령: 키가 없으면 0에서 시작해서 -1 반환, 이후 -2, -3, ...
         Long counter = getRedisTemplate().opsForValue().decrement(counterKey);
-        
+
         return counter.intValue();
     }
 
@@ -385,7 +386,7 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
             // Record 타입인 경우 withXXX 메서드 찾기
             String idFieldName = idField.getName();
             String withMethodName = "with" + Character.toUpperCase(idFieldName.charAt(0)) + idFieldName.substring(1);
-            
+
             try {
                 Method withMethod = dtoClass.getMethod(withMethodName, idField.getType());
                 return (DTO) withMethod.invoke(dto, newId);
@@ -439,8 +440,8 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
     @Override
     public final List<DTO> loadFromDatabaseByParentId(ID parentId) {
         return loadEntitiesByParentId(parentId).stream()
-            .map(this::convertToDto)
-            .toList();
+                .map(this::convertToDto)
+                .toList();
     }
 
     @SuppressWarnings("unchecked")
@@ -479,11 +480,11 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
     @Override
     public List<T> findByParentId(ID parentId) {
         List<DTO> dtos = findDtosByParentId(parentId);
-        
+
         // Entity로 변환
         return dtos.stream()
-            .map(this::convertToEntity)
-            .toList();
+                .map(this::convertToEntity)
+                .toList();
     }
 
     /**
@@ -495,26 +496,23 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         if (parentIdField == null) {
             throw new UnsupportedOperationException("ParentId 필드가 없습니다.");
         }
-        
+
         // 먼저 삭제할 DTO들을 조회
         List<DTO> dtosToDelete = findDtosByParentId(parentId);
-        
+
         if (dtosToDelete.isEmpty()) {
             return Collections.emptyList();
         }
-        
-        // 삭제할 키들 수집
-        List<String> keysToDelete = dtosToDelete.stream()
-            .map(dto -> getRedisKey(extractId(dto)))
-            .toList();
-        
-        // Redis에서 삭제
-        getRedisTemplate().delete(keysToDelete);
-        
+
+        // 하위 캐시 포함 삭제
+        dtosToDelete.stream()
+                .map(this::extractId)
+                .forEach(this::deleteCacheCascade);
+
         // 삭제된 Entity 리스트 반환
         return dtosToDelete.stream()
-            .map(this::convertToEntity)
-            .toList();
+                .map(this::convertToEntity)
+                .toList();
     }
 
     /**
@@ -525,45 +523,45 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         if (parentIdField == null) {
             throw new UnsupportedOperationException("ParentId 필드가 없습니다.");
         }
-        
+
         // Redis에서 패턴으로 모든 키 찾기 (예: "plan:*")
         String pattern = cacheKeyPrefix + ":*";
         Set<String> keys = getRedisTemplate().keys(pattern);
-        
+
         if (keys == null || keys.isEmpty()) {
             return Collections.emptyList();
         }
-        
+
         // 모든 DTO 가져오기
         List<DTO> allDtos = getRedisTemplate().opsForValue().multiGet(keys);
         if (allDtos == null) {
             return Collections.emptyList();
         }
-        
+
         // parentId로 필터링
         return allDtos.stream()
-            .filter(dto -> dto != null)
-            .filter(dto -> {
-                try {
-                    Object dtoParentId = parentIdField.get(dto);
-                    return parentId.equals(dtoParentId);
-                } catch (IllegalAccessException e) {
-                    return false;
-                }
-            })
-            .toList();
+                .filter(dto -> dto != null)
+                .filter(dto -> {
+                    try {
+                        Object dtoParentId = parentIdField.get(dto);
+                        return parentId.equals(dtoParentId);
+                    } catch (IllegalAccessException e) {
+                        return false;
+                    }
+                })
+                .toList();
     }
 
     private Object[] buildEntityConverterParameters(DTO dto) throws Exception {
         Object[] params = new Object[entityConverterRepositories.length];
-        
+
         for (int i = 0; i < entityConverterRepositories.length; i++) {
             String repoName = entityConverterRepositories[i];
             Object repository = applicationContext.getBean(repoName);
-            
+
             // DTO에서 적절한 ID를 추출
             Object relatedId = extractRelatedId(dto, i);
-            
+
             // ID가 null이면 null 반환
             if (relatedId == null) {
                 params[i] = null;
@@ -577,29 +575,29 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
                 }
             }
         }
-        
+
         return params;
     }
 
     private Object extractRelatedId(DTO dto, int parameterIndex) {
         String repoName = entityConverterRepositories[parameterIndex];
-        
+
         try {
             // Repository에서 엔티티 클래스 타입 가져오기
             Object repository = applicationContext.getBean(repoName);
             Class<?> entityClass = getEntityClassFromRepository(repository);
-            
+
             if (entityClass == null) {
                 return null;
             }
-            
+
             // 엔티티에서 @Id 어노테이션이 붙은 필드 찾기
             String idFieldName = findIdFieldNameInEntity(entityClass);
-            
+
             if (idFieldName == null) {
                 return null;
             }
-            
+
             // DTO에서 같은 이름의 필드 찾기
             Field dtoIdField = findFieldInHierarchy(dtoClass, idFieldName);
             if (dtoIdField != null) {
@@ -607,13 +605,13 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
                 Object idValue = dtoIdField.get(dto);
                 return idValue;
             }
-            
+
             return null;
         } catch (IllegalAccessException e) {
             throw new RuntimeException("관련 ID 추출 실패: " + repoName, e);
         }
     }
-    
+
     /**
      * Repository에서 엔티티 클래스 타입 추출
      */
@@ -621,7 +619,7 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         try {
             // Spring Data JPA Repository는 프록시 객체이므로 인터페이스를 찾아야 함
             Class<?>[] interfaces = repository.getClass().getInterfaces();
-            
+
             for (Class<?> iface : interfaces) {
                 // Repository 인터페이스 찾기
                 if (iface.getName().endsWith("Repository")) {
@@ -631,7 +629,7 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
                         if (genericInterface instanceof ParameterizedType) {
                             ParameterizedType parameterizedType = (ParameterizedType) genericInterface;
                             Type rawType = parameterizedType.getRawType();
-                            
+
                             // JpaRepository 인터페이스 확인
                             if (rawType.getTypeName().contains("JpaRepository")) {
                                 Type[] typeArguments = parameterizedType.getActualTypeArguments();
@@ -650,7 +648,7 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         }
         return null;
     }
-    
+
     /**
      * 엔티티 클래스에서 @Id 어노테이션이 붙은 필드 이름 찾기
      */
@@ -664,7 +662,7 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         }
         return null;
     }
-    
+
     private Field findFieldInHierarchy(Class<?> clazz, String fieldName) {
         try {
             return clazz.getDeclaredField(fieldName);
@@ -752,76 +750,185 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
     public DTO findDtoById(ID id){
         return getRedisTemplate().opsForValue().get(getRedisKey(id));
     }
-    public List<DTO> findDtoListByParentID(ID parentId){
+    public List<DTO> findDtoListByParentId(ID parentId){
         return findDtosByParentId(parentId);
+    }
+
+    public void deleteCacheById(ID id) {
+        if (id == null) {
+            return;
+        }
+        deleteCacheCascade(id);
+    }
+
+    public void deleteCacheByParentId(ID parentId) {
+        if (parentIdField == null || parentId == null) {
+            return;
+        }
+        removeEntriesByParentInternal(parentId);
+    }
+
+    private void deleteCacheCascade(ID id) {
+        if (id == null) {
+            return;
+        }
+
+        propagateParentDeletion(id);
+        getRedisTemplate().delete(getRedisKey(id));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void propagateParentDeletion(Object parentIdObject) {
+        if (parentIdObject == null) {
+            return;
+        }
+
+        Map<String, AutoCacheRepository<?, ?, ?>> repositories =
+                (Map<String, AutoCacheRepository<?, ?, ?>>) (Map<?, ?>) applicationContext.getBeansOfType(AutoCacheRepository.class);
+        Class<T> entityClass = getEntityClass();
+
+        for (AutoCacheRepository<?, ?, ?> repository : repositories.values()) {
+            if (repository == this) {
+                continue;
+            }
+            if (repository.parentEntityClass == null) {
+                continue;
+            }
+            if (!repository.parentEntityClass.isAssignableFrom(entityClass)) {
+                continue;
+            }
+            repository.removeEntriesByParentInternal(parentIdObject);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void removeEntriesByParentInternal(Object parentIdObject) {
+        if (parentIdField == null || parentIdObject == null) {
+            return;
+        }
+        if (!parentIdField.getType().isInstance(parentIdObject)) {
+            return;
+        }
+
+        ID parentId = (ID) parentIdObject;
+        List<DTO> dtos = findDtosByParentId(parentId);
+        if (dtos.isEmpty()) {
+            return;
+        }
+
+        for (DTO dto : dtos) {
+            ID childId = extractId(dto);
+            deleteCacheCascade(childId);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void syncToDatabaseByParentIdInternal(Object parentIdObject) {
+        if (parentIdField == null || parentIdObject == null) {
+            return;
+        }
+        if (!parentIdField.getType().isInstance(parentIdObject)) {
+            return;
+        }
+
+        ID parentId = (ID) parentIdObject;
+        syncToDatabaseByParentId(parentId);
     }
 
     // ==== 동기화 메소드 ====
 
-    public void syncToDatabase(DTO dto) {
+    public DTO syncToDatabaseByDto(DTO dto) {
         if (dto == null) {
-            return;
+            return null;
         }
-        // 부모가 없을 때 
+        // 부모가 없을 때
         if (parentIdField == null) {
-            saveToDatabase(dto);
-            return;
+            return saveToDatabase(dto);
         }
         // 부모가 있을 때
         Object parentIdValue = getParentIdValue(dto);
         if (parentIdValue instanceof Number number && number.longValue() <0) {
             System.out.println("부모키가 음수라 저장할 수 없습니다");
-            return;
+            return null;
         }
-
-        saveToDatabase(dto);
-        return;
+        return saveToDatabase(dto);
     }
 
     /**
      * 캐시에 존재하는 ParentId 하위 DTO들을 DB와 동기화하며, 캐시에 없어진 엔티티는 DB에서도 삭제합니다.
      */
-    public void syncCollectionByParentId(ID parentId) {
+    public List<DTO> syncToDatabaseByParentId(ID parentId) {
         if (parentIdField == null) {
             throw new UnsupportedOperationException("ParentId 필드가 없습니다.");
         }
         if (parentId == null) {
-            return;
+            return Collections.emptyList();
         }
         if (parentId instanceof Number number && number.longValue() < 0L) {
-            return; // 아직 영속화되지 않은 부모
+            return Collections.emptyList(); // 아직 영속화되지 않은 부모
         }
 
-        List<DTO> cachedDtos = findDtoListByParentID(parentId);
+        List<DTO> cachedDtos = findDtoListByParentId(parentId);
         if (!cachedDtos.isEmpty()) {
-            cachedDtos.forEach(this::syncToDatabase);
+            cachedDtos.forEach(this::syncToDatabaseByDto);
         }
 
-        List<DTO> refreshedDtos = findDtoListByParentID(parentId);
+        List<DTO> refreshedDtos = findDtoListByParentId(parentId);
         Set<ID> cachedPersistentIds = refreshedDtos.stream()
-            .map(this::extractId)
-            .filter(Objects::nonNull)
-            .filter(id -> !isTemporaryId(id))
-            .collect(Collectors.toSet());
+                .map(this::extractId)
+                .filter(Objects::nonNull)
+                .filter(id -> !isTemporaryId(id))
+                .collect(Collectors.toSet());
 
         List<T> persistedEntities = loadEntitiesByParentId(parentId);
         if (persistedEntities == null || persistedEntities.isEmpty()) {
-            return;
+            return Collections.emptyList();
         }
 
         List<T> entitiesToDelete = persistedEntities.stream()
-            .filter(entity -> {
-                ID entityId = extractEntityId(entity);
-                return entityId != null && !cachedPersistentIds.contains(entityId);
-            })
-            .collect(Collectors.toList());
+                .filter(entity -> {
+                    ID entityId = extractEntityId(entity);
+                    return entityId != null && !cachedPersistentIds.contains(entityId);
+                })
+                .collect(Collectors.toList());
 
         if (!entitiesToDelete.isEmpty()) {
+            handleChildCleanupBeforeDelete(entitiesToDelete);
             getJpaRepository().deleteAll(entitiesToDelete);
+        }
+        return refreshedDtos;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void handleChildCleanupBeforeDelete(List<T> entitiesToDelete) {
+        if (entitiesToDelete == null || entitiesToDelete.isEmpty()) {
+            return;
+        }
+
+        Map<String, AutoCacheRepository<?, ?, ?>> repositories =
+                (Map<String, AutoCacheRepository<?, ?, ?>>) (Map<?, ?>) applicationContext.getBeansOfType(AutoCacheRepository.class);
+        Class<T> entityClass = getEntityClass();
+
+        for (T entity : entitiesToDelete) {
+            ID parentId = extractEntityId(entity);
+            if (parentId == null) {
+                continue;
+            }
+
+            for (AutoCacheRepository<?, ?, ?> repository : repositories.values()) {
+                if (repository.parentEntityClass == null) {
+                    continue;
+                }
+                if (!repository.parentEntityClass.isAssignableFrom(entityClass)) {
+                    continue;
+                }
+                repository.syncToDatabaseByParentIdInternal(parentId);
+                repository.removeEntriesByParentInternal(parentId);
+            }
         }
     }
 
-    private void saveToDatabase(DTO dto) {
+    private DTO saveToDatabase(DTO dto) {
         JpaRepository<T, ID> repository = getJpaRepository();
         T entity = convertToEntity(dto);
 
@@ -844,7 +951,7 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         } else {
             savedEntity = repository.save(entity);
         }
-        
+
         DTO updatedDto = convertToDto(savedEntity);
         ID cacheId = extractId(updatedDto);
 
@@ -859,8 +966,9 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         if (previousId != null && !Objects.equals(previousId, cacheId)) {
             getRedisTemplate().delete(getRedisKey(previousId));
         }
+        return updatedDto;
     }
-        
+
 
     private Object getParentIdValue(DTO dto) {
         if (parentIdField == null) {
@@ -890,7 +998,7 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
         }
 
         Map<String, AutoCacheRepository<?, ?, ?>> repositories =
-            (Map<String, AutoCacheRepository<?, ?, ?>>) (Map<?, ?>) applicationContext.getBeansOfType(AutoCacheRepository.class);
+                (Map<String, AutoCacheRepository<?, ?, ?>>) (Map<?, ?>) applicationContext.getBeansOfType(AutoCacheRepository.class);
         Class<T> entityClass = getEntityClass();
         for (AutoCacheRepository<?, ?, ?> repository : repositories.values()) {
             if (repository == this) {
@@ -972,7 +1080,7 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
             }
 
             java.lang.reflect.Constructor<DTO> constructor =
-                (java.lang.reflect.Constructor<DTO>) dtoClass.getDeclaredConstructor(paramTypes);
+                    (java.lang.reflect.Constructor<DTO>) dtoClass.getDeclaredConstructor(paramTypes);
             return constructor.newInstance(values);
         } catch (Exception e) {
             throw new RuntimeException("DTO 부모 ID 업데이트 실패", e);
