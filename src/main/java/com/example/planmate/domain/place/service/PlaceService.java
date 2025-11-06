@@ -1,12 +1,5 @@
 package com.example.planmate.domain.place.service;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.springframework.data.util.Pair;
-import org.springframework.stereotype.Service;
-
 import com.example.planmate.common.externalAPI.GoogleMap;
 import com.example.planmate.common.externalAPI.GooglePlaceDetails;
 import com.example.planmate.common.valueObject.LodgingPlaceVO;
@@ -19,8 +12,13 @@ import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.user.entity.PreferredTheme;
 import com.example.planmate.domain.user.repository.UserRepository;
 import com.example.planmate.domain.webSocket.service.RedisService;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.util.Pair;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -37,10 +35,13 @@ public class PlaceService {
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
         Plan cachePlan = redisService.findPlanByPlanId(planId);
         String travelCategoryName;
+        String travelName;
         if(cachePlan!=null){
             travelCategoryName = cachePlan.getTravel().getTravelCategory().getTravelCategoryName();
+            travelName = travelCategoryName + " " + cachePlan.getTravel().getTravelName();
         } else {
             travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
+            travelName = travelCategoryName + " " + plan.getTravel().getTravelName();
         }
         List<PreferredTheme> preferredThemes = userRepository.findById(userId).get().getPreferredThemes();
         preferredThemes.removeIf(preferredTheme -> preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId() != 0);
@@ -49,7 +50,6 @@ public class PlaceService {
         for (PreferredTheme preferredTheme : preferredThemes) {
             preferredThemeNames.add(preferredTheme.getPreferredThemeName());
         }
-        String travelName = travelCategoryName + " " + plan.getTravel().getTravelName();
         Pair<List<TourPlaceVO>, List<String>> pair = googleMap.getTourPlace(travelCategoryName + " " + travelName, preferredThemeNames);
         List<TourPlaceVO> tourPlaceVOs = (List<TourPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
         response.addPlace(tourPlaceVOs);

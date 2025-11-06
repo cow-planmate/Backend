@@ -38,7 +38,10 @@ public class GooglePlaceImageWorker {
     public CompletableFuture<PlacePhoto> fetchSinglePlaceImageAsync(String placeId) {
         try {
             if(placePhotoRepository.existsById(placeId)) {
-                return CompletableFuture.completedFuture(placePhotoRepository.findById(placeId).get());
+                PlacePhoto photo = placePhotoRepository.findById(placeId).get();
+                if(photo.getPhotoUrl() != null && !photo.getPhotoUrl().isEmpty()) {
+                    return CompletableFuture.completedFuture(placePhotoRepository.findById(placeId).get());
+                }
             }
 
             String detailsUrl = "https://maps.googleapis.com/maps/api/place/details/json?placeid=" + placeId + "&fields=photos&key=" + googleApiKey;
