@@ -33,7 +33,7 @@ public class WebSocketPlanService {
 
     public WPlanResponse updatePlan(int planId, WPlanRequest request) {
         WPlanResponse response = new WPlanResponse();
-        Plan plan = redisService.findPlanByPlanId(planId);
+    Plan plan = redisService.findPlanByPlanId(planId);
 
         if(request.getPlanName() != null) {
             plan.changePlanName(request.getPlanName());

@@ -10,7 +10,6 @@ import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
 import com.example.planmate.domain.webSocket.dto.WPlanRequest;
-import com.example.planmate.domain.webSocket.dto.WPlanResponse;
 import com.example.planmate.domain.webSocket.dto.WTimeTablePlaceBlockRequest;
 import com.example.planmate.domain.webSocket.dto.WTimetableRequest;
 import com.example.planmate.domain.webSocket.service.WebSocketPlanService;
@@ -120,16 +119,20 @@ public class ChatBotPlanService {
     
     private String getTransportationName(int id) {
         return switch (id) {
-            case 0 -> "자동차";
-            case 1 -> "대중교통";
+            case 1 -> "도보";
+            case 2 -> "자전거";
+            case 3 -> "자동차";
+            case 4 -> "대중교통";
             default -> "알 수 없음";
         };
     }
     
     private String getTransportationEmoji(int id) {
         return switch (id) {
-            case 0 -> "🚗";
-            case 1 -> "🚌";
+            case 1 -> "🚶";
+            case 2 -> "🚴";
+            case 3 -> "🚗";
+            case 4 -> "🚌";
             default -> "🚀";
         };
     }
@@ -301,25 +304,22 @@ public class ChatBotPlanService {
             java.util.Map<String, Object> planMap = objectMapper.readValue(planJson, java.util.Map.class);
             
             // WPlanRequest 객체 생성 및 필드 설정
-            WPlanResponse response = new WPlanResponse();
+            WPlanRequest request = new WPlanRequest();
             
             if (planMap.containsKey("planName")) {
-                response.setPlanName((String) planMap.get("planName"));
+                request.setPlanName((String) planMap.get("planName"));
             }
             if (planMap.containsKey("departure")) {
-                response.setDeparture((String) planMap.get("departure"));
+                request.setDeparture((String) planMap.get("departure"));
             }
             if (planMap.containsKey("adultCount")) {
-                response.setAdultCount((Integer) planMap.get("adultCount"));
+                request.setAdultCount((Integer) planMap.get("adultCount"));
             }
             if (planMap.containsKey("childCount")) {
-                response.setChildCount((Integer) planMap.get("childCount"));
+                request.setChildCount((Integer) planMap.get("childCount"));
             }
             if (planMap.containsKey("transportationCategoryId")) {
-                response.setTransportationCategoryId((Integer) planMap.get("transportationCategoryId"));
-            }
-            if (planMap.containsKey("travelName")){
-                response.setTravelName((String) planMap.get("travelName"));
+                request.setTransportationCategoryId((Integer) planMap.get("transportationCategoryId"));
             }
             
             // 사용자 메시지 생성
@@ -350,7 +350,7 @@ public class ChatBotPlanService {
             
             String userMessage = messageBuilder.toString().trim();
             
-            return ChatBotActionResponse.withAction(userMessage, "update", "plan", response);
+            return ChatBotActionResponse.withAction(userMessage, "update", "plan", request);
             
         } catch (Exception e) {
             log.error("전체 계획 업데이트 실패: {}", e.getMessage());

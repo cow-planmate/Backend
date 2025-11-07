@@ -168,7 +168,6 @@ public class ChatBotService {
                 **중요** 반드시 JSON으로 반환을 해야 합니다
                 delete 빼고는 target의 모든 값을 다 반환해야 합니다
                 timeTablePlaceBlock은 생성하거나 수정할때 같은 timeTable안에 있는 다른 timeTablePlaceBlock과 시간이 겹치면 안됩니다.
-                timeTablePlaceBlock은 구글 장소 api를 사용해서 장소 정보를 채워야 합니다.
                 {
                   "userMessage": "사용자에게 보여줄 친근한 메시지",
                   "hasAction": true or false,
