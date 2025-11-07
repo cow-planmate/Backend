@@ -1,5 +1,6 @@
 package com.example.planmate.domain.chatbot.controller;
 
+import com.example.planmate.domain.webSocket.dto.WPlanResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -85,7 +86,7 @@ public class ChatBotController {
             if ("plan".equals(targetName)) {
                 if ("update".equals(actionType)) {
                     WPlanRequest request = (WPlanRequest) action.getTarget();
-                    var response = webSocketPlanService.updatePlan(planId, request);
+                    WPlanResponse response = webSocketPlanService.updatePlan(planId, request);
                     
                     messagingTemplate.convertAndSend(
                         "/topic/plan/" + planId + "/update/plan", 

@@ -1,11 +1,5 @@
 package com.example.planmate.domain.chatbot.service;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Service;
-
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
@@ -13,9 +7,13 @@ import com.example.planmate.domain.webSocket.dto.WPlanRequest;
 import com.example.planmate.domain.webSocket.dto.WTimeTablePlaceBlockRequest;
 import com.example.planmate.domain.webSocket.dto.WTimetableRequest;
 import com.example.planmate.domain.webSocket.service.WebSocketPlanService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 /**
  * AI 챗봇이 호출할 수 있는 여행 계획 관련 함수들을 정의
@@ -320,6 +318,9 @@ public class ChatBotPlanService {
             }
             if (planMap.containsKey("transportationCategoryId")) {
                 request.setTransportationCategoryId((Integer) planMap.get("transportationCategoryId"));
+            }
+            if(planMap.containsKey("travelId")) {
+                request.setTravelId((Integer) planMap.get("travelId"));
             }
             
             // 사용자 메시지 생성
