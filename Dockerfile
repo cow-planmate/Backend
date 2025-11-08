@@ -1,5 +1,5 @@
 # 1. JDK 기반 이미지
-FROM eclipse-temurin:17-jdk-jamm
+FROM eclipse-temurin:17-jdk-jammy
 
 # 2. APM 에이전트 추가
 COPY elastic-apm-agent.jar /elastic-apm-agent.jar
