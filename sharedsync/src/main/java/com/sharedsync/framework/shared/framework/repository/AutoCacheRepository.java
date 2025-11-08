@@ -837,6 +837,13 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
 
     // ==== 동기화 메소드 ====
 
+    public static void syncHierarchyToDatabaseByRootId(int rootId){
+
+    }
+    public static void syncHierarchyToDatabaseByRootId(String rootId){
+
+    }
+
     public DTO syncToDatabaseByDto(DTO dto) {
         if (dto == null) {
             return null;
@@ -1114,4 +1121,6 @@ public abstract class AutoCacheRepository<T, ID, DTO> implements CacheRepository
     private JpaRepository<T, ID> getJpaRepository() {
         return (JpaRepository<T, ID>) applicationContext.getBean(repositoryBeanName);
     }
+
+
 }
