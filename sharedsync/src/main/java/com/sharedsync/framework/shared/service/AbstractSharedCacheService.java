@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
+import com.sharedsync.framework.shared.framework.dto.CacheDto;
 import com.sharedsync.framework.shared.framework.dto.WRequest;
 import com.sharedsync.framework.shared.framework.dto.WResponse;
 import com.sharedsync.framework.shared.framework.repository.AutoCacheRepository;
@@ -18,7 +19,7 @@ import com.sharedsync.framework.shared.framework.repository.AutoCacheRepository;
  * workflow shared by the distributed shared services. Concrete services supply
  * request/response wiring and ID handling via the constructor arguments.
  */
-public abstract class AbstractSharedCacheService<Req extends WRequest, Res extends WResponse, DTO, ID>
+public abstract class AbstractSharedCacheService<Req extends WRequest, Res extends WResponse, DTO extends CacheDto<ID>, ID>
         implements SharedService<Req, Res> {
 
     private final AutoCacheRepository<?, ID, DTO> cacheRepository;
