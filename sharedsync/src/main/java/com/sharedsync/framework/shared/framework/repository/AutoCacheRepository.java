@@ -418,9 +418,19 @@ public abstract class AutoCacheRepository<T, ID, DTO extends CacheDto<ID>> imple
 
     @Override
     public final List<DTO> loadFromDatabaseByParentId(ID parentId) {
-        return loadEntitiesByParentId(parentId).stream()
-                .map(this::convertToDto)
-                .toList();
+        List<T> entities = loadEntitiesByParentId(parentId);
+        if (entities == null || entities.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<DTO> dtos = new ArrayList<>(entities.size());
+        for (T entity : entities) {
+            DTO dto = convertToDto(entity);
+            if (dto != null) {
+                dtos.add(dto);
+            }
+        }
+        return dtos;
     }
 
     @SuppressWarnings("unchecked")

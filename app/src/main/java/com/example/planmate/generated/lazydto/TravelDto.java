@@ -13,7 +13,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class TravelDto extends CacheDto<Integer> {
+public class TravelDto {
 
     private Integer travelId;
     private String travelName;

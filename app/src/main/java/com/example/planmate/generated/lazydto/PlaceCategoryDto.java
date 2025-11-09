@@ -12,7 +12,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class PlaceCategoryDto extends CacheDto<Integer> {
+public class PlaceCategoryDto {
 
     private Integer placeCategoryId;
     private String placeCategoryName;
