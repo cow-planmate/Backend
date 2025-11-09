@@ -49,17 +49,12 @@ public class SharedEventTracker {
     }
 
     private Integer parseRoomId(String destination) {
-        if (destination == null) {
-            return null;
+        if (destination == null) return null;
+        for (String token : destination.split("/")) {
+            try {
+                return Integer.parseInt(token);
+            } catch (NumberFormatException ignored) {}
         }
-        String[] tokens = destination.split("/");
-        if (tokens.length <= 2) {
-            return null;
-        }
-        try {
-            return Integer.parseInt(tokens[2]);
-        } catch (NumberFormatException ex) {
-            return null;
-        }
+        return null;
     }
 }
