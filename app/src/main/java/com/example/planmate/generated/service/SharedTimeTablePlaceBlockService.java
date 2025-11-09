@@ -5,12 +5,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Service;
+
 import com.example.planmate.generated.cache.TimeTablePlaceBlockCache;
 import com.example.planmate.generated.dto.WTimeTablePlaceBlockRequest;
 import com.example.planmate.generated.dto.WTimeTablePlaceBlockResponse;
 import com.example.planmate.generated.lazydto.TimeTablePlaceBlockDto;
 import com.sharedsync.framework.shared.service.SharedService;
-import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,7 +35,7 @@ public class SharedTimeTablePlaceBlockService
         }
 
         List<TimeTablePlaceBlockDto> sanitized = payload.stream()
-                .map(dto -> dto.withBlockId(null))
+            .map(dto -> dto.<TimeTablePlaceBlockDto>changeId(null))
                 .collect(Collectors.toList());
 
         List<TimeTablePlaceBlockDto> saved = timeTablePlaceBlockCache.saveAll(sanitized);
@@ -55,7 +56,7 @@ public class SharedTimeTablePlaceBlockService
         }
 
         Integer parentTimeTableId = payload.stream()
-                .map(TimeTablePlaceBlockDto::timeTableId)
+            .map(TimeTablePlaceBlockDto::getTimeTableId)
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElse(null);
@@ -103,7 +104,7 @@ public class SharedTimeTablePlaceBlockService
         }
 
         List<Integer> ids = payload.stream()
-                .map(TimeTablePlaceBlockDto::blockId)
+                    .map(TimeTablePlaceBlockDto::getBlockId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 

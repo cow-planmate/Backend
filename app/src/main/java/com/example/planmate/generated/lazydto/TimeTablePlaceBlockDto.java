@@ -13,28 +13,39 @@ import com.sharedsync.framework.shared.framework.annotation.CacheEntity;
 import com.sharedsync.framework.shared.framework.annotation.CacheId;
 import com.sharedsync.framework.shared.framework.annotation.EntityConverter;
 import com.sharedsync.framework.shared.framework.annotation.ParentId;
+import com.sharedsync.framework.shared.framework.dto.CacheDto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @CacheEntity
 @AutoRedisTemplate("timeTablePlaceBlockRedis")
 @AutoDatabaseLoader(repository = "timeTablePlaceBlockRepository", method = "findByTimeTableTimeTableId")
 @AutoEntityConverter(repositories = {"placeCategoryRepository", "timeTableRepository", "placePhotoRepository"})
-public record TimeTablePlaceBlockDto(
-        @CacheId
-        Integer blockId,
-        String placeName,
-        String placeTheme,
-        float placeRating,
-        String placeAddress,
-        String placeLink,
-        LocalTime blockStartTime,
-        LocalTime blockEndTime,
-        double xLocation,
-        double yLocation,
-        String placeId,
-        Integer placeCategoryId,
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+public class TimeTablePlaceBlockDto extends CacheDto<Integer> {
+
+    @CacheId
+    private Integer blockId;
+    private String placeName;
+    private String placeTheme;
+    private float placeRating;
+    private String placeAddress;
+    private String placeLink;
+    private LocalTime blockStartTime;
+    private LocalTime blockEndTime;
+    private double xLocation;
+    private double yLocation;
+    private String placeId;
+    private Integer placeCategoryId;
     @ParentId(TimeTable.class)
-        Integer timeTableId
-) {
+    private Integer timeTableId;
+
     public static TimeTablePlaceBlockDto fromEntity(TimeTablePlaceBlock block) {
         return new TimeTablePlaceBlockDto(
                 block.getBlockId(),
@@ -72,26 +83,4 @@ public record TimeTablePlaceBlockDto(
                 .build();
     }
 
-    /**
-     * ID만 변경된 새로운 TimeTablePlaceBlockDto 객체를 생성합니다.
-     * @param newBlockId 새로운 블록 ID
-     * @return ID가 변경된 새로운 DTO 객체
-     */
-    public TimeTablePlaceBlockDto withBlockId(Integer newBlockId) {
-        return new TimeTablePlaceBlockDto(
-                newBlockId,
-                this.placeName,
-                this.placeTheme,
-                this.placeRating,
-                this.placeAddress,
-                this.placeLink,
-                this.blockStartTime,
-                this.blockEndTime,
-                this.xLocation,
-                this.yLocation,
-                this.placeId,
-                this.placeCategoryId,
-                this.timeTableId
-        );
-    }
 }

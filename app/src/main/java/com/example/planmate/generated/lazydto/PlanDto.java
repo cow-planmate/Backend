@@ -2,28 +2,39 @@ package com.example.planmate.generated.lazydto;
 
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TransportationCategory;
+import com.example.planmate.domain.travel.entity.Travel;
+import com.example.planmate.domain.user.entity.User;
 import com.sharedsync.framework.shared.framework.annotation.AutoEntityConverter;
 import com.sharedsync.framework.shared.framework.annotation.AutoRedisTemplate;
 import com.sharedsync.framework.shared.framework.annotation.CacheEntity;
 import com.sharedsync.framework.shared.framework.annotation.CacheId;
 import com.sharedsync.framework.shared.framework.annotation.EntityConverter;
-import com.example.planmate.domain.travel.entity.Travel;
-import com.example.planmate.domain.user.entity.User;
+import com.sharedsync.framework.shared.framework.dto.CacheDto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @CacheEntity 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
 @AutoRedisTemplate("planRedis") //이름매칭으로 대체 가능할듯
 @AutoEntityConverter(repositories = {"userRepository", "transportationCategoryRepository", "travelRepository"})
-public record PlanDto(
-        @CacheId
-        Integer planId,
-        String planName,
-        String departure,
-        int adultCount,
-        int childCount,
-        Integer userId,
-        Integer transportationCategoryId,
-        Integer travelId    
-) {
+public class PlanDto extends CacheDto<Integer> {
+
+    @CacheId
+    private Integer planId;
+    private String planName;
+    private String departure;
+    private int adultCount;
+    private int childCount;
+    private Integer userId;
+    private Integer transportationCategoryId;
+    private Integer travelId;
+
     public static PlanDto fromEntity(Plan plan) {
         return new PlanDto(
                 plan.getPlanId(),
@@ -49,21 +60,5 @@ public record PlanDto(
                 .transportationCategory(transportationCategory)
                 .travel(travel)
                 .build();
-    }
-
-    /**
-     * ID만 변경된 새로운 PlanDto 객체를 생성합니다.
-     */
-    public PlanDto withPlanId(Integer newPlanId) {
-        return new PlanDto(
-                newPlanId,
-                this.planName,
-                this.departure,
-                this.adultCount,
-                this.childCount,
-                this.userId,
-                this.transportationCategoryId,
-                this.travelId
-        );
     }
 }

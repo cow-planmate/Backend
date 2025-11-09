@@ -1,15 +1,26 @@
 package com.example.planmate.generated.lazydto;
 
 import com.example.planmate.domain.user.entity.User;
+import com.sharedsync.framework.shared.framework.dto.CacheDto;
 
-public record UserDto(
-        Integer userId,
-        String email,
-        String password,
-        String nickname,
-        int age,
-        int gender
-) {
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+public class UserDto extends CacheDto<Integer> {
+
+    private Integer userId;
+    private String email;
+    private String password;
+    private String nickname;
+    private int age;
+    private int gender;
+
     public static UserDto fromEntity(User user) {
         return new UserDto(
                 user.getUserId(),

@@ -5,15 +5,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Service;
+
+import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.generated.cache.PlanCache;
 import com.example.planmate.generated.dto.WPlanRequest;
 import com.example.planmate.generated.dto.WPlanResponse;
 import com.example.planmate.generated.lazydto.PlanDto;
 import com.sharedsync.framework.shared.service.SharedService;
-import org.springframework.stereotype.Service;
-
-import com.example.planmate.domain.plan.entity.Plan;
-
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,9 +32,9 @@ public class SharedPlanService implements SharedService<WPlanRequest, WPlanRespo
             return response;
         }
 
-        List<PlanDto> sanitized = payload.stream()
-                .map(dto -> dto.withPlanId(null))
-                .collect(Collectors.toList());
+    List<PlanDto> sanitized = payload.stream()
+        .map(dto -> dto.<PlanDto>changeId(null))
+        .collect(Collectors.toList());
 
         List<PlanDto> saved = planCache.saveAll(sanitized);
         response.setPlanDto(saved);
@@ -52,8 +51,8 @@ public class SharedPlanService implements SharedService<WPlanRequest, WPlanRespo
             return response;
         }
 
-        List<Integer> ids = payload.stream()
-                .map(PlanDto::planId)
+    List<Integer> ids = payload.stream()
+        .map(PlanDto::getPlanId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
@@ -100,8 +99,8 @@ public class SharedPlanService implements SharedService<WPlanRequest, WPlanRespo
             return response;
         }
 
-        List<Integer> ids = payload.stream()
-                .map(PlanDto::planId)
+    List<Integer> ids = payload.stream()
+        .map(PlanDto::getPlanId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 

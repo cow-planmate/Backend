@@ -5,12 +5,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Service;
+
 import com.example.planmate.generated.cache.TimeTableCache;
 import com.example.planmate.generated.dto.WTimetableRequest;
 import com.example.planmate.generated.dto.WTimetableResponse;
 import com.example.planmate.generated.lazydto.TimeTableDto;
 import com.sharedsync.framework.shared.service.SharedService;
-import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,9 +32,9 @@ public class SharedTimeTableService implements SharedService<WTimetableRequest, 
             return response;
         }
 
-        List<TimeTableDto> sanitized = payload.stream()
-                .map(dto -> dto.withTimeTableId(null))
-                .collect(Collectors.toList());
+    List<TimeTableDto> sanitized = payload.stream()
+        .map(dto -> dto.<TimeTableDto>changeId(null))
+        .collect(Collectors.toList());
 
         List<TimeTableDto> saved = timeTableCache.saveAll(sanitized);
         response.setTimeTableDtos(saved);
@@ -51,8 +52,8 @@ public class SharedTimeTableService implements SharedService<WTimetableRequest, 
             return response;
         }
 
-        Integer parentPlanId = payload.stream()
-                .map(TimeTableDto::planId)
+    Integer parentPlanId = payload.stream()
+        .map(TimeTableDto::getPlanId)
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElse(null);
@@ -97,8 +98,8 @@ public class SharedTimeTableService implements SharedService<WTimetableRequest, 
             return response;
         }
 
-        List<Integer> ids = payload.stream()
-                .map(TimeTableDto::timeTableId)
+    List<Integer> ids = payload.stream()
+        .map(TimeTableDto::getTimeTableId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 

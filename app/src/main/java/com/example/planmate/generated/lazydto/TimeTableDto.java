@@ -12,20 +12,31 @@ import com.sharedsync.framework.shared.framework.annotation.CacheEntity;
 import com.sharedsync.framework.shared.framework.annotation.CacheId;
 import com.sharedsync.framework.shared.framework.annotation.EntityConverter;
 import com.sharedsync.framework.shared.framework.annotation.ParentId;
+import com.sharedsync.framework.shared.framework.dto.CacheDto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @CacheEntity
 @AutoRedisTemplate("timeTableRedis")
 @AutoDatabaseLoader(repository = "timeTableRepository", method = "findByPlanPlanId")
 @AutoEntityConverter(repositories = {"planRepository"})
-public record TimeTableDto(
-        @CacheId
-        Integer timeTableId,
-        LocalDate date,
-        LocalTime timeTableStartTime,
-        LocalTime timeTableEndTime,
-        @ParentId(Plan.class)
-        Integer planId
-) {
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+public class TimeTableDto extends CacheDto<Integer> {
+
+    @CacheId
+    private Integer timeTableId;
+    private LocalDate date;
+    private LocalTime timeTableStartTime;
+    private LocalTime timeTableEndTime;
+    @ParentId(Plan.class)
+    private Integer planId;
+
     public static TimeTableDto fromEntity(TimeTable timeTable) {
         return new TimeTableDto(
                 timeTable.getTimeTableId(),
@@ -47,18 +58,4 @@ public record TimeTableDto(
                 .build();
     }
 
-    /**
-     * ID만 변경된 새로운 TimeTableDto 객체를 생성합니다.
-     * @param newTimeTableId 새로운 타임테이블 ID
-     * @return ID가 변경된 새로운 DTO 객체
-     */
-    public TimeTableDto withTimeTableId(Integer newTimeTableId) {
-        return new TimeTableDto(
-                newTimeTableId,
-                this.date,
-                this.timeTableStartTime,
-                this.timeTableEndTime,
-                this.planId
-        );
-    }
 }
