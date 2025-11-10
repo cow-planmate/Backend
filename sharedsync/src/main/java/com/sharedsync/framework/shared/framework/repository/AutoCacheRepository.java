@@ -458,5 +458,4 @@ public abstract class AutoCacheRepository<T, ID, DTO extends CacheDto<ID>> exten
     public boolean isPersistentId(Object id) {
         return id != null && !isTemporaryId(id);
     }
-
 }

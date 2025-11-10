@@ -69,20 +69,4 @@ public class CacheSyncService {
             persistentIds.forEach(childId -> syncRecursively(childRepo, childId));
         }
     }
-
-    // public void syncToDatabase(int planId) {
-    //     PlanDto planDto = planCache.findDtoById(planId);
-    //     PlanDto updatedPlanDto = planCache.syncToDatabaseByDto(planDto);
-
-    //     timeTableCache.syncToDatabaseByParentId(updatedPlanDto.planId());
-    //     List<TimeTableDto> refreshedTimeTables = timeTableCache.findDtoListByParentId(planId);
-
-    //     for (TimeTableDto timeTableDto : refreshedTimeTables) {
-    //         Integer timeTableId = timeTableDto.timeTableId();
-    //         timeTablePlaceBlockCache.syncToDatabaseByParentId(timeTableId);
-    //         timeTablePlaceBlockCache.deleteCacheByParentId(timeTableId);
-    //     }
-    //     timeTableCache.deleteCacheByParentId(planId);
-    //     planCache.deleteCacheById(planId);
-    // }
 }

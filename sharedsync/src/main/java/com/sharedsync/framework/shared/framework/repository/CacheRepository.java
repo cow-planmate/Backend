@@ -202,9 +202,6 @@ public abstract class CacheRepository<T, ID, DTO> {
         return dtos;
     }
 
-    
-
-
     // ==== 내부 헬퍼 메서드 ====
 
     protected final String getRedisKey(ID id) {
@@ -459,14 +456,7 @@ public abstract class CacheRepository<T, ID, DTO> {
                 .map(this::convertToEntity)
                 .toList();
     }
-
-    /**
-     * ParentId로 캐시에서 Entity 리스트 삭제
-     * Redis에 저장된 해당 ParentId를 가진 모든 데이터를 삭제하고 삭제된 Entity 리스트 반환
-     */
     
-    
-
     /**
      * ParentId로 캐시에서 DTO 리스트 조회
      * Redis에 이미 저장된 DTO를 직접 반환 (Entity 변환 없음)
@@ -711,17 +701,6 @@ public abstract class CacheRepository<T, ID, DTO> {
     public List<DTO> findDtoListByParentIdUnchecked(Object parentId) {
         return findDtoListByParentId((ID) parentId);
     }
-
-    
-
-    
-
-    
-
-    
-
-    
-
    
 
     // ==== 동기화 메소드 ====
@@ -732,17 +711,6 @@ public abstract class CacheRepository<T, ID, DTO> {
     public static void syncHierarchyToDatabaseByRootId(String rootId){
 
     }
-
-    
-
-    
-
-  
-
-    
-
-    
-
     
 
     public boolean isParentIdFieldPresent() {
