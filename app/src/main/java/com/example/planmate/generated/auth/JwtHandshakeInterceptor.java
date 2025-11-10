@@ -1,19 +1,22 @@
 package com.example.planmate.generated.auth;
 
-import com.example.planmate.common.auth.JwtTokenProvider;
-import lombok.RequiredArgsConstructor;
+import java.util.Map;
+
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
-import java.util.Map;
+
+import com.example.planmate.common.auth.AuthenticationTokenResolver;
+
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
 public class JwtHandshakeInterceptor implements HandshakeInterceptor {
 
-    private final JwtTokenProvider jwt;
+    private final AuthenticationTokenResolver tokenResolver;
 
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
@@ -24,12 +27,12 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                 response.setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
                 return false;
             }
-            if (!jwt.validateToken(token)) {
+            if (!tokenResolver.validate(token)) {
                 response.setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
                 return false;
             }
 
-            attributes.put("userId", jwt.getSubject(token));
+            attributes.put("userId", tokenResolver.extractPrincipalId(token));
             return true;
 
         } catch (Exception e) {

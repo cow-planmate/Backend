@@ -2,10 +2,13 @@ package com.example.planmate.common.auth;
 
 import java.security.Key;
 import java.util.Date;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
 import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
 import com.example.planmate.domain.refreshToken.service.RefreshTokenStore;
+
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -16,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-public class JwtTokenProvider {
+public class JwtTokenProvider implements AuthenticationTokenResolver {
 
     private Key accessKey;
     private Key refreshKey;
@@ -76,6 +79,16 @@ public class JwtTokenProvider {
     }
 
 
+    @Override
+    public boolean validate(String token) {
+        return validateToken(token);
+    }
+
+    @Override
+    public String extractPrincipalId(String token) {
+        return getSubject(token);
+    }
+
     // 토큰에서 정보 추출
     public String getSubject(String token) {
         return Jwts.parserBuilder()
@@ -109,7 +122,5 @@ public class JwtTokenProvider {
             return false;
         }
     }
-
-
 }
 
