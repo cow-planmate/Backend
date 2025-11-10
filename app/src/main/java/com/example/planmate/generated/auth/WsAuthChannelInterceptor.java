@@ -1,4 +1,4 @@
-package com.sharedsync.framework.shared.auth;
+package com.example.planmate.generated.auth;
 
 import java.security.Principal;
 import java.util.List;

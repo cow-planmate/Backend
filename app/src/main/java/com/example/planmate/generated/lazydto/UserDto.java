@@ -1,6 +1,9 @@
 package com.example.planmate.generated.lazydto;
 
 import com.example.planmate.domain.user.entity.User;
+import com.sharedsync.framework.shared.framework.annotation.CacheEntity;
+import com.sharedsync.framework.shared.framework.annotation.CacheId;
+import com.sharedsync.framework.shared.framework.annotation.EntityConverter;
 import com.sharedsync.framework.shared.framework.dto.CacheDto;
 
 import lombok.AllArgsConstructor;
@@ -8,12 +11,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@CacheEntity
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 public class UserDto extends CacheDto<Integer> {
-
+    @CacheId
     private Integer userId;
     private String email;
     private String password;
@@ -31,8 +35,8 @@ public class UserDto extends CacheDto<Integer> {
                 user.getGender()
         );
     }
-
-    public User toEntity(String encodedPassword) {
+    @EntityConverter
+    public User toEntity() {
         return User.builder()
                 .userId(this.userId)
                 .email(this.email)

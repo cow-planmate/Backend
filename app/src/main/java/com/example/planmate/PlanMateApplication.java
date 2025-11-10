@@ -3,7 +3,7 @@ package com.example.planmate;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.example.planmate", "com.sharedsync"})
 public class PlanMateApplication {
 
     public static void main(String[] args) {

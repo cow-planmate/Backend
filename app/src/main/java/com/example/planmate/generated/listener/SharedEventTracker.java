@@ -1,4 +1,4 @@
-package com.sharedsync.framework.shared.listener;
+package com.example.planmate.generated.listener;
 
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;

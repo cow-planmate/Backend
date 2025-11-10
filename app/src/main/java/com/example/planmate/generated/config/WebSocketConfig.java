@@ -1,4 +1,4 @@
-package com.sharedsync.framework.shared.config;
+package com.example.planmate.generated.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -8,7 +8,7 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 import com.example.planmate.common.log.WsAccessLogInterceptor;
-import com.sharedsync.framework.shared.auth.JwtHandshakeInterceptor;
+import com.example.planmate.generated.auth.JwtHandshakeInterceptor;
 
 import lombok.RequiredArgsConstructor;
 

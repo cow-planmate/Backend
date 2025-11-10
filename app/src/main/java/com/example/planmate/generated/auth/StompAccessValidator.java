@@ -1,4 +1,4 @@
-package com.sharedsync.framework.shared.auth;
+package com.example.planmate.generated.auth;
 
 /**
  * STOMP 목적지에 대한 접근 권한 검증 전략.

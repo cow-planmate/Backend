@@ -8,6 +8,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
@@ -26,6 +27,7 @@ import com.sharedsync.framework.shared.framework.annotation.AutoRedisTemplate;
 import com.sharedsync.framework.shared.framework.annotation.CacheEntity;
 import com.sharedsync.framework.shared.framework.annotation.CacheId;
 import com.sharedsync.framework.shared.framework.annotation.EntityConverter;
+import com.sharedsync.framework.shared.framework.annotation.EntityReference;
 import com.sharedsync.framework.shared.framework.annotation.ParentId;
 /**
  * 공통 캐시 인터페이스 - JpaRepository와 유사한 방식으로 캐시 작업을 수행
@@ -50,6 +52,7 @@ public abstract class CacheRepository<T, ID, DTO> {
     protected final String loadMethodName;
     protected final String[] entityConverterRepositories;
     protected final List<Field> dtoFields;
+    protected final List<EntityReferenceDefinition> entityReferenceDefinitions;
 
     @SuppressWarnings("unchecked")
     public CacheRepository() {
@@ -140,9 +143,15 @@ public abstract class CacheRepository<T, ID, DTO> {
         detectedEntityIdField.setAccessible(true);
         this.entityIdField = detectedEntityIdField;
 
-    this.dtoFields = Arrays.stream(dtoClass.getDeclaredFields())
+    List<Field> collectedFields = Arrays.stream(dtoClass.getDeclaredFields())
         .filter(field -> !Modifier.isStatic(field.getModifiers()))
         .peek(field -> field.setAccessible(true))
+        .collect(Collectors.toCollection(ArrayList::new));
+
+    this.dtoFields = Collections.unmodifiableList(collectedFields);
+    this.entityReferenceDefinitions = this.dtoFields.stream()
+        .filter(field -> field.isAnnotationPresent(EntityReference.class))
+        .map(field -> new EntityReferenceDefinition(field, field.getAnnotation(EntityReference.class)))
         .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
     }
 
@@ -495,30 +504,190 @@ public abstract class CacheRepository<T, ID, DTO> {
     }
 
     private Object[] buildEntityConverterParameters(DTO dto) throws Exception {
-        Object[] params = new Object[entityConverterRepositories.length];
+        Class<?>[] parameterTypes = entityConverterMethod.getParameterTypes();
+        Object[] params = new Object[parameterTypes.length];
 
-        for (int i = 0; i < entityConverterRepositories.length; i++) {
-            String repoName = entityConverterRepositories[i];
-            Object repository = applicationContext.getBean(repoName);
+        List<EntityReferenceDefinition> remainingDefinitions = new ArrayList<>(entityReferenceDefinitions);
+        remainingDefinitions.sort(Comparator.comparingInt(EntityReferenceDefinition::order));
 
-            // DTO에서 적절한 ID를 추출
-            Object relatedId = extractRelatedId(dto, i);
+        for (int i = 0; i < parameterTypes.length; i++) {
+            Class<?> parameterType = parameterTypes[i];
+            EntityReferenceDefinition definition = detachMatchingDefinition(remainingDefinitions, parameterType);
 
-            // ID가 null이면 null 반환
-            if (relatedId == null) {
-                params[i] = null;
-            } else {
-                try {
-                    Method getReferenceMethod = repository.getClass().getMethod("getReferenceById", Object.class);
-                    Object entityRef = getReferenceMethod.invoke(repository, relatedId);
-                    params[i] = entityRef;
-                } catch (Exception e) {
-                    params[i] = null;
-                }
+            if (definition != null) {
+                params[i] = resolveEntityReferenceParameter(dto, definition, parameterType);
+                continue;
             }
+
+            params[i] = resolveLegacyEntityConverterParameter(dto, i);
         }
 
         return params;
+    }
+
+    private EntityReferenceDefinition detachMatchingDefinition(List<EntityReferenceDefinition> candidates, Class<?> parameterType) {
+        for (int index = 0; index < candidates.size(); index++) {
+            EntityReferenceDefinition definition = candidates.get(index);
+            if (definition.matches(parameterType)) {
+                candidates.remove(index);
+                return definition;
+            }
+        }
+        return null;
+    }
+
+    private Object resolveEntityReferenceParameter(DTO dto, EntityReferenceDefinition definition, Class<?> parameterType) throws Exception {
+        Object relatedId = definition.readId(dto);
+        if (relatedId == null) {
+            if (definition.optional()) {
+                return null;
+            }
+            throw new IllegalStateException("필수 연관 ID가 누락되었습니다: " + definition.fieldName());
+        }
+
+        Object repository = applicationContext.getBean(definition.repository());
+        Method lookupMethod = resolveLookupMethod(repository, definition.method());
+        if (lookupMethod == null) {
+            throw new IllegalStateException("Repository '" + definition.repository() + "'에서 메서드 '"
+                    + definition.method() + "'를 찾을 수 없습니다.");
+        }
+
+        Object result = lookupMethod.invoke(repository, relatedId);
+        result = unwrapOptional(result);
+
+        if (result == null) {
+            if (definition.optional()) {
+                return null;
+            }
+            throw new IllegalStateException("연관 엔티티를 찾을 수 없습니다: " + definition.fieldName() + "=" + relatedId);
+        }
+
+        if (!parameterType.isInstance(result)) {
+            throw new IllegalStateException(
+                    "연관 엔티티 타입 불일치. 기대 타입=" + parameterType.getName() + ", 실제 타입=" + result.getClass().getName());
+        }
+
+        return result;
+    }
+
+    private Object resolveLegacyEntityConverterParameter(DTO dto, int parameterIndex) throws Exception {
+        if (parameterIndex >= entityConverterRepositories.length) {
+            return null;
+        }
+
+        String repoName = entityConverterRepositories[parameterIndex];
+        if (repoName == null || repoName.isBlank()) {
+            return null;
+        }
+
+        Object repository = applicationContext.getBean(repoName);
+        Object relatedId = extractRelatedId(dto, parameterIndex);
+        if (relatedId == null) {
+            return null;
+        }
+
+        Method lookupMethod = resolveLookupMethod(repository, "getReferenceById");
+        if (lookupMethod == null) {
+            lookupMethod = resolveLookupMethod(repository, "findById");
+        }
+        if (lookupMethod == null) {
+            return null;
+        }
+
+        Object result = lookupMethod.invoke(repository, relatedId);
+        return unwrapOptional(result);
+    }
+
+    private Method resolveLookupMethod(Object repository, String preferredMethodName) {
+        Method method = findSingleArgumentMethod(repository, preferredMethodName);
+        if (method != null) {
+            method.setAccessible(true);
+            return method;
+        }
+
+        // 기본 메서드 우선순위: preferred -> findById -> getReferenceById
+        if (!"findById".equals(preferredMethodName)) {
+            method = findSingleArgumentMethod(repository, "findById");
+            if (method != null) {
+                method.setAccessible(true);
+                return method;
+            }
+        }
+
+        if (!"getReferenceById".equals(preferredMethodName)) {
+            method = findSingleArgumentMethod(repository, "getReferenceById");
+            if (method != null) {
+                method.setAccessible(true);
+                return method;
+            }
+        }
+
+        return null;
+    }
+
+    private Method findSingleArgumentMethod(Object repository, String methodName) {
+        return Arrays.stream(repository.getClass().getMethods())
+                .filter(method -> method.getName().equals(methodName) && method.getParameterCount() == 1)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private Object unwrapOptional(Object result) {
+        if (result instanceof Optional<?> optional) {
+            return optional.orElse(null);
+        }
+        return result;
+    }
+
+    private static final class EntityReferenceDefinition {
+        private final Field field;
+        private final String repository;
+        private final String method;
+        private final boolean optional;
+        private final int order;
+        private final Class<?> entityType;
+
+        private EntityReferenceDefinition(Field field, EntityReference annotation) {
+            this.field = field;
+            this.repository = annotation.repository();
+            this.method = annotation.method();
+            this.optional = annotation.optional();
+            this.order = annotation.order();
+            this.entityType = annotation.entityType() != Void.class ? annotation.entityType() : null;
+        }
+
+        private boolean matches(Class<?> parameterType) {
+            Class<?> targetType = entityType != null ? entityType : parameterType;
+            return parameterType.isAssignableFrom(targetType);
+        }
+
+        private Object readId(Object dtoInstance) {
+            try {
+                return field.get(dtoInstance);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException("연관 ID 필드 접근 실패: " + field.getName(), e);
+            }
+        }
+
+        private String repository() {
+            return repository;
+        }
+
+        private String method() {
+            return method;
+        }
+
+        private boolean optional() {
+            return optional;
+        }
+
+        private int order() {
+            return order;
+        }
+
+        private String fieldName() {
+            return field.getName();
+        }
     }
 
     private Object extractRelatedId(DTO dto, int parameterIndex) {

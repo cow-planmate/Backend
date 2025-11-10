@@ -1,15 +1,15 @@
-package com.sharedsync.framework.shared.listener;
+package com.example.planmate.generated.listener;
 
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.sharedsync.framework.shared.cache.PlanCache;
-import com.sharedsync.framework.shared.cache.TimeTableCache;
-import com.sharedsync.framework.shared.cache.TimeTablePlaceBlockCache;
-import com.sharedsync.framework.shared.lazydto.PlanDto;
-import com.sharedsync.framework.shared.lazydto.TimeTableDto;
-import com.sharedsync.framework.shared.lazydto.TimeTablePlaceBlockDto;
+import com.example.planmate.generated.cache.PlanCache;
+import com.example.planmate.generated.cache.TimeTableCache;
+import com.example.planmate.generated.cache.TimeTablePlaceBlockCache;
+import com.example.planmate.generated.lazydto.PlanDto;
+import com.example.planmate.generated.lazydto.TimeTableDto;
+import com.example.planmate.generated.lazydto.TimeTablePlaceBlockDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,7 +32,7 @@ public class CacheInitializer {
         for (TimeTableDto timeTable : timeTables) {
             timeTableCache.save(timeTable);
             List<TimeTablePlaceBlockDto> blocks = timeTablePlaceBlockCache
-                    .loadFromDatabaseByParentId(timeTable.timeTableId());
+                    .loadFromDatabaseByParentId(timeTable.getTimeTableId());
             blocks.forEach(timeTablePlaceBlockCache::save);
         }
     }

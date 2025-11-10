@@ -9,6 +9,7 @@ import com.sharedsync.framework.shared.framework.annotation.AutoRedisTemplate;
 import com.sharedsync.framework.shared.framework.annotation.CacheEntity;
 import com.sharedsync.framework.shared.framework.annotation.CacheId;
 import com.sharedsync.framework.shared.framework.annotation.EntityConverter;
+import com.sharedsync.framework.shared.framework.annotation.EntityReference;
 import com.sharedsync.framework.shared.framework.dto.CacheDto;
 
 import lombok.AllArgsConstructor;
@@ -31,8 +32,11 @@ public class PlanDto extends CacheDto<Integer> {
     private String departure;
     private int adultCount;
     private int childCount;
+    @EntityReference(repository = "userRepository", entityType = User.class, optional = false)
     private Integer userId;
+    @EntityReference(repository = "transportationCategoryRepository", entityType = TransportationCategory.class, optional = false)
     private Integer transportationCategoryId;
+    @EntityReference(repository = "travelRepository", entityType = Travel.class, optional = false)
     private Integer travelId;
 
     public static PlanDto fromEntity(Plan plan) {

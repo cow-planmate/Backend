@@ -1,4 +1,4 @@
-package com.sharedsync.framework.shared.config;
+package com.example.planmate.generated.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
@@ -9,11 +9,11 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 
-import com.sharedsync.framework.shared.lazydto.PlaceCategoryDto;
-import com.sharedsync.framework.shared.lazydto.PlanDto;
-import com.sharedsync.framework.shared.lazydto.TimeTableDto;
-import com.sharedsync.framework.shared.lazydto.TimeTablePlaceBlockDto;
-import com.sharedsync.framework.shared.lazydto.TravelDto;
+import com.example.planmate.generated.lazydto.PlaceCategoryDto;
+import com.example.planmate.generated.lazydto.PlanDto;
+import com.example.planmate.generated.lazydto.TimeTableDto;
+import com.example.planmate.generated.lazydto.TimeTablePlaceBlockDto;
+import com.example.planmate.generated.lazydto.TravelDto;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

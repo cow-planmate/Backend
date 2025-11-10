@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sharedsync.framework.shared.framework.annotation.CacheId;
 
 /**
@@ -26,6 +27,7 @@ public abstract class CacheDto<ID> {
      * 구현체는 {@code @CacheId}가 지정된 필드를 통해 식별자를 노출해야 합니다.
      */
     @SuppressWarnings("unchecked")
+    @JsonIgnore
     public ID getId() {
         Field idField = ID_FIELD_CACHE.computeIfAbsent(getClass(), CacheDto::resolveCacheIdField);
         try {

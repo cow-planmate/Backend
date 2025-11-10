@@ -2,13 +2,10 @@ package com.example.planmate.common.auth;
 
 import java.security.Key;
 import java.util.Date;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
 import com.example.planmate.domain.refreshToken.service.RefreshTokenStore;
-
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

@@ -1,9 +1,9 @@
-package com.sharedsync.framework.shared.listener;
+package com.example.planmate.generated.listener;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
-import com.sharedsync.framework.shared.dto.WPresenceResponse;
+import com.example.planmate.generated.dto.WPresenceResponse;
 
 import lombok.RequiredArgsConstructor;
 

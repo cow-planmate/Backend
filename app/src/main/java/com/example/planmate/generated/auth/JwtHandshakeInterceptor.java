@@ -1,4 +1,4 @@
-package com.sharedsync.framework.shared.auth;
+package com.example.planmate.generated.auth;
 
 import com.example.planmate.common.auth.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
