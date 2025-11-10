@@ -35,6 +35,7 @@ import com.sharedsync.framework.shared.framework.annotation.ParentId;
  * @param <ID> ID 타입 
  * @param <DTO> DTO 타입
  */
+@SuppressWarnings("null")
 public abstract class CacheRepository<T, ID, DTO> {
 
     @Autowired
@@ -219,7 +220,7 @@ public abstract class CacheRepository<T, ID, DTO> {
 
     @SuppressWarnings("unchecked")
     protected final RedisTemplate<String, DTO> getRedisTemplate() {
-        return (RedisTemplate<String, DTO>) applicationContext.getBean(redisTemplateBeanName);
+    return (RedisTemplate<String, DTO>) applicationContext.getBean(redisTemplateBeanName);
     }
 
     @SuppressWarnings("unchecked")
@@ -398,7 +399,7 @@ public abstract class CacheRepository<T, ID, DTO> {
     @SuppressWarnings("unchecked")
     protected List<T> loadEntitiesByParentId(ID parentId) {
         try {
-            Object repository = applicationContext.getBean(repositoryBeanName);
+        Object repository = applicationContext.getBean(repositoryBeanName);
             Method loadMethod = findLoadMethod(repository, parentId);
             return (List<T>) loadMethod.invoke(repository, parentId);
         } catch (Exception e) {
@@ -426,7 +427,7 @@ public abstract class CacheRepository<T, ID, DTO> {
     @SuppressWarnings("unchecked")
     public final DTO loadFromDatabaseById(ID id){
         try {
-            Object repository = applicationContext.getBean(repositoryBeanName);
+        Object repository = applicationContext.getBean(repositoryBeanName);
             Method findByIdMethod = resolveFindByIdMethod(repository);
 
             Object result = findByIdMethod.invoke(repository, id);
@@ -504,6 +505,10 @@ public abstract class CacheRepository<T, ID, DTO> {
     }
 
     private Object[] buildEntityConverterParameters(DTO dto) throws Exception {
+        if (entityConverterMethod.isVarArgs()) {
+            return buildVarArgEntityConverterParameters(dto);
+        }
+
         Class<?>[] parameterTypes = entityConverterMethod.getParameterTypes();
         Object[] params = new Object[parameterTypes.length];
 
@@ -523,6 +528,26 @@ public abstract class CacheRepository<T, ID, DTO> {
         }
 
         return params;
+    }
+
+    private Object[] buildVarArgEntityConverterParameters(DTO dto) throws Exception {
+        List<Object> resolved = new ArrayList<>();
+
+    List<EntityReferenceDefinition> definitions = new ArrayList<>(entityReferenceDefinitions);
+    definitions.sort(Comparator.comparingInt(EntityReferenceDefinition::order)
+        .thenComparing(EntityReferenceDefinition::fieldName));
+        for (EntityReferenceDefinition definition : definitions) {
+            Class<?> expectedType = definition.entityType() != null ? definition.entityType() : Object.class;
+            Object value = resolveEntityReferenceParameter(dto, definition, expectedType);
+            resolved.add(value);
+        }
+
+        for (int index = 0; index < entityConverterRepositories.length; index++) {
+            resolved.add(resolveLegacyEntityConverterParameter(dto, index));
+        }
+
+        Object[] varArgs = resolved.toArray();
+        return new Object[]{varArgs};
     }
 
     private EntityReferenceDefinition detachMatchingDefinition(List<EntityReferenceDefinition> candidates, Class<?> parameterType) {
@@ -545,7 +570,7 @@ public abstract class CacheRepository<T, ID, DTO> {
             throw new IllegalStateException("필수 연관 ID가 누락되었습니다: " + definition.fieldName());
         }
 
-        Object repository = applicationContext.getBean(definition.repository());
+    Object repository = applicationContext.getBean(definition.repository());
         Method lookupMethod = resolveLookupMethod(repository, definition.method());
         if (lookupMethod == null) {
             throw new IllegalStateException("Repository '" + definition.repository() + "'에서 메서드 '"
@@ -580,7 +605,7 @@ public abstract class CacheRepository<T, ID, DTO> {
             return null;
         }
 
-        Object repository = applicationContext.getBean(repoName);
+    Object repository = applicationContext.getBean(repoName);
         Object relatedId = extractRelatedId(dto, parameterIndex);
         if (relatedId == null) {
             return null;
@@ -687,6 +712,10 @@ public abstract class CacheRepository<T, ID, DTO> {
 
         private String fieldName() {
             return field.getName();
+        }
+
+        private Class<?> entityType() {
+            return entityType;
         }
     }
 
@@ -833,10 +862,15 @@ public abstract class CacheRepository<T, ID, DTO> {
     }
 
     private Method findMethodWithAnnotation(Class<?> clazz, Class<? extends java.lang.annotation.Annotation> annotationClass) {
-        for (Method method : clazz.getDeclaredMethods()) {
-            if (method.isAnnotationPresent(annotationClass)) {
-                return method;
+        Class<?> current = clazz;
+        while (current != null && current != Object.class) {
+            for (Method method : current.getDeclaredMethods()) {
+                if (method.isAnnotationPresent(annotationClass)) {
+                    method.setAccessible(true);
+                    return method;
+                }
             }
+            current = current.getSuperclass();
         }
         return null;
     }
@@ -855,7 +889,7 @@ public abstract class CacheRepository<T, ID, DTO> {
     }
 
     public DTO findDtoById(ID id){
-        return getRedisTemplate().opsForValue().get(getRedisKey(id));
+    return getRedisTemplate().opsForValue().get(getRedisKey(id));
     }
     public List<DTO> findDtoListByParentId(ID parentId){
         return findDtosByParentId(parentId);
@@ -915,7 +949,7 @@ public abstract class CacheRepository<T, ID, DTO> {
 
     @SuppressWarnings({"unchecked", "null"})
     protected JpaRepository<T, ID> getJpaRepository() {
-        return (JpaRepository<T, ID>) Objects.requireNonNull(applicationContext.getBean(repositoryBeanName));
+    return (JpaRepository<T, ID>) Objects.requireNonNull(applicationContext.getBean(repositoryBeanName));
     }
 
 

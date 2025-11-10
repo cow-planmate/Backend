@@ -6,13 +6,11 @@ import java.time.LocalTime;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TimeTable;
 import com.sharedsync.framework.shared.framework.annotation.AutoDatabaseLoader;
-import com.sharedsync.framework.shared.framework.annotation.AutoEntityConverter;
 import com.sharedsync.framework.shared.framework.annotation.AutoRedisTemplate;
 import com.sharedsync.framework.shared.framework.annotation.CacheEntity;
 import com.sharedsync.framework.shared.framework.annotation.CacheId;
-import com.sharedsync.framework.shared.framework.annotation.EntityConverter;
 import com.sharedsync.framework.shared.framework.annotation.ParentId;
-import com.sharedsync.framework.shared.framework.dto.CacheDto;
+import com.sharedsync.framework.shared.framework.dto.EntityBackedCacheDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,12 +20,11 @@ import lombok.Setter;
 @CacheEntity
 @AutoRedisTemplate("timeTableRedis")
 @AutoDatabaseLoader(repository = "timeTableRepository", method = "findByPlanPlanId")
-@AutoEntityConverter(repositories = {"planRepository"})
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class TimeTableDto extends CacheDto<Integer> {
+public class TimeTableDto extends EntityBackedCacheDto<Integer, TimeTable> {
 
     @CacheId
     private Integer timeTableId;
@@ -38,24 +35,7 @@ public class TimeTableDto extends CacheDto<Integer> {
     private Integer planId;
 
     public static TimeTableDto fromEntity(TimeTable timeTable) {
-        return new TimeTableDto(
-                timeTable.getTimeTableId(),
-                timeTable.getDate(),
-                timeTable.getTimeTableStartTime(),
-                timeTable.getTimeTableEndTime(),
-                timeTable.getPlan().getPlanId()
-        );
-    }
-
-    @EntityConverter
-    public TimeTable toEntity(Plan plan) {
-        return TimeTable.builder()
-                .timeTableId(this.timeTableId)
-                .date(this.date)
-                .timeTableStartTime(this.timeTableStartTime)
-                .timeTableEndTime(this.timeTableEndTime)
-                .plan(plan)
-                .build();
+        return instantiateFromEntity(timeTable, TimeTableDto.class);
     }
 
 }
