@@ -1,5 +1,6 @@
 package com.example.planmate.domain.chatbot.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -28,12 +29,17 @@ public class ChatBotActionResponse {
         return new ChatBotActionResponse(message, false, null);
     }
     public void addAction(ActionData actionData) {
+        if (this.actions == null) {
+            this.actions = new ArrayList<>();
+        }
         this.actions.add(actionData);
     }
-    
+
     // 액션 있는 응답용
     public static ChatBotActionResponse withAction(String message, String action, String targetName, Object target) {
         ActionData actionData = new ActionData(action, targetName, target);
-        return new ChatBotActionResponse(message, true, actionData);
+        List<ActionData> actionList = new ArrayList<>();
+        actionList.add(actionData);
+        return new ChatBotActionResponse(message, true, actionList);
     }
 }

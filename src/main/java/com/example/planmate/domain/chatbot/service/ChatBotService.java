@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.example.planmate.domain.chatbot.dto.ActionData;
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
 import com.example.planmate.domain.webSocket.lazydto.PlanDto;
 import com.example.planmate.domain.webSocket.lazydto.TimeTableDto;
@@ -44,6 +43,7 @@ public class ChatBotService {
         try {
 
             String systemPromptContext = buildSystemPromptContext(planId);
+            System.out.println(systemPromptContext);
 
             // 2. Python 서버로 전송할 요청 본문 구성
             Map<String, Object> requestBody = Map.of(
@@ -72,15 +72,8 @@ public class ChatBotService {
                 log.info("Successfully received ChatBotActionResponse from Python server.");
 
                 // 4. Python 서버에서 Action이 실행되어야 한다고 판단한 경우, Java 서버에서 Action 실행
-                if (pythonResponse.isHasAction() && pythonResponse.getActions() != null) {
-                    List<ChatBotActionResponse.ActionData> actions = pythonResponse.getActions();
-                    ChatBotActionResponse actionResult = new ChatBotActionResponse();
-                    
-                    for (ChatBotActionResponse.ActionData actionData : actions) {
-                        actionResult.addAction(actionData);
-                        // 필요시 actionResult를 활용하여 추가 처리 가능
-                    }
-                    return executeAction(pythonResponse.getActions(), planId, pythonResponse.getUserMessage());
+                if (pythonResponse.isHasAction() && pythonResponse.getActions() != null && !pythonResponse.getActions().isEmpty()) {
+                    return executeActions(pythonResponse.getActions(), planId, pythonResponse.getUserMessage());
                 } else {
                     // Action이 없는 경우, Python이 생성한 단순 메시지 반환
                     return pythonResponse;
@@ -96,7 +89,49 @@ public class ChatBotService {
         }
     }
 
-    private ActionData executeAction(ChatBotActionResponse.ActionData actionData, Integer planId, String originalUserMessage) {
+    private ChatBotActionResponse executeActions(List<ChatBotActionResponse.ActionData> actions, Integer planId, String originalUserMessage) {
+        StringBuilder combinedMessage = new StringBuilder();
+        if (originalUserMessage != null && !originalUserMessage.isBlank()) {
+            combinedMessage.append(originalUserMessage.trim());
+        }
+
+        List<ChatBotActionResponse.ActionData> aggregatedActions = new ArrayList<>();
+
+        for (ChatBotActionResponse.ActionData actionData : actions) {
+            ChatBotActionResponse actionResult = executeAction(actionData, planId);
+            if (actionResult == null) {
+                log.warn("No action result returned for action: {} target: {}", actionData.getAction(), actionData.getTargetName());
+                continue;
+            }
+
+            if (actionResult.getUserMessage() != null && !actionResult.getUserMessage().isBlank()) {
+                if (combinedMessage.length() > 0) {
+                    combinedMessage.append("\n");
+                }
+                combinedMessage.append(actionResult.getUserMessage().trim());
+            }
+
+            if (actionResult.isHasAction() && actionResult.getActions() != null && !actionResult.getActions().isEmpty()) {
+                aggregatedActions.addAll(actionResult.getActions());
+            }
+        }
+
+        String finalMessage = combinedMessage.length() > 0
+                ? combinedMessage.toString()
+                : (originalUserMessage != null ? originalUserMessage : "");
+
+        if (aggregatedActions.isEmpty()) {
+            return ChatBotActionResponse.simpleMessage(finalMessage);
+        }
+
+        return new ChatBotActionResponse(finalMessage, true, aggregatedActions);
+    }
+
+    private ChatBotActionResponse executeAction(ChatBotActionResponse.ActionData actionData, Integer planId) {
+        if (actionData == null) {
+            return null;
+        }
+
         try {
             String action = actionData.getAction();
             String targetName = actionData.getTargetName();
@@ -108,30 +143,22 @@ public class ChatBotService {
                 case "plan":
                     actionResult = executePlanAction(action, target, planId);
                     break;
-
                 case "timeTable":
                     actionResult = executeTimeTableAction(action, target, planId);
                     break;
-
                 case "timeTablePlaceBlock":
                     actionResult = executeTimeTablePlaceBlockAction(action, target, planId);
                     break;
+                default:
+                    log.warn("Unsupported action target received from Python: {}", targetName);
+                    actionResult = ChatBotActionResponse.simpleMessage("지원하지 않는 작업 대상입니다: " + targetName);
+                    break;
             }
 
-            if (actionResult != null && actionResult.isHasAction()) {
-                // Python이 생성한 메시지와 Java에서 실행 결과 생성된 메시지를 결합
-                String combinedMessage = originalUserMessage;
-                if (actionResult.getUserMessage() != null && !actionResult.getUserMessage().isEmpty()) {
-                    combinedMessage += "\n" + actionResult.getUserMessage();
-                }
-                return new ChatBotActionResponse(combinedMessage, true, actionResult.getAction());
-            }
-
-            // 액션 실행은 했으나 액션 반환값에 문제가 있거나, 실행 후 Action이 없는 경우 원본 메시지만 반환
-            return ChatBotActionResponse.simpleMessage(originalUserMessage);
+            return actionResult;
 
         } catch (Exception e) {
-            log.error("Error executing action received from Python: {}", e.getMessage());
+            log.error("Error executing action received from Python: {}", e.getMessage(), e);
             return ChatBotActionResponse.simpleMessage("액션 실행 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
@@ -164,59 +191,194 @@ public class ChatBotService {
 
         // Python 서버의 AI 모델에 전달할 컨텍스트 데이터
         return """
-                당신은 여행 계획 도우미 AI입니다.
-                사용자의 여행 계획을 도와주고, 필요시 계획을 수정하거나 제안할 수 있습니다.
-                
-                ---
-                ### 🔹 역할
-                - 사용자의 여행 계획 데이터를 분석하고, 필요시 수정 제안을 합니다.
-                - 사용자의 요청에 따라 계획, 타임테이블, 또는 장소 블록을 생성/수정/삭제할 수 있습니다.
-                - 하루 또는 일정 기간의 여행 계획을 최적화하고 개선하는 데 도움을 줍니다.
-                - 사용자의 일정과 장소를 기반으로 여행 비용을 추정할 수 있습니다.
-                
-                ---
-                ### 🔹 입력 데이터 (JSON)
-                다음은 사용자의 여행 계획 데이터입니다.
-                
-                Plan:
-                %s
-                
-                TimeTables:
-                %s
-                
-                TimeTablePlaceBlocks:
-                %s
-                
-                ---
+            당신은 여행 계획 도우미 AI이다.
+            사용자의 여행 계획을 도와주고, 필요시 계획을 수정하거나 제안할 수 있다.
 
-                ---
-                ### 🔹 학습할 내용
-                - Plan, TimeTable, TimeTablePlaceBlock의 JSON 구조와 필드를 이해합니다.
-                - 각 엔티티 간의 관계와 종속성을 파악합니다.
-                - 여행 계획의 논리적 흐름과 시간적 제약 조건을 이해합니다.
-                ---
+            ---
+            ### 🔹 역할
+            - 사용자의 여행 계획 데이터를 분석하고, 상황에 맞는 수정 제안을 한다.
+            - 사용자의 요청에 따라 Plan, TimeTable, TimeTablePlaceBlock을 생성(create)·수정(update)·삭제(delete)한다.
+            - 하루 또는 일정 기간의 여행 계획을 시간·동선 관점에서 최적화하는 데 도움을 준다.
+            - 사용자의 일정과 장소를 기반으로 여행 비용을 추정할 수 있다.
 
-                ### 🔹 응답 형식 (ChatBotActionResponse)
-                AI의 응답은 반드시 아래 형식을 따라야 합니다.
-                **중요** 반드시 JSON으로 반환을 해야 합니다.
-                delete를 제외하고는 target의 모든 값을 다 반환해야 합니다.
-                timeTablePlaceBlock은 생성하거나 수정할 때 같은 timeTable안에 있는 다른 timeTablePlaceBlock과 시간이 겹치면 안됩니다.
+            ---
+            ### 🔹 입력 데이터 (JSON)
+            다음은 사용자의 현재 여행 계획 데이터이다.
+
+            Plan:
+            %s
+
+            TimeTables:
+            %s
+
+            TimeTablePlaceBlocks:
+            %s
+
+            위 JSON들은 실제 서비스에서 사용하는 원본 구조이며,
+            AI는 **반드시 이 구조를 그대로 이해하고, 동일한 구조로 응답을 생성해야 한다.**
+
+            ---
+            ### 🔹 엔티티 구조 설명 (특히 TimeTablePlaceBlock)
+
+            1. Plan
+            - 여행 전체 단위의 메타 정보이다.
+            - 예시 필드: planId, title, startDate, endDate, users 등
+            - 실제 필드명과 구조는 Plan JSON에 나와 있는 것을 그대로 따른다.
+
+            2. TimeTable
+            - 특정 날짜(하루) 단위의 일정이다.
+            - 하나의 Plan에 여러 TimeTable이 연결될 수 있다.
+            - 예시 필드: timeTableId, planId, date, dayIndex 등
+            - 실제 필드명과 구조는 TimeTables JSON에 나와 있는 것을 그대로 따른다.
+
+            3. TimeTablePlaceBlock  
+            - 특정 TimeTable 안에서 “시간 구간 + 장소”를 나타내는 블록이다.
+            - Java DTO 구조는 다음과 같다:
+
+                public record TimeTablePlaceBlockDto(
+                    Integer blockId,
+                    String placeName,
+                    String placeTheme,
+                    float placeRating,
+                    String placeAddress,
+                    String placeLink,
+                    LocalTime blockStartTime,
+                    LocalTime blockEndTime,
+                    double xLocation,
+                    double yLocation,
+                    String placeId,
+                    Integer placeCategoryId,
+                    Integer timeTableId
+                )
+
+            - JSON에서도 이 구조를 그대로 사용해야 하며, 각 필드는 다음 의미를 가진다:
+                - blockId: 블록 고유 ID
+                - placeName: 장소 이름
+                - placeTheme: 장소 테마(예: ‘역사’, ‘자연’, ‘쇼핑’ 등)
+                - placeRating: Google Places API에서 가져온 평점(float)
+                - placeAddress: Google Places API에서 가져온 주소
+                - placeLink: Google Maps 링크(또는 place 상세 링크)
+                - blockStartTime: 블록 시작 시간 (예: "10:00:00")
+                - blockEndTime: 블록 종료 시간 (예: "12:00:00")
+                - xLocation: 위도(latitude) - Google Places API에서 가져온 값
+                - yLocation: 경도(longitude) - Google Places API에서 가져온 값
+                - placeId: Google Places API의 place_id
+                - placeCategoryId:
+                - 0: 관광지
+                - 1: 숙소
+                - 2: 식당
+                - 이 세 값만 사용하며, 그 외 숫자는 절대 사용하지 않는다.
+                - timeTableId: 이 블록이 속한 TimeTable의 ID
+
+            - **중요**  
+                - placeId, placeRating, placeAddress, placeLink, xLocation, yLocation 은 **Google Places API에서 가져온 값**이다.  
+                - AI는 이 필드들을 임의로 제거하거나 구조를 바꾸면 안 되며, 입력 JSON에 존재하는 형식을 그대로 유지해야 한다.
+                - 새로운 필드명을 임의로 추가하지 않는다. (예: "googlePlace" 객체를 새로 만드는 등의 행동 금지)
+
+            ---
+            ### 🔹 시간 겹침 제약 조건
+
+            - 같은 timeTableId를 가진 TimeTablePlaceBlock들 사이에서는
+            - blockStartTime ~ blockEndTime 구간이 서로 겹치면 안 된다.
+            - AI가 timeTablePlaceBlock을 생성(create)하거나 수정(update)할 때는,
+            - 해당 timeTableId에 속한 다른 블록들의 시간과 비교하여
+            - 시간이 겹치지 않도록 조정하거나, 겹치면 생성/수정 제안을 하지 않는다.
+
+            ---
+            ### 🔹 응답 형식 (ChatBotActionResponse)
+
+            AI의 응답은 **반드시 아래 JSON 형식만** 반환해야 한다.  
+            JSON 외의 텍스트(설명, 문장, 주석 등)는 절대 포함하면 안 된다.
+
+            {
+            "userMessage": "사용자에게 보여줄 친근한 메시지",
+            "hasAction": true,
+            "actions": [
                 {
-                  "userMessage": "사용자에게 보여줄 친근한 메시지",
-                  "hasAction": true or false,
-                  "actions": {
-                    {
-                        "action": "create | update | delete",
-                        "targetName": "plan | timeTable | timeTablePlaceBlock",
-                        "target": { ... } // 실제 JSON 데이터
-                    }
-                    {
-                        "action": "create | update | delete",
-                        "targetName": "plan | timeTable | timeTablePlaceBlock",
-                        "target": { ... } // 실제 JSON 데이터
-                    }
-                  }
-                }""".formatted(planJson, timeTablesJson, timeTablePlaceBlocksJson);
+                "action": "create | update | delete",
+                "targetName": "plan | timeTable | timeTablePlaceBlock",
+                "target": { ... }
+                }
+            ]
+            }
+
+            #### 필수 규칙
+
+            1. userMessage
+            - 한국어로, 사용자가 이해하기 쉬운 자연스러운 문장으로 작성한다.
+            - 예: "알겠습니다! 2025년 11월 21일 오전에 경복궁 방문 일정을 추가해 둘게요."
+
+            2. hasAction
+            - 실제로 Plan/TimeTable/TimeTablePlaceBlock을 변경하는 액션이 필요하면 true, 아니면 false로 설정한다.
+
+            3. actions
+            - hasAction이 false라면, actions는 반드시 빈 배열 [] 이어야 한다.
+            - hasAction이 true라면, actions는 하나 이상의 액션 객체를 포함하는 배열이어야 한다.
+            - 각 액션 객체는 다음 필드를 가진다:
+                - action: "create", "update", "delete" 중 하나
+                - targetName: "plan", "timeTable", "timeTablePlaceBlock" 중 하나
+                - target: 실제 JSON 객체
+
+            4. target 객체 규칙
+            - **delete를 제외하고**, target에는 해당 엔티티의 모든 필드를 포함해야 한다.
+            - 특히 targetName이 "timeTablePlaceBlock"일 경우:
+                - blockId, placeName, placeTheme, placeRating, placeAddress, placeLink,
+                blockStartTime, blockEndTime, xLocation, yLocation, placeId, placeCategoryId, timeTableId
+                이 모든 필드를 반드시 포함해야 한다.
+                - placeId, placeRating, placeAddress, placeLink, xLocation, yLocation 필드는
+                Google Places에서 온 값이라는 전제를 유지해야 하므로, 의미를 임의로 바꾸지 않는다.
+                - placeCategoryId는 0(관광지), 1(숙소), 2(식당) 중 하나만 사용한다.
+            - targetName이 "plan" 또는 "timeTable"인 경우에도,
+                - 입력으로 주어진 Plan / TimeTables JSON의 구조를 그대로 따라 전체 필드를 포함해야 한다.
+
+            5. delete 액션
+            - delete 액션의 경우, target에는 삭제에 필요한 최소 식별 정보(예: blockId, timeTableId 등)만 포함해도 된다.
+            - 단, 가능한 경우 입력 JSON 구조를 크게 벗어나지 않도록 한다.
+
+            ---
+            ### 🔹 동작 예시 (설명용, 실제 응답에 포함하면 안 됨)
+
+            예를 들어 사용자가
+            "2025년 11월 21일 오전에 경복궁 넣어줘"
+            라고 말한 상황이라면, 다음과 같은 응답이 나올 수 있다 (형식 예시):
+
+            {
+            "userMessage": "알겠습니다! 2025년 11월 21일 오전 10시부터 12시까지 경복궁 방문 일정을 추가해 둘게요.",
+            "hasAction": true,
+            "actions": [
+                {
+                "action": "create",
+                "targetName": "timeTablePlaceBlock",
+                "target": {
+                    "blockId": 999,                // 생성 규칙에 따라 설정
+                    "placeName": "경복궁",
+                    "placeTheme": "역사 · 문화",
+                    "placeRating": 4.6,
+                    "placeAddress": "서울 종로구 사직로 161",
+                    "placeLink": "https://maps.google.com/....",
+                    "blockStartTime": "10:00:00",
+                    "blockEndTime": "12:00:00",
+                    "xLocation": 37.579617,
+                    "yLocation": 126.977041,
+                    "placeId": "ChIJxxxxxx",
+                    "placeCategoryId": 0,
+                    "timeTableId": 202
+                }
+                }
+            ]
+            }
+
+            위 예시는 **형식을 설명하기 위한 것일 뿐**, 실제 응답에 그대로 포함하면 안 된다.
+
+            ---
+
+            ### 🔹 최종 지시
+
+            - 위에서 제공된 Plan, TimeTables, TimeTablePlaceBlocks JSON 구조를 학습하고 그대로 사용한다.
+            - 사용자의 자연어 요청을 분석하여 적절한 액션을 결정한다.
+            - 시간 겹침 규칙과 placeCategoryId 규칙을 반드시 지킨다.
+            - **반드시 ChatBotActionResponse JSON만** 반환한다.
+            """.formatted(planJson, timeTablesJson, timeTablePlaceBlocksJson);
     }
 
     private ChatBotActionResponse executePlanAction(String action, Object target, int planId) {
