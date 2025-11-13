@@ -1,5 +1,13 @@
 package com.example.planmate.domain.place.service;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.data.util.Pair;
+import org.springframework.stereotype.Service;
+
 import com.example.planmate.common.externalAPI.GoogleMap;
 import com.example.planmate.common.externalAPI.GooglePlaceDetails;
 import com.example.planmate.common.valueObject.LodgingPlaceVO;
@@ -12,13 +20,8 @@ import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.user.entity.PreferredTheme;
 import com.example.planmate.domain.user.repository.UserRepository;
 import com.example.planmate.domain.webSocket.service.RedisService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.util.Pair;
-import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -30,81 +33,66 @@ public class PlaceService {
     private final GooglePlaceDetails googlePlaceDetails;
     private final RedisService redisService;
 
-    public PlaceResponse getTourPlace(int userId, int planId) throws IOException {
+    @FunctionalInterface
+    private interface ThrowingBiFunction<T, U, R> {
+        R apply(T t, U u) throws IOException;
+    }
+
+    /**
+     * Generic helper to reduce duplication across place retrieval methods.
+     *
+     * @param userId user id used to load preferred themes
+     * @param planId plan id to validate access and get travel info
+     * @param preferredThemeCategoryId filter id for PreferredThemeCategory (0=tour,1=lodging,2=restaurant)
+     * @param googleMapFn function that calls the appropriate googleMap method and returns Pair<List<T>, List<String>>
+     * @param <T> concrete VO type that extends SearchPlaceVO
+     * @return PlaceResponse with places and next page token
+     * @throws IOException if external calls fail
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private PlaceResponse getPlaceForUserAndPlan(int userId,
+                                                 int planId,
+                                                 int preferredThemeCategoryId,
+                                                 ThrowingBiFunction<String, List<String>, Pair> googleMapFn) throws IOException {
         PlaceResponse response = new PlaceResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
         Plan cachePlan = redisService.findPlanByPlanId(planId);
-        String travelCategoryName;
-        String travelName;
-        if(cachePlan!=null){
-            travelCategoryName = cachePlan.getTravel().getTravelCategory().getTravelCategoryName();
-            travelName = travelCategoryName + " " + cachePlan.getTravel().getTravelName();
-        } else {
-            travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
-            travelName = travelCategoryName + " " + plan.getTravel().getTravelName();
-        }
-        List<PreferredTheme> preferredThemes = userRepository.findById(userId).get().getPreferredThemes();
-        preferredThemes.removeIf(preferredTheme -> preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId() != 0);
 
-        List<String> preferredThemeNames = new ArrayList<>();
-        for (PreferredTheme preferredTheme : preferredThemes) {
-            preferredThemeNames.add(preferredTheme.getPreferredThemeName());
-        }
-        Pair<List<TourPlaceVO>, List<String>> pair = googleMap.getTourPlace(travelCategoryName + " " + travelName, preferredThemeNames);
-        List<TourPlaceVO> tourPlaceVOs = (List<TourPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
-        response.addPlace(tourPlaceVOs);
+        String travelCategoryName = (cachePlan != null)
+            ? cachePlan.getTravel().getTravelCategory().getTravelCategoryName()
+            : plan.getTravel().getTravelCategory().getTravelCategoryName();
+
+        // preserve original behavior where travelName included category (keeps semantics identical)
+        String travelName = (cachePlan != null)
+            ? travelCategoryName + " " + cachePlan.getTravel().getTravelName()
+            : travelCategoryName + " " + plan.getTravel().getTravelName();
+
+        List<PreferredTheme> preferredThemes = userRepository.findById(userId).get().getPreferredThemes();
+        preferredThemes.removeIf(preferredTheme -> preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId() != preferredThemeCategoryId);
+
+        List<String> preferredThemeNames = preferredThemes.stream()
+            .map(PreferredTheme::getPreferredThemeName)
+            .collect(Collectors.toList());
+
+        Pair rawPair = googleMapFn.apply(travelCategoryName + " " + travelName, preferredThemeNames);
+        Pair<List<? extends SearchPlaceVO>, List<String>> pair = (Pair) rawPair;
+        List<?> detailedRaw = (List<?>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
+        List<SearchPlaceVO> detailed = (List<SearchPlaceVO>) detailedRaw;
+        response.addPlace(detailed);
         response.addNextPageToken(pair.getSecond());
         return response;
+    }
+
+    public PlaceResponse getTourPlace(int userId, int planId) throws IOException {
+        return getPlaceForUserAndPlan(userId, planId, 0, (search, themes) -> googleMap.getTourPlace(search, themes));
     }
 
     public PlaceResponse getLodgingPlace(int userId, int planId) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-        Plan cachePlan = redisService.findPlanByPlanId(planId);
-        String travelCategoryName;
-        if(cachePlan!=null){
-            travelCategoryName = cachePlan.getTravel().getTravelCategory().getTravelCategoryName();
-        } else {
-            travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
-        }
-        List<PreferredTheme> preferredThemes = userRepository.findById(userId).get().getPreferredThemes();
-        preferredThemes.removeIf(preferredTheme -> preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId() != 1);
-
-        List<String> preferredThemeNames = new ArrayList<>();
-        for (PreferredTheme preferredTheme : preferredThemes) {
-            preferredThemeNames.add(preferredTheme.getPreferredThemeName());
-        }
-        String travelName = travelCategoryName + " " + plan.getTravel().getTravelName();
-        Pair<List<LodgingPlaceVO>, List<String>> pair = googleMap.getLodgingPlace(travelCategoryName + " " + travelName, preferredThemeNames);
-        List<LodgingPlaceVO> lodgingPlaceVOs = (List<LodgingPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
-        response.addPlace(lodgingPlaceVOs);
-        response.addNextPageToken(pair.getSecond());
-        return response;
+        return getPlaceForUserAndPlan(userId, planId, 1, (search, themes) -> googleMap.getLodgingPlace(search, themes));
     }
 
     public PlaceResponse getRestaurantPlace(int userId, int planId) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-        Plan cachePlan = redisService.findPlanByPlanId(planId);
-        String travelCategoryName;
-        if(cachePlan!=null){
-            travelCategoryName = cachePlan.getTravel().getTravelCategory().getTravelCategoryName();
-        } else {
-            travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
-        }
-        List<PreferredTheme> preferredThemes = userRepository.findById(userId).get().getPreferredThemes();
-        preferredThemes.removeIf(preferredTheme -> preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId() != 2);
-
-        List<String> preferredThemeNames = new ArrayList<>();
-        for (PreferredTheme preferredTheme : preferredThemes) {
-            preferredThemeNames.add(preferredTheme.getPreferredThemeName());
-        }
-        String travelName = travelCategoryName + " " + plan.getTravel().getTravelName();
-        Pair<List<RestaurantPlaceVO>, List<String>> pair = googleMap.getRestaurantPlace(travelCategoryName + " " + travelName, preferredThemeNames);
-        List<RestaurantPlaceVO> restaurantPlaceVOs = (List<RestaurantPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
-        response.addPlace(restaurantPlaceVOs);
-        response.addNextPageToken(pair.getSecond());
-        return response;
+        return getPlaceForUserAndPlan(userId, planId, 2, (search, themes) -> googleMap.getRestaurantPlace(search, themes));
     }
 
     public PlaceResponse getSearchPlace(int userId, int planId, String query) throws IOException {
