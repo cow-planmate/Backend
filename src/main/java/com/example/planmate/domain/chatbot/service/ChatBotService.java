@@ -3,10 +3,7 @@ package com.example.planmate.domain.chatbot.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -16,11 +13,14 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
+import com.example.planmate.domain.chatbot.dto.ActionData;
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
 import com.example.planmate.domain.webSocket.lazydto.PlanDto;
 import com.example.planmate.domain.webSocket.lazydto.TimeTableDto;
 import com.example.planmate.domain.webSocket.lazydto.TimeTablePlaceBlockDto;
 import com.example.planmate.domain.webSocket.service.RedisService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -72,8 +72,15 @@ public class ChatBotService {
                 log.info("Successfully received ChatBotActionResponse from Python server.");
 
                 // 4. Python 서버에서 Action이 실행되어야 한다고 판단한 경우, Java 서버에서 Action 실행
-                if (pythonResponse.isHasAction() && pythonResponse.getAction() != null) {
-                    return executeAction(pythonResponse.getAction(), planId, pythonResponse.getUserMessage());
+                if (pythonResponse.isHasAction() && pythonResponse.getActions() != null) {
+                    List<ChatBotActionResponse.ActionData> actions = pythonResponse.getActions();
+                    ChatBotActionResponse actionResult = new ChatBotActionResponse();
+                    
+                    for (ChatBotActionResponse.ActionData actionData : actions) {
+                        actionResult.addAction(actionData);
+                        // 필요시 actionResult를 활용하여 추가 처리 가능
+                    }
+                    return executeAction(pythonResponse.getActions(), planId, pythonResponse.getUserMessage());
                 } else {
                     // Action이 없는 경우, Python이 생성한 단순 메시지 반환
                     return pythonResponse;
@@ -89,7 +96,7 @@ public class ChatBotService {
         }
     }
 
-    private ChatBotActionResponse executeAction(ChatBotActionResponse.ActionData actionData, Integer planId, String originalUserMessage) {
+    private ActionData executeAction(ChatBotActionResponse.ActionData actionData, Integer planId, String originalUserMessage) {
         try {
             String action = actionData.getAction();
             String targetName = actionData.getTargetName();
@@ -109,9 +116,6 @@ public class ChatBotService {
                 case "timeTablePlaceBlock":
                     actionResult = executeTimeTablePlaceBlockAction(action, target, planId);
                     break;
-                default:
-                    log.warn("Unknown action target: {}", targetName);
-                    return ChatBotActionResponse.simpleMessage(originalUserMessage);
             }
 
             if (actionResult != null && actionResult.isHasAction()) {
@@ -167,6 +171,7 @@ public class ChatBotService {
                 ### 🔹 역할
                 - 사용자의 여행 계획 데이터를 분석하고, 필요시 수정 제안을 합니다.
                 - 사용자의 요청에 따라 계획, 타임테이블, 또는 장소 블록을 생성/수정/삭제할 수 있습니다.
+                - 하루 또는 일정 기간의 여행 계획을 최적화하고 개선하는 데 도움을 줍니다.
                 - 사용자의 일정과 장소를 기반으로 여행 비용을 추정할 수 있습니다.
                 
                 ---
@@ -183,6 +188,14 @@ public class ChatBotService {
                 %s
                 
                 ---
+
+                ---
+                ### 🔹 학습할 내용
+                - Plan, TimeTable, TimeTablePlaceBlock의 JSON 구조와 필드를 이해합니다.
+                - 각 엔티티 간의 관계와 종속성을 파악합니다.
+                - 여행 계획의 논리적 흐름과 시간적 제약 조건을 이해합니다.
+                ---
+
                 ### 🔹 응답 형식 (ChatBotActionResponse)
                 AI의 응답은 반드시 아래 형식을 따라야 합니다.
                 **중요** 반드시 JSON으로 반환을 해야 합니다.
@@ -191,10 +204,17 @@ public class ChatBotService {
                 {
                   "userMessage": "사용자에게 보여줄 친근한 메시지",
                   "hasAction": true or false,
-                  "action": {
-                    "action": "create | update | delete",
-                    "targetName": "plan | timeTable | timeTablePlaceBlock",
-                    "target": { ... } // 실제 JSON 데이터
+                  "actions": {
+                    {
+                        "action": "create | update | delete",
+                        "targetName": "plan | timeTable | timeTablePlaceBlock",
+                        "target": { ... } // 실제 JSON 데이터
+                    }
+                    {
+                        "action": "create | update | delete",
+                        "targetName": "plan | timeTable | timeTablePlaceBlock",
+                        "target": { ... } // 실제 JSON 데이터
+                    }
                   }
                 }""".formatted(planJson, timeTablesJson, timeTablePlaceBlocksJson);
     }
