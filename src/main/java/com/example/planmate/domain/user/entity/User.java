@@ -22,20 +22,26 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer userId;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
+    private String provider;
+
+    @Column
+    private String providerId;
+
+    @Column(unique = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column
     private String password;
 
     @Column(nullable = false, unique = true)
     private String nickname;
 
-    @Column(nullable = false)
-    private int age;
+    @Column
+    private Integer age;
 
-    @Column(nullable = false)
-    private int gender;
+    @Column
+    private Integer gender;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonIgnore
@@ -57,7 +63,6 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "preferred_theme_id")
     )
-
     @JsonIgnore
     @Builder.Default
     private List<PreferredTheme> preferredThemes = new ArrayList<>();
@@ -97,17 +102,11 @@ public class User {
         this.nickname = newNickname;
     }
 
-    public void changeAge(int newAge) {
-        if (newAge < 0) {
-            throw new IllegalArgumentException("나이는 0 이상이어야 합니다.");
-        }
+    public void changeAge(Integer newAge) {
         this.age = newAge;
     }
 
-    public void changeGender(int newGender) {
-        if (newGender < 0) {
-            throw new IllegalArgumentException("성별 값이 올바르지 않습니다.");
-        }
+    public void changeGender(Integer newGender) {
         this.gender = newGender;
     }
 }
