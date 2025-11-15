@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.example.planmate.generated.valueObject.UserDayIndexVO;
+import com.sharedsync.framework.shared.presence.core.SharedPresenceFacade;
 import org.springframework.data.util.Pair;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -56,7 +58,6 @@ import com.example.planmate.domain.plan.repository.TransportationCategoryReposit
 import com.example.planmate.generated.cache.PlanCache;
 import com.example.planmate.generated.cache.TimeTableCache;
 import com.example.planmate.generated.cache.TimeTablePlaceBlockCache;
-import com.example.planmate.generated.service.PresenceTrackingService;
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.travel.repository.TravelRepository;
 import com.example.planmate.domain.user.entity.PreferredTheme;
@@ -84,7 +85,7 @@ public class PlanService {
     private final GoogleMap googleMap;
     private final GooglePlaceDetails googlePlaceDetails;
     private final PlacePhotoRepository placePhotoRepository;
-    private final PresenceTrackingService presenceTrackingService;
+    private final SharedPresenceFacade presenceFacade;
 
     public MakePlanResponse makeService(int userId, String departure, int travelId, int transportationCategoryId, List<LocalDate> dates, int adultCount, int childCount) {
         User user = userRepository.findById(userId)
@@ -197,7 +198,18 @@ public class PlanService {
                 }
             }
         }
-        response.setUserDayIndexes(presenceTrackingService.getPlanTracker(planId));
+        // 프레임워크에서 PresenceSnapshot 리스트 조회
+        var snapshots = presenceFacade.getPresence(planId);
+
+        // 앱의 VO(UserDayIndexVO)로 변환
+        response.setUserDayIndexes(
+                snapshots.stream()
+                        .map(s -> new UserDayIndexVO(
+                                s.nickname(),
+                                (int) s.attributes().get("dayIndex")
+                        ))
+                        .toList()
+        );
         return response; // DTO 변환
     }
 

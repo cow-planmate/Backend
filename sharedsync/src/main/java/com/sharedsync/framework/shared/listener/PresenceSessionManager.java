@@ -1,11 +1,12 @@
 package com.sharedsync.framework.shared.listener;
 
-import org.springframework.stereotype.Service;
-
-import com.sharedsync.framework.shared.service.PresenceTrackingService;
+import com.sharedsync.framework.shared.presence.core.PresenceBroadcaster;
+import com.sharedsync.framework.shared.presence.core.PresenceRootResolver;
+import com.sharedsync.framework.shared.presence.core.UserProvider;
+import com.sharedsync.framework.shared.presence.storage.PresenceStorage;
 import com.sharedsync.framework.shared.sync.CacheSyncService;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -15,41 +16,70 @@ public class PresenceSessionManager {
     private static final String ACTION_CREATE = "create";
     private static final String ACTION_DELETE = "delete";
 
-    private final PresenceTrackingService presenceTrackingService;
-    private final CacheSyncService cacheSyncService;
-    private final CacheInitializer planCacheInitializer;
+    private final PresenceStorage presenceStorage;
     private final PresenceBroadcaster presenceBroadcaster;
+    private final UserProvider userProvider;        // ✅ 새 의존성
+    private final CacheInitializer planCacheInitializer;
+    private final CacheSyncService cacheSyncService;
+    private final PresenceRootResolver presenceRootResolver;
 
-    public void handleSubscribe(int planId, int userId) {
-        if (!presenceTrackingService.hasPlanTracker(planId)) {
-            planCacheInitializer.initializeHierarchy(planId);
+    /**
+     * STOMP 구독 시 (입장)
+     */
+    public void handleSubscribe(int rootId, int userId) {
+        if (!presenceStorage.hasTracker(rootId)) {
+            planCacheInitializer.initializeHierarchy(rootId);
         }
 
-        presenceTrackingService.insertPlanTracker(planId, userId, DEFAULT_DAY_INDEX);
-        presenceTrackingService.insertNickname(userId);
-        presenceTrackingService.insertUserIdToPlanId(planId, userId);
+        String nickname = presenceStorage.getNicknameByUserId(userId);
+        if (nickname == null || nickname.isBlank()) {
+            nickname = userProvider.findNicknameByUserId(userId);
+            if (nickname != null) presenceStorage.saveUserNickname(userId, nickname);
+        }
 
-        broadcast(planId, userId, ACTION_CREATE);
+        presenceStorage.insertTracker(rootId, userId, DEFAULT_DAY_INDEX);
+        presenceStorage.mapUserToRoot(rootId, userId);
+
+        String channel = presenceRootResolver.getChannel();
+
+        String finalNickname = nickname;
+        presenceBroadcaster.broadcast(
+                channel,
+                rootId,
+                ACTION_CREATE,
+                new Object() {
+                    public final String userNickname = finalNickname;
+                    public final int uid = userId;
+                }
+        );
     }
 
+
+    /**
+     * 연결 해제 시 (퇴장)
+     */
     public void handleDisconnect(int userId) {
-        int planId = presenceTrackingService.removeUserIdToPlanId(userId);
-        if (planId == 0) {
-            return;
+        int rootId = presenceStorage.removeUserRootMapping(userId);
+        if (rootId == 0) return;
+
+        presenceStorage.removeTracker(rootId, userId);
+
+        if (!presenceStorage.hasTracker(rootId)) {
+            cacheSyncService.syncToDatabase(rootId);
         }
 
-        presenceTrackingService.removePlanTracker(planId, userId);
-        presenceTrackingService.removeNickname(userId);
+        String channel = presenceRootResolver.getChannel();
+        String nickname = presenceStorage.getNicknameByUserId(userId);
 
-        if (!presenceTrackingService.hasPlanTracker(planId)) {
-            cacheSyncService.syncToDatabase(planId);
-        }
-
-        broadcast(planId, userId, ACTION_DELETE);
+        presenceBroadcaster.broadcast(
+                channel,
+                rootId,
+                ACTION_DELETE,
+                new Object() {
+                    public final String userNickname = nickname;
+                    public final int uid = userId;
+                }
+        );
     }
 
-    private void broadcast(int planId, int userId, String action) {
-        String nickname = presenceTrackingService.getNicknameByUserId(userId);
-        presenceBroadcaster.broadcast(planId, userId, nickname, action);
-    }
 }

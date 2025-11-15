@@ -259,6 +259,11 @@ public abstract class AutoCacheRepository<T, ID, DTO extends CacheDto<ID>> imple
         return dto;
     }
 
+    @SuppressWarnings("unchecked")
+    public final void saveUnchecked(Object dto) {
+        save((DTO) dto);
+    }
+
     /**
      * 기존 데이터를 불러와서 null이 아닌 값만 업데이트 (ID 제외)
      */
@@ -421,6 +426,10 @@ public abstract class AutoCacheRepository<T, ID, DTO extends CacheDto<ID>> imple
         return loadEntitiesByParentId(parentId).stream()
                 .map(this::convertToDto)
                 .toList();
+    }
+    @SuppressWarnings("unchecked")
+    public List<? extends CacheDto<?>> loadFromDatabaseByParentIdUnchecked(Object parentId) {
+        return loadFromDatabaseByParentId((ID) parentId);
     }
 
     @SuppressWarnings("unchecked")
