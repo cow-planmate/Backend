@@ -14,6 +14,7 @@ import com.sharedsync.framework.shared.framework.annotation.EntityConverter;
 import com.sharedsync.framework.shared.framework.annotation.ParentId;
 import com.sharedsync.framework.shared.framework.dto.CacheDto;
 
+import com.sharedsync.framework.shared.presence.annotation.PresenceKey;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,6 +32,11 @@ public class TimeTableDto extends CacheDto<Integer> {
 
     @CacheId
     private Integer timeTableId;
+    @PresenceKey(
+            name = "date",      // JSON key
+            level = 0,            // 계층 최상위
+            identifier = true     // Presence 식별자
+    )
     private LocalDate date;
     private LocalTime timeTableStartTime;
     private LocalTime timeTableEndTime;

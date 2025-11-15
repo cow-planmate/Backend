@@ -11,6 +11,8 @@ import com.sharedsync.framework.shared.framework.annotation.CacheId;
 import com.sharedsync.framework.shared.framework.annotation.EntityConverter;
 import com.sharedsync.framework.shared.framework.dto.CacheDto;
 
+import com.sharedsync.framework.shared.presence.annotation.PresenceKey;
+import com.sharedsync.framework.shared.presence.annotation.PresenceRoot;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +25,11 @@ import lombok.Setter;
 @Setter
 @AutoRedisTemplate("planRedis") //이름매칭으로 대체 가능할듯
 @AutoEntityConverter(repositories = {"userRepository", "transportationCategoryRepository", "travelRepository"})
+@PresenceRoot(
+        channel = "plan",     // WebSocket channel 이름
+        idField = "planId"    // Root 식별자
+)
+
 public class PlanDto extends CacheDto<Integer> {
 
     @CacheId
