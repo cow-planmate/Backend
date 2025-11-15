@@ -5,6 +5,7 @@ import com.example.planmate.domain.plan.entity.TransportationCategory;
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.user.entity.User;
 import com.sharedsync.framework.shared.framework.annotation.AutoRedisTemplate;
+import com.sharedsync.framework.shared.framework.annotation.CacheDtoField;
 import com.sharedsync.framework.shared.framework.annotation.CacheEntity;
 import com.sharedsync.framework.shared.framework.annotation.CacheId;
 import com.sharedsync.framework.shared.framework.annotation.EntityReference;
@@ -35,8 +36,11 @@ public class PlanDto extends EntityBackedCacheDto<Integer, Plan> {
     private Integer transportationCategoryId;
     @EntityReference(repository = "travelRepository", entityType = Travel.class, optional = false)
     private Integer travelId;
+    @CacheDtoField(entityType = Travel.class)
+    private TravelDto travel;
 
     public static PlanDto fromEntity(Plan plan) {
         return instantiateFromEntity(plan, PlanDto.class);
     }
+
 }

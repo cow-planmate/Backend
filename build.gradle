@@ -23,6 +23,16 @@ allprojects {
 subprojects {
     apply plugin: 'io.spring.dependency-management'
 
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
+
+    tasks.withType(Javadoc).configureEach {
+        options.encoding = 'UTF-8'
+        options.charSet = 'UTF-8'
+        options.docEncoding = 'UTF-8'
+    }
+
     afterEvaluate { project ->
         project.dependencies {
             compileOnly 'org.projectlombok:lombok:1.18.34'

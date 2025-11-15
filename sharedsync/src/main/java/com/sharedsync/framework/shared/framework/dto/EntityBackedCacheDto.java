@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import com.sharedsync.framework.shared.framework.annotation.CacheDtoField;
 import com.sharedsync.framework.shared.framework.annotation.EntityReference;
 
 import jakarta.persistence.Id;
@@ -118,20 +119,25 @@ public abstract class EntityBackedCacheDto<ID, E> extends CacheDto<ID> {
 
     private record ReferenceMapping(Field dtoField, Field entityField, Method builderSetter, EntityReference reference) {}
 
+    private record DtoFieldMapping(Field dtoField, Field entityField, Method factoryMethod) {}
+
     private static final class MappingMetadata<ID, E> {
         private final Class<E> entityType;
         private final Method builderFactory;
         private final Method buildMethod;
         private final List<FieldMapping> scalarMappings;
         private final List<ReferenceMapping> referenceMappings;
+        private final List<DtoFieldMapping> dtoFieldMappings;
 
         private MappingMetadata(Class<E> entityType, Method builderFactory, Method buildMethod,
-                                List<FieldMapping> scalarMappings, List<ReferenceMapping> referenceMappings) {
+                                List<FieldMapping> scalarMappings, List<ReferenceMapping> referenceMappings,
+                                List<DtoFieldMapping> dtoFieldMappings) {
             this.entityType = entityType;
             this.builderFactory = builderFactory;
             this.buildMethod = buildMethod;
             this.scalarMappings = scalarMappings;
             this.referenceMappings = referenceMappings;
+            this.dtoFieldMappings = dtoFieldMappings;
         }
 
         static <ID, E> MappingMetadata<ID, E> create(Class<?> dtoType, Class<E> entityType) {
@@ -146,14 +152,25 @@ public abstract class EntityBackedCacheDto<ID, E> extends CacheDto<ID> {
 
                 List<FieldMapping> scalarMappings = new ArrayList<>();
                 List<Field> referenceDtoFields = new ArrayList<>();
+                List<DtoFieldMapping> dtoFieldMappings = new ArrayList<>();
 
                 for (Field dtoField : dtoFields) {
                     if (dtoField.isAnnotationPresent(EntityReference.class)) {
                         referenceDtoFields.add(dtoField);
                         continue;
                     }
+                    if (dtoField.isAnnotationPresent(CacheDtoField.class)) {
+                        CacheDtoField dtoFieldAnnotation = dtoField.getAnnotation(CacheDtoField.class);
+                        Field entityField = resolveEntityFieldForDtoField(entityType, entityFieldsByName, dtoField, dtoFieldAnnotation);
+                        Method factoryMethod = resolveDtoFactoryMethod(dtoField, dtoFieldAnnotation);
+                        dtoFieldMappings.add(new DtoFieldMapping(dtoField, entityField, factoryMethod));
+                        continue;
+                    }
                     Field entityField = entityFieldsByName.get(dtoField.getName());
                     if (entityField == null) {
+                        continue;
+                    }
+                    if (!areTypesCompatible(dtoField.getType(), entityField.getType())) {
                         continue;
                     }
                     Method setter = resolveBuilderSetter(builderClass, entityField.getName(), entityField.getType());
@@ -174,7 +191,7 @@ public abstract class EntityBackedCacheDto<ID, E> extends CacheDto<ID> {
                 }
 
                 return new MappingMetadata<>(entityType, builderFactory, buildMethod,
-                        List.copyOf(scalarMappings), List.copyOf(referenceMappings));
+                        List.copyOf(scalarMappings), List.copyOf(referenceMappings), List.copyOf(dtoFieldMappings));
             } catch (ReflectiveOperationException ex) {
                 throw new IllegalStateException("Failed to analyse DTO mapping for " + dtoType.getSimpleName(), ex);
             }
@@ -263,12 +280,62 @@ public abstract class EntityBackedCacheDto<ID, E> extends CacheDto<ID> {
             throw new NoSuchMethodException("Builder method not found for field " + fieldName + " on " + builderClass.getName());
         }
 
+        private static Field resolveEntityFieldForDtoField(Class<?> entityType, Map<String, Field> entityFieldsByName,
+                                                            Field dtoField, CacheDtoField annotation) {
+            Field directMatch = entityFieldsByName.get(dtoField.getName());
+            if (directMatch != null && annotation.entityType().isAssignableFrom(directMatch.getType())) {
+                return directMatch;
+            }
+
+            for (Field field : entityFieldsByName.values()) {
+                if (annotation.entityType().isAssignableFrom(field.getType())) {
+                    return field;
+                }
+            }
+
+            throw new IllegalStateException("Unable to resolve entity field for DTO field " + dtoField.getName());
+        }
+
+        private static Method resolveDtoFactoryMethod(Field dtoField, CacheDtoField annotation) throws NoSuchMethodException {
+            Class<?> dtoType = dtoField.getType();
+            Method factoryMethod = dtoType.getMethod(annotation.factoryMethod(), annotation.entityType());
+            if (!Modifier.isStatic(factoryMethod.getModifiers())) {
+                throw new NoSuchMethodException("Factory method " + annotation.factoryMethod() + " on " + dtoType.getName() + " must be static");
+            }
+            if (!dtoType.isAssignableFrom(factoryMethod.getReturnType())) {
+                throw new NoSuchMethodException("Factory method " + factoryMethod + " must return " + dtoType.getName());
+            }
+            factoryMethod.setAccessible(true);
+            return factoryMethod;
+        }
+
         private Object newBuilderInstance() {
             try {
                 return builderFactory.invoke(null);
             } catch (ReflectiveOperationException ex) {
                 throw new IllegalStateException("Unable to obtain builder for " + entityType.getSimpleName(), ex);
             }
+        }
+
+        private static boolean areTypesCompatible(Class<?> dtoType, Class<?> entityType) {
+            Class<?> left = wrap(dtoType);
+            Class<?> right = wrap(entityType);
+            return left.isAssignableFrom(right) || right.isAssignableFrom(left);
+        }
+
+        private static Class<?> wrap(Class<?> type) {
+            if (type == null || !type.isPrimitive()) {
+                return type;
+            }
+            if (type == boolean.class) return Boolean.class;
+            if (type == byte.class) return Byte.class;
+            if (type == short.class) return Short.class;
+            if (type == char.class) return Character.class;
+            if (type == int.class) return Integer.class;
+            if (type == long.class) return Long.class;
+            if (type == float.class) return Float.class;
+            if (type == double.class) return Double.class;
+            return type;
         }
 
         void copyEntityToDto(E entity, EntityBackedCacheDto<ID, E> dto) {
@@ -292,8 +359,20 @@ public abstract class EntityBackedCacheDto<ID, E> extends CacheDto<ID> {
                     Object idValue = idField.get(related);
                     mapping.dtoField.set(dto, idValue);
                 }
+
+                for (DtoFieldMapping mapping : dtoFieldMappings) {
+                    Object relatedEntity = mapping.entityField.get(entity);
+                    if (relatedEntity == null) {
+                        mapping.dtoField.set(dto, null);
+                        continue;
+                    }
+                    Object convertedDto = mapping.factoryMethod.invoke(null, relatedEntity);
+                    mapping.dtoField.set(dto, convertedDto);
+                }
             } catch (IllegalAccessException ex) {
                 throw new IllegalStateException("Failed to copy entity to DTO", ex);
+            } catch (ReflectiveOperationException ex) {
+                throw new IllegalStateException("Failed to convert nested entity to DTO", ex);
             }
         }
 
