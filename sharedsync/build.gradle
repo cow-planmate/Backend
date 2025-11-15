@@ -26,6 +26,8 @@ dependencies {
     api 'org.springframework.boot:spring-boot-starter-data-jpa'
 
     implementation 'org.reflections:reflections:0.10.2'
+    implementation 'org.springframework.security:spring-security-core'
+    implementation 'org.springframework.security:spring-security-web'
 
     compileOnly 'org.projectlombok:lombok:1.18.34'
     annotationProcessor 'org.projectlombok:lombok:1.18.34'
