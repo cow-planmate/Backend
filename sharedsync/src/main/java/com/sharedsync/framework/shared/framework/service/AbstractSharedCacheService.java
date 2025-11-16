@@ -1,4 +1,4 @@
-package com.sharedsync.framework.shared.service;
+package com.sharedsync.framework.shared.framework.service;
 
 import java.util.Collections;
 import java.util.List;

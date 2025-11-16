@@ -1,8 +1,9 @@
 package com.example.planmate.common.valueObject;
 
-import com.sharedsync.framework.shared.util.LocalTime24Deserializer;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.sharedsync.framework.shared.framework.util.LocalTime24Deserializer;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

@@ -1,4 +1,4 @@
-package com.example.planmate.common.auth;
+package com.sharedsync.framework.shared.framework.auth;
 
 /**
  * Abstraction for frameworks that need to validate an authentication token and derive

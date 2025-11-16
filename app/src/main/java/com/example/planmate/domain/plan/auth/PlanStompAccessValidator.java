@@ -3,7 +3,7 @@ package com.example.planmate.domain.plan.auth;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
-import com.example.planmate.generated.auth.StompAccessValidator;
+import com.sharedsync.framework.shared.framework.auth.StompAccessValidator;
 
 import lombok.RequiredArgsConstructor;
 

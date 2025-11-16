@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
 import com.example.planmate.domain.refreshToken.service.RefreshTokenStore;
+import com.sharedsync.framework.shared.framework.auth.AuthenticationTokenResolver;
 
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;

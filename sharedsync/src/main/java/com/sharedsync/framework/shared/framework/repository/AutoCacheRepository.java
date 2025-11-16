@@ -2,7 +2,6 @@ package com.sharedsync.framework.shared.framework.repository;
 
 import com.sharedsync.framework.shared.framework.dto.CacheDto;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -285,7 +284,7 @@ public abstract class AutoCacheRepository<T, ID, DTO extends CacheDto<ID>> exten
             }
         }
 
-        T savedEntity = repository.save(Objects.requireNonNull(entityToSave));
+        T savedEntity = repository.save(entityToSave);
 
         DTO updatedDto = convertToDto(savedEntity);
         if(originalParentId != null) {
@@ -370,7 +369,7 @@ public abstract class AutoCacheRepository<T, ID, DTO extends CacheDto<ID>> exten
     /**
      * 캐시에 존재하는 ParentId 하위 DTO들을 DB와 동기화하며, 캐시에 없어진 엔티티는 DB에서도 삭제합니다.
      */
-    @Transactional
+
     public List<DTO> syncToDatabaseByParentId(ID parentId) {
         if (parentIdField == null) {
             throw new UnsupportedOperationException("ParentId 필드가 없습니다.");
@@ -418,7 +417,7 @@ public abstract class AutoCacheRepository<T, ID, DTO extends CacheDto<ID>> exten
         return syncToDatabaseByParentId((ID) parentId);
     }
 
-    @Transactional
+
     public DTO syncToDatabaseByDto(DTO dto) {
         if (dto == null) {
             return null;

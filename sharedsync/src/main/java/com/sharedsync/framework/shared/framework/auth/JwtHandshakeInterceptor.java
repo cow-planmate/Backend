@@ -1,4 +1,4 @@
-package com.example.planmate.generated.auth;
+package com.sharedsync.framework.shared.framework.auth;
 
 import java.util.Map;
 
@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
-import com.example.planmate.common.auth.AuthenticationTokenResolver;
 
 import lombok.RequiredArgsConstructor;
 

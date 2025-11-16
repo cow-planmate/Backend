@@ -11,7 +11,7 @@ import com.example.planmate.generated.cache.TimeTableCache;
 import com.example.planmate.generated.dto.WTimetableRequest;
 import com.example.planmate.generated.dto.WTimetableResponse;
 import com.example.planmate.generated.lazydto.TimeTableDto;
-import com.sharedsync.framework.shared.service.SharedService;
+import com.sharedsync.framework.shared.framework.service.SharedService;
 
 import lombok.RequiredArgsConstructor;
 

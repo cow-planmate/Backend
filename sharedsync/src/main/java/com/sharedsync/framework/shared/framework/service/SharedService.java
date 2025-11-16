@@ -1,4 +1,4 @@
-package com.sharedsync.framework.shared.service;
+package com.sharedsync.framework.shared.framework.service;
 
 import com.sharedsync.framework.shared.framework.dto.WRequest;
 import com.sharedsync.framework.shared.framework.dto.WResponse;

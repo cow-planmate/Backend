@@ -1,4 +1,4 @@
-package com.sharedsync.framework.shared.util;
+package com.sharedsync.framework.shared.framework.util;
 
 
 import com.fasterxml.jackson.core.JsonParser;

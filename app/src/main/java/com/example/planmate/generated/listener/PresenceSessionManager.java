@@ -3,7 +3,7 @@ package com.example.planmate.generated.listener;
 import org.springframework.stereotype.Service;
 
 import com.example.planmate.generated.service.PresenceTrackingService;
-import com.sharedsync.framework.shared.sync.CacheSyncService;
+import com.sharedsync.framework.shared.framework.sync.CacheSyncService;
 
 import lombok.RequiredArgsConstructor;
 

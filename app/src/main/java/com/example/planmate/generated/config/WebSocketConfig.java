@@ -8,7 +8,7 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 import com.example.planmate.common.log.WsAccessLogInterceptor;
-import com.example.planmate.generated.auth.JwtHandshakeInterceptor;
+import com.sharedsync.framework.shared.framework.auth.JwtHandshakeInterceptor;
 
 import lombok.RequiredArgsConstructor;
 

@@ -60,16 +60,6 @@ public class RedisConfig {
         return template;
     }
 
-
-    @Bean
-    public RedisTemplate<String, Integer> planToTimeTableRedis(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Integer> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-        template.afterPropertiesSet();
-        return template;
-    }
-
     @Bean
     public RedisTemplate<String, TimeTablePlaceBlockDto> timeTablePlaceBlockRedis(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, TimeTablePlaceBlockDto> template = new RedisTemplate<>();
@@ -88,15 +78,6 @@ public class RedisConfig {
         template.setDefaultSerializer(customSerializer);
         template.setValueSerializer(customSerializer);
 
-        template.afterPropertiesSet();
-        return template;
-    }
-
-    @Bean
-    public RedisTemplate<String, Integer> timeTableToTimeTablePlaceBlockRedis(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Integer> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         template.afterPropertiesSet();
         return template;
     }

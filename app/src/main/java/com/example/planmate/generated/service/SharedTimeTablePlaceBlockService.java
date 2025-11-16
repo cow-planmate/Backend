@@ -11,7 +11,7 @@ import com.example.planmate.generated.cache.TimeTablePlaceBlockCache;
 import com.example.planmate.generated.dto.WTimeTablePlaceBlockRequest;
 import com.example.planmate.generated.dto.WTimeTablePlaceBlockResponse;
 import com.example.planmate.generated.lazydto.TimeTablePlaceBlockDto;
-import com.sharedsync.framework.shared.service.SharedService;
+import com.sharedsync.framework.shared.framework.service.SharedService;
 
 import lombok.RequiredArgsConstructor;
 

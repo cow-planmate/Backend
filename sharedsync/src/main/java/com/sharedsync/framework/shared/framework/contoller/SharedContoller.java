@@ -5,7 +5,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 
 import com.sharedsync.framework.shared.framework.dto.WRequest;
 import com.sharedsync.framework.shared.framework.dto.WResponse;
-import com.sharedsync.framework.shared.service.SharedService;
+import com.sharedsync.framework.shared.framework.service.SharedService;
 
 import lombok.RequiredArgsConstructor;
 

@@ -1,4 +1,4 @@
-package com.example.planmate.generated.auth;
+package com.sharedsync.framework.shared.framework.auth;
 
 import java.security.Principal;
 import java.util.List;
@@ -10,8 +10,6 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
-
-import com.example.planmate.common.auth.AuthenticationTokenResolver;
 
 import lombok.RequiredArgsConstructor;
 
