@@ -1,6 +1,6 @@
 package com.example.planmate.domain.plan.auth;
 
-import com.sharedsync.framework.shared.auth.StompAccessValidator;
+import com.example.planmate.move.auth.StompAccessValidator;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 

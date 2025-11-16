@@ -8,7 +8,7 @@ import org.springframework.stereotype.Controller;
 
 import com.example.planmate.generated.dto.WTimeTablePlaceBlockRequest;
 import com.example.planmate.generated.dto.WTimeTablePlaceBlockResponse;
-import com.sharedsync.framework.shared.framework.contoller.SharedContoller;
+import com.example.planmate.move.shared.framework.contoller.SharedContoller;
 import com.example.planmate.generated.service.SharedTimeTablePlaceBlockService;
 
 @Controller

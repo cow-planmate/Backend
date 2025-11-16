@@ -2,7 +2,7 @@ package com.example.planmate.domain.user.entity;
 
 import com.example.planmate.domain.plan.entity.Plan;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.sharedsync.framework.shared.presence.annotation.PresenceUser;
+import com.example.planmate.move.shared.presence.annotation.PresenceUser;
 import jakarta.persistence.*;
 import lombok.*;
 

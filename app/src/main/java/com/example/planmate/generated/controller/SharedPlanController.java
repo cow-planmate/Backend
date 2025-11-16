@@ -8,7 +8,7 @@ import org.springframework.stereotype.Controller;
 
 import com.example.planmate.generated.dto.WPlanRequest;
 import com.example.planmate.generated.dto.WPlanResponse;
-import com.sharedsync.framework.shared.framework.contoller.SharedContoller;
+import com.example.planmate.move.shared.framework.contoller.SharedContoller;
 import com.example.planmate.generated.service.SharedPlanService;
 
 @Controller

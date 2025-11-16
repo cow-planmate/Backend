@@ -29,11 +29,11 @@ public class TravelCache {
             travelRedis.opsForValue().set(travelKey(travel.getTravelId()), TravelDto.fromEntity(travel));
         }
     }
-    public Travel findTravelByTravelId(int travelId) {
-        TravelDto dto = travelRedis.opsForValue().get(travelKey(travelId));
-        if (dto == null) return null;
-        return dto.toEntity(travelCategoryRepository.getReferenceById(dto.travelCategoryId()));
-    }
+//    public Travel findTravelByTravelId(int travelId) {
+//        TravelDto dto = travelRedis.opsForValue().get(travelKey(travelId));
+//        if (dto == null) return null;
+//        return dto.toEntity(travelCategoryRepository.getReferenceById(dto.travelCategoryId()));
+//    }
 
     private static String travelKey(int travelId) {
         return TRAVEL_KEY_PREFIX + travelId;

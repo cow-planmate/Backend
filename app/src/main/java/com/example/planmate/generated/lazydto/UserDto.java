@@ -1,7 +1,7 @@
 package com.example.planmate.generated.lazydto;
 
 import com.example.planmate.domain.user.entity.User;
-import com.sharedsync.framework.shared.framework.dto.CacheDto;
+import com.example.planmate.move.shared.framework.dto.CacheDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
