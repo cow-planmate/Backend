@@ -1,4 +1,4 @@
-package com.example.planmate.move.auth;
+package com.example.planmate.move.shared.auth;
 
 import java.util.Map;
 

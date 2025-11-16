@@ -1,4 +1,4 @@
-package com.example.planmate.move.auth;
+package com.example.planmate.move.shared.auth;
 
 /**
  * STOMP 목적지에 대한 접근 권한 검증 전략.

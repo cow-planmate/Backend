@@ -1,6 +1,6 @@
 package com.example.planmate.move.config;
 
-import com.example.planmate.move.auth.JwtHandshakeInterceptor;
+import com.example.planmate.move.shared.auth.JwtHandshakeInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;

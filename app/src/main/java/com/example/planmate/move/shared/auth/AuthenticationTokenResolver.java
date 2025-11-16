@@ -1,4 +1,4 @@
-package com.example.planmate.move.auth;
+package com.example.planmate.move.shared.auth;
 /**
  * Abstraction for frameworks that need to validate an authentication token and derive
  * a principal identifier without tying consumers to a specific token technology.
