@@ -36,14 +36,13 @@ public class ChatBotService {
     private final ChatBotPlanService chatBotPlanService;
     private final RedisService redisService;
 
-    @Value("${python.chatbot.api.url:http://localhost:5000/api/chatbot/generate}")
+    @Value("${python.chatbot.api.url:http://localhost:8010/api/chatbot/generate}")
     private String pythonApiUrl;
     
     public ChatBotActionResponse getChatResponse(String message, Integer planId, String planContext) {
         try {
 
             String systemPromptContext = buildSystemPromptContext(planId);
-            System.out.println(systemPromptContext);
 
             // 2. Python 서버로 전송할 요청 본문 구성
             Map<String, Object> requestBody = Map.of(
@@ -198,8 +197,6 @@ public class ChatBotService {
             ### 🔹 역할
             - 사용자의 여행 계획 데이터를 분석하고, 상황에 맞는 수정 제안을 한다.
             - 사용자의 요청에 따라 Plan, TimeTable, TimeTablePlaceBlock을 생성(create)·수정(update)·삭제(delete)한다.
-            - 하루 또는 일정 기간의 여행 계획을 시간·동선 관점에서 최적화하는 데 도움을 준다.
-            - 사용자의 일정과 장소를 기반으로 여행 비용을 추정할 수 있다.
 
             ---
             ### 🔹 입력 데이터 (JSON)

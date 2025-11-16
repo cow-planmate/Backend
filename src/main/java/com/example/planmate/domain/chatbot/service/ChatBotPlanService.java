@@ -1,19 +1,19 @@
 package com.example.planmate.domain.chatbot.service;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+import org.springframework.stereotype.Service;
+
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
 import com.example.planmate.domain.webSocket.dto.WPlanRequest;
 import com.example.planmate.domain.webSocket.dto.WTimeTablePlaceBlockRequest;
 import com.example.planmate.domain.webSocket.dto.WTimetableRequest;
-import com.example.planmate.domain.webSocket.service.WebSocketPlanService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
 
 /**
  * AI 챗봇이 호출할 수 있는 여행 계획 관련 함수들을 정의
@@ -250,13 +250,13 @@ public class ChatBotPlanService {
                 null, // timetablePlaceBlockId - 생성 시에는 null
                 (Integer) placeBlockMap.get("placeCategoryId"),
                 (String) placeBlockMap.get("placeName"),
-                (Float) placeBlockMap.get("placeRating"),
+                getFloatValue(placeBlockMap.get("placeRating")),
                 (String) placeBlockMap.get("placeAddress"),
                 (String) placeBlockMap.get("placeLink"),
                 (String) placeBlockMap.get("placeId"),
                 (String) placeBlockMap.get("date"),
-                placeBlockMap.containsKey("startTime") ? LocalTime.parse((String) placeBlockMap.get("startTime")) : LocalTime.parse(placeBlockJson),
-                placeBlockMap.containsKey("endTime") ? LocalTime.parse((String) placeBlockMap.get("endTime")) : null,
+                LocalTime.parse((String) placeBlockMap.get("blockStartTime")),
+                LocalTime.parse((String) placeBlockMap.get("blockEndTime")),
                 (Double) placeBlockMap.get("xLocation"),
                 (Double) placeBlockMap.get("yLocation")
             );
@@ -296,7 +296,7 @@ public class ChatBotPlanService {
                 placeBlockId, // timetablePlaceBlockId
                 (Integer) placeBlockMap.get("placeCategoryId"),
                 (String) placeBlockMap.get("placeName"),
-                (Float) placeBlockMap.get("placeRating"),
+                getFloatValue(placeBlockMap.get("placeRating")),
                 (String) placeBlockMap.get("placeAddress"),
                 (String) placeBlockMap.get("placeLink"),
                 (String) placeBlockMap.get("placeId"),
@@ -356,5 +356,22 @@ public class ChatBotPlanService {
             log.error("장소 블록 삭제 실패: {}", e.getMessage());
             return ChatBotActionResponse.simpleMessage("장소 삭제에 실패했습니다: " + e.getMessage());
         }
+    }
+
+    private Float getFloatValue(Object rawValue) {
+        if (rawValue == null) {
+            return null;
+        }
+        if (rawValue instanceof Number) {
+            return ((Number) rawValue).floatValue();
+        }
+        if (rawValue instanceof String) {
+            try {
+                return Float.parseFloat((String) rawValue);
+            } catch (NumberFormatException ex) {
+                log.warn("placeRating 파싱 실패: {}", rawValue);
+            }
+        }
+        return null;
     }
 }
