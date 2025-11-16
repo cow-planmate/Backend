@@ -54,3 +54,14 @@ server:
       force: true
       charset: UTF-8
 
+sharedsync:
+  websocket:
+    endpoint: "/ws-plan"
+    allowed-origins:
+      - "http://localhost:3000"
+      - "http://localhost:5173"
+      - "http://localhost:63771"
+      - "https://planmate.site"
+      - "https://www.planmate.site"
+
+

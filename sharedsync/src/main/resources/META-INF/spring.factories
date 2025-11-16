@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.sharedsync.framework.websocket.autoconfig.SharedSyncAutoConfig,\
+com.sharedsync.framework.presence.autoconfig.SharedPresenceAutoConfig
