@@ -11,15 +11,13 @@ import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
-import com.example.planmate.common.auth.JwtTokenProvider;
-
 import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
 public class WsAuthChannelInterceptor implements ChannelInterceptor {
 
-    private final JwtTokenProvider jwtTokenProvider;
+    private final AuthenticationTokenResolver tokenResolver;
     private final List<StompAccessValidator> accessValidators;
 
     @Override
@@ -42,10 +40,10 @@ public class WsAuthChannelInterceptor implements ChannelInterceptor {
             throw new AccessDeniedException("Missing Authorization");
         }
         String token = auth.substring(7);
-        if (!jwtTokenProvider.validateToken(token)) {
+        if (!tokenResolver.validate(token)) {
             throw new AccessDeniedException("Invalid token");
         }
-        int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
+        int userId = Integer.parseInt(tokenResolver.extractPrincipalId(token));
         // STOMP 세션의 사용자 주체 설정
         acc.setUser(new StompPrincipal(userId));
     }
@@ -91,4 +89,6 @@ public class WsAuthChannelInterceptor implements ChannelInterceptor {
         @Override public String getName() { return "u:" + userId; }
     }
 }
+
+
 
