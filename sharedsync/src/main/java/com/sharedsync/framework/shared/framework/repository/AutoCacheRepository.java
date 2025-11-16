@@ -1,14 +1,11 @@
 package com.sharedsync.framework.shared.framework.repository;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.sharedsync.framework.shared.framework.dto.CacheDto;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 완전 자동화된 캐시 리포지토리
@@ -279,9 +276,26 @@ public abstract class AutoCacheRepository<T, ID, DTO extends CacheDto<ID>> exten
             }
         }
 
+        Object originalParentId = null;
+        if (parentIdField != null) {
+            try {
+                originalParentId = parentIdField.get(dto);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException("ParentId 필드 접근 실패", e);
+            }
+        }
+
         T savedEntity = repository.save(Objects.requireNonNull(entityToSave));
 
         DTO updatedDto = convertToDto(savedEntity);
+        if(originalParentId != null) {
+            try {
+                parentIdField.set(updatedDto, originalParentId);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         ID cacheId = extractId(updatedDto);
 
         if (cacheId != null) {
@@ -356,6 +370,7 @@ public abstract class AutoCacheRepository<T, ID, DTO extends CacheDto<ID>> exten
     /**
      * 캐시에 존재하는 ParentId 하위 DTO들을 DB와 동기화하며, 캐시에 없어진 엔티티는 DB에서도 삭제합니다.
      */
+    @Transactional
     public List<DTO> syncToDatabaseByParentId(ID parentId) {
         if (parentIdField == null) {
             throw new UnsupportedOperationException("ParentId 필드가 없습니다.");
@@ -403,6 +418,7 @@ public abstract class AutoCacheRepository<T, ID, DTO extends CacheDto<ID>> exten
         return syncToDatabaseByParentId((ID) parentId);
     }
 
+    @Transactional
     public DTO syncToDatabaseByDto(DTO dto) {
         if (dto == null) {
             return null;

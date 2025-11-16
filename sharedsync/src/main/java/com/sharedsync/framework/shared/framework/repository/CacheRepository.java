@@ -1,34 +1,14 @@
 package com.sharedsync.framework.shared.framework.repository;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import com.sharedsync.framework.shared.framework.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.redis.core.RedisTemplate;
 
-import com.sharedsync.framework.shared.framework.annotation.AutoDatabaseLoader;
-import com.sharedsync.framework.shared.framework.annotation.AutoEntityConverter;
-import com.sharedsync.framework.shared.framework.annotation.AutoRedisTemplate;
-import com.sharedsync.framework.shared.framework.annotation.CacheEntity;
-import com.sharedsync.framework.shared.framework.annotation.CacheId;
-import com.sharedsync.framework.shared.framework.annotation.EntityConverter;
-import com.sharedsync.framework.shared.framework.annotation.EntityReference;
-import com.sharedsync.framework.shared.framework.annotation.ParentId;
+import java.lang.reflect.*;
+import java.util.*;
+import java.util.stream.Collectors;
 /**
  * 공통 캐시 인터페이스 - JpaRepository와 유사한 방식으로 캐시 작업을 수행
  * @param <T> 엔티티 타입
@@ -359,13 +339,28 @@ public abstract class CacheRepository<T, ID, DTO> {
     /**
      * DTO의 ID 필드를 업데이트 (Record는 새 인스턴스 생성)
      */
-    @SuppressWarnings("unchecked")
     private DTO updateDtoWithId(DTO dto, ID newId) {
         try {
             idField.set(dto, newId);
             return dto;
         } catch (IllegalAccessException e) {
             throw new RuntimeException("DTO ID 업데이트 실패: " + dto, e);
+        }
+    }
+
+    private DTO assignParentIdIfNeeded(DTO dto, ID parentId) {
+        if (dto == null || parentId == null || parentIdField == null) {
+            return dto;
+        }
+
+        try {
+            Object currentValue = parentIdField.get(dto);
+            if (currentValue == null) {
+                parentIdField.set(dto, parentId);
+            }
+            return dto;
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("ParentId 필드 설정 실패", e);
         }
     }
 
@@ -418,6 +413,7 @@ public abstract class CacheRepository<T, ID, DTO> {
         for (T entity : entities) {
             DTO dto = convertToDto(entity);
             if (dto != null) {
+                dto = assignParentIdIfNeeded(dto, parentId);
                 dtos.add(dto);
             }
         }
