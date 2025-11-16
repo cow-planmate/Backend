@@ -1,4 +1,4 @@
-package com.example.planmate.move.config;
+package com.example.planmate.move.shared.config;
 
 import com.example.planmate.generated.lazydto.*;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,4 +1,4 @@
-package com.example.planmate.move.autoConfig;
+package com.example.planmate.move.shared.autoConfig;
 
 import com.example.planmate.move.shared.presence.core.SharedPresenceFacade;
 import com.example.planmate.move.shared.presence.storage.PresenceStorage;

@@ -1,4 +1,4 @@
-package com.example.planmate.move.config;
+package com.example.planmate.move.shared.config;
 
 import java.util.List;
 
