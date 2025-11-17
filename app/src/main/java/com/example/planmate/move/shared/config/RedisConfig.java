@@ -24,17 +24,17 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import com.example.planmate.move.shared.framework.annotation.AutoRedisTemplate;
+import com.example.planmate.move.shared.framework.annotation.Cache;
 import com.example.planmate.move.shared.framework.dto.CacheDto;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.example.planmate.move.shared.framework.annotation.Cache;
 
 @EnableCaching
 @Configuration
-public class RedisConfigGenerator implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware {
+public class RedisConfig implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware {
 
     private String basePackage = "com"; // fallback 기본값
 
@@ -54,12 +54,10 @@ public class RedisConfigGenerator implements BeanDefinitionRegistryPostProcessor
         }
     }
 
-    // 타입 기반 주입을 위한 기본 RedisTemplate<String, Object> 빈 등록
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
+    public RedisTemplate<String, Integer> refreshRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Integer> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
-        configureSerializers(template);
         template.afterPropertiesSet();
         return template;
     }

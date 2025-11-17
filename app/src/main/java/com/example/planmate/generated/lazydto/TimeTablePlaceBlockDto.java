@@ -9,7 +9,7 @@ import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
 import com.example.planmate.move.shared.framework.annotation.AutoDatabaseLoader;
 import com.example.planmate.move.shared.framework.annotation.AutoEntityConverter;
 import com.example.planmate.move.shared.framework.annotation.AutoRedisTemplate;
-import com.example.planmate.move.shared.framework.annotation.CacheEntity;
+import com.example.planmate.move.shared.framework.annotation.Cache;
 import com.example.planmate.move.shared.framework.annotation.CacheId;
 import com.example.planmate.move.shared.framework.annotation.EntityConverter;
 import com.example.planmate.move.shared.framework.annotation.ParentId;
@@ -20,7 +20,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@CacheEntity
+@Cache
 @AutoRedisTemplate("timeTablePlaceBlockRedis")
 @AutoDatabaseLoader(repository = "timeTablePlaceBlockRepository", method = "findByTimeTableTimeTableId")
 @AutoEntityConverter(repositories = {"placeCategoryRepository", "timeTableRepository", "placePhotoRepository"})

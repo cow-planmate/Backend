@@ -24,6 +24,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import com.example.planmate.move.shared.framework.annotation.AutoDatabaseLoader;
 import com.example.planmate.move.shared.framework.annotation.AutoEntityConverter;
 import com.example.planmate.move.shared.framework.annotation.AutoRedisTemplate;
+import com.example.planmate.move.shared.framework.annotation.Cache;
 import com.example.planmate.move.shared.framework.annotation.CacheEntity;
 import com.example.planmate.move.shared.framework.annotation.CacheId;
 import com.example.planmate.move.shared.framework.annotation.EntityConverter;
@@ -68,19 +69,19 @@ public abstract class AutoCacheRepository<T, ID, DTO extends CacheDto<ID>> imple
         }
 
         // @CacheEntity 어노테이션에서 키 타입 추출
-        CacheEntity cacheEntityAnnotation = dtoClass.getAnnotation(CacheEntity.class);
-        if (cacheEntityAnnotation == null) {
+        Cache cacheAnnotation = dtoClass.getAnnotation(Cache.class);
+        if (cacheAnnotation == null) {
             throw new IllegalStateException(dtoClass.getSimpleName() + "에 @CacheEntity 어노테이션이 없습니다.");
         }
 
         // keyType이 빈 문자열이면 클래스 이름에서 자동 생성
-        String annotationKeyType = cacheEntityAnnotation.keyType();
+        String annotationKeyType = cacheAnnotation.keyType();
         if (annotationKeyType == null || annotationKeyType.isEmpty()) {
             // PlanDto -> "plan"
             this.cacheKeyPrefix = dtoClass.getSimpleName().replace("Dto", "").toLowerCase();
         } else {
             this.cacheKeyPrefix = annotationKeyType.toLowerCase();
-        }
+        }   
 
         // @AutoRedisTemplate 어노테이션에서 Redis 템플릿 이름 추출
         AutoRedisTemplate redisTemplateAnnotation = dtoClass.getAnnotation(AutoRedisTemplate.class);

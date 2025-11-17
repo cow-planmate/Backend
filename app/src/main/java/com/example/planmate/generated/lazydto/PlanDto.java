@@ -6,18 +6,18 @@ import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.move.shared.framework.annotation.AutoEntityConverter;
 import com.example.planmate.move.shared.framework.annotation.AutoRedisTemplate;
-import com.example.planmate.move.shared.framework.annotation.CacheEntity;
+import com.example.planmate.move.shared.framework.annotation.Cache;
 import com.example.planmate.move.shared.framework.annotation.CacheId;
 import com.example.planmate.move.shared.framework.annotation.EntityConverter;
 import com.example.planmate.move.shared.framework.dto.CacheDto;
-
 import com.example.planmate.move.shared.presence.annotation.PresenceRoot;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@CacheEntity 
+@Cache
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

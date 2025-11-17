@@ -3,6 +3,8 @@ package com.example.planmate.domain.plan.entity;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import com.example.planmate.move.shared.framework.annotation.CacheEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -17,7 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
+@CacheEntity
 @Entity
 @Table(name = "time_table")
 @Getter
