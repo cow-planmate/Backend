@@ -268,7 +268,8 @@ public class ChatBotService {
                 - timeTableId: 이 블록이 속한 TimeTable의 ID
 
             - **중요**  
-                - placeId, placeRating, placeAddress, placeLink, xLocation, yLocation 은 **Google Places API에서 가져온 값**이다.  
+                - placeId, placeRating, placeAddress, placeLink, xLocation, yLocation 은 **Google Places API에서 가져온 값**이다.
+                - 실제로 생성할때 구글 플레이스 API 호출을 통해 얻은 값이어야 한다.  
                 - AI는 이 필드들을 임의로 제거하거나 구조를 바꾸면 안 되며, 입력 JSON에 존재하는 형식을 그대로 유지해야 한다.
                 - 새로운 필드명을 임의로 추가하지 않는다. (예: "googlePlace" 객체를 새로 만드는 등의 행동 금지)
 
