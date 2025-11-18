@@ -1,9 +1,11 @@
 package com.example.planmate.move.shared.presence.storage;
 
-import lombok.RequiredArgsConstructor;
+import java.util.Map;
+
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-import java.util.Map;
+
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
@@ -23,17 +25,28 @@ public class RedisPresenceStorage implements PresenceStorage {
 
     @Override
     public void insertTracker(int rootId, int userId, int index) {
-        redis.opsForHash().put(TRACKER + rootId, userId, index);
+        redis.opsForHash().put(TRACKER + rootId, String.valueOf(userId), String.valueOf(index));
     }
 
     @Override
     public void removeTracker(int rootId, int userId) {
-        redis.opsForHash().delete(TRACKER + rootId, userId);
+        redis.opsForHash().delete(TRACKER + rootId, String.valueOf(userId));
     }
 
     @Override
     public Map<Integer, Integer> getTrackerEntries(int rootId) {
-        return (Map<Integer, Integer>) (Map<?, ?>) redis.opsForHash().entries(TRACKER + rootId);
+        Map<Object, Object> entries = redis.opsForHash().entries(TRACKER + rootId);
+        Map<Integer, Integer> result = new java.util.HashMap<>();
+        for (Map.Entry<Object, Object> entry : entries.entrySet()) {
+            try {
+                int key = Integer.parseInt(entry.getKey().toString());
+                int value = Integer.parseInt(entry.getValue().toString());
+                result.put(key, value);
+            } catch (NumberFormatException e) {
+                // skip invalid entries
+            }
+        }
+        return result;
     }
 
     @Override
