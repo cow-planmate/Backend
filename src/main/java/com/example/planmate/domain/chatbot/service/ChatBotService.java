@@ -287,6 +287,7 @@ public class ChatBotService {
 
             AI의 응답은 **반드시 아래 JSON 형식만** 반환해야 한다.  
             JSON 외의 텍스트(설명, 문장, 주석 등)는 절대 포함하면 안 된다.
+            action이 있으면 반듯이 target이 있어야 한다.
 
             {
             "userMessage": "사용자에게 보여줄 친근한 메시지",
