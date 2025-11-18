@@ -294,6 +294,7 @@ public class ChatBotPlanService {
             throw new RuntimeException(e);
         }
         SearchPlaceVO searchPlaceVO = pair.getFirst().get(0);
+        timetablePlaceBlockVO.setPlaceName(searchPlaceVO.getName());
         timetablePlaceBlockVO.setPlaceId(searchPlaceVO.getPlaceId());
         timetablePlaceBlockVO.setPlaceLink(searchPlaceVO.getUrl());
         timetablePlaceBlockVO.setXLocation(searchPlaceVO.getXLocation());
