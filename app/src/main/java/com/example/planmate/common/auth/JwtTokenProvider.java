@@ -3,7 +3,7 @@ package com.example.planmate.common.auth;
 import java.security.Key;
 import java.util.Date;
 
-import com.example.planmate.move.shared.auth.AuthenticationTokenResolver;
+import com.sharedsync.framework.shared.auth.AuthenticationTokenResolver;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 

@@ -2,7 +2,7 @@ package com.example.planmate.generated.dto;
 
 import java.util.List;
 
-import com.example.planmate.move.shared.framework.dto.WRequest;
+import com.sharedsync.framework.shared.framework.dto.WRequest;
 import com.example.planmate.generated.lazydto.TimeTablePlaceBlockDto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 

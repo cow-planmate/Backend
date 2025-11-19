@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.example.planmate.generated.valueObject.UserDayIndexVO;
-import com.example.planmate.move.shared.presence.core.SharedPresenceFacade;
+import com.sharedsync.framework.shared.presence.core.SharedPresenceFacade;
 import org.springframework.data.util.Pair;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;

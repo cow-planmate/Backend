@@ -12,7 +12,7 @@ import com.example.planmate.generated.cache.PlanCache;
 import com.example.planmate.generated.dto.WPlanRequest;
 import com.example.planmate.generated.dto.WPlanResponse;
 import com.example.planmate.generated.lazydto.PlanDto;
-import com.example.planmate.move.shared.service.SharedService;
+import com.sharedsync.framework.shared.service.SharedService;
 
 import lombok.RequiredArgsConstructor;
 

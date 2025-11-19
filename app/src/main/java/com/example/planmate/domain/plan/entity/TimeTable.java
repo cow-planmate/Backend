@@ -3,7 +3,7 @@ package com.example.planmate.domain.plan.entity;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-import com.example.planmate.move.shared.framework.annotation.CacheEntity;
+import com.sharedsync.framework.shared.framework.annotation.CacheEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

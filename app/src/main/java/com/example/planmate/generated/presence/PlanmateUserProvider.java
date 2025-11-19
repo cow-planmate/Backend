@@ -1,7 +1,7 @@
 package com.example.planmate.generated.presence;
 
 import com.example.planmate.domain.user.repository.UserRepository;
-import com.example.planmate.move.shared.presence.core.UserProvider;
+import com.sharedsync.framework.shared.presence.core.UserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
