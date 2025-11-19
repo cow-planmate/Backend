@@ -22,7 +22,8 @@ public class AuthWhitelist {
             "/api/plan/place",
             "/api/plan/nextPlace",
             "/logs/**",
-            "/image/**"
+            "/image/**",
+            "/api/oauth/**"
     );
 
     public static boolean isWhitelisted(String uri) {

@@ -166,4 +166,26 @@ public class UserService {
 
         return response;
     }
+
+    @Transactional
+    public User findOrCreateOAuthUser(String provider, String providerId, String email, String nickname) {
+
+        // 1) provider + providerId 기준으로 기존 유저 조회
+        return userRepository.findByProviderAndProviderId(provider, providerId)
+                .orElseGet(() -> {
+                    // 2) 없으면 새로 생성 (SNS는 password 필요 없음)
+                    User newUser = User.builder()
+                            .provider(provider)
+                            .providerId(providerId)
+                            .email(email)
+                            .nickname(nickname)
+                            .password(null)   // SNS 로그인은 비번 없음
+                            .age(null)
+                            .gender(null)
+                            .build();
+
+                    return userRepository.save(newUser);
+                });
+    }
+
 }
