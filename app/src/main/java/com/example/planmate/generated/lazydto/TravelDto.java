@@ -2,7 +2,6 @@ package com.example.planmate.generated.lazydto;
 
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.travel.entity.TravelCategory;
-import com.sharedsync.framework.shared.framework.annotation.CacheEntity;
 import com.sharedsync.framework.shared.framework.annotation.CacheId;
 import com.sharedsync.framework.shared.framework.dto.CacheDto;
 
@@ -11,7 +10,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@CacheEntity
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

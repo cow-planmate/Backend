@@ -1,6 +1,4 @@
 package com.example.planmate.generated.dto;
-
-import java.util.ArrayList;
 import java.util.List;
 
 import com.sharedsync.framework.shared.framework.dto.WResponse;
@@ -13,11 +11,4 @@ import lombok.Setter;
 @Setter
 public class WTimetableResponse extends WResponse {
     private List<TimeTableDto> timeTableDtos;
-    public WTimetableResponse() {
-        timeTableDtos = new ArrayList<>();
-    }
-    public void addTimetableVO(TimeTableDto timeTableDto) {
-        timeTableDtos.add(timeTableDto);
-    }
-
 }

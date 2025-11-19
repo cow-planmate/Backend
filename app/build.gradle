@@ -16,6 +16,7 @@ java {
 dependencies {
     // ✅ sharedsync 프레임워크 의존성 추가
     implementation project(":sharedsync")
+    annotationProcessor project(":sharedsync")
 
     // ✅ 애플리케이션 전용 의존성
     implementation 'org.springframework.boot:spring-boot-starter'
