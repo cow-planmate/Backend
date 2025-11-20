@@ -6,13 +6,7 @@ import com.example.planmate.domain.image.entity.PlacePhoto;
 import com.example.planmate.domain.plan.entity.PlaceCategory;
 import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
-import com.sharedsync.framework.shared.framework.annotation.AutoDatabaseLoader;
-import com.sharedsync.framework.shared.framework.annotation.AutoEntityConverter;
-import com.sharedsync.framework.shared.framework.annotation.AutoRedisTemplate;
-import com.sharedsync.framework.shared.framework.annotation.Cache;
-import com.sharedsync.framework.shared.framework.annotation.CacheId;
-import com.sharedsync.framework.shared.framework.annotation.EntityConverter;
-import com.sharedsync.framework.shared.framework.annotation.ParentId;
+import com.sharedsync.framework.shared.framework.annotation.*;
 import com.sharedsync.framework.shared.framework.dto.CacheDto;
 
 import lombok.AllArgsConstructor;
@@ -46,21 +40,21 @@ public class TimeTablePlaceBlockDto extends CacheDto<Integer> {
     @ParentId(TimeTable.class)
     private Integer timeTableId;
 
-    public static TimeTablePlaceBlockDto fromEntity(TimeTablePlaceBlock block) {
+    public static TimeTablePlaceBlockDto fromEntity(TimeTablePlaceBlock timeTablePlaceBlock) {
         return new TimeTablePlaceBlockDto(
-                block.getBlockId(),
-                block.getPlaceName(),
-                block.getPlaceTheme(),
-                block.getPlaceRating(),
-                block.getPlaceAddress(),
-                block.getPlaceLink(),
-                block.getBlockStartTime(),
-                block.getBlockEndTime(),
-                block.getXLocation(),
-                block.getYLocation(),
-                block.getPlacePhoto() != null ? block.getPlacePhoto().getPlaceId() : null,
-                block.getPlaceCategory().getPlaceCategoryId(),
-                block.getTimeTable().getTimeTableId()
+                timeTablePlaceBlock.getBlockId(),
+                timeTablePlaceBlock.getPlaceName(),
+                timeTablePlaceBlock.getPlaceTheme(),
+                timeTablePlaceBlock.getPlaceRating(),
+                timeTablePlaceBlock.getPlaceAddress(),
+                timeTablePlaceBlock.getPlaceLink(),
+                timeTablePlaceBlock.getBlockStartTime(),
+                timeTablePlaceBlock.getBlockEndTime(),
+                timeTablePlaceBlock.getXLocation(),
+                timeTablePlaceBlock.getYLocation(),
+                timeTablePlaceBlock.getPlacePhoto().getPlaceId(),
+                timeTablePlaceBlock.getPlaceCategory().getPlaceCategoryId(),
+                timeTablePlaceBlock.getTimeTable().getTimeTableId()
         );
     }
 

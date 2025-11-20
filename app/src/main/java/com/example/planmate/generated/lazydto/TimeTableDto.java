@@ -5,13 +5,7 @@ import java.time.LocalTime;
 
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.TimeTable;
-import com.sharedsync.framework.shared.framework.annotation.AutoDatabaseLoader;
-import com.sharedsync.framework.shared.framework.annotation.AutoEntityConverter;
-import com.sharedsync.framework.shared.framework.annotation.AutoRedisTemplate;
-import com.sharedsync.framework.shared.framework.annotation.Cache;
-import com.sharedsync.framework.shared.framework.annotation.CacheId;
-import com.sharedsync.framework.shared.framework.annotation.EntityConverter;
-import com.sharedsync.framework.shared.framework.annotation.ParentId;
+import com.sharedsync.framework.shared.framework.annotation.*;
 import com.sharedsync.framework.shared.framework.dto.CacheDto;
 import com.sharedsync.framework.shared.presence.annotation.PresenceKey;
 
