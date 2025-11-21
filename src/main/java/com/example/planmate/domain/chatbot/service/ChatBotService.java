@@ -230,36 +230,19 @@ public class ChatBotService {
 
             3. TimeTablePlaceBlock  
             - 특정 TimeTable 안에서 “시간 구간 + 장소”를 나타내는 블록이다.
-            - Java DTO 구조는 다음과 같다:
-
-                public record TimeTablePlaceBlockDto(
-                    Integer blockId,
-                    String placeName,
-                    String placeTheme,
-                    float placeRating,
-                    String placeAddress,
-                    String placeLink,
-                    LocalTime blockStartTime,
-                    LocalTime blockEndTime,
-                    double xLocation,
-                    double yLocation,
-                    String placeId,
-                    Integer placeCategoryId,
-                    Integer timeTableId
-                )
 
             - JSON에서도 이 구조를 그대로 사용해야 하며, 각 필드는 다음 의미를 가진다:
                 - blockId: 블록 고유 ID
                 - placeName: 장소 이름
                 - placeTheme: 장소 테마(예: ‘역사’, ‘자연’, ‘쇼핑’ 등)
-                - placeRating: Google Places API에서 가져온 평점(float)
-                - placeAddress: Google Places API에서 가져온 주소
+                - placeRating: 평점(float)
+                - placeAddress: 주소
                 - placeLink: Google Maps 링크(또는 place 상세 링크)
                 - blockStartTime: 블록 시작 시간 (예: "10:00:00")
                 - blockEndTime: 블록 종료 시간 (예: "12:00:00")
-                - xLocation: 위도(latitude) - Google Places API에서 가져온 값
-                - yLocation: 경도(longitude) - Google Places API에서 가져온 값
-                - placeId: Google Places API의 place_id
+                - xLocation: 위도(latitude)
+                - yLocation: 경도(longitude)
+                - placeId: place_id
                 - placeCategoryId:
                 - 0: 관광지
                 - 1: 숙소
@@ -268,8 +251,6 @@ public class ChatBotService {
                 - timeTableId: 이 블록이 속한 TimeTable의 ID
 
             - **중요**  
-                - placeId, placeRating, placeAddress, placeLink, xLocation, yLocation 은 **Google Places API에서 가져온 값**이다.
-                - 실제로 생성할때 구글 플레이스 API 호출을 통해 얻은 값이어야 한다.  
                 - AI는 이 필드들을 임의로 제거하거나 구조를 바꾸면 안 되며, 입력 JSON에 존재하는 형식을 그대로 유지해야 한다.
                 - 새로운 필드명을 임의로 추가하지 않는다. (예: "googlePlace" 객체를 새로 만드는 등의 행동 금지)
 
@@ -287,7 +268,7 @@ public class ChatBotService {
 
             AI의 응답은 **반드시 아래 JSON 형식만** 반환해야 한다.  
             JSON 외의 텍스트(설명, 문장, 주석 등)는 절대 포함하면 안 된다.
-            action이 있으면 반듯이 target이 있어야 한다.
+            action이 있으면 반드시 target이 있어야 한다.
 
             {
             "userMessage": "사용자에게 보여줄 친근한 메시지",
@@ -296,7 +277,7 @@ public class ChatBotService {
                 {
                 "action": "create | update | delete",
                 "targetName": "plan | timeTable | timeTablePlaceBlock",
-                "target": { ... }
+                "target": { action이 있으면 반드시 포함 }
                 }
             ]
             }
@@ -320,19 +301,13 @@ public class ChatBotService {
 
             4. target 객체 규칙
             - **delete를 제외하고**, target에는 해당 엔티티의 모든 필드를 포함해야 한다.
-            - 특히 targetName이 "timeTablePlaceBlock"일 경우:
-                - blockId, placeName, placeTheme, placeRating, placeAddress, placeLink,
-                blockStartTime, blockEndTime, xLocation, yLocation, placeId, placeCategoryId, timeTableId
-                이 모든 필드를 반드시 포함해야 한다.
-                - placeId, placeRating, placeAddress, placeLink, xLocation, yLocation 필드는
-                Google Places에서 온 값이라는 전제를 유지해야 하므로, 의미를 임의로 바꾸지 않는다.
+                - placeId, placeRating, placeAddress, placeLink, xLocation, yLocation 필드는 의미를 임의로 바꾸지 않는다.
                 - placeCategoryId는 0(관광지), 1(숙소), 2(식당) 중 하나만 사용한다.
             - targetName이 "plan" 또는 "timeTable"인 경우에도,
                 - 입력으로 주어진 Plan / TimeTables JSON의 구조를 그대로 따라 전체 필드를 포함해야 한다.
 
             5. delete 액션
             - delete 액션의 경우, target에는 삭제에 필요한 최소 식별 정보(예: blockId, timeTableId 등)만 포함해도 된다.
-            - 단, 가능한 경우 입력 JSON 구조를 크게 벗어나지 않도록 한다.
 
             ---
             ### 🔹 동작 예시 (설명용, 실제 응답에 포함하면 안 됨)
@@ -377,6 +352,8 @@ public class ChatBotService {
             - 사용자의 자연어 요청을 분석하여 적절한 액션을 결정한다.
             - 시간 겹침 규칙과 placeCategoryId 규칙을 반드시 지킨다.
             - **반드시 ChatBotActionResponse JSON만** 반환한다.
+            - 키값은 ""로 반드시 감싼다.
+            - **반드시 action이 있으면 target도 포함되도록** 응답을 생성한다.
             """.formatted(planJson, timeTablesJson, timeTablePlaceBlocksJson);
     }
 
@@ -414,7 +391,10 @@ public class ChatBotService {
 
             switch (action) {
                 case "create":
-                    return chatBotPlanService.createTimeTable(planId, timeTableJson);
+                    String date = (String)timeTableMap.get("date");
+                    if(date != null){
+                        return chatBotPlanService.createTimeTable(planId, timeTableJson);
+                    }
                 case "update":
                     Integer timeTableId = (Integer) timeTableMap.get("timeTableId");
                     if (timeTableId != null) {
@@ -452,13 +432,13 @@ public class ChatBotService {
                     }
                     break;
                 case "update":
-                    Integer placeBlockId = (Integer) placeBlockMap.get("timeTablePlaceBlockId");
+                    Integer placeBlockId = (Integer) placeBlockMap.get("blockId");
                     if (placeBlockId != null) {
                         return chatBotPlanService.updateTimeTablePlaceBlock(placeBlockId, placeBlockJson);
                     }
                     break;
                 case "delete":
-                    Integer deletePlaceBlockId = (Integer) placeBlockMap.get("timeTablePlaceBlockId");
+                    Integer deletePlaceBlockId = (Integer) placeBlockMap.get("blockId");
                     if (deletePlaceBlockId != null) {
                         return chatBotPlanService.deleteTimeTablePlaceBlock(deletePlaceBlockId);
                     }
