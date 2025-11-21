@@ -15,7 +15,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Cache
-@AutoRedisTemplate("timeTableRedis")
 @AutoDatabaseLoader(repository = "timeTableRepository", method = "findByPlanPlanId")
 @AutoEntityConverter(repositories = {"planRepository"})
 @NoArgsConstructor

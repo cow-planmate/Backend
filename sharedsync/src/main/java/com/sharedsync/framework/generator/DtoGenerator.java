@@ -15,10 +15,21 @@ public class DtoGenerator {
         String packageName = cacheInfo.getBasicPackagePath() + "." + OBJECT_NAME;
 
         String source = "package " + packageName + ";\n"
-            + "import org.springframework.stereotype.Component;\n"
-            + "import com.sharedsync.framework.shared.framework.repository.AutoCacheRepository;\n"
+            + "import com.sharedsync.framework.shared.framework.annotation.*;\n"
+            + "import lombok.*;\n"
+            + "import com.sharedsync.framework.shared.framework.dto.CacheDto;\n"
+            + entityPath(cacheInfo) 
             + "import " + cacheInfo.getEntityPath() + ";\n"
             + "import " + cacheInfo.getDtoPath() + ";\n"
+            + "@Cache\n"
+            + "@AllArgsConstructor\n"
+            + "@NoArgsConstructor\n"
+            + "@Getter\n"
+            + "@Setter\n"
+            + "@AutoEntityConverter(repositories = {"
+            + generateRepositoryList(cacheInfo)
+            + "})\n"
+            + "public class " + dtoClassName + " extends CacheDto<" + cacheInfo.getPkType() + "> {\n\n"
             + "@Component\n"
             + "public class " + dtoClassName + " extends AutoCacheRepository<" + cacheInfo.getEntityName() + ", " + cacheInfo.getPkType() + ", " + cacheInfo.getDtoClassName() + "> {}";
 
@@ -34,5 +45,13 @@ public class DtoGenerator {
         }
         
         return true;
+    }
+
+    private static String entityPath(CacheInformation cacheInfo){
+        String path = "import com.example.planmate.domain.plan.entity." + cacheInfo.getEntityName() + ";\n";
+        for (String entityName : cacheInfo.getRelatedEntitieNames()) {
+            path += "import com.example.planmate.domain.plan.entity." + entityName + ";\n";
+        }
+        return path;
     }
 }

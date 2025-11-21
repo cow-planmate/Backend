@@ -23,7 +23,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 
 import com.sharedsync.framework.shared.framework.annotation.AutoDatabaseLoader;
 import com.sharedsync.framework.shared.framework.annotation.AutoEntityConverter;
-import com.sharedsync.framework.shared.framework.annotation.AutoRedisTemplate;
 import com.sharedsync.framework.shared.framework.annotation.Cache;
 import com.sharedsync.framework.shared.framework.annotation.CacheId;
 import com.sharedsync.framework.shared.framework.annotation.EntityConverter;
@@ -83,14 +82,9 @@ public abstract class AutoCacheRepository<T, ID, DTO extends CacheDto<ID>> imple
         }   
 
         // @AutoRedisTemplate 어노테이션에서 Redis 템플릿 이름 추출
-        AutoRedisTemplate redisTemplateAnnotation = dtoClass.getAnnotation(AutoRedisTemplate.class);
-        if (redisTemplateAnnotation != null && !redisTemplateAnnotation.value().isEmpty()) {
-            this.redisTemplateBeanName = redisTemplateAnnotation.value();
-        } else {
-            // 자동 생성: TimeTableDto -> timeTableRedis
-            String entityName = dtoClass.getSimpleName().replace("Dto", "");
-            this.redisTemplateBeanName = Character.toLowerCase(entityName.charAt(0)) + entityName.substring(1) + "Redis";
-        }
+        String entityName = dtoClass.getSimpleName().replace("Dto", "");
+        this.redisTemplateBeanName = Character.toLowerCase(entityName.charAt(0)) + entityName.substring(1) + "Redis";
+        
 
         // @AutoDatabaseLoader 어노테이션에서 Repository와 메서드 정보 추출
         AutoDatabaseLoader dbLoaderAnnotation = dtoClass.getAnnotation(AutoDatabaseLoader.class);

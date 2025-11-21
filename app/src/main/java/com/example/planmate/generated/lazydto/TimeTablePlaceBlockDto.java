@@ -15,13 +15,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Cache
-@AutoRedisTemplate("timeTablePlaceBlockRedis")
-@AutoDatabaseLoader(repository = "timeTablePlaceBlockRepository", method = "findByTimeTableTimeTableId")
-@AutoEntityConverter(repositories = {"placeCategoryRepository", "timeTableRepository", "placePhotoRepository"})
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
+@AutoDatabaseLoader(repository = "timeTablePlaceBlockRepository", method = "findByTimeTableTimeTableId")
+@AutoEntityConverter(repositories = {"placeCategoryRepository", "timeTableRepository", "placePhotoRepository"})
 public class TimeTablePlaceBlockDto extends CacheDto<Integer> {
 
     @CacheId
