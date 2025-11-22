@@ -23,7 +23,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import com.sharedsync.framework.shared.framework.annotation.AutoRedisTemplate;
 import com.sharedsync.framework.shared.framework.annotation.Cache;
 import com.sharedsync.framework.shared.framework.dto.CacheDto;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -118,10 +117,6 @@ public class RedisConfig implements BeanDefinitionRegistryPostProcessor, Applica
     }
 
     private String resolveBeanName(Class<?> dtoClass) {
-        AutoRedisTemplate annotation = dtoClass.getAnnotation(AutoRedisTemplate.class);
-        if (annotation != null && !annotation.value().isBlank()) {
-            return annotation.value();
-        }
 
         String simpleName = dtoClass.getSimpleName();
         if (simpleName.endsWith("Dto")) {

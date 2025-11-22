@@ -1,6 +1,5 @@
 package com.sharedsync.framework.generator;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -23,13 +22,28 @@ import lombok.Setter;
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
 public class Generator extends AbstractProcessor{
         
-    List<CacheInformation> cacheInfoList = new ArrayList<CacheInformation>();;
+    List<CacheInformation> cacheInfoList = new ArrayList<CacheInformation>();
+    @Getter
+    @Setter
+    public class FieldInfo {
+        private String name;
+        private String type;
+        private boolean isManyToOne;
+
+        public FieldInfo(String name, String type, boolean isManyToOne) {
+            this.name = name;
+            this.type = removePath(type);
+            this.isManyToOne = isManyToOne;
+        }
+    }
+
     @Getter
     @Setter
     public class CacheInformation{
 
         private String entityName;
-        private String pkType;
+        private String idType;
+        private String idName;
         private String basicPackagePath;
         private String entityPath;
 
@@ -40,7 +54,7 @@ public class Generator extends AbstractProcessor{
         private String repositoryName;
         private List<String> relatedRepositoryNames;
 
-        private List<Field> entityFields;
+        private List<FieldInfo> entityFields;
 
         // dto
         private String dtoClassName;
@@ -58,49 +72,44 @@ public class Generator extends AbstractProcessor{
         }
 
         public void addRelatedEntityName(String entityName) {
-            this.relatedEntitieNames.add(entityName);
+            this.relatedEntitieNames.add(removePath(entityName));
         }
         public void setRelatedRepositoryName(String repositoryName, int index) {
             // 리스트 크기 맞추기
             while (relatedRepositoryNames.size() <= index) {
                 relatedRepositoryNames.add("");
             }
-            relatedRepositoryNames.set(index, repositoryName);
+            relatedRepositoryNames.set(index, removePath(repositoryName));
         }
-        public void setEntityFields(List<Field> entityFields) {
-            this.entityFields = entityFields;
+        public void addEntityField(FieldInfo fieldInfo) {
+            this.entityFields.add(fieldInfo);
         }
             
     }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        
         for (Element element : roundEnv.getElementsAnnotatedWith(CacheEntity.class)) {
             CacheInformation cacheInfo = new CacheInformation();
             String entityName = element.getSimpleName().toString();
             cacheInfo.setEntityName(entityName);
-            String pkType = "";
             cacheInfo.setEntityPath(element.asType().toString());
 
-           
-
-
-
             for (Element field : element.getEnclosedElements()) {
-                if (field.getAnnotation(jakarta.persistence.Id.class) != null) {
-                    pkType = field.asType().toString(); // 예: java.lang.Integer
-                    // 필요시 마지막 점(.) 뒤만 추출해서 Integer 등으로 쓸 수 있음
+                if (field.getKind().isField()) {
+                    boolean isManyToOne = field.getAnnotation(jakarta.persistence.ManyToOne.class) != null;
+                    cacheInfo.addEntityField(new FieldInfo(field.getSimpleName().toString(), field.asType().toString(), isManyToOne));
                 }
-
+                if (field.getAnnotation(jakarta.persistence.Id.class) != null) {
+                    cacheInfo.setIdType(removePath(field.asType().toString()));
+                    cacheInfo.setIdName(field.getSimpleName().toString());
+                }
                 if(field.getAnnotation(jakarta.persistence.ManyToOne.class) != null ) {
-                    cacheInfo.addRelatedEntityName(field.asType().toString());
+                    cacheInfo.addRelatedEntityName(removePath(field.asType().toString()));
                     if (field.asType() instanceof DeclaredType declaredType) {
                         Element typeElement = declaredType.asElement();
                         if (typeElement.getAnnotation(CacheEntity.class) != null) {
-                            cacheInfo.setParentEntityName(field.asType().toString());
-
-                            // 부모 엔티티의 PK 필드명/타입 찾기
+                            cacheInfo.setParentEntityName(removePath(field.asType().toString()));
                             String parentId = null;
                             for (Element parentField : typeElement.getEnclosedElements()) {
                                 if (parentField.getAnnotation(jakarta.persistence.Id.class) != null) {
@@ -112,9 +121,8 @@ public class Generator extends AbstractProcessor{
                         }
                     }
                 }
-
             }
-            
+
 
             // 모든 Repository 인터페이스를 탐색하여 해당 엔티티와 PK 타입을 관리하는 Repository를 찾음
             for (Element repoElement : roundEnv.getRootElements()) {
@@ -130,7 +138,7 @@ public class Generator extends AbstractProcessor{
                                         String repoEntityType = typeArgs.get(0).toString();
                                         // 현재 entity와 PK 타입이 일치하는 Repository라면
                                         if (repoEntityType.equals(element.asType().toString())) {
-                                            cacheInfo.setRepositoryName(typeElement.getQualifiedName().toString());
+                                            cacheInfo.setRepositoryName(removePath(typeElement.getQualifiedName().toString()));
                                         }
                                         // relatedEntitieNames와 순서 맞춰서 관련 Repository 이름 저장
                                         for (int i = 0; i < cacheInfo.getRelatedEntitieNames().size(); i++) {
@@ -145,11 +153,9 @@ public class Generator extends AbstractProcessor{
                     }
                 }
             }
-
-
-            cacheInfo.setPkType(pkType);
             cacheInfoList.add(cacheInfo);
             CacheEntityGenerator.process(cacheInfo, processingEnv);
+            DtoGenerator.process(cacheInfo, processingEnv);
         }
 
         
@@ -160,5 +166,17 @@ public class Generator extends AbstractProcessor{
     public static String capitalizeFirst(String str) {
         if (str == null || str.isEmpty()) return "";
         return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
+    // 앞글자만 소문자로 바꿔주는 static 메서드
+    public static String decapitalizeFirst(String str) {
+        if (str == null || str.isEmpty()) return "";
+        return str.substring(0, 1).toLowerCase() + str.substring(1);
+    }
+
+    public static String removePath(String fullPath){
+        if(fullPath.contains(".")){
+            return fullPath.split("\\.")[fullPath.split("\\.").length - 1];
+        }
+        return fullPath;
     }
 }

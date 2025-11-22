@@ -21,7 +21,7 @@ public class CacheEntityGenerator{
             + "import " + cacheInfo.getEntityPath() + ";\n"
             + "import " + cacheInfo.getDtoPath() + ";\n"
             + "@Component\n"
-            + "public class " + cacheClassName + " extends AutoCacheRepository<" + cacheInfo.getEntityName() + ", " + cacheInfo.getPkType() + ", " + cacheInfo.getDtoClassName() + "> {}";
+            + "public class " + cacheClassName + " extends AutoCacheRepository<" + cacheInfo.getEntityName() + ", " + cacheInfo.getIdType() + ", " + cacheInfo.getDtoClassName() + "> {}";
 
         // 파일 생성
         JavaFileObject file;
