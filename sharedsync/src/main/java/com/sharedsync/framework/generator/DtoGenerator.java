@@ -22,7 +22,7 @@ public class DtoGenerator {
             + "import com.sharedsync.framework.shared.framework.annotation.*;\n"
             + "import lombok.*;\n"
             + "import com.sharedsync.framework.shared.framework.dto.CacheDto;\n"
-            + entityPath(cacheInfo) 
+            + writeEntityPath(cacheInfo) 
             + "@Cache\n"
             + "@AllArgsConstructor\n"
             + "@NoArgsConstructor\n"
@@ -50,10 +50,10 @@ public class DtoGenerator {
         return true;
     }
 
-    private static String entityPath(CacheInformation cacheInfo){
+    private static String writeEntityPath(CacheInformation cacheInfo){
         String path = "import com.example.planmate.domain.plan.entity." + cacheInfo.getEntityName() + ";\n";
-        for (String entityName : cacheInfo.getRelatedEntitieNames()) {
-            path += "import com.example.planmate.domain.plan.entity." + entityName + ";\n";
+        for (String entityName : cacheInfo.getRelatedEntityPaths()) {
+            path += "import " + entityName + ";\n";
         }
         return path;
     }
@@ -62,19 +62,19 @@ public class DtoGenerator {
         if(cacheInfo.getParentEntityName() == null || cacheInfo.getParentId() == null) {
             return "";
         } else {
-        String loader = "@AutoDatabaseLoader(repository = \"" + cacheInfo.getRepositoryName() + "\", method = \"findBy" + cacheInfo.getParentEntityName() + Generator.capitalizeFirst(cacheInfo.getParentId()) + "\")\n";
+        String loader = "@AutoDatabaseLoader(repository = \"" + Generator.removePath(cacheInfo.getRepositoryName()) + "\", method = \"findBy" + Generator.removePath(cacheInfo.getParentEntityName()) + Generator.capitalizeFirst(cacheInfo.getParentId()) + "\")\n";
         return loader;
         }
     }
 
     private static String writeAutoEntityConverter(CacheInformation cacheInfo) {
-        if (cacheInfo.getRelatedRepositoryNames() == null || cacheInfo.getRelatedRepositoryNames().isEmpty()) {
+        if (cacheInfo.getRelatedRepositoryPaths() == null || cacheInfo.getRelatedRepositoryPaths().isEmpty()) {
             return "";
         } else {
             StringBuilder repositories = new StringBuilder();
-            List<String> repoList = cacheInfo.getRelatedRepositoryNames();
+            List<String> repoList = cacheInfo.getRelatedRepositoryPaths();
             for (int i = 0; i < repoList.size(); i++) {
-                repositories.append("\"").append(repoList.get(i)).append("\"");
+                repositories.append("\"").append(Generator.removePath(repoList.get(i))).append("\"");
                 if (i < repoList.size() - 1) {
                     repositories.append(", ");
                 }
@@ -86,7 +86,7 @@ public class DtoGenerator {
 
     private static String writeDtoFields(CacheInformation cacheInfo) {
         StringBuilder fields = new StringBuilder();
-        fields.append("@CacheId\n");
+        fields.append("    @CacheId\n");
         fields.append("    private ").append(cacheInfo.getIdType()).append(" ").append(cacheInfo.getIdName()).append(";\n");
         for (FieldInfo fieldInfo : cacheInfo.getEntityFields()) {
             if(fieldInfo.getName().equals(cacheInfo.getParentId())){
@@ -130,7 +130,7 @@ public class DtoGenerator {
         for (FieldInfo field : fields) {
             if (field.isManyToOne()) {
                 if (!first) method.append(", ");
-                method.append(field.getType()).append(" ").append(field.getName());
+                method.append(Generator.removePath(field.getType())).append(" ").append(field.getName());
                 first = false;
             }
         }

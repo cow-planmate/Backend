@@ -32,7 +32,7 @@ public class Generator extends AbstractProcessor{
 
         public FieldInfo(String name, String type, boolean isManyToOne) {
             this.name = name;
-            this.type = removePath(type);
+            this.type = type;
             this.isManyToOne = isManyToOne;
         }
     }
@@ -47,18 +47,19 @@ public class Generator extends AbstractProcessor{
         private String basicPackagePath;
         private String entityPath;
 
-        private List<String> relatedEntitieNames;
+        private List<String> relatedEntityPaths;
         private String parentEntityName;
         private String parentId;
 
         private String repositoryName;
-        private List<String> relatedRepositoryNames;
+        private List<String> relatedRepositoryPaths;
 
         private List<FieldInfo> entityFields;
 
         // dto
         private String dtoClassName;
         private String dtoPath;
+
         // cache
         private String cacheClassName;
         private String cachePath;
@@ -66,20 +67,20 @@ public class Generator extends AbstractProcessor{
 
         public CacheInformation() {
             basicPackagePath = "sharedsync";
-            relatedEntitieNames = new ArrayList<>();
-            relatedRepositoryNames = new ArrayList<>();
+            relatedEntityPaths = new ArrayList<>();
+            relatedRepositoryPaths = new ArrayList<>();
             entityFields = new ArrayList<>();
         }
 
-        public void addRelatedEntityName(String entityName) {
-            this.relatedEntitieNames.add(removePath(entityName));
+        public void addRelatedEntityPath(String entityPath) {
+            this.relatedEntityPaths.add(entityPath);
         }
-        public void setRelatedRepositoryName(String repositoryName, int index) {
+        public void setRelatedRepositoryPath(String repositoryPath, int index) {
             // 리스트 크기 맞추기
-            while (relatedRepositoryNames.size() <= index) {
-                relatedRepositoryNames.add("");
+            while (relatedRepositoryPaths.size() <= index) {
+                relatedRepositoryPaths.add("");
             }
-            relatedRepositoryNames.set(index, removePath(repositoryName));
+            relatedRepositoryPaths.set(index, repositoryPath);
         }
         public void addEntityField(FieldInfo fieldInfo) {
             this.entityFields.add(fieldInfo);
@@ -105,11 +106,11 @@ public class Generator extends AbstractProcessor{
                     cacheInfo.setIdName(field.getSimpleName().toString());
                 }
                 if(field.getAnnotation(jakarta.persistence.ManyToOne.class) != null ) {
-                    cacheInfo.addRelatedEntityName(removePath(field.asType().toString()));
+                    cacheInfo.addRelatedEntityPath(field.asType().toString());
                     if (field.asType() instanceof DeclaredType declaredType) {
                         Element typeElement = declaredType.asElement();
                         if (typeElement.getAnnotation(CacheEntity.class) != null) {
-                            cacheInfo.setParentEntityName(removePath(field.asType().toString()));
+                            cacheInfo.setParentEntityName(field.asType().toString());
                             String parentId = null;
                             for (Element parentField : typeElement.getEnclosedElements()) {
                                 if (parentField.getAnnotation(jakarta.persistence.Id.class) != null) {
@@ -138,12 +139,12 @@ public class Generator extends AbstractProcessor{
                                         String repoEntityType = typeArgs.get(0).toString();
                                         // 현재 entity와 PK 타입이 일치하는 Repository라면
                                         if (repoEntityType.equals(element.asType().toString())) {
-                                            cacheInfo.setRepositoryName(removePath(typeElement.getQualifiedName().toString()));
+                                            cacheInfo.setRepositoryName(typeElement.getQualifiedName().toString());
                                         }
                                         // relatedEntitieNames와 순서 맞춰서 관련 Repository 이름 저장
-                                        for (int i = 0; i < cacheInfo.getRelatedEntitieNames().size(); i++) {
-                                            if (repoEntityType.equals(cacheInfo.getRelatedEntitieNames().get(i))) {
-                                                cacheInfo.setRelatedRepositoryName(typeElement.getQualifiedName().toString(), i);
+                                        for (int i = 0; i < cacheInfo.getRelatedEntityPaths().size(); i++) {
+                                            if (repoEntityType.equals(cacheInfo.getRelatedEntityPaths().get(i))) {
+                                                cacheInfo.setRelatedRepositoryPath(typeElement.getQualifiedName().toString(), i);
                                             }
                                         }
                                     }
