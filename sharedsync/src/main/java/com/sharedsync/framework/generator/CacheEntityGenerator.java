@@ -12,7 +12,7 @@ public class CacheEntityGenerator{
     private static final String OBJECT_NAME = "cache";
 
     public static boolean process(CacheInformation cacheInfo, ProcessingEnvironment processingEnv) {
-        String cacheClassName = cacheInfo.getEntityName() + OBJECT_NAME.substring(0, 1).toUpperCase() + OBJECT_NAME.substring(1);
+        String cacheClassName = cacheInfo.getEntityName() + Generator.capitalizeFirst(OBJECT_NAME);
         String packageName = cacheInfo.getBasicPackagePath() + "." + OBJECT_NAME;
 
         String source = "package " + packageName + ";\n"

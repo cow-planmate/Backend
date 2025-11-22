@@ -1,5 +1,6 @@
 package com.sharedsync.framework.generator;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -21,6 +22,7 @@ import lombok.Setter;
 @SupportedAnnotationTypes("com.sharedsync.framework.shared.framework.annotation.CacheEntity")
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
 public class Generator extends AbstractProcessor{
+        
     List<CacheInformation> cacheInfoList = new ArrayList<CacheInformation>();;
     @Getter
     @Setter
@@ -31,13 +33,14 @@ public class Generator extends AbstractProcessor{
         private String basicPackagePath;
         private String entityPath;
 
-        private String repositoryName;
-
         private List<String> relatedEntitieNames;
         private String parentEntityName;
         private String parentId;
 
-        
+        private String repositoryName;
+        private List<String> relatedRepositoryNames;
+
+        private List<Field> entityFields;
 
         // dto
         private String dtoClassName;
@@ -49,11 +52,23 @@ public class Generator extends AbstractProcessor{
 
         public CacheInformation() {
             basicPackagePath = "sharedsync";
-            relatedEntitieNames = new ArrayList<String>();
+            relatedEntitieNames = new ArrayList<>();
+            relatedRepositoryNames = new ArrayList<>();
+            entityFields = new ArrayList<>();
         }
 
         public void addRelatedEntityName(String entityName) {
             this.relatedEntitieNames.add(entityName);
+        }
+        public void setRelatedRepositoryName(String repositoryName, int index) {
+            // 리스트 크기 맞추기
+            while (relatedRepositoryNames.size() <= index) {
+                relatedRepositoryNames.add("");
+            }
+            relatedRepositoryNames.set(index, repositoryName);
+        }
+        public void setEntityFields(List<Field> entityFields) {
+            this.entityFields = entityFields;
         }
             
     }
@@ -68,7 +83,7 @@ public class Generator extends AbstractProcessor{
             String pkType = "";
             cacheInfo.setEntityPath(element.asType().toString());
 
-            for(Element repoElement : roundEnv.get(JpaRepository))
+           
 
 
 
@@ -99,6 +114,39 @@ public class Generator extends AbstractProcessor{
                 }
 
             }
+            
+
+            // 모든 Repository 인터페이스를 탐색하여 해당 엔티티와 PK 타입을 관리하는 Repository를 찾음
+            for (Element repoElement : roundEnv.getRootElements()) {
+                if (repoElement instanceof TypeElement typeElement) {
+                    // 인터페이스만 처리
+                    if (typeElement.getKind().isInterface()) {
+                        for (javax.lang.model.type.TypeMirror iface : typeElement.getInterfaces()) {
+                            if (iface instanceof DeclaredType declaredType) {
+                                Element ifaceElement = declaredType.asElement();
+                                if (ifaceElement.getSimpleName().toString().equals("JpaRepository")) {
+                                    List<? extends javax.lang.model.type.TypeMirror> typeArgs = declaredType.getTypeArguments();
+                                    if (typeArgs.size() == 2) {
+                                        String repoEntityType = typeArgs.get(0).toString();
+                                        // 현재 entity와 PK 타입이 일치하는 Repository라면
+                                        if (repoEntityType.equals(element.asType().toString())) {
+                                            cacheInfo.setRepositoryName(typeElement.getQualifiedName().toString());
+                                        }
+                                        // relatedEntitieNames와 순서 맞춰서 관련 Repository 이름 저장
+                                        for (int i = 0; i < cacheInfo.getRelatedEntitieNames().size(); i++) {
+                                            if (repoEntityType.equals(cacheInfo.getRelatedEntitieNames().get(i))) {
+                                                cacheInfo.setRelatedRepositoryName(typeElement.getQualifiedName().toString(), i);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+
             cacheInfo.setPkType(pkType);
             cacheInfoList.add(cacheInfo);
             CacheEntityGenerator.process(cacheInfo, processingEnv);
@@ -106,5 +154,11 @@ public class Generator extends AbstractProcessor{
 
         
         return false;
+    }
+
+    // 앞글자만 대문자로 바꿔주는 static 메서드
+    public static String capitalizeFirst(String str) {
+        if (str == null || str.isEmpty()) return "";
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 }

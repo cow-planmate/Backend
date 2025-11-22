@@ -2,6 +2,7 @@ package com.sharedsync.framework.generator;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.List;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.tools.JavaFileObject;
@@ -11,7 +12,7 @@ import com.sharedsync.framework.generator.Generator.CacheInformation;
 public class DtoGenerator {
     private static final String OBJECT_NAME = "dto";
     public static boolean process(CacheInformation cacheInfo, ProcessingEnvironment processingEnv) {
-        String dtoClassName = cacheInfo.getEntityName() + OBJECT_NAME.substring(0, 1).toUpperCase() + OBJECT_NAME.substring(1);
+        String dtoClassName = cacheInfo.getEntityName() + Generator.capitalizeFirst(OBJECT_NAME);
         String packageName = cacheInfo.getBasicPackagePath() + "." + OBJECT_NAME;
 
         String source = "package " + packageName + ";\n"
@@ -26,12 +27,14 @@ public class DtoGenerator {
             + "@NoArgsConstructor\n"
             + "@Getter\n"
             + "@Setter\n"
-            + "@AutoEntityConverter(repositories = {"
-            + generateRepositoryList(cacheInfo)
-            + "})\n"
+            + getAutoDatabaseLoader(cacheInfo)
+            + getAutoEntityConverter(cacheInfo)
             + "public class " + dtoClassName + " extends CacheDto<" + cacheInfo.getPkType() + "> {\n\n"
             + "@Component\n"
-            + "public class " + dtoClassName + " extends AutoCacheRepository<" + cacheInfo.getEntityName() + ", " + cacheInfo.getPkType() + ", " + cacheInfo.getDtoClassName() + "> {}";
+            + "public class " + dtoClassName + " extends AutoCacheRepository<" + cacheInfo.getEntityName() + ", " + cacheInfo.getPkType() + ", " + cacheInfo.getDtoClassName() + "> {\n\n";
+            + "@CacheId\n"
+            
+
 
         // 파일 생성
         JavaFileObject file;
@@ -53,5 +56,31 @@ public class DtoGenerator {
             path += "import com.example.planmate.domain.plan.entity." + entityName + ";\n";
         }
         return path;
+    }
+
+    private static String getAutoDatabaseLoader (CacheInformation cacheInfo) {
+        if(cacheInfo.getParentEntityName() == null || cacheInfo.getParentId() == null) {
+            return "";
+        } else {
+        String loader = "@AutoDatabaseLoader(repository = \"" + cacheInfo.getRepositoryName() + "\", method = \"findBy" + cacheInfo.getParentEntityName() + Generator.capitalizeFirst(cacheInfo.getParentId()) + "\")\n";
+        return loader;
+        }
+    }
+
+    private static String getAutoEntityConverter(CacheInformation cacheInfo) {
+        if (cacheInfo.getRelatedRepositoryNames() == null || cacheInfo.getRelatedRepositoryNames().isEmpty()) {
+            return "";
+        } else {
+            StringBuilder repositories = new StringBuilder();
+            List<String> repoList = cacheInfo.getRelatedRepositoryNames();
+            for (int i = 0; i < repoList.size(); i++) {
+                repositories.append("\"").append(repoList.get(i)).append("\"");
+                if (i < repoList.size() - 1) {
+                    repositories.append(", ");
+                }
+            }
+            String converter = "@AutoEntityConverter(repositories = {" + repositories.toString() + "})\n";
+            return converter;
+        }
     }
 }
