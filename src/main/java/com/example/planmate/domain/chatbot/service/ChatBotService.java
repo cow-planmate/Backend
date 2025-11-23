@@ -254,141 +254,100 @@ public class ChatBotService {
 
             1. Plan
             - 여행 전체 단위의 메타 정보이다.
-            - 예시 필드: planId, title, startDate, endDate, users 등
             - 실제 필드명과 구조는 Plan JSON에 나와 있는 것을 그대로 따른다.
 
             2. TimeTable
             - 특정 날짜(하루) 단위의 일정이다.
-            - 하나의 Plan에 여러 TimeTable이 연결될 수 있다.
-            - 예시 필드: timeTableId, planId, date, dayIndex 등
             - 실제 필드명과 구조는 TimeTables JSON에 나와 있는 것을 그대로 따른다.
 
-            3. TimeTablePlaceBlock  
-            - 특정 TimeTable 안에서 “시간 구간 + 장소”를 나타내는 블록이다.
-
-            - JSON에서도 이 구조를 그대로 사용해야 하며, 각 필드는 다음 의미를 가진다:
-                - blockId: 블록 고유 ID
-                - placeName: 장소 이름
-                - placeTheme: 장소 테마(예: ‘역사’, ‘자연’, ‘쇼핑’ 등)
-                - placeRating: 평점(float)
-                - placeAddress: 주소
-                - placeLink: Google Maps 링크(또는 place 상세 링크)
-                - blockStartTime: 블록 시작 시간 (예: "10:00:00")
-                - blockEndTime: 블록 종료 시간 (예: "12:00:00")
-                - xLocation: 위도(latitude)
-                - yLocation: 경도(longitude)
-                - placeId: place_id
-                - placeCategoryId:
-                - 0: 관광지
-                - 1: 숙소
-                - 2: 식당
-                - 이 세 값만 사용하며, 그 외 숫자는 절대 사용하지 않는다.
-                - timeTableId: 이 블록이 속한 TimeTable의 ID
-
-            - **중요**  
-                - AI는 이 필드들을 임의로 제거하거나 구조를 바꾸면 안 되며, 입력 JSON에 존재하는 형식을 그대로 유지해야 한다.
-                - 새로운 필드명을 임의로 추가하지 않는다. (예: "googlePlace" 객체를 새로 만드는 등의 행동 금지)
+            3. TimeTablePlaceBlock 
+            새로운 블록을 생성(create)할 때는 아래 필드를 **빠짐없이** 채워라.
+    
+            - **blockId**: 0 (새로 생성 시 0으로 고정)
+            - **placeName**: 장소명 (사용자 요청에 따름)
+            - **placeTheme**: 테마 (예: '맛집', '산책', '쇼핑' 등 AI가 판단하여 기입)
+            - **placeRating**: 0.0 ~ 5.0 사이 (모르면 4.0으로 기입)
+            - **placeAddress**: 주소 (모르면 '주소 정보 없음' 또는 시/군/구 단위까지만이라도 기입)
+            - **placeLink**: (모르면 빈 문자열 "")
+            - **blockStartTime**: "HH:mm:ss"
+            - **blockEndTime**: "HH:mm:ss"
+            - **xLocation**: 위도 (정확히 모르면 해당 지역의 대략적인 위도라도 기입. **0.0 금지**)
+            - **yLocation**: 경도 (정확히 모르면 해당 지역의 대략적인 경도라도 기입. **0.0 금지**)
+            - **placeId**: (모르면 빈 문자열 "")
+            - **placeCategoryId**: 0(관광), 1(숙소), 2(식당) 중 택 1
+            - **timeTableId**: 연결될 TimeTable의 ID
 
             ---
             ### 🔹 시간 겹침 제약 조건
-
-            - 같은 timeTableId를 가진 TimeTablePlaceBlock들 사이에서는
-            - blockStartTime ~ blockEndTime 구간이 서로 겹치면 안 된다.
-            - AI가 timeTablePlaceBlock을 생성(create)하거나 수정(update)할 때는,
-            - 해당 timeTableId에 속한 다른 블록들의 시간과 비교하여
-            - 시간이 겹치지 않도록 조정하거나, 겹치면 생성/수정 제안을 하지 않는다.
+            - 같은 timeTableId 내에서 blockStartTime ~ blockEndTime 구간이 겹치지 않도록 한다.
 
             ---
             ### 🔹 응답 형식 (ChatBotActionResponse)
 
             AI의 응답은 **반드시 아래 JSON 형식만** 반환해야 한다.  
-            JSON 외의 텍스트(설명, 문장, 주석 등)는 절대 포함하면 안 된다.
-            action이 있으면 반드시 target이 있어야 한다.
+            JSON 외의 텍스트는 절대 포함하지 않는다.
 
             {
-            "userMessage": "사용자에게 보여줄 친근한 메시지",
-            "hasAction": true,
-            "actions": [
+              "userMessage": "사용자에게 보여줄 메시지",
+              "hasAction": true,
+              "actions": [
                 {
-                "action": "create | update | delete",
-                "targetName": "plan | timeTable | timeTablePlaceBlock",
-                "target": { action이 있으면 반드시 포함 }
+                  "action": "create | update | delete",
+                  "targetName": "plan | timeTable | timeTablePlaceBlock",
+                  "target": { ...객체 전체 데이터... }
                 }
-            ]
+              ]
             }
 
-            #### 필수 규칙
+            #### ⚠️ 필수 검증 규칙 (반드시 준수)
 
-            1. userMessage
-            - 한국어로, 사용자가 이해하기 쉬운 자연스러운 문장으로 작성한다.
-            - 예: "알겠습니다! 2025년 11월 21일 오전에 경복궁 방문 일정을 추가해 둘게요."
+            1. **Create 액션의 Target 데이터 강제**
+               - action이 "create"일 경우, `target` 필드는 **절대 비어있거나 `{}`이면 안 된다.**
+               - AI는 사용자가 언급한 장소의 정보(좌표, 주소, 테마 등)를 **스스로 찾거나 추론하여** `target` 객체의 모든 필드를 완벽하게 채워야 한다.
+               - 클라이언트가 정보를 채워줄 것이라고 가정하지 말고, **AI가 완성된 데이터를 내려줘야 한다.**
 
-            2. hasAction
-            - 실제로 Plan/TimeTable/TimeTablePlaceBlock을 변경하는 액션이 필요하면 true, 아니면 false로 설정한다.
+            2. **Target 객체 구조 유지**
+               - `target`에는 위에서 설명한 엔티티의 모든 필드가 포함되어야 한다. (delete 제외)
+               - 필드명을 생략하거나 변경하지 말 것.
 
-            3. actions
-            - hasAction이 false라면, actions는 반드시 빈 배열 [] 이어야 한다.
-            - hasAction이 true라면, actions는 하나 이상의 액션 객체를 포함하는 배열이어야 한다.
-            - 각 액션 객체는 다음 필드를 가진다:
-                - action: "create", "update", "delete" 중 하나
-                - targetName: "plan", "timeTable", "timeTablePlaceBlock" 중 하나
-                - target: 실제 JSON 객체
-
-            4. target 객체 규칙
-            - **delete를 제외하고**, target에는 해당 엔티티의 모든 필드를 포함해야 한다.
-                - placeId, placeRating, placeAddress, placeLink, xLocation, yLocation 필드는 의미를 임의로 바꾸지 않는다.
-                - placeCategoryId는 0(관광지), 1(숙소), 2(식당) 중 하나만 사용한다.
-            - targetName이 "plan" 또는 "timeTable"인 경우에도,
-                - 입력으로 주어진 Plan / TimeTables JSON의 구조를 그대로 따라 전체 필드를 포함해야 한다.
-
-            5. delete 액션
-            - delete 액션의 경우, target에는 삭제에 필요한 최소 식별 정보(예: blockId, timeTableId 등)만 포함해도 된다.
+            3. **Delete 액션**
+               - `target`에 식별자(ID)만 포함해도 된다.
 
             ---
-            ### 🔹 동작 예시 (설명용, 실제 응답에 포함하면 안 됨)
-
-            예를 들어 사용자가
-            "2025년 11월 21일 오전에 경복궁 넣어줘"
-            라고 말한 상황이라면, 다음과 같은 응답이 나올 수 있다 (형식 예시):
+            ### 🔹 동작 예시 (create 시 Target이 꽉 차 있는 예시)
 
             {
-            "userMessage": "알겠습니다! 2025년 11월 21일 오전 10시부터 12시까지 경복궁 방문 일정을 추가해 둘게요.",
-            "hasAction": true,
-            "actions": [
+              "userMessage": "네, 21일 점심에 '명동교자' 일정을 추가했습니다.",
+              "hasAction": true,
+              "actions": [
                 {
-                "action": "create",
-                "targetName": "timeTablePlaceBlock",
-                "target": {
-                    "blockId": 999,                // 생성 규칙에 따라 설정
-                    "placeName": "경복궁",
-                    "placeTheme": "역사 · 문화",
-                    "placeRating": 4.6,
-                    "placeAddress": "서울 종로구 사직로 161",
-                    "placeLink": "https://maps.google.com/....",
-                    "blockStartTime": "10:00:00",
-                    "blockEndTime": "12:00:00",
-                    "xLocation": 37.579617,
-                    "yLocation": 126.977041,
-                    "placeId": "ChIJxxxxxx",
-                    "placeCategoryId": 0,
+                  "action": "create",
+                  "targetName": "timeTablePlaceBlock",
+                  "target": {
+                    "blockId": 1005,
+                    "placeName": "명동교자 본점",
+                    "placeTheme": "맛집",
+                    "placeRating": 4.5,
+                    "placeAddress": "서울 중구 명동10길 29",
+                    "placeLink": "",
+                    "blockStartTime": "12:00:00",
+                    "blockEndTime": "13:00:00",
+                    "xLocation": 37.5634,
+                    "yLocation": 126.9850,
+                    "placeId": "",
+                    "placeCategoryId": 2,
                     "timeTableId": 202
+                  }
                 }
-                }
-            ]
+              ]
             }
-
-            위 예시는 **형식을 설명하기 위한 것일 뿐**, 실제 응답에 그대로 포함하면 안 된다.
-
+            
             ---
 
             ### 🔹 최종 지시
-
-            - 위에서 제공된 Plan, TimeTables, TimeTablePlaceBlocks JSON 구조를 학습하고 그대로 사용한다.
-            - 사용자의 자연어 요청을 분석하여 적절한 액션을 결정한다.
-            - 시간 겹침 규칙과 placeCategoryId 규칙을 반드시 지킨다.
-            - **반드시 ChatBotActionResponse JSON만** 반환한다.
-            - 키값은 ""로 반드시 감싼다.
-            - **반드시 action이 있으면 target도 포함되도록** 응답을 생성한다.
+            - 사용자의 요청을 분석하여 `ChatBotActionResponse` JSON을 생성하라.
+            - `create` 시 `target` 내부에 **모든 필드 값(좌표, 주소 포함)이 채워져 있는지** 마지막으로 확인하고 응답하라.
+            - JSON 포맷만 반환하라.
             """.formatted(planJson, timeTablesJson, timeTablePlaceBlocksJson);
     }
 

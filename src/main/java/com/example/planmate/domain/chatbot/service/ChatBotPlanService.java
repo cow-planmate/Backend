@@ -1,11 +1,10 @@
 package com.example.planmate.domain.chatbot.service;
 
-import com.example.planmate.common.externalAPI.GoogleMap;
+import com.example.planmate.common.externalAPI.*;
 import com.example.planmate.common.valueObject.SearchPlaceVO;
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
-import com.example.planmate.domain.image.service.ImageService;
 import com.example.planmate.domain.webSocket.dto.WPlanRequest;
 import com.example.planmate.domain.webSocket.dto.WTimeTablePlaceBlockRequest;
 import com.example.planmate.domain.webSocket.dto.WTimetableRequest;
@@ -28,7 +27,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChatBotPlanService {
     private final GoogleMap googleMap;
-    private final ImageService imageService;
+    private final GooglePlaceImageWorker googlePlaceImageWorker;
 
     
     /**
@@ -300,7 +299,7 @@ public class ChatBotPlanService {
         timetablePlaceBlockVO.setPlaceLink(searchPlaceVO.getUrl());
         timetablePlaceBlockVO.setXLocation(searchPlaceVO.getXLocation());
         timetablePlaceBlockVO.setYLocation(searchPlaceVO.getYLocation());
-        imageService.getGooglePlaceImage(timetablePlaceBlockVO.getPlaceId());
+        googlePlaceImageWorker.fetchSinglePlaceImageAsync(searchPlaceVO.getPlaceId());
     }
     
     /**
