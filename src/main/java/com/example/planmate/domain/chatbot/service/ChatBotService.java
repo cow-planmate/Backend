@@ -134,7 +134,42 @@ public class ChatBotService {
         try {
             String action = actionData.getAction();
             String targetName = actionData.getTargetName();
-            Object target = actionData.getTarget();
+            Object targetObj = actionData.getTarget();
+            Object target = targetObj;
+
+            String json = null;
+
+            // 1. 데이터 추출
+            if (targetObj instanceof Map<?,?> map && map.containsKey("raw_string_data")) {
+                json = (String) map.get("raw_string_data");
+            } else if (targetObj instanceof String str && str.startsWith("raw_string_data=")) {
+                json = str.replace("raw_string_data=", "");
+            }
+
+            // 2. JSON 문자열 보정 (앞뒤 괄호/따옴표 강제 주입)
+            if (json != null) {
+                json = json.trim(); // 공백 제거
+
+                // (1) 시작 부분 보정: 'blockId' 처럼 시작하면 '{"blockId' 로 변경
+                if (!json.startsWith("{")) {
+                    json = "{\"" + json;
+                }
+
+                // (2) 끝 부분 보정: '}'로 끝나지 않으면 '}' 추가
+                if (!json.endsWith("}")) {
+                    json = json + "}";
+                }
+
+                // 3. 파싱 시도
+                try {
+                    System.out.println("보정된 JSON: " + json); // 디버깅용 로그
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    target = objectMapper.readValue(json, Map.class);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    // 에러 발생 시 원본 문자열 확인 필요
+                }
+            }
 
             ChatBotActionResponse actionResult = null;
 

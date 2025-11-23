@@ -29,6 +29,7 @@ import java.util.List;
 public class ChatBotPlanService {
     private final GoogleMap googleMap;
     private final ImageService imageService;
+
     
     /**
      * 전체 계획 정보 업데이트 (JSON 형태로 받은 모든 필드를 처리)
