@@ -11,15 +11,19 @@ import com.example.planmate.common.oauth.dto.naver.NaverTokenResponse;
 import com.example.planmate.common.oauth.dto.naver.NaverUserResponse;
 import com.example.planmate.common.oauth.enums.OAuthProvider;
 import com.example.planmate.domain.user.entity.User;
+import com.example.planmate.domain.user.repository.UserRepository;
 import com.example.planmate.domain.user.service.UserService;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +32,7 @@ public class OAuthLoginService {
     private final OAuthProperties oAuthProperties;
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -60,6 +65,7 @@ public class OAuthLoginService {
 
 
     // 2) callback 처리: code → token → user → JWT 발급
+    @Transactional
     public String handleCallback(OAuthProvider provider, String code, String state) {
 
         // 1) provider별로 사용자 프로필 가져오기
@@ -69,21 +75,45 @@ public class OAuthLoginService {
             case NAVER -> fetchNaverProfile(code, state);
         };
 
-        // 2) 유저 찾기 또는 생성
+        String providerName = provider.name().toLowerCase();
+        String email = profile.getEmail();
+        String providerId = profile.getProviderId();
+
+        // 🔥 2) 이메일 충돌 검사 (SNS ↔ Local 충돌 방지)
+        if (email != null) {
+            Optional<User> existing = userRepository.findByEmailIgnoreCase(email);
+
+            // 이미 존재하는데 provider가 다르면 충돌
+            if (existing.isPresent() && !existing.get().getProvider().equals(providerName)) {
+                throw new IllegalArgumentException(
+                        "이미 해당 이메일로 가입된 계정이 있습니다. "
+                                + "같은 방식(" + existing.get().getProvider() + ")으로 로그인해주세요."
+                );
+            }
+        }
+
+        // 3) 유저 찾기 또는 생성
+        String rawNickname = profile.getNickname();
+        String safeNickname = userService.sanitizeNickname(rawNickname);
+        String finalNickname = userService.resolveUniqueNickname(safeNickname);
+
+
         User user = userService.findOrCreateOAuthUser(
-                provider.name().toLowerCase(),
-                profile.getProviderId(),
-                profile.getEmail(),
-                profile.getNickname()
+                providerName,
+                providerId,
+                email,
+                finalNickname // ← 여기 자동 생성된 닉네임
         );
 
-        // 3) JWT 발급
+
+        // 4) JWT 발급
         String access = jwtTokenProvider.generateAccessToken(user.getUserId());
         String refresh = jwtTokenProvider.generateRefreshToken(user.getUserId());
 
-        // 4) 최종 redirect URL 생성
+        // 5) 프론트로 redirect URL 생성
         return buildFrontendRedirectUrl(access, refresh);
     }
+
 
 
 

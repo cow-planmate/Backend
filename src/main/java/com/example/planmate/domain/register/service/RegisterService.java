@@ -31,6 +31,8 @@ public class RegisterService{
             return response;
         }
         User user = User.builder()
+                .provider("local") // 추가됨
+                .providerId(null)  // local 계정은 providerId 없음
                 .email(email)
                 .nickname(request.getNickname())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -38,8 +40,9 @@ public class RegisterService{
                 .age(request.getAge())
                 .build();
 
+
         userRepository.save(user);
-    presenceTrackingService.insertNickname(user.getUserId(), user.getNickname());
+        presenceTrackingService.insertNickname(user.getUserId(), user.getNickname());
         response.setMessage("User registered successfully");
         response.setUserId(user.getUserId());
         return response;
@@ -55,8 +58,4 @@ public class RegisterService{
         response.setNicknameAvailable(true);
         return response;
     }
-
-
-
-
 }

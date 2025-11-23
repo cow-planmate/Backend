@@ -188,4 +188,59 @@ public class UserService {
                 });
     }
 
+    public String resolveUniqueNickname(String baseNickname) {
+
+        // 닉네임 중복 체크
+        if (!userRepository.findByNickname(baseNickname).isPresent()) {
+            return baseNickname; // 바로 사용 가능
+        }
+
+        // 중복이면 숫자 증가
+        int index = 1;
+        String newNickname;
+
+        while (true) {
+            newNickname = baseNickname + index;
+
+            if (!userRepository.findByNickname(newNickname).isPresent()) {
+                return newNickname;
+            }
+
+            index++;
+        }
+    }
+
+    public String sanitizeNickname(String nickname) {
+
+        if (nickname == null || nickname.isBlank()) {
+            return "user";
+        }
+
+        String cleaned = nickname;
+
+        // 1) 앞뒤 공백 제거
+        cleaned = cleaned.trim();
+
+        // 2) 모든 공백 제거 (중간 공백도)
+        cleaned = cleaned.replaceAll("\\s+", "");
+
+        // 3) 이모지 제거 (유니코드 범위 기준)
+        cleaned = cleaned.replaceAll("[\\p{So}\\p{Cn}]", "");
+
+        // 4) 특수문자 제거 (한글, 영문, 숫자만 허용)
+        cleaned = cleaned.replaceAll("[^a-zA-Z0-9가-힣]", "");
+
+        // 5) sanitize 후 값이 비면 fallback
+        if (cleaned.isBlank()) {
+            cleaned = "user";
+        }
+
+        // 6) 너무 길면 20자 제한 (선택 — UX상 좋음)
+        if (cleaned.length() > 20) {
+            cleaned = cleaned.substring(0, 20);
+        }
+
+        return cleaned;
+    }
+
 }
