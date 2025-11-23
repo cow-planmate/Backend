@@ -22,7 +22,11 @@ import lombok.Setter;
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
 public class Generator extends AbstractProcessor{
         
-    List<CacheInformation> cacheInfoList = new ArrayList<CacheInformation>();
+    List<CacheInformation> cacheInfoList;
+
+    public Generator() {
+        cacheInfoList = new ArrayList<>();
+    }
     @Getter
     @Setter
     public class FieldInfo {
@@ -36,6 +40,14 @@ public class Generator extends AbstractProcessor{
             this.isManyToOne = isManyToOne;
         }
     }
+    @Getter
+    @Setter
+    public class RelatedEntity{
+        private String entityPath;
+        private String entityIdType;
+        private String entityIdName;
+        private String repositoryPath;
+    }
 
     @Getter
     @Setter
@@ -47,13 +59,10 @@ public class Generator extends AbstractProcessor{
         private String basicPackagePath;
         private String entityPath;
 
-        private List<String> relatedEntityPaths;
-        private String parentEntityName;
+        private String parentEntityPath;
         private String parentId;
 
         private String repositoryName;
-        private List<String> relatedRepositoryPaths;
-
         private List<FieldInfo> entityFields;
 
         // dto
@@ -63,24 +72,18 @@ public class Generator extends AbstractProcessor{
         // cache
         private String cacheClassName;
         private String cachePath;
+
+        List<RelatedEntity> relatedEntities;
         
 
         public CacheInformation() {
             basicPackagePath = "sharedsync";
-            relatedEntityPaths = new ArrayList<>();
-            relatedRepositoryPaths = new ArrayList<>();
+            relatedEntities = new ArrayList<>();
             entityFields = new ArrayList<>();
         }
 
-        public void addRelatedEntityPath(String entityPath) {
-            this.relatedEntityPaths.add(entityPath);
-        }
-        public void setRelatedRepositoryPath(String repositoryPath, int index) {
-            // 리스트 크기 맞추기
-            while (relatedRepositoryPaths.size() <= index) {
-                relatedRepositoryPaths.add("");
-            }
-            relatedRepositoryPaths.set(index, repositoryPath);
+        public void addRelatedEntity(RelatedEntity relatedEntity){
+            relatedEntities.add(relatedEntity);
         }
         public void addEntityField(FieldInfo fieldInfo) {
             this.entityFields.add(fieldInfo);
@@ -106,11 +109,20 @@ public class Generator extends AbstractProcessor{
                     cacheInfo.setIdName(field.getSimpleName().toString());
                 }
                 if(field.getAnnotation(jakarta.persistence.ManyToOne.class) != null ) {
-                    cacheInfo.addRelatedEntityPath(field.asType().toString());
+                    RelatedEntity relatedEntity = new RelatedEntity();
+                    relatedEntity.setEntityPath(field.asType().toString());
+                    for (Element relatedField : ((TypeElement)((DeclaredType)field.asType()).asElement()).getEnclosedElements()) {
+                        if (relatedField.getAnnotation(jakarta.persistence.Id.class) != null) {
+                            relatedEntity.setEntityIdType(removePath(relatedField.asType().toString()));
+                            relatedEntity.setEntityIdName(relatedField.getSimpleName().toString());
+                            break;
+                        }
+                    }
+                    cacheInfo.addRelatedEntity(relatedEntity);
                     if (field.asType() instanceof DeclaredType declaredType) {
                         Element typeElement = declaredType.asElement();
                         if (typeElement.getAnnotation(CacheEntity.class) != null) {
-                            cacheInfo.setParentEntityName(field.asType().toString());
+                            cacheInfo.setParentEntityPath(field.asType().toString());
                             String parentId = null;
                             for (Element parentField : typeElement.getEnclosedElements()) {
                                 if (parentField.getAnnotation(jakarta.persistence.Id.class) != null) {
@@ -141,10 +153,10 @@ public class Generator extends AbstractProcessor{
                                         if (repoEntityType.equals(element.asType().toString())) {
                                             cacheInfo.setRepositoryName(typeElement.getQualifiedName().toString());
                                         }
-                                        // relatedEntitieNames와 순서 맞춰서 관련 Repository 이름 저장
-                                        for (int i = 0; i < cacheInfo.getRelatedEntityPaths().size(); i++) {
-                                            if (repoEntityType.equals(cacheInfo.getRelatedEntityPaths().get(i))) {
-                                                cacheInfo.setRelatedRepositoryPath(typeElement.getQualifiedName().toString(), i);
+
+                                        for (RelatedEntity relatedEntity : cacheInfo.getRelatedEntities()) {
+                                            if (repoEntityType.equals(relatedEntity.getEntityPath())) {
+                                                relatedEntity.setRepositoryPath(typeElement.getQualifiedName().toString());
                                             }
                                         }
                                     }

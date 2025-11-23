@@ -9,6 +9,7 @@ import javax.tools.JavaFileObject;
 
 import com.sharedsync.framework.generator.Generator.CacheInformation;
 import com.sharedsync.framework.generator.Generator.FieldInfo;
+import com.sharedsync.framework.generator.Generator.RelatedEntity;
 
 public class DtoGenerator {
     private static final String OBJECT_NAME = "dto";
@@ -52,27 +53,27 @@ public class DtoGenerator {
 
     private static String writeEntityPath(CacheInformation cacheInfo){
         String path = "import com.example.planmate.domain.plan.entity." + cacheInfo.getEntityName() + ";\n";
-        for (String entityName : cacheInfo.getRelatedEntityPaths()) {
-            path += "import " + entityName + ";\n";
+        for (RelatedEntity relatedEntity : cacheInfo.getRelatedEntities()) {
+            path += "import " + relatedEntity.getEntityPath() + ";\n";
         }
         return path;
     }
 
     private static String writeAutoDatabaseLoader (CacheInformation cacheInfo) {
-        if(cacheInfo.getParentEntityName() == null || cacheInfo.getParentId() == null) {
+        if(cacheInfo.getParentEntityPath() == null || cacheInfo.getParentId() == null) {
             return "";
         } else {
-        String loader = "@AutoDatabaseLoader(repository = \"" + Generator.removePath(cacheInfo.getRepositoryName()) + "\", method = \"findBy" + Generator.removePath(cacheInfo.getParentEntityName()) + Generator.capitalizeFirst(cacheInfo.getParentId()) + "\")\n";
+        String loader = "@AutoDatabaseLoader(repository = \"" + Generator.removePath(cacheInfo.getRepositoryName()) + "\", method = \"findBy" + Generator.removePath(cacheInfo.getParentEntityPath()) + Generator.capitalizeFirst(cacheInfo.getParentId()) + "\")\n";
         return loader;
         }
     }
 
     private static String writeAutoEntityConverter(CacheInformation cacheInfo) {
-        if (cacheInfo.getRelatedRepositoryPaths() == null || cacheInfo.getRelatedRepositoryPaths().isEmpty()) {
+        if (cacheInfo.getRelatedEntities() == null || cacheInfo.getRelatedEntities().isEmpty()) {
             return "";
         } else {
             StringBuilder repositories = new StringBuilder();
-            List<String> repoList = cacheInfo.getRelatedRepositoryPaths();
+            List<String> repoList = cacheInfo.getRelatedEntities().stream().map(RelatedEntity::getRepositoryPath).toList();
             for (int i = 0; i < repoList.size(); i++) {
                 repositories.append("\"").append(Generator.removePath(repoList.get(i))).append("\"");
                 if (i < repoList.size() - 1) {
@@ -88,12 +89,31 @@ public class DtoGenerator {
         StringBuilder fields = new StringBuilder();
         fields.append("    @CacheId\n");
         fields.append("    private ").append(cacheInfo.getIdType()).append(" ").append(cacheInfo.getIdName()).append(";\n");
+        
         for (FieldInfo fieldInfo : cacheInfo.getEntityFields()) {
-            if(fieldInfo.getName().equals(cacheInfo.getParentId())){
-                fields.append("    @ParentId(").append(cacheInfo.getParentEntityName()).append(".class)\n");
+            if(cacheInfo.getParentEntityPath() != null && fieldInfo.getName().equals(Generator.decapitalizeFirst(Generator.removePath(cacheInfo.getParentEntityPath())))){
+                RelatedEntity parentEntity = cacheInfo.getRelatedEntities().stream()
+                    .filter(re -> re.getEntityPath().equals(cacheInfo.getParentEntityPath()))
+                    .findFirst()
+                    .orElse(null);
+                fields.append("    @ParentId(").append(Generator.removePath(parentEntity.getEntityPath())).append(".class)\n");
+                fields.append("    private ").append(parentEntity.getEntityIdType()).append(" ").append(parentEntity.getEntityIdName()).append(";\n");
             }
-            if (!fieldInfo.getName().equals(cacheInfo.getIdName())) {
-                fields.append("    private ").append(fieldInfo.getType()).append(" ").append(fieldInfo.getName()).append(";\n");
+            
+
+            else if(!fieldInfo.getName().equals(cacheInfo.getIdName())) {
+                if(cacheInfo.getRelatedEntities().stream().anyMatch(re -> re.getEntityPath().equals(fieldInfo.getType()))){
+                    //private Integer placeCategoryId;
+                    RelatedEntity relatedEntity = cacheInfo.getRelatedEntities().stream()
+                        .filter(re -> re.getEntityPath().equals(fieldInfo.getType()))
+                        .findFirst()
+                        .orElse(null);
+                    fields.append("    private ").append(relatedEntity.getEntityIdType()).append(" ").append(relatedEntity.getEntityIdName()).append(";\n");
+                }
+                else{
+                    fields.append("    private ").append(fieldInfo.getType()).append(" ").append(fieldInfo.getName()).append(";\n");
+                }
+                
             }
         }
         fields.append("\n");
@@ -108,8 +128,20 @@ public class DtoGenerator {
         List<FieldInfo> fields = cacheInfo.getEntityFields();
         for (int i = 0; i < fields.size(); i++) {
             FieldInfo field = fields.get(i);
-            method.append("                ").append(Generator.decapitalizeFirst(cacheInfo.getEntityName()))
-                .append(".get").append(Generator.capitalizeFirst(field.getName())).append("()");
+            if(cacheInfo.getRelatedEntities().stream().anyMatch(re -> re.getEntityPath().equals(field.getType()))){
+                RelatedEntity relatedEntity = cacheInfo.getRelatedEntities().stream()
+                    .filter(re -> re.getEntityPath().equals(field.getType()))
+                    .findFirst()
+                    .orElse(null);
+                method.append("                ").append(Generator.decapitalizeFirst(cacheInfo.getEntityName()))
+                .append(".get").append(Generator.capitalizeFirst(Generator.removePath(relatedEntity.getEntityPath()))).append("()")
+                .append(".get").append(Generator.capitalizeFirst(relatedEntity.getEntityIdName())).append("()");
+            }
+            else{
+                method.append("                ").append(Generator.decapitalizeFirst(cacheInfo.getEntityName()))
+                    .append(".get").append(Generator.capitalizeFirst(field.getName())).append("()");
+            }
+            
             if (i < fields.size() - 1) {
                 method.append(",\n");
             } else {

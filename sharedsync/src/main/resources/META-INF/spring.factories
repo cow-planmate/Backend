@@ -1,3 +1,3 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 com.sharedsync.framework.shared.autoConfig.SharedSyncAutoConfig,\
 com.sharedsync.framework.shared.autoConfig.SharedPresenceAutoConfig
