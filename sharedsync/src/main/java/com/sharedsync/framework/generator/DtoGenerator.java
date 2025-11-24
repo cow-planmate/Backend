@@ -13,13 +13,18 @@ import com.sharedsync.framework.generator.Generator.RelatedEntity;
 
 public class DtoGenerator {
     private static final String OBJECT_NAME = "dto";
-    public static boolean process(CacheInformation cacheInfo, ProcessingEnvironment processingEnv) {
+
+    public static void initialize(CacheInformation cacheInfo) {
         String dtoClassName = cacheInfo.getEntityName() + Generator.capitalizeFirst(OBJECT_NAME);
         cacheInfo.setDtoClassName(dtoClassName);
         String packageName = cacheInfo.getBasicPackagePath() + "." + OBJECT_NAME;
         cacheInfo.setDtoPath(packageName);
+    }
 
-        String source = "package " + packageName + ";\n"
+    public static boolean process(CacheInformation cacheInfo, ProcessingEnvironment processingEnv) {
+        
+
+        String source = "package " + cacheInfo.getDtoPath() + ";\n"
             + "import com.sharedsync.framework.shared.framework.annotation.*;\n"
             + "import lombok.*;\n"
             + "import com.sharedsync.framework.shared.framework.dto.CacheDto;\n"
@@ -31,7 +36,7 @@ public class DtoGenerator {
             + "@Setter\n"
             + writeAutoDatabaseLoader(cacheInfo)
             + writeAutoEntityConverter(cacheInfo)
-            + "public class " + dtoClassName + " extends CacheDto<" + cacheInfo.getIdType() + "> {\n\n"
+            + "public class " + cacheInfo.getDtoClassName() + " extends CacheDto<" + cacheInfo.getIdType() + "> {\n\n"
             + writeDtoFields(cacheInfo)
             + writeFromEntityMethod(cacheInfo)
             + writeToEntityMethod(cacheInfo)
@@ -40,7 +45,7 @@ public class DtoGenerator {
 
         // 파일 생성
         try {
-            JavaFileObject file = processingEnv.getFiler().createSourceFile(packageName + "." + dtoClassName);
+            JavaFileObject file = processingEnv.getFiler().createSourceFile(cacheInfo.getDtoPath() + "." + cacheInfo.getDtoClassName());
             Writer writer = file.openWriter();
             writer.write(source);
             writer.close();
@@ -63,7 +68,7 @@ public class DtoGenerator {
         if(cacheInfo.getParentEntityPath() == null || cacheInfo.getParentId() == null) {
             return "";
         } else {
-        String loader = "@AutoDatabaseLoader(repository = \"" + Generator.removePath(cacheInfo.getRepositoryName()) + "\", method = \"findBy" + Generator.removePath(cacheInfo.getParentEntityPath()) + Generator.capitalizeFirst(cacheInfo.getParentId()) + "\")\n";
+        String loader = "@AutoDatabaseLoader(repository = \"" + cacheInfo.getRepositoryName() + "\", method = \"findBy" + Generator.removePath(cacheInfo.getParentEntityPath()) + Generator.capitalizeFirst(cacheInfo.getParentId()) + "\")\n";
         return loader;
         }
     }

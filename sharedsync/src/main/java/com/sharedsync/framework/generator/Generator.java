@@ -63,6 +63,7 @@ public class Generator extends AbstractProcessor{
         private String parentId;
 
         private String repositoryName;
+        private String repositoryPath;
         private List<FieldInfo> entityFields;
 
         // dto
@@ -72,6 +73,22 @@ public class Generator extends AbstractProcessor{
         // cache
         private String cacheClassName;
         private String cachePath;
+
+        // controller
+        private String controllerClassName;
+        private String controllerPath;
+
+        // service
+        private String serviceClassName;
+        private String servicePath;
+
+        // request
+        private String requestClassName;
+        private String requestPath;
+
+        // response
+        private String responseClassName;
+        private String responsePath;
 
         List<RelatedEntity> relatedEntities;
         
@@ -151,7 +168,8 @@ public class Generator extends AbstractProcessor{
                                         String repoEntityType = typeArgs.get(0).toString();
                                         // 현재 entity와 PK 타입이 일치하는 Repository라면
                                         if (repoEntityType.equals(element.asType().toString())) {
-                                            cacheInfo.setRepositoryName(typeElement.getQualifiedName().toString());
+                                            cacheInfo.setRepositoryName(removePath(typeElement.getQualifiedName().toString()));
+                                            cacheInfo.setRepositoryPath(typeElement.getQualifiedName().toString());
                                         }
 
                                         for (RelatedEntity relatedEntity : cacheInfo.getRelatedEntities()) {
@@ -167,13 +185,24 @@ public class Generator extends AbstractProcessor{
                 }
             }
             cacheInfoList.add(cacheInfo);
+            initialize(cacheInfo);
+            
+
             CacheEntityGenerator.process(cacheInfo, processingEnv);
             DtoGenerator.process(cacheInfo, processingEnv);
             ControllerGenerator.process(cacheInfo, processingEnv);
+            ServiceGenerator.process(cacheInfo, processingEnv);
         }
 
         
         return false;
+    }
+
+    public static void initialize(CacheInformation cacheInfo) {
+        CacheEntityGenerator.initialize(cacheInfo);
+        DtoGenerator.initialize(cacheInfo);
+        ControllerGenerator.initialize(cacheInfo);
+        ServiceGenerator.initialize(cacheInfo);
     }
 
     // 앞글자만 대문자로 바꿔주는 static 메서드

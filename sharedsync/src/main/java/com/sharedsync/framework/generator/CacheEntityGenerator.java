@@ -11,22 +11,26 @@ import com.sharedsync.framework.generator.Generator.CacheInformation;
 public class CacheEntityGenerator{
     private static final String OBJECT_NAME = "cache";
 
-    public static boolean process(CacheInformation cacheInfo, ProcessingEnvironment processingEnv) {
-        String cacheClassName = cacheInfo.getEntityName() + Generator.capitalizeFirst(OBJECT_NAME);
-        String packageName = cacheInfo.getBasicPackagePath() + "." + OBJECT_NAME;
+    public static void initialize(CacheInformation cacheInfo) {
+        cacheInfo.setBasicPackagePath("sharedsync");
+        cacheInfo.setCacheClassName(Generator.capitalizeFirst(cacheInfo.getEntityName()) + Generator.capitalizeFirst(OBJECT_NAME));
+        cacheInfo.setCachePath(cacheInfo.getBasicPackagePath() + "." + OBJECT_NAME);
+    }
 
-        String source = "package " + packageName + ";\n"
+    public static boolean process(CacheInformation cacheInfo, ProcessingEnvironment processingEnv) {
+
+        String source = "package " + cacheInfo.getCachePath() + ";\n"
             + "import org.springframework.stereotype.Component;\n"
             + "import com.sharedsync.framework.shared.framework.repository.AutoCacheRepository;\n"
             + "import " + cacheInfo.getEntityPath() + ";\n"
-            + "import " + cacheInfo.getDtoPath() + ";\n"
+            + "import " + cacheInfo.getDtoPath() + "." + cacheInfo.getDtoClassName() + ";\n"
             + "@Component\n"
-            + "public class " + cacheClassName + " extends AutoCacheRepository<" + cacheInfo.getEntityName() + ", " + cacheInfo.getIdType() + ", " + cacheInfo.getDtoClassName() + "> {}";
+            + "public class " + cacheInfo.getCacheClassName() + " extends AutoCacheRepository<" + cacheInfo.getEntityName() + ", " + cacheInfo.getIdType() + ", " + cacheInfo.getDtoClassName() + "> {}";
 
         // 파일 생성
         JavaFileObject file;
         try {
-            file = processingEnv.getFiler().createSourceFile(packageName + "." + cacheClassName);
+            file = processingEnv.getFiler().createSourceFile(cacheInfo.getCachePath() + "." + cacheInfo.getCacheClassName());
             Writer writer = file.openWriter();
             writer.write(source);
             writer.close();
@@ -36,5 +40,7 @@ public class CacheEntityGenerator{
         
         return true;
     }
+
+    
 
 }
