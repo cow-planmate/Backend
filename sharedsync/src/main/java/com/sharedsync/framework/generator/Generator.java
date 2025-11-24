@@ -169,6 +169,7 @@ public class Generator extends AbstractProcessor{
             cacheInfoList.add(cacheInfo);
             CacheEntityGenerator.process(cacheInfo, processingEnv);
             DtoGenerator.process(cacheInfo, processingEnv);
+            ControllerGenerator.process(cacheInfo, processingEnv);
         }
 
         
