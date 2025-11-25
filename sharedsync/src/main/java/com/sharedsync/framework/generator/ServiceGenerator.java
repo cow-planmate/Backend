@@ -23,8 +23,8 @@ public class ServiceGenerator {
 		source.append("import org.springframework.stereotype.Service;\n");
 		source.append("import org.springframework.beans.factory.annotation.Autowired;\n\n");
 		source.append("import ").append(cacheInfo.getRepositoryPath()).append(";\n");
-		source.append("import ").append(cacheInfo.getRequestPath()).append(";\n");
-		source.append("import ").append(cacheInfo.getResponsePath()).append(";\n");
+		source.append("import ").append(cacheInfo.getRequestPath()).append(".").append(cacheInfo.getRequestClassName()).append(";\n");
+		source.append("import ").append(cacheInfo.getResponsePath()).append(".").append(cacheInfo.getResponseClassName()).append(";\n");
 		source.append("import ").append("com.sharedsync.framework.shared.service.SharedService").append(";\n\n");
 
 		source.append("@Service\n");
