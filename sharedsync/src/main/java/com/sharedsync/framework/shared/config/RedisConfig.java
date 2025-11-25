@@ -23,13 +23,13 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import com.sharedsync.framework.shared.framework.annotation.Cache;
-import com.sharedsync.framework.shared.framework.dto.CacheDto;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.sharedsync.framework.shared.framework.annotation.Cache;
+import com.sharedsync.framework.shared.framework.dto.CacheDto;
 
 @EnableCaching
 @Configuration
@@ -95,7 +95,8 @@ public class RedisConfig implements BeanDefinitionRegistryPostProcessor, Applica
 
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-        Reflections reflections = new Reflections(basePackage);
+        // Only scan sharedsync.dto for @Cache-annotated DTOs
+        Reflections reflections = new Reflections("sharedsync.dto");
         Set<Class<?>> cacheDtos = reflections.getTypesAnnotatedWith(Cache.class);
 
         for (Class<?> dtoClass : cacheDtos) {
