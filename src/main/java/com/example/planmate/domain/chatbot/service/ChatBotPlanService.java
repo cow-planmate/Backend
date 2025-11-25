@@ -270,8 +270,7 @@ public class ChatBotPlanService {
                 (Double) placeBlockMap.get("xLocation"),
                 (Double) placeBlockMap.get("yLocation")
             );
-            getSearchPlace(placeBlockVO);
-            
+
             request.setTimetablePlaceBlockVO(placeBlockVO);
             
             String userMessage = "새로운 장소를 일정에 추가했습니다! 📍";
