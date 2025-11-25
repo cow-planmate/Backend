@@ -19,15 +19,15 @@ public class ControllerGenerator {
 	public static boolean process(CacheInformation cacheInfo, ProcessingEnvironment processingEnv) {
 		String entityName = cacheInfo.getEntityName();
 
-
 		StringBuilder source = new StringBuilder();
 		source.append("package ").append(cacheInfo.getControllerPath()).append(";\n\n");
 		source.append("import org.springframework.messaging.handler.annotation.*;\n");
 		source.append("import org.springframework.stereotype.Controller;\n\n");
-		source.append("import ").append(cacheInfo.getRequestPath()).append(";\n");
-		source.append("import ").append(cacheInfo.getResponsePath()).append(";\n");
-		source.append("import ").append(cacheInfo.getControllerPath()).append(";\n");
-		source.append("import ").append(cacheInfo.getServicePath()).append(";\n\n");
+		source.append("import com.sharedsync.framework.shared.framework.contoller.SharedContoller;\n\n");
+		source.append("import ").append(cacheInfo.getRequestPath()).append(".").append(cacheInfo.getRequestClassName()).append(";\n");
+		source.append("import ").append(cacheInfo.getResponsePath()).append(".").append(cacheInfo.getResponseClassName()).append(";\n");
+		source.append("import ").append(cacheInfo.getControllerPath()).append(".").append(cacheInfo.getControllerClassName()).append(";\n");
+		source.append("import ").append(cacheInfo.getServicePath()).append(".").append(cacheInfo.getServiceClassName()).append(";\n\n");
 
 		source.append("@Controller\n");
 		source.append("public class ").append(cacheInfo.getControllerClassName())
