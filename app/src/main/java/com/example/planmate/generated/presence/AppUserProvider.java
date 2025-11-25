@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class PlanmateUserProvider implements UserProvider {
+public class AppUserProvider implements UserProvider {
 
     private final UserRepository userRepository;
 
