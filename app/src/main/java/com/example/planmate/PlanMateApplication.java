@@ -5,7 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = {
         "com.example.planmate",
-        "com.sharedsync.framework"
+        "com.sharedsync.framework",
+        "sharedsync"
 })
 public class PlanMateApplication {
 

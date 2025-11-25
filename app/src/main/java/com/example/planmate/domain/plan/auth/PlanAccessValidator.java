@@ -6,9 +6,9 @@ import org.springframework.stereotype.Component;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.repository.PlanEditorRepository;
 import com.example.planmate.domain.plan.repository.PlanRepository;
-import com.example.planmate.generated.cache.PlanCache;
 
 import lombok.RequiredArgsConstructor;
+import sharedsync.cache.PlanCache;
 
 @Component
 @RequiredArgsConstructor

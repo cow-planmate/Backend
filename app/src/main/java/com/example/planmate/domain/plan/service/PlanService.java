@@ -11,11 +11,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.example.planmate.generated.cache.PlanCache;
-import com.example.planmate.generated.cache.TimeTableCache;
-import com.example.planmate.generated.cache.TimeTablePlaceBlockCache;
-import com.example.planmate.generated.valueObject.UserDayIndexVO;
-import com.sharedsync.framework.shared.presence.core.SharedPresenceFacade;
 import org.springframework.data.util.Pair;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -63,8 +58,13 @@ import com.example.planmate.domain.travel.repository.TravelRepository;
 import com.example.planmate.domain.user.entity.PreferredTheme;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
+import com.example.planmate.generated.valueObject.UserDayIndexVO;
+import com.sharedsync.framework.shared.presence.core.SharedPresenceFacade;
 
 import lombok.RequiredArgsConstructor;
+import sharedsync.cache.PlanCache;
+import sharedsync.cache.TimeTableCache;
+import sharedsync.cache.TimeTablePlaceBlockCache;
 
 @Service
 @RequiredArgsConstructor

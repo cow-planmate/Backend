@@ -21,13 +21,17 @@ public class ServiceGenerator {
 		StringBuilder source = new StringBuilder();
 		source.append("package ").append(cacheInfo.getServicePath()).append(";\n\n");
 		source.append("import org.springframework.stereotype.Service;\n");
-		source.append("import org.springframework.beans.factory.annotation.Autowired;\n\n");
+		source.append("import lombok.RequiredArgsConstructor;\n\n");
+		source.append("import ").append(cacheInfo.getEntityPath()).append(";\n");
 		source.append("import ").append(cacheInfo.getRepositoryPath()).append(";\n");
 		source.append("import ").append(cacheInfo.getRequestPath()).append(".").append(cacheInfo.getRequestClassName()).append(";\n");
 		source.append("import ").append(cacheInfo.getResponsePath()).append(".").append(cacheInfo.getResponseClassName()).append(";\n");
+		source.append("import ").append(cacheInfo.getCachePath()).append(".").append(cacheInfo.getCacheClassName()).append(";\n");
+		source.append("import ").append(cacheInfo.getDtoPath()).append(".").append(cacheInfo.getDtoClassName()).append(";\n");
 		source.append("import ").append("com.sharedsync.framework.shared.service.SharedService").append(";\n\n");
 
 		source.append("@Service\n");
+		source.append("@RequiredArgsConstructor\n");
 		source.append("public class ").append(cacheInfo.getServiceClassName())
 			.append(" implements SharedService<")
 			.append(cacheInfo.getRequestClassName()).append(", ")
@@ -43,7 +47,7 @@ public class ServiceGenerator {
 		source.append("            return response;\n");
 		source.append("        }\n");
 		source.append("        java.util.List<").append(cacheInfo.getDtoClassName()).append("> sanitized = payload.stream()\n");
-		source.append("            .map(dto -> dto.changeId(null))\n");
+		source.append("            .map(dto -> dto.").append("<").append(cacheInfo.getDtoClassName()).append(">").append("changeId(null))\n");
 		source.append("            .collect(java.util.stream.Collectors.toList());\n");
 		source.append("        java.util.List<").append(cacheInfo.getDtoClassName()).append("> saved = ").append(decapitalizeFirst(cacheInfo.getCacheClassName())).append(".saveAll(sanitized);\n");
 		source.append("        response.set").append(cacheInfo.getDtoClassName()).append("(saved);\n");

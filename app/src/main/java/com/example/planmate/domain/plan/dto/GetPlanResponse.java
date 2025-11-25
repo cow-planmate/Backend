@@ -1,5 +1,10 @@
 package com.example.planmate.domain.plan.dto;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.example.planmate.common.dto.CommonResponse;
 import com.example.planmate.common.valueObject.PlaceBlockVO;
 import com.example.planmate.common.valueObject.PlanFrameVO;
@@ -8,11 +13,6 @@ import com.example.planmate.generated.valueObject.UserDayIndexVO;
 
 import lombok.Getter;
 import lombok.Setter;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
 @Getter
 @Setter
 public class GetPlanResponse extends CommonResponse {

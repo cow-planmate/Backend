@@ -3,6 +3,7 @@ package com.example.planmate.domain.plan.entity;
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.user.entity.User;
 import com.sharedsync.framework.shared.framework.annotation.CacheEntity;
+import com.sharedsync.framework.shared.presence.annotation.PresenceRoot;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,6 +27,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+@PresenceRoot(channel = "plan-presence", idField = "planId")
 public class Plan {
 
     @Id
