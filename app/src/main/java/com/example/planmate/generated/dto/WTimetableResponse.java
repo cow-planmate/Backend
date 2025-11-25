@@ -10,5 +10,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class WTimetableResponse extends WResponse {
-    private List<TimeTableDto> timeTableDtos;
+    private List<TimeTableDto> timeTableDto;
 }

@@ -13,5 +13,5 @@ import lombok.Setter;
 @Setter
 public class WTimetableRequest extends WRequest {
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
-    private List<TimeTableDto> timeTableDtos;
+    private List<TimeTableDto> timeTableDto;
 }

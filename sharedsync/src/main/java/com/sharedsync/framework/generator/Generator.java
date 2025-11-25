@@ -21,7 +21,7 @@ import lombok.Setter;
 @SupportedAnnotationTypes("com.sharedsync.framework.shared.framework.annotation.CacheEntity")
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
 public class Generator extends AbstractProcessor{
-        
+
     List<CacheInformation> cacheInfoList;
 
     public Generator() {
@@ -91,7 +91,7 @@ public class Generator extends AbstractProcessor{
         private String responsePath;
 
         List<RelatedEntity> relatedEntities;
-        
+
 
         public CacheInformation() {
             basicPackagePath = "sharedsync";
@@ -105,7 +105,7 @@ public class Generator extends AbstractProcessor{
         public void addEntityField(FieldInfo fieldInfo) {
             this.entityFields.add(fieldInfo);
         }
-            
+
     }
 
     @Override
@@ -186,21 +186,23 @@ public class Generator extends AbstractProcessor{
             }
             cacheInfoList.add(cacheInfo);
             initialize(cacheInfo);
-            
+
 
             CacheEntityGenerator.process(cacheInfo, processingEnv);
             DtoGenerator.process(cacheInfo, processingEnv);
+            WebsocketDtoGenerator.process(cacheInfo, processingEnv);
             ControllerGenerator.process(cacheInfo, processingEnv);
             ServiceGenerator.process(cacheInfo, processingEnv);
         }
 
-        
+
         return false;
     }
 
     public static void initialize(CacheInformation cacheInfo) {
         CacheEntityGenerator.initialize(cacheInfo);
         DtoGenerator.initialize(cacheInfo);
+        WebsocketDtoGenerator.initialize(cacheInfo);
         ControllerGenerator.initialize(cacheInfo);
         ServiceGenerator.initialize(cacheInfo);
     }
