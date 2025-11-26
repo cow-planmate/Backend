@@ -3,7 +3,7 @@ package com.sharedsync.shared.presence.dto;
 import java.util.Map;
 
 public record PresenceSnapshot(
-        int userId,
+        String userId,
         String nickname,
         Map<String, Object> attributes
 ) {}

@@ -199,17 +199,17 @@ public class PlanService {
             }
         }
         // 프레임워크에서 PresenceSnapshot 리스트 조회
-        var snapshots = presenceFacade.getPresence(planId);
+        var snapshots = presenceFacade.getPresence(String.valueOf(planId));
 
         // 앱의 VO(UserDayIndexVO)로 변환
-        response.setUserDayIndexes(
-                snapshots.stream()
-                        .map(s -> new UserDayIndexVO(
-                                s.nickname(),
-                                (int) s.attributes().get("dayIndex")
-                        ))
-                        .toList()
-        );
+        // response.setUserDayIndexes(
+        //         snapshots.stream()
+        //                 .map(s -> new UserDayIndexVO(
+        //                         s.nickname(),
+        //                         (int) s.attributes().get("dayIndex")
+        //                 ))
+        //                 .toList()
+        // );
         return response; // DTO 변환
     }
 

@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 public class CacheSyncService {
     private final List<AutoCacheRepository<?, ?, ?>> cacheRepositories;
 
-    public void syncToDatabase(int rootId) {
+    public void syncToDatabase(String rootId) {
         AutoCacheRepository<?, ?, ?> rootRepository = cacheRepositories.stream()
                 .filter(repo -> !repo.isParentIdFieldPresent())
                 .findFirst()

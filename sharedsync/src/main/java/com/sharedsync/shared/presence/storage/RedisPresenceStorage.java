@@ -19,28 +19,28 @@ public class RedisPresenceStorage implements PresenceStorage {
     private static final String NAME_TO_ID = "PRESENCE:NAME_ID:";
 
     @Override
-    public boolean hasTracker(int rootId) {
+    public boolean hasTracker(String rootId) {
         return redis.hasKey(TRACKER + rootId);
     }
 
     @Override
-    public void insertTracker(int rootId, String sessionId, int userId, String index) {
+    public void insertTracker(String rootId, String sessionId, String userId, String index) {
         redis.opsForHash().put(TRACKER + rootId, String.valueOf(userId + "//" + sessionId), index);
     }
 
     @Override
-    public void removeTracker(int rootId, String sessionId, int userId) {
+    public void removeTracker(String rootId, String sessionId, String userId) {
         redis.opsForHash().delete(TRACKER + rootId, String.valueOf(userId + "//" + sessionId));
     }
 
     @Override
-    public Map<Integer, Integer> getTrackerEntries(int rootId) {
+    public Map<String, String> getTrackerEntries(String rootId) {
         Map<Object, Object> entries = redis.opsForHash().entries(TRACKER + rootId);
-        Map<Integer, Integer> result = new java.util.HashMap<>();
+        Map<String, String> result = new java.util.HashMap<>();
         for (Map.Entry<Object, Object> entry : entries.entrySet()) {
             try {
-                int key = Integer.parseInt(entry.getKey().toString());
-                int value = Integer.parseInt(entry.getValue().toString());
+                String key = entry.getKey().toString();
+                String value = entry.getValue().toString();
                 result.put(key, value);
             } catch (NumberFormatException e) {
                 // skip invalid entries
@@ -50,37 +50,37 @@ public class RedisPresenceStorage implements PresenceStorage {
     }
 
     @Override
-    public void saveUserNickname(int userId, String nickname) {
+    public void saveUserNickname(String userId, String nickname) {
         redis.opsForValue().set(NICKNAME + userId, nickname);
         redis.opsForValue().set(NAME_TO_ID + nickname, userId);
     }
 
     @Override
-    public String getNicknameByUserId(int userId) {
+    public String getNicknameByUserId(String userId) {
         return (String) redis.opsForValue().get(NICKNAME + userId);
     }
 
     @Override
-    public Integer getUserIdByNickname(String nickname) {
+    public String getUserIdByNickname(String nickname) {
         Object v = redis.opsForValue().get(NAME_TO_ID + nickname);
-        return v == null ? null : (Integer) v;
+        return v == null ? null : (String) v;
     }
 
     @Override
-    public void mapUserToRoot(int rootId, int userId) {
+    public void mapUserToRoot(String rootId, String userId) {
         redis.opsForValue().set(USER_TO_ROOT + userId, rootId);
     }
 
     @Override
-    public int getRootIdByUserId(int userId) {
+    public String getRootIdByUserId(String userId) {
         Object v = redis.opsForValue().get(USER_TO_ROOT + userId);
-        return v == null ? 0 : (int) v;
+        return v == null ? null : (String) v;
     }
 
     @Override
-    public int removeUserRootMapping(int userId) {
+    public String removeUserRootMapping(String userId) {
         Object v = redis.opsForValue().getAndDelete(USER_TO_ROOT + userId);
-        return v == null ? 0 : (int) v;
+        return v == null ? null : (String) v;
     }
 }
 

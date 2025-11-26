@@ -3,16 +3,16 @@ package com.sharedsync.shared.presence.storage;
 import java.util.Map;
 
 public interface PresenceStorage {
-    boolean hasTracker(int rootId);
-    void insertTracker(int rootId, String sessionId, int userId, String index);
-    void removeTracker(int rootId, String sessionId, int userId);
-    Map<Integer, Integer> getTrackerEntries(int rootId);
+    boolean hasTracker(String rootId);
+    void insertTracker(String rootId, String sessionId, String userId, String index);
+    void removeTracker(String rootId, String sessionId, String userId);
+    Map<String, String> getTrackerEntries(String rootId);
 
-    void saveUserNickname(int userId, String nickname);
-    String getNicknameByUserId(int userId);
-    Integer getUserIdByNickname(String nickname);
+    void saveUserNickname(String userId, String nickname);
+    String getNicknameByUserId(String userId);
+    String getUserIdByNickname(String nickname);
 
-    void mapUserToRoot(int rootId, int userId);
-    int getRootIdByUserId(int userId);
-    int removeUserRootMapping(int userId);
+    void mapUserToRoot(String rootId, String userId);
+    String getRootIdByUserId(String userId);
+    String removeUserRootMapping(String userId);
 }

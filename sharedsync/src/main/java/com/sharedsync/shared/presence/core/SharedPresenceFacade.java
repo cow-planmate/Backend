@@ -14,7 +14,7 @@ public class SharedPresenceFacade {
 
     private final PresenceStorage storage;
 
-    public List<PresenceSnapshot> getPresence(int planId) {
+    public List<PresenceSnapshot> getPresence(String planId) {
         var entries = storage.getTrackerEntries(planId);
 
         if (entries == null || entries.isEmpty()) return Collections.emptyList();
@@ -22,8 +22,8 @@ public class SharedPresenceFacade {
         List<PresenceSnapshot> snapshots = new ArrayList<>();
 
         for (var e : entries.entrySet()) {
-            int userId = e.getKey();
-            int dayIndex = e.getValue();
+            String userId = e.getKey();
+            String dayIndex = e.getValue();
             String nickname = storage.getNicknameByUserId(userId);
 
             Map<String, Object> attr = new HashMap<>();

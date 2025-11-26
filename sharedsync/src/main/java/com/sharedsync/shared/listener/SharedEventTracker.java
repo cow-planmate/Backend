@@ -1,5 +1,7 @@
 package com.sharedsync.shared.listener;
 
+import java.util.List;
+
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
@@ -19,8 +21,8 @@ public class SharedEventTracker {
     public void handleSubscribeEvent(SessionSubscribeEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
         String sessionId = accessor.getSessionId();
-        Integer userId = extractUserId(accessor);
-        Integer roomId = parseRoomId(accessor.getDestination());
+        String userId = extractUserId(accessor);
+        String roomId = parseRoomId(accessor.getDestination());
 
         if (userId != null && roomId != null) {
             presenceSessionManager.handleSubscribe(roomId, userId, sessionId);
@@ -30,32 +32,28 @@ public class SharedEventTracker {
     @EventListener
     public void handleDisconnectEvent(SessionDisconnectEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        Integer userId = extractUserId(accessor);
+        String userId = extractUserId(accessor);
         String sessionId = accessor.getSessionId();
         if (userId != null) {
             presenceSessionManager.handleDisconnect(userId, sessionId);
         }
     }
 
-    private Integer extractUserId(StompHeaderAccessor accessor) {
+    private String extractUserId(StompHeaderAccessor accessor) {
         Object value = accessor.getSessionAttributes().get(USER_ID);
         if (value == null) {
             return null;
         }
         try {
-            return Integer.valueOf(String.valueOf(value));
+            return String.valueOf(value);
         } catch (NumberFormatException ex) {
             return null;
         }
     }
 
-    private Integer parseRoomId(String destination) {
+    private String parseRoomId(String destination) {
         if (destination == null) return null;
-        for (String token : destination.split("/")) {
-            try {
-                return Integer.parseInt(token);
-            } catch (NumberFormatException ignored) {}
-        }
-        return null;
+        List<String> tokens = List.of(destination.split("/"));
+        return tokens.get(2);
     }
 }

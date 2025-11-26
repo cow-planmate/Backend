@@ -36,7 +36,7 @@ public class CacheInitializer {
     /**
      * 루트 엔티티 ID만 넣으면 전체 계층 캐시 자동 로딩
      */
-    public void initializeHierarchy(int rootId) {
+    public void initializeHierarchy(String rootId) {
         AutoCacheRepository<?, ?, ?> rootRepo = findRootRepository();
         if (rootRepo == null) {
             throw new IllegalStateException("No root CacheEntity found");
@@ -48,7 +48,7 @@ public class CacheInitializer {
     /**
      * 재귀적으로 캐시 로딩
      */
-    private void loadRecursively(AutoCacheRepository repo, int id) {
+    private void loadRecursively(AutoCacheRepository repo, String id) {
 
         // 1) 루트/부모 DTO 로드
         CacheDto<?> dto = repo.loadFromDatabaseById(id);
@@ -72,7 +72,7 @@ public class CacheInitializer {
             for (var childDto : children) {
                 Object childId = childRepo.extractIdUnchecked(childDto);
                 childRepo.saveUnchecked(childDto);
-                loadRecursively(childRepo, (Integer) childId);
+                loadRecursively(childRepo, (String) childId);
             }
         }
     }

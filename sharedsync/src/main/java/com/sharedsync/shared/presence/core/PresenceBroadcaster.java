@@ -11,10 +11,10 @@ public class PresenceBroadcaster {
 
     private final SimpMessagingTemplate messagingTemplate;
 
-    public void broadcast(String entityName, int roomId, String action, Object dtoWithPresenceKeys) {
+    public void broadcast(String entityName, String roomId, String action, Object dtoWithPresenceKeys) {
         Map<String, Object> payload = PresenceFieldScanner.extractPresenceData(dtoWithPresenceKeys);
         messagingTemplate.convertAndSend(
-                String.format("/topic/%s/%d/%s/presence", entityName, roomId, action),
+                String.format("/topic/%s/%s/%s/presence", entityName, roomId, action),
                 payload
         );
     }

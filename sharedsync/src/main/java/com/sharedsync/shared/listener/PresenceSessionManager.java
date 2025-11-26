@@ -21,16 +21,16 @@ public class PresenceSessionManager {
     private final PresenceStorage presenceStorage;
     private final PresenceBroadcaster presenceBroadcaster;
     private final UserProvider userProvider;        
-    private final CacheInitializer planCacheInitializer;
+    private final CacheInitializer cacheInitializer;
     private final CacheSyncService cacheSyncService;
     private final PresenceRootResolver presenceRootResolver;
 
     /**
      * STOMP 구독 시 (입장)
      */
-    public void handleSubscribe(int rootId, int userId, String sessionId) {
+    public void handleSubscribe(String rootId, String userId, String sessionId) {
         if (!presenceStorage.hasTracker(rootId)) {
-            planCacheInitializer.initializeHierarchy(rootId);
+            cacheInitializer.initializeHierarchy(rootId);
         }
 
         String nickname = presenceStorage.getNicknameByUserId(userId);
@@ -51,7 +51,7 @@ public class PresenceSessionManager {
                 ACTION_CREATE,
                 new Object() {
                     public final String userNickname = finalNickname;
-                    public final int uid = userId;
+                    public final String uid = userId;
                 }
         );
     }
@@ -60,9 +60,9 @@ public class PresenceSessionManager {
     /**
      * 연결 해제 시 (퇴장)
      */
-    public void handleDisconnect(int userId, String sessionId) {
-        int rootId = presenceStorage.removeUserRootMapping(userId);
-        if (rootId == 0) return;
+    public void handleDisconnect(String userId, String sessionId) {
+        String rootId = presenceStorage.removeUserRootMapping(userId);
+        if (rootId == null || rootId.isBlank()) return;
 
         presenceStorage.removeTracker(rootId, sessionId, userId);
 
@@ -79,7 +79,7 @@ public class PresenceSessionManager {
                 ACTION_DELETE,
                 new Object() {
                     public final String userNickname = nickname;
-                    public final int uid = userId;
+                    public final String uid = userId;
                 }
         );
     }
