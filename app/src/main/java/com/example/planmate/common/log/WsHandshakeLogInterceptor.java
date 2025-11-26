@@ -17,7 +17,6 @@ public class WsHandshakeLogInterceptor implements HandshakeInterceptor {
                                    WebSocketHandler h, Map<String, Object> attrs) {
         String ip = req.getHeaders().getFirst("X-Forwarded-For");
         if (ip == null && req instanceof ServletServerHttpRequest s) ip = s.getServletRequest().getRemoteAddr();
-        LoggerFactory.getLogger(getClass()).info("WS HANDSHAKE ip={}", ip);
         return true;
     }
     @Override public void afterHandshake(ServerHttpRequest r, ServerHttpResponse s, WebSocketHandler h, Exception e) {}

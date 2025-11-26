@@ -1,3 +1,4 @@
- org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.sharedsync.framework.shared.autoConfig.SharedSyncAutoConfig,\
-com.sharedsync.framework.shared.autoConfig.SharedPresenceAutoConfig
+# Deprecated: migrated to
+# META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
+# The new file contains the auto-configuration classes for Spring Boot 2.7+/3.x
+# Kept here for backward compatibility (can be removed once all consumers are updated).
