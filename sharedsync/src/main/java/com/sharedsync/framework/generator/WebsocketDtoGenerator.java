@@ -52,7 +52,7 @@ public class WebsocketDtoGenerator {
         source.append("@Setter\n");
         source.append("public class ").append(cacheInfo.getRequestClassName()).append(" extends WRequest {\n\n");
         source.append("    @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)\n");
-        source.append("    private List<").append(dtoName).append("> ").append(fieldName).append(";\n\n");
+        source.append("    private List<").append(dtoName).append("> ").append(fieldName).append("s").append(";\n\n");
         source.append("}\n");
 
         writeToFile(env, cacheInfo.getRequestPath(), cacheInfo.getRequestClassName(), source.toString());
@@ -79,7 +79,7 @@ public class WebsocketDtoGenerator {
         source.append("@Getter\n");
         source.append("@Setter\n");
         source.append("public class ").append(cacheInfo.getResponseClassName()).append(" extends WResponse {\n\n");
-        source.append("    private List<").append(dtoName).append("> ").append(fieldName).append(";\n\n");
+        source.append("    private List<").append(dtoName).append("> ").append(fieldName).append("s").append(";\n\n");
         source.append("}\n");
 
         writeToFile(env, cacheInfo.getResponsePath(), cacheInfo.getResponseClassName(), source.toString());

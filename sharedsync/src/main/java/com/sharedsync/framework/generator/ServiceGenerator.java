@@ -41,25 +41,25 @@ public class ServiceGenerator {
 		// create
 		source.append("    public ").append(cacheInfo.getResponseClassName()).append(" create(").append(cacheInfo.getRequestClassName()).append(" request) {\n");
 		source.append("        ").append(cacheInfo.getResponseClassName()).append(" response = new ").append(cacheInfo.getResponseClassName()).append("();\n");
-		source.append("        java.util.List<").append(cacheInfo.getDtoClassName()).append("> payload = request.get").append(cacheInfo.getDtoClassName()).append("() != null ? request.get").append(cacheInfo.getDtoClassName()).append("() : java.util.Collections.emptyList();\n");
+		source.append("        java.util.List<").append(cacheInfo.getDtoClassName()).append("> payload = request.get").append(cacheInfo.getDtoClassName()).append("s").append("() != null ? request.get").append(cacheInfo.getDtoClassName()).append("s").append("() : java.util.Collections.emptyList();\n");
 		source.append("        if (payload.isEmpty()) {\n");
-		source.append("            response.set").append(cacheInfo.getDtoClassName()).append("(java.util.Collections.emptyList());\n");
+		source.append("            response.set").append(cacheInfo.getDtoClassName()).append("s").append("(java.util.Collections.emptyList());\n");
 		source.append("            return response;\n");
 		source.append("        }\n");
 		source.append("        java.util.List<").append(cacheInfo.getDtoClassName()).append("> sanitized = payload.stream()\n");
 		source.append("            .map(dto -> dto.").append("<").append(cacheInfo.getDtoClassName()).append(">").append("changeId(null))\n");
 		source.append("            .collect(java.util.stream.Collectors.toList());\n");
 		source.append("        java.util.List<").append(cacheInfo.getDtoClassName()).append("> saved = ").append(decapitalizeFirst(cacheInfo.getCacheClassName())).append(".saveAll(sanitized);\n");
-		source.append("        response.set").append(cacheInfo.getDtoClassName()).append("(saved);\n");
+		source.append("        response.set").append(cacheInfo.getDtoClassName()).append("s").append("(saved);\n");
 		source.append("        return response;\n");
 		source.append("    }\n\n");
 
 		// read
 		source.append("    public ").append(cacheInfo.getResponseClassName()).append(" read(").append(cacheInfo.getRequestClassName()).append(" request) {\n");
 		source.append("        ").append(cacheInfo.getResponseClassName()).append(" response = new ").append(cacheInfo.getResponseClassName()).append("();\n");
-		source.append("        java.util.List<").append(cacheInfo.getDtoClassName()).append("> payload = request.get").append(cacheInfo.getDtoClassName()).append("() != null ? request.get").append(cacheInfo.getDtoClassName()).append("() : java.util.Collections.emptyList();\n");
+		source.append("        java.util.List<").append(cacheInfo.getDtoClassName()).append("> payload = request.get").append(cacheInfo.getDtoClassName()).append("s").append("() != null ? request.get").append(cacheInfo.getDtoClassName()).append("s").append("() : java.util.Collections.emptyList();\n");
 		source.append("        if (payload.isEmpty()) {\n");
-		source.append("            response.set").append(cacheInfo.getDtoClassName()).append("(java.util.Collections.emptyList());\n");
+		source.append("            response.set").append(cacheInfo.getDtoClassName()).append("s").append("(java.util.Collections.emptyList());\n");
 		source.append("            return response;\n");
 		source.append("        }\n");
 		source.append("        java.util.List<Integer> ids = payload.stream()\n");
@@ -67,7 +67,7 @@ public class ServiceGenerator {
 		source.append("            .filter(java.util.Objects::nonNull)\n");
 		source.append("            .collect(java.util.stream.Collectors.toList());\n");
 		source.append("        if (ids.isEmpty()) {\n");
-		source.append("            response.set").append(cacheInfo.getDtoClassName()).append("(java.util.Collections.emptyList());\n");
+		source.append("            response.set").append(cacheInfo.getDtoClassName()).append("s").append("(java.util.Collections.emptyList());\n");
 		source.append("            return response;\n");
 		source.append("        }\n");
 		source.append("        java.util.List<").append(cacheInfo.getEntityName()).append("> entities = ").append(decapitalizeFirst(cacheInfo.getCacheClassName())).append(".findAllById(ids);\n");
@@ -75,31 +75,31 @@ public class ServiceGenerator {
 		source.append("            .filter(java.util.Objects::nonNull)\n");
 		source.append("            .map(").append(cacheInfo.getDtoClassName()).append("::fromEntity)\n");
 		source.append("            .collect(java.util.stream.Collectors.toList());\n");
-		source.append("        response.set").append(cacheInfo.getDtoClassName()).append("(dtos);\n");
+		source.append("        response.set").append(cacheInfo.getDtoClassName()).append("s").append("(dtos);\n");
 		source.append("        return response;\n");
 		source.append("    }\n\n");
 
 		// update
 		source.append("    public ").append(cacheInfo.getResponseClassName()).append(" update(").append(cacheInfo.getRequestClassName()).append(" request) {\n");
 		source.append("        ").append(cacheInfo.getResponseClassName()).append(" response = new ").append(cacheInfo.getResponseClassName()).append("();\n");
-		source.append("        java.util.List<").append(cacheInfo.getDtoClassName()).append("> payload = request.get").append(cacheInfo.getDtoClassName()).append("() != null ? request.get").append(cacheInfo.getDtoClassName()).append("() : java.util.Collections.emptyList();\n");
+		source.append("        java.util.List<").append(cacheInfo.getDtoClassName()).append("> payload = request.get").append(cacheInfo.getDtoClassName()).append("s").append("() != null ? request.get").append(cacheInfo.getDtoClassName()).append("s").append("() : java.util.Collections.emptyList();\n");
 		source.append("        if (payload.isEmpty()) {\n");
-		source.append("            response.set").append(cacheInfo.getDtoClassName()).append("(java.util.Collections.emptyList());\n");
+		source.append("            response.set").append(cacheInfo.getDtoClassName()).append("s").append("(java.util.Collections.emptyList());\n");
 		source.append("            return response;\n");
 		source.append("        }\n");
 		source.append("        java.util.List<").append(cacheInfo.getDtoClassName()).append("> updated = payload.stream()\n");
 		source.append("            .map(").append(decapitalizeFirst(cacheInfo.getCacheClassName())).append("::update)\n");
 		source.append("            .collect(java.util.stream.Collectors.toList());\n");
-		source.append("        response.set").append(cacheInfo.getDtoClassName()).append("(updated);\n");
+		source.append("        response.set").append(cacheInfo.getDtoClassName()).append("s").append("(updated);\n");
 		source.append("        return response;\n");
 		source.append("    }\n\n");
 
 		// delete
 		source.append("    public ").append(cacheInfo.getResponseClassName()).append(" delete(").append(cacheInfo.getRequestClassName()).append(" request) {\n");
 		source.append("        ").append(cacheInfo.getResponseClassName()).append(" response = new ").append(cacheInfo.getResponseClassName()).append("();\n");
-		source.append("        java.util.List<").append(cacheInfo.getDtoClassName()).append("> payload = request.get").append(cacheInfo.getDtoClassName()).append("() != null ? request.get").append(cacheInfo.getDtoClassName()).append("() : java.util.Collections.emptyList();\n");
+		source.append("        java.util.List<").append(cacheInfo.getDtoClassName()).append("> payload = request.get").append(cacheInfo.getDtoClassName()).append("s").append("() != null ? request.get").append(cacheInfo.getDtoClassName()).append("s").append("() : java.util.Collections.emptyList();\n");
 		source.append("        if (payload.isEmpty()) {\n");
-		source.append("            response.set").append(cacheInfo.getDtoClassName()).append("(java.util.Collections.emptyList());\n");
+		source.append("            response.set").append(cacheInfo.getDtoClassName()).append("s").append("(java.util.Collections.emptyList());\n");
 		source.append("            return response;\n");
 		source.append("        }\n");
 		source.append("        java.util.List<Integer> ids = payload.stream()\n");
@@ -109,7 +109,7 @@ public class ServiceGenerator {
 		source.append("        if (!ids.isEmpty()) {\n");
 		source.append("            ").append(decapitalizeFirst(cacheInfo.getCacheClassName())).append(".deleteAllById(ids);\n");
 		source.append("        }\n");
-		source.append("        response.set").append(cacheInfo.getDtoClassName()).append("(payload);\n");
+		source.append("        response.set").append(cacheInfo.getDtoClassName()).append("s").append("(payload);\n");
 		source.append("        return response;\n");
 		source.append("    }\n\n");
 
