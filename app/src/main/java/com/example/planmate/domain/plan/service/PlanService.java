@@ -59,7 +59,7 @@ import com.example.planmate.domain.user.entity.PreferredTheme;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
 import com.example.planmate.generated.valueObject.UserDayIndexVO;
-import com.sharedsync.framework.shared.presence.core.SharedPresenceFacade;
+import com.sharedsync.shared.presence.core.SharedPresenceFacade;
 
 import lombok.RequiredArgsConstructor;
 import sharedsync.cache.PlanCache;

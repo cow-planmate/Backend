@@ -1,2 +1,2 @@
-com.sharedsync.framework.generator.Generator
-com.sharedsync.framework.generator.PresenceUserGenerator
+com.sharedsync.generator.Generator
+com.sharedsync.generator.PresenceUserGenerator
