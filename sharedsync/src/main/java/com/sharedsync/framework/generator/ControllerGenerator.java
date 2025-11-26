@@ -72,11 +72,11 @@ public class ControllerGenerator {
 	}
 
 	private static String generateCrudMethod(String action, String lowerEntity, String dtoRequestName, String dtoResponseName) {
-		return "    @MessageMapping(\"/{roomId}/" + action + "/" + lowerEntity + "\")\n" +
-			   "    @SendTo(\"/topic/{roomId}/" + action + "/" + lowerEntity + "\")\n" +
-			   "    public " + dtoResponseName + " " + action + "(@DestinationVariable int roomId, @Payload " + dtoRequestName + " request) {\n" +
-			   "        return handle" + capitalizeFirst(action) + "(roomId, request);\n" +
-			   "    }\n";
+		 return "    @MessageMapping(\"/{roomId}/" + action + "/" + lowerEntity + "\")\n" +
+			 "    @SendTo(\"/topic/{roomId}/" + action + "/" + lowerEntity + "\")\n" +
+			 "    public " + dtoResponseName + " " + action + "(@DestinationVariable(\"roomId\") int roomId, @Payload " + dtoRequestName + " request) {\n" +
+			 "        return handle" + capitalizeFirst(action) + "(roomId, request);\n" +
+			 "    }\n";
 	}
 
 	private static String capitalizeFirst(String str) {
