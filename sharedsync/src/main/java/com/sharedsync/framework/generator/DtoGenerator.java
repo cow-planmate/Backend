@@ -68,7 +68,7 @@ public class DtoGenerator {
         if(cacheInfo.getParentEntityPath() == null || cacheInfo.getParentId() == null) {
             return "";
         } else {
-        String loader = "@AutoDatabaseLoader(repository = \"" + cacheInfo.getRepositoryName() + "\", method = \"findBy" + Generator.removePath(cacheInfo.getParentEntityPath()) + Generator.capitalizeFirst(cacheInfo.getParentId()) + "\")\n";
+        String loader = "@AutoDatabaseLoader(repository = \"" + Generator.decapitalizeFirst(cacheInfo.getRepositoryName()) + "\", method = \"findBy" + Generator.removePath(cacheInfo.getParentEntityPath()) + Generator.capitalizeFirst(cacheInfo.getParentId()) + "\")\n";
         return loader;
         }
     }
@@ -80,7 +80,7 @@ public class DtoGenerator {
             StringBuilder repositories = new StringBuilder();
             List<String> repoList = cacheInfo.getRelatedEntities().stream().map(RelatedEntity::getRepositoryPath).toList();
             for (int i = 0; i < repoList.size(); i++) {
-                repositories.append("\"").append(Generator.removePath(repoList.get(i))).append("\"");
+                repositories.append("\"").append(Generator.decapitalizeFirst(Generator.removePath(repoList.get(i)))).append("\"");
                 if (i < repoList.size() - 1) {
                     repositories.append(", ");
                 }
