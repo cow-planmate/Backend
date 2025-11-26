@@ -24,13 +24,13 @@ public class RedisPresenceStorage implements PresenceStorage {
     }
 
     @Override
-    public void insertTracker(int rootId, int userId, int index) {
-        redis.opsForHash().put(TRACKER + rootId, String.valueOf(userId), String.valueOf(index));
+    public void insertTracker(int rootId, String sessionId, int userId, String index) {
+        redis.opsForHash().put(TRACKER + rootId, String.valueOf(userId + "//" + sessionId), index);
     }
 
     @Override
-    public void removeTracker(int rootId, int userId) {
-        redis.opsForHash().delete(TRACKER + rootId, String.valueOf(userId));
+    public void removeTracker(int rootId, String sessionId, int userId) {
+        redis.opsForHash().delete(TRACKER + rootId, String.valueOf(userId + "//" + sessionId));
     }
 
     @Override

@@ -18,11 +18,12 @@ public class SharedEventTracker {
     @EventListener
     public void handleSubscribeEvent(SessionSubscribeEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
+        String sessionId = accessor.getSessionId();
         Integer userId = extractUserId(accessor);
         Integer roomId = parseRoomId(accessor.getDestination());
 
         if (userId != null && roomId != null) {
-            presenceSessionManager.handleSubscribe(roomId, userId);
+            presenceSessionManager.handleSubscribe(roomId, userId, sessionId);
         }
     }
 
@@ -30,9 +31,9 @@ public class SharedEventTracker {
     public void handleDisconnectEvent(SessionDisconnectEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
         Integer userId = extractUserId(accessor);
-
+        String sessionId = accessor.getSessionId();
         if (userId != null) {
-            presenceSessionManager.handleDisconnect(userId);
+            presenceSessionManager.handleDisconnect(userId, sessionId);
         }
     }
 

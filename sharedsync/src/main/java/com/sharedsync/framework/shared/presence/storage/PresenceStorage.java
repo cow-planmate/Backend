@@ -4,8 +4,8 @@ import java.util.Map;
 
 public interface PresenceStorage {
     boolean hasTracker(int rootId);
-    void insertTracker(int rootId, int userId, int index);
-    void removeTracker(int rootId, int userId);
+    void insertTracker(int rootId, String sessionId, int userId, String index);
+    void removeTracker(int rootId, String sessionId, int userId);
     Map<Integer, Integer> getTrackerEntries(int rootId);
 
     void saveUserNickname(int userId, String nickname);
