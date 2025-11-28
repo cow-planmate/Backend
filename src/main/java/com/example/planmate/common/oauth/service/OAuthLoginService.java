@@ -36,7 +36,8 @@ public class OAuthLoginService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    // 1) 로그인 시작 URL 생성
+
+    /** 1. 로그인 시작 URL 생성 */
     public String buildAuthorizeUrl(OAuthProvider provider) {
         OAuthProperties.Provider config = oAuthProperties.getProvider(provider);
 
@@ -46,80 +47,100 @@ public class OAuthLoginService {
                 .queryParam("redirect_uri", config.getRedirectUri())
                 .queryParam("response_type", "code");
 
-        // 구글/네이버 스펙에 따라 추가 파라미터
         switch (provider) {
-            case GOOGLE -> builder
-                    .queryParam("access_type", "offline")
+            case GOOGLE -> builder.queryParam("access_type", "offline")
                     .queryParam("prompt", "consent");
-
-            case NAVER -> builder
-                    .queryParam("state", "RANDOM_STATE"); // 실서비스는 난수 사용
+            case NAVER -> builder.queryParam("state", "RANDOM_STATE");
         }
 
-        if (config.getScope() != null) {
+        if (config.getScope() != null)
             builder.queryParam("scope", config.getScope());
-        }
 
         return builder.toUriString();
     }
 
 
-    // 2) callback 처리: code → token → user → JWT 발급
+    /** 2. callback 처리 */
     @Transactional
     public String handleCallback(OAuthProvider provider, String code, String state) {
 
-        // 1) provider별로 사용자 프로필 가져오기
-        OAuthUserProfile profile = switch (provider) {
-            case KAKAO -> fetchKakaoProfile(code);
-            case GOOGLE -> fetchGoogleProfile(code);
-            case NAVER -> fetchNaverProfile(code, state);
-        };
+        // 1) OAuth 프로필 가져오기
+        OAuthUserProfile profile =
+                switch (provider) {
+                    case KAKAO -> fetchKakaoProfile(code);
+                    case GOOGLE -> fetchGoogleProfile(code);
+                    case NAVER -> fetchNaverProfile(code, state);
+                };
 
         String providerName = provider.name().toLowerCase();
         String email = profile.getEmail();
         String providerId = profile.getProviderId();
 
-        // 🔥 2) 이메일 충돌 검사 (SNS ↔ Local 충돌 방지)
+
+        // ⭐ 2) 이미 SNS로 가입된 유저인지 먼저 체크
+        Optional<User> existedSNSUser =
+                userRepository.findByProviderAndProviderId(providerName, providerId);
+
+        if (existedSNSUser.isPresent()) {
+            User user = existedSNSUser.get();
+
+            // 바로 JWT 발급
+            String access = jwtTokenProvider.generateAccessToken(user.getUserId());
+            String refresh = jwtTokenProvider.generateRefreshToken(user.getUserId());
+
+            // 로그인 성공 리다이렉트
+            return buildFrontendRedirectUrl(access, refresh);
+        }
+
+
+        // ⭐ 3) 이메일 충돌 체크 (local ↔ sns 충돌)
         if (email != null) {
             Optional<User> existing = userRepository.findByEmailIgnoreCase(email);
 
-            // 이미 존재하는데 provider가 다르면 충돌
             if (existing.isPresent() && !existing.get().getProvider().equals(providerName)) {
                 throw new IllegalArgumentException(
-                        "이미 해당 이메일로 가입된 계정이 있습니다. "
-                                + "같은 방식(" + existing.get().getProvider() + ")으로 로그인해주세요."
+                        "이미 해당 이메일로 가입된 계정이 있습니다. 같은 방식("
+                                + existing.get().getProvider() + ")으로 로그인해주세요."
                 );
             }
         }
 
-        // 3) 유저 찾기 또는 생성
-        String rawNickname = profile.getNickname();
-        String safeNickname = userService.sanitizeNickname(rawNickname);
-        String finalNickname = userService.resolveUniqueNickname(safeNickname);
 
-
-        User user = userService.findOrCreateOAuthUser(
-                providerName,
-                providerId,
-                email,
-                finalNickname // ← 여기 자동 생성된 닉네임
+        // ⭐ 4) 신규 SNS 유저 → 추가 정보 입력 필요
+        String finalNickname = userService.resolveUniqueNickname(
+                userService.sanitizeNickname(profile.getNickname())
         );
 
-
-        // 4) JWT 발급
-        String access = jwtTokenProvider.generateAccessToken(user.getUserId());
-        String refresh = jwtTokenProvider.generateRefreshToken(user.getUserId());
-
-        // 5) 프론트로 redirect URL 생성
-        return buildFrontendRedirectUrl(access, refresh);
+        return buildAdditionalInfoRedirect(
+                providerName, providerId, email, finalNickname
+        );
     }
 
 
 
+    /** 프론트에서 추가정보 입력하라고 보내는 redirect */
+    private String buildAdditionalInfoRedirect(
+            String provider,
+            String providerId,
+            String email,
+            String nickname
+    ) {
+        return UriComponentsBuilder
+                .fromUriString(oAuthProperties.getFrontendRedirectUri())
+                .queryParam("status", "NEED_ADDITIONAL_INFO")
+                .queryParam("provider", provider)
+                .queryParam("providerId", providerId)
+                .queryParam("email", email == null ? "" : email)
+                .queryParam("nickname", nickname)
+                .build()
+                .toString();
+    }
 
-    // 프론트 콜백 URL로 redirect
+
+    /** 정상 로그인 redirect */
     private String buildFrontendRedirectUrl(String access, String refresh) {
         return UriComponentsBuilder.fromUriString(oAuthProperties.getFrontendRedirectUri())
+                .queryParam("status", "SUCCESS")
                 .queryParam("access", access)
                 .queryParam("refresh", refresh)
                 .build()
@@ -127,152 +148,119 @@ public class OAuthLoginService {
     }
 
 
-    // ===================
-    //   PROVIDER 구현부
-    // ===================
+    /** =========== PROVIDER 구현부 =========== */
 
-    /** Kakao */
     private OAuthUserProfile fetchKakaoProfile(String code) {
-
         OAuthProperties.Provider config = oAuthProperties.getProvider(OAuthProvider.KAKAO);
 
-        // 1) code → access token 요청
+        // token 요청
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("grant_type", "authorization_code");
-        form.add("client_id", config.getClientId());
-        form.add("client_secret", config.getClientSecret());
-        form.add("redirect_uri", config.getRedirectUri());
-        form.add("code", code);
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("grant_type", "authorization_code");
+        body.add("client_id", config.getClientId());
+        body.add("client_secret", config.getClientSecret());
+        body.add("redirect_uri", config.getRedirectUri());
+        body.add("code", code);
 
-        HttpEntity<MultiValueMap<String, String>> tokenRequest =
-                new HttpEntity<>(form, headers);
-
-        KakaoTokenResponse tokenResponse = restTemplate.postForObject(
+        KakaoTokenResponse token = restTemplate.postForObject(
                 config.getTokenUri(),
-                tokenRequest,
+                new HttpEntity<>(body, headers),
                 KakaoTokenResponse.class
         );
 
-        String accessToken = tokenResponse.getAccessToken();
-
-        // 2) access token → user info 요청
+        // user info 요청
         HttpHeaders infoHeaders = new HttpHeaders();
-        infoHeaders.setBearerAuth(accessToken);
+        infoHeaders.setBearerAuth(token.getAccessToken());
 
-        HttpEntity<Void> userInfoRequest = new HttpEntity<>(infoHeaders);
-
-        ResponseEntity<KakaoUserResponse> userInfoResponse = restTemplate.exchange(
+        ResponseEntity<KakaoUserResponse> response = restTemplate.exchange(
                 config.getUserInfoUri(),
                 HttpMethod.GET,
-                userInfoRequest,
+                new HttpEntity<>(infoHeaders),
                 KakaoUserResponse.class
         );
 
-        KakaoUserResponse body = userInfoResponse.getBody();
+        KakaoUserResponse d = response.getBody();
 
         return new OAuthUserProfile(
-                String.valueOf(body.getId()),
-                body.getKakaoAccount().getEmail(),
-                body.getKakaoAccount().getProfile().getNickname()
+                String.valueOf(d.getId()),
+                d.getKakaoAccount().getEmail(),
+                d.getKakaoAccount().getProfile().getNickname()
         );
     }
 
 
-    /** Google */
     private OAuthUserProfile fetchGoogleProfile(String code) {
-
         OAuthProperties.Provider config = oAuthProperties.getProvider(OAuthProvider.GOOGLE);
 
-        // 1) token 요청
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("grant_type", "authorization_code");
-        form.add("client_id", config.getClientId());
-        form.add("client_secret", config.getClientSecret());
-        form.add("redirect_uri", config.getRedirectUri());
-        form.add("code", code);
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("grant_type", "authorization_code");
+        body.add("client_id", config.getClientId());
+        body.add("client_secret", config.getClientSecret());
+        body.add("redirect_uri", config.getRedirectUri());
+        body.add("code", code);
 
-        HttpEntity<MultiValueMap<String, String>> tokenRequest =
-                new HttpEntity<>(form, headers);
-
-        GoogleTokenResponse tokenResponse = restTemplate.postForObject(
+        GoogleTokenResponse token = restTemplate.postForObject(
                 config.getTokenUri(),
-                tokenRequest,
+                new HttpEntity<>(body, headers),
                 GoogleTokenResponse.class
         );
 
-        String accessToken = tokenResponse.getAccessToken();
-
-        // 2) userinfo
         HttpHeaders infoHeaders = new HttpHeaders();
-        infoHeaders.setBearerAuth(accessToken);
+        infoHeaders.setBearerAuth(token.getAccessToken());
 
-        HttpEntity<Void> userInfoRequest = new HttpEntity<>(infoHeaders);
-
-        ResponseEntity<GoogleUserResponse> userInfoResponse = restTemplate.exchange(
+        ResponseEntity<GoogleUserResponse> response = restTemplate.exchange(
                 config.getUserInfoUri(),
                 HttpMethod.GET,
-                userInfoRequest,
+                new HttpEntity<>(infoHeaders),
                 GoogleUserResponse.class
         );
 
-        GoogleUserResponse body = userInfoResponse.getBody();
+        GoogleUserResponse d = response.getBody();
 
         return new OAuthUserProfile(
-                body.getSub(),     // Google unique id
-                body.getEmail(),
-                body.getName()
+                d.getSub(),
+                d.getEmail(),
+                d.getName()
         );
     }
 
 
-    /** Naver */
     private OAuthUserProfile fetchNaverProfile(String code, String state) {
-
         OAuthProperties.Provider config = oAuthProperties.getProvider(OAuthProvider.NAVER);
 
-        // 1) token 요청
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("grant_type", "authorization_code");
-        form.add("client_id", config.getClientId());
-        form.add("client_secret", config.getClientSecret());
-        form.add("redirect_uri", config.getRedirectUri());
-        form.add("code", code);
-        form.add("state", state);
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("grant_type", "authorization_code");
+        body.add("client_id", config.getClientId());
+        body.add("client_secret", config.getClientSecret());
+        body.add("redirect_uri", config.getRedirectUri());
+        body.add("code", code);
+        body.add("state", state);
 
-        HttpEntity<MultiValueMap<String, String>> tokenRequest =
-                new HttpEntity<>(form, headers);
-
-        NaverTokenResponse tokenResponse = restTemplate.postForObject(
+        NaverTokenResponse token = restTemplate.postForObject(
                 config.getTokenUri(),
-                tokenRequest,
+                new HttpEntity<>(body, headers),
                 NaverTokenResponse.class
         );
 
-        String accessToken = tokenResponse.getAccessToken();
-
-        // 2) userinfo
         HttpHeaders infoHeaders = new HttpHeaders();
-        infoHeaders.setBearerAuth(accessToken);
+        infoHeaders.setBearerAuth(token.getAccessToken());
 
-        HttpEntity<Void> userInfoRequest = new HttpEntity<>(infoHeaders);
-
-        ResponseEntity<NaverUserResponse> userInfoResponse = restTemplate.exchange(
+        ResponseEntity<NaverUserResponse> response = restTemplate.exchange(
                 config.getUserInfoUri(),
                 HttpMethod.GET,
-                userInfoRequest,
+                new HttpEntity<>(infoHeaders),
                 NaverUserResponse.class
         );
 
-        NaverUserResponse.Result r = userInfoResponse.getBody().getResponse();
+        NaverUserResponse.Result r = response.getBody().getResponse();
 
         return new OAuthUserProfile(
                 r.getId(),
@@ -281,4 +269,3 @@ public class OAuthLoginService {
         );
     }
 }
-

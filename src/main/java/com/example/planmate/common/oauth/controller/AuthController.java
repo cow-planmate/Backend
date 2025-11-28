@@ -2,24 +2,26 @@ package com.example.planmate.common.oauth.controller;
 
 import java.io.IOException;
 
+import com.example.planmate.common.oauth.dto.OAuthCompleteRequest;
+import com.example.planmate.common.oauth.dto.OAuthCompleteResponse;
 import com.example.planmate.common.oauth.enums.OAuthProvider;
+import com.example.planmate.common.oauth.service.OAuthCompleteService;
 import com.example.planmate.common.oauth.service.OAuthLoginService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/oauth")
 public class AuthController {
 
     private final OAuthLoginService oAuthLoginService;
+    private final OAuthCompleteService oAuthCompleteService;
 
     // 1) SNS 로그인 시작
-    @GetMapping("/api/oauth/{provider}")
+    @GetMapping("/{provider}")
     public void redirectToProvider(@PathVariable String provider,
                                    HttpServletResponse response) throws IOException {
 
@@ -31,7 +33,7 @@ public class AuthController {
     }
 
     // 2) SNS 로그인 콜백
-    @GetMapping("/api/oauth/{provider}/callback")
+    @GetMapping("/{provider}/callback")
     public void callback(@PathVariable String provider,
                          @RequestParam("code") String code,
                          @RequestParam(value = "state", required = false) String state,
@@ -43,6 +45,11 @@ public class AuthController {
         String redirectUrl = oAuthLoginService.handleCallback(oAuthProvider, code, state);
 
         response.sendRedirect(redirectUrl);
+    }
+
+    @PostMapping("/complete")
+    public OAuthCompleteResponse complete(@RequestBody OAuthCompleteRequest request) {
+        return oAuthCompleteService.completeRegistration(request);
     }
 }
 

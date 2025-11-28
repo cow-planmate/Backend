@@ -109,4 +109,17 @@
         public void changeGender(Integer newGender) {
             this.gender = newGender;
         }
+
+        public void changeEmail(String email) {
+            if (email == null || email.isBlank()) {
+                throw new IllegalArgumentException("이메일은 비어 있을 수 없습니다.");
+            }
+
+            if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+                throw new IllegalArgumentException("유효한 이메일 형식이 아닙니다.");
+            }
+
+            this.email = email;
+        }
+
     }
