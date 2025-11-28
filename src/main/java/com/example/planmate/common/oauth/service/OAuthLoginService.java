@@ -22,7 +22,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 @Service
@@ -76,22 +78,19 @@ public class OAuthLoginService {
         String email = profile.getEmail();
         String providerId = profile.getProviderId();
 
-
-        // ⭐ 2) 이미 SNS로 가입된 유저인지 먼저 체크
+        // ⭐ 2) 이미 SNS로 가입된 유저인지 먼저 체크 (provider + providerId)
         Optional<User> existedSNSUser =
                 userRepository.findByProviderAndProviderId(providerName, providerId);
 
         if (existedSNSUser.isPresent()) {
             User user = existedSNSUser.get();
 
-            // 바로 JWT 발급
+            // 바로 JWT 발급 → 로그인
             String access = jwtTokenProvider.generateAccessToken(user.getUserId());
             String refresh = jwtTokenProvider.generateRefreshToken(user.getUserId());
 
-            // 로그인 성공 리다이렉트
             return buildFrontendRedirectUrl(access, refresh);
         }
-
 
         // ⭐ 3) 이메일 충돌 체크 (local ↔ sns 충돌)
         if (email != null) {
@@ -105,16 +104,32 @@ public class OAuthLoginService {
             }
         }
 
+        // ⭐ 4) 신규 SNS 유저 생성 (DB INSERT)
+        String sanitized = userService.sanitizeNickname(profile.getNickname());
+        String finalNickname = userService.resolveUniqueNickname(sanitized);
 
-        // ⭐ 4) 신규 SNS 유저 → 추가 정보 입력 필요
-        String finalNickname = userService.resolveUniqueNickname(
-                userService.sanitizeNickname(profile.getNickname())
-        );
+        User newUser = User.builder()
+                .provider(providerName)
+                .providerId(providerId)
+                .email(email)              // null 가능 → complete에서 채움
+                .nickname(finalNickname)
+                .password(null)            // SNS는 패스워드 없음
+                .age(null)
+                .gender(null)
+                .build();
 
+        newUser = userRepository.save(newUser); // DB 저장
+
+        // ⭐ 5) 추가 정보 입력 필요 → 프론트로 redirect
+        // (닉네임/이메일/아이디 모두 프론트에서 표시)
         return buildAdditionalInfoRedirect(
-                providerName, providerId, email, finalNickname
+                providerName,
+                providerId,
+                email,
+                finalNickname
         );
     }
+
 
 
 
@@ -127,25 +142,30 @@ public class OAuthLoginService {
     ) {
         return UriComponentsBuilder
                 .fromUriString(oAuthProperties.getFrontendRedirectUri())
-                .queryParam("status", "NEED_ADDITIONAL_INFO")
-                .queryParam("provider", provider)
-                .queryParam("providerId", providerId)
-                .queryParam("email", email == null ? "" : email)
-                .queryParam("nickname", nickname)
-                .build()
-                .toString();
+                .queryParam("status", UriUtils.encode("NEED_ADDITIONAL_INFO", StandardCharsets.UTF_8))
+                .queryParam("provider", UriUtils.encode(provider, StandardCharsets.UTF_8))
+                .queryParam("providerId", UriUtils.encode(providerId, StandardCharsets.UTF_8))
+                .queryParam("email", UriUtils.encode(email == null ? "" : email, StandardCharsets.UTF_8))
+                .queryParam("nickname", UriUtils.encode(nickname, StandardCharsets.UTF_8))
+                .build(true)  // ★ 반드시 넣어야 함
+                .toUriString();
     }
+
+
 
 
     /** 정상 로그인 redirect */
     private String buildFrontendRedirectUrl(String access, String refresh) {
-        return UriComponentsBuilder.fromUriString(oAuthProperties.getFrontendRedirectUri())
-                .queryParam("status", "SUCCESS")
-                .queryParam("access", access)
-                .queryParam("refresh", refresh)
-                .build()
-                .toString();
+        return UriComponentsBuilder
+                .fromUriString(oAuthProperties.getFrontendRedirectUri())
+                .queryParam("status", UriUtils.encode("SUCCESS", StandardCharsets.UTF_8))
+                .queryParam("access", UriUtils.encode(access, StandardCharsets.UTF_8))
+                .queryParam("refresh", UriUtils.encode(refresh, StandardCharsets.UTF_8))
+                .build(true)
+                .toUriString();
     }
+
+
 
 
     /** =========== PROVIDER 구현부 =========== */
