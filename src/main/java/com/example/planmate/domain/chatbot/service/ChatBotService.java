@@ -1,12 +1,12 @@
 package com.example.planmate.domain.chatbot.service;
 
+import java.net.http.HttpHeaders;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
+import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.webSocket.lazydto.PlanDto;
 import com.example.planmate.domain.webSocket.lazydto.TimeTableDto;
 import com.example.planmate.domain.webSocket.lazydto.TimeTablePlaceBlockDto;
@@ -38,23 +39,26 @@ public class ChatBotService {
 
     @Value("${python.chatbot.api.url:http://localhost:8010/api/chatbot/generate}")
     private String pythonApiUrl;
-    
+
     public ChatBotActionResponse getChatResponse(String message, Integer planId, String planContext) {
         try {
 
             String systemPromptContext = buildSystemPromptContext(planId);
 
-            // 2. Python 서버로 전송할 요청 본문 구성
+            // planContext를 Map으로 구성 (Python이 dict를 기대)
+            Map<String, Object> planContextMap = buildPlanContextMap(planId);
+
+            // Python 서버로 전송할 요청 본문 구성
             Map<String, Object> requestBody = Map.of(
                     "planId", planId,
                     "message", message,
                     "systemPromptContext", systemPromptContext,
-                    "planContext", planContext != null ? planContext : ""
+                    "planContext", planContextMap
             );
-            
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            
+
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
             log.info("요청을 Python 챗봇 서버로 전달: {}", pythonApiUrl);
@@ -63,18 +67,17 @@ public class ChatBotService {
                     pythonApiUrl,
                     HttpMethod.POST,
                     entity,
-                    ChatBotActionResponse.class // Python 응답을 직접 ChatBotActionResponse 객체로 받음
+                    ChatBotActionResponse.class
             );
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 ChatBotActionResponse pythonResponse = response.getBody();
                 log.info("Successfully received ChatBotActionResponse from Python server.");
 
-                // 4. Python 서버에서 Action이 실행되어야 한다고 판단한 경우, Java 서버에서 Action 실행
+                // Python 서버에서 Action이 실행되어야 한다고 판단한 경우, Java 서버에서 Action 실행
                 if (pythonResponse.isHasAction() && pythonResponse.getActions() != null && !pythonResponse.getActions().isEmpty()) {
                     return executeActions(pythonResponse.getActions(), planId, pythonResponse.getUserMessage());
                 } else {
-                    // Action이 없는 경우, Python이 생성한 단순 메시지 반환
                     return pythonResponse;
                 }
             } else {
@@ -197,8 +200,44 @@ public class ChatBotService {
         }
     }
 
+    private Map<String, Object> buildPlanContextMap(Integer planId) {
+        try {
+            Plan plan = redisService.findPlanByPlanId(planId);
+            if (plan == null) {
+                log.error("Plan not found in Redis: planId={}", planId);
+                throw new IllegalStateException("Plan not found in Redis: " + planId);
+            }
+
+            PlanDto planDto = PlanDto.fromEntity(plan);
+            List<TimeTableDto> timeTables = redisService.findTimeTablesByPlanId(planId)
+                    .stream()
+                    .map(TimeTableDto::fromEntity)
+                    .toList();
+
+            List<TimeTablePlaceBlockDto> timeTablePlaceBlocks = new ArrayList<>();
+            for (TimeTableDto timeTable : timeTables) {
+                List<TimeTablePlaceBlockDto> blocks = redisService.findTimeTablePlaceBlocksByTimeTableId(timeTable.timeTableId())
+                        .stream()
+                        .map(TimeTablePlaceBlockDto::fromEntity)
+                        .toList();
+                timeTablePlaceBlocks.addAll(blocks);
+            }
+
+            // Python의 planContext dict 형식으로 반환
+            Map<String, Object> planContextMap = new java.util.HashMap<>();
+            planContextMap.put("Plan", planDto);
+            planContextMap.put("TimeTables", timeTables);
+            planContextMap.put("TimeTablePlaceBlocks", timeTablePlaceBlocks);
+
+            return planContextMap;
+        } catch (Exception e) {
+            log.error("Error building plan context map: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to build plan context: " + e.getMessage(), e);
+        }
+    }
+
     private String buildSystemPromptContext(Integer planId) throws JsonProcessingException {
-        PlanDto planDto = PlanDto.fromEntity(redisService.findPlanByPlanId(planId));
+        PlanDto planDto = PlanDto.fromEntity(redisService.findPlanByPlanId(planId)); //문제가 있다면 여기
         List<TimeTableDto> timeTables = redisService.findTimeTablesByPlanId(planId)
                 .stream()
                 .map(TimeTableDto::fromEntity)
@@ -225,129 +264,61 @@ public class ChatBotService {
 
         // Python 서버의 AI 모델에 전달할 컨텍스트 데이터
         return """
-            당신은 여행 계획 도우미 AI이다.
-            사용자의 여행 계획을 도와주고, 필요시 계획을 수정하거나 제안할 수 있다.
+            당신은 여행 계획 도우미 AI입니다. 사용 가능한 도구(Tools)를 사용하여 사용자의 요청을 처리하세요.
 
-            ---
-            ### 🔹 역할
-            - 사용자의 여행 계획 데이터를 분석하고, 상황에 맞는 수정 제안을 한다.
-            - 사용자의 요청에 따라 Plan, TimeTable, TimeTablePlaceBlock을 생성(create)·수정(update)·삭제(delete)한다.
+            ### 현재 계획 데이터
+            Plan: %s
+            TimeTables: %s
+            TimeTablePlaceBlocks: %s
 
-            ---
-            ### 🔹 입력 데이터 (JSON)
-            다음은 사용자의 현재 여행 계획 데이터이다.
+            ### 역할 및 사용 가능한 기능
+            1. **장소 검색 및 추가**: 사용자가 장소를 추가하고 싶을 때 search_multiple_place_blocks 또는 search_and_create_place_block 함수를 호출하세요.
+               - 예: "명동 맛집 3곳 추가해줘" → search_multiple_place_blocks(queries=["명동 맛집", "명동 맛집", "명동 맛집"], timeTableId=...)
+               - 예: "경복궁 추가해줘" → search_and_create_place_block(query="경복궁", timeTableId=...)
 
-            Plan:
-            %s
+            2. **일정 수정/삭제**: 사용자가 기존 일정을 수정하거나 삭제하고 싶을 때 반드시 JSON 응답을 반환하세요.
+               - 시간 변경, 제목 변경, 일정 삭제 등
+               - "점심"은 11:00~14:00, "저녁"은 17:00~20:00 시간대를 의미합니다.
+               - 사용자가 "점심에 일정 삭제"라고 하면 해당 시간대의 블록을 찾아서 삭제하세요.
 
-            TimeTables:
-            %s
+            ### 중요 규칙
+            1. **장소 추가 요청 시**: 반드시 함수를 호출하세요. JSON으로 응답하지 마세요.
+            2. **일정 수정/삭제 시**: 반드시 JSON 형식으로만 응답하세요. 일반 텍스트로 응답하지 마세요.
+            3. **시간 겹침 금지**: 같은 timeTableId 내에서 blockStartTime~blockEndTime이 겹치면 안 됩니다.
+            4. **timeTableId 찾기**: TimeTables에서 사용자가 언급한 날짜("1일차", "2일차")에 해당하는 timeTableId를 찾으세요.
+            5. **시간대 해석**:
+               - "아침": 06:00~10:00
+               - "점심": 11:00~14:00
+               - "오후": 14:00~18:00
+               - "저녁": 17:00~20:00
 
-            TimeTablePlaceBlocks:
-            %s
-
-            위 JSON들은 실제 서비스에서 사용하는 원본 구조이며,
-            AI는 **반드시 이 구조를 그대로 이해하고, 동일한 구조로 응답을 생성해야 한다.**
-
-            ---
-            ### 🔹 엔티티 구조 설명 (특히 TimeTablePlaceBlock)
-
-            1. Plan
-            - 여행 전체 단위의 메타 정보이다.
-            - 실제 필드명과 구조는 Plan JSON에 나와 있는 것을 그대로 따른다.
-
-            2. TimeTable
-            - 특정 날짜(하루) 단위의 일정이다.
-            - 실제 필드명과 구조는 TimeTables JSON에 나와 있는 것을 그대로 따른다.
-
-            3. TimeTablePlaceBlock 
-            새로운 블록을 생성(create)할 때는 아래 필드를 **빠짐없이** 채워라.
-    
-            - **blockId**: 0 (새로 생성 시 0으로 고정)
-            - **placeName**: 장소명 (사용자 요청에 따름)
-            - **placeTheme**: 테마 (예: '맛집', '산책', '쇼핑' 등 AI가 판단하여 기입)
-            - **placeRating**: 0.0 ~ 5.0 사이 (모르면 4.0으로 기입)
-            - **placeAddress**: 주소 (모르면 '주소 정보 없음' 또는 시/군/구 단위까지만이라도 기입)
-            - **placeLink**: (모르면 빈 문자열 "")
-            - **blockStartTime**: "HH:mm:ss"
-            - **blockEndTime**: "HH:mm:ss"
-            - **xLocation**: 위도 (정확히 모르면 해당 지역의 대략적인 위도라도 기입. **0.0 금지**)
-            - **yLocation**: 경도 (정확히 모르면 해당 지역의 대략적인 경도라도 기입. **0.0 금지**)
-            - **placeId**: (모르면 빈 문자열 "")
-            - **placeCategoryId**: 0(관광), 1(숙소), 2(식당) 중 택 1
-            - **timeTableId**: 연결될 TimeTable의 ID
-
-            ---
-            ### 🔹 시간 겹침 제약 조건
-            - 같은 timeTableId 내에서 blockStartTime ~ blockEndTime 구간이 겹치지 않도록 한다.
-
-            ---
-            ### 🔹 응답 형식 (ChatBotActionResponse)
-
-            AI의 응답은 **반드시 아래 JSON 형식만** 반환해야 한다.  
-            JSON 외의 텍스트는 절대 포함하지 않는다.
+            ### JSON 응답 형식 (수정/삭제 시 필수)
+            반드시 아래 JSON 형식으로만 응답하세요. JSON 외의 텍스트는 절대 포함하지 마세요.
 
             {
-              "userMessage": "사용자에게 보여줄 메시지",
-              "hasAction": true,
+              "userMessage": "친근한 한국어 메시지",
+              "hasAction": true/false,
               "actions": [
                 {
                   "action": "create | update | delete",
                   "targetName": "plan | timeTable | timeTablePlaceBlock",
-                  "target": { ...객체 전체 데이터... }
+                  "target": { ... }
                 }
               ]
             }
 
-            #### ⚠️ 필수 검증 규칙 (반드시 준수)
+            ### 예시
+            - "1일차 점심에 명동 맛집 3곳 추가해줘" → search_multiple_place_blocks 함수 호출
+            - "경복궁 일정에 추가해줘" → search_and_create_place_block 함수 호출
+            - "1일차 점심에 일정 삭제해줘" → JSON 응답 (delete, 점심 시간대(11:00~14:00)의 블록 찾아서 삭제)
+            - "경복궁 삭제해줘" → JSON 응답 (delete, blockId=20)
+            - "시작 시간 1시간 뒤로 미뤄줘" → JSON 응답 (update)
 
-            1. **Create 액션의 Target 데이터 강제**
-               - action이 "create"일 경우, `target` 필드는 **절대 비어있거나 `{}`이면 안 된다.**
-               - AI는 사용자가 언급한 장소의 정보(좌표, 주소, 테마 등)를 **스스로 찾거나 추론하여** `target` 객체의 모든 필드를 완벽하게 채워야 한다.
-               - 클라이언트가 정보를 채워줄 것이라고 가정하지 말고, **AI가 완성된 데이터를 내려줘야 한다.**
-
-            2. **Target 객체 구조 유지**
-               - `target`에는 위에서 설명한 엔티티의 모든 필드가 포함되어야 한다. (delete 제외)
-               - 필드명을 생략하거나 변경하지 말 것.
-
-            3. **Delete 액션**
-               - `target`에 식별자(ID)만 포함해도 된다.
-
-            ---
-            ### 🔹 동작 예시 (create 시 Target이 꽉 차 있는 예시)
-
-            {
-              "userMessage": "네, 21일 점심에 '명동교자' 일정을 추가했습니다.",
-              "hasAction": true,
-              "actions": [
-                {
-                  "action": "create",
-                  "targetName": "timeTablePlaceBlock",
-                  "target": {
-                    "blockId": 1005,
-                    "placeName": "명동교자 본점",
-                    "placeTheme": "맛집",
-                    "placeRating": 4.5,
-                    "placeAddress": "서울 중구 명동10길 29",
-                    "placeLink": "",
-                    "blockStartTime": "12:00:00",
-                    "blockEndTime": "13:00:00",
-                    "xLocation": 37.5634,
-                    "yLocation": 126.9850,
-                    "placeId": "",
-                    "placeCategoryId": 2,
-                    "timeTableId": 202
-                  }
-                }
-              ]
-            }
-            
-            ---
-
-            ### 🔹 최종 지시
-            - 사용자의 요청을 분석하여 `ChatBotActionResponse` JSON을 생성하라.
-            - `create` 시 `target` 내부에 **모든 필드 값(좌표, 주소 포함)이 채워져 있는지** 마지막으로 확인하고 응답하라.
-            - JSON 포맷만 반환하라.
+            ### 최종 지시
+            - 장소 검색 요청이면: 함수 호출
+            - 수정/삭제 요청이면: 반드시 JSON만 반환
+            - 사용자에게 다시 물어보지 마세요. 현재 데이터를 기반으로 최선의 판단을 내리고 바로 실행하세요.
+            - 예: "점심에 일정 삭제"라고 하면, 점심 시간대(11:00~14:00)와 겹치는 블록을 찾아서 바로 삭제하세요.
             """.formatted(planJson, timeTablesJson, timeTablePlaceBlocksJson);
     }
 
@@ -373,7 +344,7 @@ public class ChatBotService {
             return null;
         }
     }
-    
+
     private ChatBotActionResponse executeTimeTableAction(String action, Object target, int planId) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -408,16 +379,16 @@ public class ChatBotService {
             return null;
         }
     }
-    
+
     private ChatBotActionResponse executeTimeTablePlaceBlockAction(String action, Object target, int planId) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.registerModule(new JavaTimeModule());
-            
+
             @SuppressWarnings("unchecked")
             Map<String, Object> placeBlockMap = (Map<String, Object>) target;
             String placeBlockJson = objectMapper.writeValueAsString(placeBlockMap);
-            
+
             switch (action) {
                 case "create":
                     Integer timeTableId = (Integer) placeBlockMap.get("timeTableId");

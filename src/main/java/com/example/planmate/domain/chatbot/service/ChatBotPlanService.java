@@ -1,22 +1,21 @@
 package com.example.planmate.domain.chatbot.service;
 
-import com.example.planmate.common.externalAPI.*;
-import com.example.planmate.common.valueObject.SearchPlaceVO;
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+import org.springframework.stereotype.Service;
+
+import com.example.planmate.common.externalAPI.GoogleMap;
+import com.example.planmate.common.externalAPI.GooglePlaceImageWorker;
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
 import com.example.planmate.domain.webSocket.dto.WPlanRequest;
 import com.example.planmate.domain.webSocket.dto.WTimeTablePlaceBlockRequest;
 import com.example.planmate.domain.webSocket.dto.WTimetableRequest;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.util.Pair;
-import org.springframework.stereotype.Service;
-
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
 
 /**
  * AI 챗봇이 호출할 수 있는 여행 계획 관련 함수들을 정의
@@ -28,7 +27,6 @@ import java.util.List;
 public class ChatBotPlanService {
     private final GoogleMap googleMap;
     private final GooglePlaceImageWorker googlePlaceImageWorker;
-
     
     /**
      * 전체 계획 정보 업데이트 (JSON 형태로 받은 모든 필드를 처리)
@@ -270,8 +268,8 @@ public class ChatBotPlanService {
                 (Double) placeBlockMap.get("xLocation"),
                 (Double) placeBlockMap.get("yLocation")
             );
-            getSearchPlace(placeBlockVO);
-            
+            googlePlaceImageWorker.fetchSinglePlaceImageAsync(placeBlockVO.getPlaceId());
+
             request.setTimetablePlaceBlockVO(placeBlockVO);
             
             String userMessage = "새로운 장소를 일정에 추가했습니다! 📍";
@@ -282,24 +280,6 @@ public class ChatBotPlanService {
             log.error("장소 블록 생성 실패: {}", e.getMessage());
             return ChatBotActionResponse.simpleMessage("장소 추가에 실패했습니다: " + e.getMessage());
         }
-    }
-
-    public void getSearchPlace(TimetablePlaceBlockVO timetablePlaceBlockVO) {
-
-        Pair<List<SearchPlaceVO>, List<String>> pair = null;
-        try {
-            pair = googleMap.getSearchPlace(timetablePlaceBlockVO.getPlaceName());
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        SearchPlaceVO searchPlaceVO = pair.getFirst().get(0);
-        timetablePlaceBlockVO.setPlaceName(searchPlaceVO.getName());
-        timetablePlaceBlockVO.setPlaceId(searchPlaceVO.getPlaceId());
-        timetablePlaceBlockVO.setPlaceLink(searchPlaceVO.getUrl());
-        timetablePlaceBlockVO.setXLocation(searchPlaceVO.getXLocation());
-        timetablePlaceBlockVO.setYLocation(searchPlaceVO.getYLocation());
-        googlePlaceImageWorker.fetchSinglePlaceImageAsync(searchPlaceVO.getPlaceId());
     }
     
     /**
