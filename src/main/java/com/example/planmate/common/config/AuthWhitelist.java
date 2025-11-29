@@ -22,7 +22,10 @@ public class AuthWhitelist {
             "/api/plan/place",
             "/api/plan/nextPlace",
             "/logs/**",
-            "/image/**"
+            "/image/**",
+            // 챗봇 테스트용 임시 추가
+            "/api/test/**",
+            "/api/chatbot/**"
     );
 
     public static boolean isWhitelisted(String uri) {
