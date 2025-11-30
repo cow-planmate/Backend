@@ -7,7 +7,6 @@ build/
 logs/
 *.log
 *.log.*
-
 ### STS ###
 .apt_generated
 .classpath
@@ -43,3 +42,6 @@ out/
 **/application-secret.yml
 # 이미지
 *.webp
+
+# local.properties는 개인 토큰을 포함할 수 있으므로 절대 커밋하지 않습니다.
+local.properties
