@@ -1,2 +1,28 @@
 rootProject.name = 'PlanMate'
 include("sharedsync", "app")
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        
+        maven {
+            url = uri("https://maven.pkg.github.com/cow-planmate/sharedsync")
+            credentials {
+                // local.properties 파일 객체를 가져옵니다
+                def props = new Properties()
+                def localPropertiesFile = new File(rootDir, "local.properties")
+                
+                // 파일이 있으면 읽어옵니다
+                if (localPropertiesFile.exists()) {
+                    props.load(new FileInputStream(localPropertiesFile))
+                }
+
+                // 파일에서 읽은 값을 넣습니다 (없으면 null)
+                username = props.getProperty("gpr.user")
+                password = props.getProperty("gpr.key")
+            }
+        }
+    }
+}
