@@ -92,11 +92,6 @@ public class ChatBotService {
     }
 
     private ChatBotActionResponse executeActions(List<ChatBotActionResponse.ActionData> actions, Integer planId, String originalUserMessage) {
-        StringBuilder combinedMessage = new StringBuilder();
-        if (originalUserMessage != null && !originalUserMessage.isBlank()) {
-            combinedMessage.append(originalUserMessage.trim());
-        }
-
         List<ChatBotActionResponse.ActionData> aggregatedActions = new ArrayList<>();
 
         for (ChatBotActionResponse.ActionData actionData : actions) {
@@ -106,21 +101,18 @@ public class ChatBotService {
                 continue;
             }
 
-            if (actionResult.getUserMessage() != null && !actionResult.getUserMessage().isBlank()) {
-                if (combinedMessage.length() > 0) {
-                    combinedMessage.append("\n");
-                }
-                combinedMessage.append(actionResult.getUserMessage().trim());
-            }
+            // 개별 액션의 메시지는 무시하고, Python AI의 메시지만 사용
+            // 이렇게 하면 "새로운 장소를 일정에 추가했습니다! 📍" 같은 중복 메시지가 제거됨
 
             if (actionResult.isHasAction() && actionResult.getActions() != null && !actionResult.getActions().isEmpty()) {
                 aggregatedActions.addAll(actionResult.getActions());
             }
         }
 
-        String finalMessage = combinedMessage.length() > 0
-                ? combinedMessage.toString()
-                : (originalUserMessage != null ? originalUserMessage : "");
+        // Python AI의 originalUserMessage만 사용
+        String finalMessage = (originalUserMessage != null && !originalUserMessage.isBlank())
+                ? originalUserMessage.trim()
+                : "요청을 처리했습니다.";
 
         if (aggregatedActions.isEmpty()) {
             return ChatBotActionResponse.simpleMessage(finalMessage);
@@ -223,11 +215,15 @@ public class ChatBotService {
                 timeTablePlaceBlocks.addAll(blocks);
             }
 
+            // Travel 정보 추가 (목적지 이름)
+            String travelName = plan.getTravel() != null ? plan.getTravel().getTravelName() : null;
+
             // Python의 planContext dict 형식으로 반환
             Map<String, Object> planContextMap = new java.util.HashMap<>();
             planContextMap.put("Plan", planDto);
             planContextMap.put("TimeTables", timeTables);
             planContextMap.put("TimeTablePlaceBlocks", timeTablePlaceBlocks);
+            planContextMap.put("TravelName", travelName);  // 목적지 이름 추가
 
             return planContextMap;
         } catch (Exception e) {
@@ -262,6 +258,15 @@ public class ChatBotService {
         String timeTablesJson = objectMapper.writeValueAsString(timeTables);
         String timeTablePlaceBlocksJson = objectMapper.writeValueAsString(timeTablePlaceBlocks);
 
+        // TimeTables의 일차 매핑 정보 생성
+        StringBuilder dayMappingBuilder = new StringBuilder();
+        for (int i = 0; i < timeTables.size(); i++) {
+            TimeTableDto timeTable = timeTables.get(i);
+            dayMappingBuilder.append(String.format("- %d일차: timeTableId=%d, 날짜=%s\n",
+                i + 1, timeTable.timeTableId(), timeTable.date()));
+        }
+        String dayMapping = dayMappingBuilder.toString();
+
         // Python 서버의 AI 모델에 전달할 컨텍스트 데이터
         return """
             당신은 여행 계획 도우미 AI입니다. 사용 가능한 도구(Tools)를 사용하여 사용자의 요청을 처리하세요.
@@ -271,29 +276,59 @@ public class ChatBotService {
             TimeTables: %s
             TimeTablePlaceBlocks: %s
 
+            ### 일차별 timeTableId 매핑
+            %s
+
             ### 역할 및 사용 가능한 기능
             1. **장소 검색 및 추가**: 사용자가 장소를 추가하고 싶을 때 search_multiple_place_blocks 또는 search_and_create_place_block 함수를 호출하세요.
                - 예: "명동 맛집 3곳 추가해줘" → search_multiple_place_blocks(queries=["명동 맛집", "명동 맛집", "명동 맛집"], timeTableId=...)
                - 예: "경복궁 추가해줘" → search_and_create_place_block(query="경복궁", timeTableId=...)
+               - 예: "2일차에 남산타워 추가해줘" → 위의 일차별 매핑에서 2일차의 timeTableId를 찾아서 사용
 
-            2. **일정 수정/삭제**: 사용자가 기존 일정을 수정하거나 삭제하고 싶을 때 반드시 JSON 응답을 반환하세요.
+            2. **일차(TimeTable) 자동 생성**: 사용자가 요청한 일차가 아직 존재하지 않으면 자동으로 생성하세요.
+               - 예: 현재 2일차까지만 있는데 "5일차 만들어줘" → 3일차, 4일차, 5일차 TimeTable을 생성
+               - 새 일차의 날짜는 마지막 일차의 날짜에서 순차적으로 +1일씩 계산하세요
+               - **중요**: 존재하지 않는 일차에 장소 추가 요청이 있으면, **일차만 먼저 생성**하고 **장소 추가는 사용자에게 다시 요청하라고 안내**하세요
+               - 예: "4일차 점심에 회 맛집 추가해줘" (현재 2일차까지만 있음)
+                 → 3일차, 4일차만 생성하고, 사용자에게 "3일차, 4일차를 생성했어요! 이제 다시 '4일차 점심에 회 맛집 추가해줘'라고 말씀해주세요."라고 안내
+               - JSON 응답 형식:
+                 {
+                   "userMessage": "3일차, 4일차를 생성했어요! 이제 다시 장소 추가를 요청해주세요.",
+                   "hasAction": true,
+                   "actions": [
+                     {
+                       "action": "create",
+                       "targetName": "timeTable",
+                       "target": {"date": "2025-01-03"}
+                     },
+                     {
+                       "action": "create",
+                       "targetName": "timeTable",
+                       "target": {"date": "2025-01-04"}
+                     }
+                   ]
+                 }
+
+            3. **일정 수정/삭제**: 사용자가 기존 일정을 수정하거나 삭제하고 싶을 때 반드시 JSON 응답을 반환하세요.
                - 시간 변경, 제목 변경, 일정 삭제 등
                - "점심"은 11:00~14:00, "저녁"은 17:00~20:00 시간대를 의미합니다.
                - 사용자가 "점심에 일정 삭제"라고 하면 해당 시간대의 블록을 찾아서 삭제하세요.
 
             ### 중요 규칙
             1. **장소 추가 요청 시**: 반드시 함수를 호출하세요. JSON으로 응답하지 마세요.
-            2. **일정 수정/삭제 시**: 반드시 JSON 형식으로만 응답하세요. 일반 텍스트로 응답하지 마세요.
-            3. **시간 겹침 금지**: 같은 timeTableId 내에서 blockStartTime~blockEndTime이 겹치면 안 됩니다.
-            4. **timeTableId 찾기**: TimeTables에서 사용자가 언급한 날짜("1일차", "2일차")에 해당하는 timeTableId를 찾으세요.
-            5. **시간대 해석**:
+            2. **일차 생성 시**: 반드시 JSON 형식으로 응답하세요.
+            3. **일정 수정/삭제 시**: 반드시 JSON 형식으로만 응답하세요. 일반 텍스트로 응답하지 마세요.
+            4. **시간 겹침 금지**: 같은 timeTableId 내에서 blockStartTime~blockEndTime이 겹치면 안 됩니다.
+            5. **timeTableId 찾기**: 위의 '일차별 timeTableId 매핑' 정보를 참고하여 사용자가 언급한 날짜("1일차", "2일차" 등)에 해당하는 timeTableId를 정확히 찾으세요.
+            6. **존재하지 않는 일차 처리**: 사용자가 요청한 일차가 현재 매핑에 없으면, 먼저 해당 일차까지 TimeTable을 생성하세요.
+            7. **시간대 해석**:
                - "아침": 06:00~10:00
                - "점심": 11:00~14:00
                - "오후": 14:00~18:00
                - "저녁": 17:00~20:00
 
             ### JSON 응답 형식 (수정/삭제 시 필수)
-            반드시 아래 JSON 형식으로만 응답하세요. JSON 외의 텍스트는 절대 포함하지 마세요.
+            반드시 아래 JSON 형식으로만 응답하세요. JSON 외의 텍스트는 c절대 포함하지 마세요.
 
             {
               "userMessage": "친근한 한국어 메시지",
@@ -308,8 +343,10 @@ public class ChatBotService {
             }
 
             ### 예시
-            - "1일차 점심에 명동 맛집 3곳 추가해줘" → search_multiple_place_blocks 함수 호출
-            - "경복궁 일정에 추가해줘" → search_and_create_place_block 함수 호출
+            - "1일차 점심에 명동 맛집 3곳 추가해줘" (1일차 존재함) → search_multiple_place_blocks 함수 호출 (1일차의 timeTableId 사용)
+            - "경복궁 일정에 추가해줘" (기존 일차 존재) → search_and_create_place_block 함수 호출
+            - "5일차 만들어줘" (현재 2일차까지만 있음) → JSON 응답으로 3일차, 4일차, 5일차 create (날짜는 마지막 날짜 +1일, +2일, +3일)
+            - **"4일차 점심에 회 맛집 추가해줘" (현재 2일차까지만 있음)** → JSON 응답으로 3일차, 4일차만 create. userMessage에 "3일차, 4일차를 생성했어요! 이제 다시 장소 추가를 요청해주세요."
             - "1일차 점심에 일정 삭제해줘" → JSON 응답 (delete, 점심 시간대(11:00~14:00)의 블록 찾아서 삭제)
             - "경복궁 삭제해줘" → JSON 응답 (delete, blockId=20)
             - "시작 시간 1시간 뒤로 미뤄줘" → JSON 응답 (update)
@@ -319,7 +356,7 @@ public class ChatBotService {
             - 수정/삭제 요청이면: 반드시 JSON만 반환
             - 사용자에게 다시 물어보지 마세요. 현재 데이터를 기반으로 최선의 판단을 내리고 바로 실행하세요.
             - 예: "점심에 일정 삭제"라고 하면, 점심 시간대(11:00~14:00)와 겹치는 블록을 찾아서 바로 삭제하세요.
-            """.formatted(planJson, timeTablesJson, timeTablePlaceBlocksJson);
+            """.formatted(planJson, timeTablesJson, timeTablePlaceBlocksJson, dayMapping);
     }
 
     private ChatBotActionResponse executePlanAction(String action, Object target, int planId) {
