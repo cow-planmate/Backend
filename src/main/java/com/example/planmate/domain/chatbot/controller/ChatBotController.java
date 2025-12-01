@@ -38,15 +38,10 @@ public class ChatBotController {
                 return ResponseEntity.badRequest()
                     .body(ChatBotResponse.error("메시지를 입력해주세요."));
             }
-            
-            // 계획 컨텍스트 생성 (현재는 간단하게, 나중에 확장 가능)
-            String planContext = request.getPlanId() != null ? 
-                "계획 ID: " + request.getPlanId() : null;
-            
+
             ChatBotActionResponse actionResponse = chatBotService.getChatResponse(
-                request.getMessage(), 
-                request.getPlanId(), 
-                planContext
+                request.getMessage(),
+                request.getPlanId()
             );
             
             // 액션이 있다면 실제 데이터 변경 및 WebSocket 브로드캐스트

@@ -1,21 +1,23 @@
 package com.example.planmate.domain.chatbot.service;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-
-import org.springframework.stereotype.Service;
-
 import com.example.planmate.common.externalAPI.GoogleMap;
-import com.example.planmate.common.externalAPI.GooglePlaceImageWorker;
+import com.example.planmate.common.valueObject.SearchPlaceVO;
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
+import com.example.planmate.domain.image.service.ImageService;
 import com.example.planmate.domain.webSocket.dto.WPlanRequest;
 import com.example.planmate.domain.webSocket.dto.WTimeTablePlaceBlockRequest;
 import com.example.planmate.domain.webSocket.dto.WTimetableRequest;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.util.Pair;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
 
 /**
  * AI 챗봇이 호출할 수 있는 여행 계획 관련 함수들을 정의
@@ -26,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ChatBotPlanService {
     private final GoogleMap googleMap;
-    private final GooglePlaceImageWorker googlePlaceImageWorker;
+    private final ImageService imageService;
     
     /**
      * 전체 계획 정보 업데이트 (JSON 형태로 받은 모든 필드를 처리)
@@ -268,7 +270,17 @@ public class ChatBotPlanService {
                 (Double) placeBlockMap.get("xLocation"),
                 (Double) placeBlockMap.get("yLocation")
             );
-            googlePlaceImageWorker.fetchSinglePlaceImageAsync(placeBlockVO.getPlaceId());
+
+            // Python에서 이미 장소 정보(placeId, 좌표 등)를 제공했으므로 재검색 불필요
+            // 이미지만 가져오기
+            try {
+                if (placeBlockVO.getPlaceId() != null && !placeBlockVO.getPlaceId().isEmpty()) {
+                    imageService.getGooglePlaceImage(placeBlockVO.getPlaceId());
+                    log.info("장소 이미지 가져오기 성공: {}", placeBlockVO.getPlaceName());
+                }
+            } catch (Exception e) {
+                log.warn("장소 이미지 가져오기 실패 (계속 진행): {}", e.getMessage());
+            }
 
             request.setTimetablePlaceBlockVO(placeBlockVO);
             
@@ -281,7 +293,7 @@ public class ChatBotPlanService {
             return ChatBotActionResponse.simpleMessage("장소 추가에 실패했습니다: " + e.getMessage());
         }
     }
-    
+
     /**
      * 장소 블록 업데이트
      */

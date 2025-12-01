@@ -1,12 +1,12 @@
 package com.example.planmate.domain.chatbot.service;
 
-import org.springframework.http.HttpHeaders;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
-import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.webSocket.lazydto.PlanDto;
 import com.example.planmate.domain.webSocket.lazydto.TimeTableDto;
 import com.example.planmate.domain.webSocket.lazydto.TimeTablePlaceBlockDto;
@@ -39,26 +38,26 @@ public class ChatBotService {
 
     @Value("${python.chatbot.api.url:http://localhost:8010/api/chatbot/generate}")
     private String pythonApiUrl;
-
-    public ChatBotActionResponse getChatResponse(String message, Integer planId, String planContext) {
+    
+    public ChatBotActionResponse getChatResponse(String message, Integer planId) {
         try {
 
             String systemPromptContext = buildSystemPromptContext(planId);
 
-            // planContext를 Map으로 구성 (Python이 dict를 기대)
+            // planContext를 객체 형태로 생성
             Map<String, Object> planContextMap = buildPlanContextMap(planId);
 
-            // Python 서버로 전송할 요청 본문 구성
+            // 2. Python 서버로 전송할 요청 본문 구성
             Map<String, Object> requestBody = Map.of(
                     "planId", planId,
                     "message", message,
                     "systemPromptContext", systemPromptContext,
                     "planContext", planContextMap
             );
-
+            
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-
+            
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
             log.info("요청을 Python 챗봇 서버로 전달: {}", pythonApiUrl);
@@ -67,17 +66,18 @@ public class ChatBotService {
                     pythonApiUrl,
                     HttpMethod.POST,
                     entity,
-                    ChatBotActionResponse.class
+                    ChatBotActionResponse.class // Python 응답을 직접 ChatBotActionResponse 객체로 받음
             );
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 ChatBotActionResponse pythonResponse = response.getBody();
                 log.info("Successfully received ChatBotActionResponse from Python server.");
 
-                // Python 서버에서 Action이 실행되어야 한다고 판단한 경우, Java 서버에서 Action 실행
+                // 4. Python 서버에서 Action이 실행되어야 한다고 판단한 경우, Java 서버에서 Action 실행
                 if (pythonResponse.isHasAction() && pythonResponse.getActions() != null && !pythonResponse.getActions().isEmpty()) {
                     return executeActions(pythonResponse.getActions(), planId, pythonResponse.getUserMessage());
                 } else {
+                    // Action이 없는 경우, Python이 생성한 단순 메시지 반환
                     return pythonResponse;
                 }
             } else {
@@ -93,26 +93,148 @@ public class ChatBotService {
 
     private ChatBotActionResponse executeActions(List<ChatBotActionResponse.ActionData> actions, Integer planId, String originalUserMessage) {
         List<ChatBotActionResponse.ActionData> aggregatedActions = new ArrayList<>();
+        StringBuilder errorMessages = new StringBuilder();
 
+        // 날짜 → timeTableId 매핑용 Map
+        java.util.Map<String, Integer> dateToTimeTableIdMap = new java.util.HashMap<>();
+
+        // 1단계: timeTable 생성 액션 먼저 실행 (Redis에 직접 저장)
         for (ChatBotActionResponse.ActionData actionData : actions) {
+            if ("timeTable".equals(actionData.getTargetName()) && "create".equals(actionData.getAction())) {
+                try {
+                    // target에서 날짜 추출
+                    Object target = actionData.getTarget();
+                    if (!(target instanceof java.util.Map)) {
+                        log.warn("TimeTable target is not a Map");
+                        continue;
+                    }
+
+                    @SuppressWarnings("unchecked")
+                    java.util.Map<String, Object> targetMap = (java.util.Map<String, Object>) target;
+                    String dateStr = (String) targetMap.get("date");
+
+                    if (dateStr == null) {
+                        log.warn("TimeTable target has no date");
+                        continue;
+                    }
+
+                    java.time.LocalDate date = java.time.LocalDate.parse(dateStr);
+                    java.time.LocalTime startTime = java.time.LocalTime.of(9, 0);
+                    java.time.LocalTime endTime = java.time.LocalTime.of(20, 0);
+
+                    // Plan 조회
+                    var plan = redisService.findPlanByPlanId(planId);
+
+                    // TimeTable 엔티티 생성
+                    var timeTable = com.example.planmate.domain.plan.entity.TimeTable.builder()
+                        .plan(plan)
+                        .date(date)
+                        .timeTableStartTime(startTime)
+                        .timeTableEndTime(endTime)
+                        .build();
+
+                    // Redis에 직접 저장
+                    int createdId = redisService.createTimeTable(planId, timeTable);
+
+                    log.info("Created TimeTable with ID {} for date {}", createdId, date);
+
+                    // 날짜 → ID 매핑 저장
+                    dateToTimeTableIdMap.put(dateStr, createdId);
+
+                    // 응답용 액션 데이터 생성
+                    var responseVO = new com.example.planmate.common.valueObject.TimetableVO();
+                    responseVO.setTimetableId(createdId);
+                    responseVO.setDate(date);
+                    responseVO.setStartTime(startTime);
+                    responseVO.setEndTime(endTime);
+
+                    var request = new com.example.planmate.domain.webSocket.dto.WTimetableRequest();
+                    request.setTimetableVOs(java.util.List.of(responseVO));
+
+                    var responseAction = new ChatBotActionResponse.ActionData("create", "timeTable", request);
+                    aggregatedActions.add(responseAction);
+
+                } catch (Exception e) {
+                    log.error("Failed to create TimeTable: {}", e.getMessage(), e);
+                    if (errorMessages.length() > 0) {
+                        errorMessages.append("\n");
+                    }
+                    errorMessages.append("타임테이블 생성 실패: ").append(e.getMessage());
+                }
+            }
+        }
+
+        // 2단계: PlaceBlock 액션 실행 (음수 timeTableId를 날짜로 매핑)
+        for (ChatBotActionResponse.ActionData actionData : actions) {
+            // timeTable create는 이미 실행했으므로 건너뜀
+            if ("timeTable".equals(actionData.getTargetName()) && "create".equals(actionData.getAction())) {
+                continue;
+            }
+
+            // PlaceBlock의 음수 timeTableId를 실제 ID로 교체
+            if ("timeTablePlaceBlock".equals(actionData.getTargetName())) {
+                Object target = actionData.getTarget();
+                if (target instanceof java.util.Map) {
+                    @SuppressWarnings("unchecked")
+                    java.util.Map<String, Object> targetMap = (java.util.Map<String, Object>) target;
+
+                    Object timeTableIdObj = targetMap.get("timeTableId");
+                    String dateStr = (String) targetMap.get("date");
+
+                    // timeTableId가 음수면 날짜로 매핑
+                    if (timeTableIdObj instanceof Integer) {
+                        int timeTableId = (Integer) timeTableIdObj;
+                        if (timeTableId < 0 && dateStr != null) {
+                            Integer realId = dateToTimeTableIdMap.get(dateStr);
+                            if (realId != null) {
+                                targetMap.put("timeTableId", realId);
+                                log.info("Mapped PlaceBlock date {} to timeTableId {} (was {})", dateStr, realId, timeTableId);
+                            } else {
+                                log.error("날짜 {}에 해당하는 TimeTable을 찾을 수 없습니다.", dateStr);
+                                if (errorMessages.length() > 0) {
+                                    errorMessages.append("\n");
+                                }
+                                errorMessages.append("날짜 ").append(dateStr).append("에 해당하는 TimeTable을 찾을 수 없습니다.");
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+
             ChatBotActionResponse actionResult = executeAction(actionData, planId);
             if (actionResult == null) {
                 log.warn("No action result returned for action: {} target: {}", actionData.getAction(), actionData.getTargetName());
                 continue;
             }
 
-            // 개별 액션의 메시지는 무시하고, Python AI의 메시지만 사용
-            // 이렇게 하면 "새로운 장소를 일정에 추가했습니다! 📍" 같은 중복 메시지가 제거됨
+            // 에러 메시지만 수집 (성공 메시지는 무시)
+            if (actionResult.getUserMessage() != null && !actionResult.getUserMessage().isBlank()) {
+                String message = actionResult.getUserMessage().trim();
+                // 에러/실패 메시지만 추가 (성공 메시지는 제외)
+                if (message.contains("실패") || message.contains("오류") || message.contains("에러") || message.contains("Error")) {
+                    if (errorMessages.length() > 0) {
+                        errorMessages.append("\n");
+                    }
+                    errorMessages.append(message);
+                }
+            }
 
             if (actionResult.isHasAction() && actionResult.getActions() != null && !actionResult.getActions().isEmpty()) {
                 aggregatedActions.addAll(actionResult.getActions());
             }
         }
 
-        // Python AI의 originalUserMessage만 사용
-        String finalMessage = (originalUserMessage != null && !originalUserMessage.isBlank())
-                ? originalUserMessage.trim()
-                : "요청을 처리했습니다.";
+        // 에러가 있으면 원본 메시지에 에러 추가, 없으면 원본 메시지만 사용
+        String finalMessage;
+        if (errorMessages.length() > 0) {
+            finalMessage = (originalUserMessage != null && !originalUserMessage.isBlank() ? originalUserMessage + "\n\n" : "")
+                          + "⚠️ 일부 작업 중 오류가 발생했습니다:\n" + errorMessages.toString();
+        } else {
+            finalMessage = originalUserMessage != null && !originalUserMessage.isBlank()
+                          ? originalUserMessage
+                          : "";
+        }
 
         if (aggregatedActions.isEmpty()) {
             return ChatBotActionResponse.simpleMessage(finalMessage);
@@ -129,42 +251,7 @@ public class ChatBotService {
         try {
             String action = actionData.getAction();
             String targetName = actionData.getTargetName();
-            Object targetObj = actionData.getTarget();
-            Object target = targetObj;
-
-            String json = null;
-
-            // 1. 데이터 추출
-            if (targetObj instanceof Map<?,?> map && map.containsKey("raw_string_data")) {
-                json = (String) map.get("raw_string_data");
-            } else if (targetObj instanceof String str && str.startsWith("raw_string_data=")) {
-                json = str.replace("raw_string_data=", "");
-            }
-
-            // 2. JSON 문자열 보정 (앞뒤 괄호/따옴표 강제 주입)
-            if (json != null) {
-                json = json.trim(); // 공백 제거
-
-                // (1) 시작 부분 보정: 'blockId' 처럼 시작하면 '{"blockId' 로 변경
-                if (!json.startsWith("{")) {
-                    json = "{\"" + json;
-                }
-
-                // (2) 끝 부분 보정: '}'로 끝나지 않으면 '}' 추가
-                if (!json.endsWith("}")) {
-                    json = json + "}";
-                }
-
-                // 3. 파싱 시도
-                try {
-                    System.out.println("보정된 JSON: " + json); // 디버깅용 로그
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    target = objectMapper.readValue(json, Map.class);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    // 에러 발생 시 원본 문자열 확인 필요
-                }
-            }
+            Object target = actionData.getTarget();
 
             ChatBotActionResponse actionResult = null;
 
@@ -192,48 +279,8 @@ public class ChatBotService {
         }
     }
 
-    private Map<String, Object> buildPlanContextMap(Integer planId) {
-        try {
-            Plan plan = redisService.findPlanByPlanId(planId);
-            if (plan == null) {
-                log.error("Plan not found in Redis: planId={}", planId);
-                throw new IllegalStateException("Plan not found in Redis: " + planId);
-            }
-
-            PlanDto planDto = PlanDto.fromEntity(plan);
-            List<TimeTableDto> timeTables = redisService.findTimeTablesByPlanId(planId)
-                    .stream()
-                    .map(TimeTableDto::fromEntity)
-                    .toList();
-
-            List<TimeTablePlaceBlockDto> timeTablePlaceBlocks = new ArrayList<>();
-            for (TimeTableDto timeTable : timeTables) {
-                List<TimeTablePlaceBlockDto> blocks = redisService.findTimeTablePlaceBlocksByTimeTableId(timeTable.timeTableId())
-                        .stream()
-                        .map(TimeTablePlaceBlockDto::fromEntity)
-                        .toList();
-                timeTablePlaceBlocks.addAll(blocks);
-            }
-
-            // Travel 정보 추가 (목적지 이름)
-            String travelName = plan.getTravel() != null ? plan.getTravel().getTravelName() : null;
-
-            // Python의 planContext dict 형식으로 반환
-            Map<String, Object> planContextMap = new java.util.HashMap<>();
-            planContextMap.put("Plan", planDto);
-            planContextMap.put("TimeTables", timeTables);
-            planContextMap.put("TimeTablePlaceBlocks", timeTablePlaceBlocks);
-            planContextMap.put("TravelName", travelName);  // 목적지 이름 추가
-
-            return planContextMap;
-        } catch (Exception e) {
-            log.error("Error building plan context map: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to build plan context: " + e.getMessage(), e);
-        }
-    }
-
     private String buildSystemPromptContext(Integer planId) throws JsonProcessingException {
-        PlanDto planDto = PlanDto.fromEntity(redisService.findPlanByPlanId(planId)); //문제가 있다면 여기
+        PlanDto planDto = PlanDto.fromEntity(redisService.findPlanByPlanId(planId));
         List<TimeTableDto> timeTables = redisService.findTimeTablesByPlanId(planId)
                 .stream()
                 .map(TimeTableDto::fromEntity)
@@ -250,7 +297,6 @@ public class ChatBotService {
 
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
@@ -258,16 +304,15 @@ public class ChatBotService {
         String timeTablesJson = objectMapper.writeValueAsString(timeTables);
         String timeTablePlaceBlocksJson = objectMapper.writeValueAsString(timeTablePlaceBlocks);
 
-        // TimeTables의 일차 매핑 정보 생성
-        StringBuilder dayMappingBuilder = new StringBuilder();
+        // 일차별 timeTableId 매핑 생성
+        StringBuilder dayMapping = new StringBuilder();
         for (int i = 0; i < timeTables.size(); i++) {
-            TimeTableDto timeTable = timeTables.get(i);
-            dayMappingBuilder.append(String.format("- %d일차: timeTableId=%d, 날짜=%s\n",
-                i + 1, timeTable.timeTableId(), timeTable.date()));
+            TimeTableDto tt = timeTables.get(i);
+            dayMapping.append(String.format("%d일차: timeTableId=%d (date=%s)\n",
+                i + 1, tt.timeTableId(), tt.date()));
         }
-        String dayMapping = dayMappingBuilder.toString();
+        String dayMappingStr = dayMapping.toString();
 
-        // Python 서버의 AI 모델에 전달할 컨텍스트 데이터
         return """
             당신은 여행 계획 도우미 AI입니다. 사용 가능한 도구(Tools)를 사용하여 사용자의 요청을 처리하세요.
 
@@ -326,9 +371,14 @@ public class ChatBotService {
                - "점심": 11:00~14:00
                - "오후": 14:00~18:00
                - "저녁": 17:00~20:00
+            8. **엔티티 필드 구조**:
+               - TimeTablePlaceBlock 필드: blockId, placeName, placeTheme, placeRating, placeAddress, placeLink,
+                 blockStartTime, blockEndTime, xLocation, yLocation, placeId, placeCategoryId, timeTableId
+               - placeCategoryId: 0(관광지), 1(숙소), 2(식당)만 사용
+               - 필드를 임의로 추가/제거하지 말고 입력 JSON 구조를 그대로 유지
 
-            ### JSON 응답 형식 (수정/삭제 시 필수)
-            반드시 아래 JSON 형식으로만 응답하세요. JSON 외의 텍스트는 c절대 포함하지 마세요.
+            ### JSON 응답 형식 (수정/삭제/일차 생성 시 필수)
+            반드시 아래 JSON 형식으로만 응답하세요. JSON 외의 텍스트는 절대 포함하지 마세요.
 
             {
               "userMessage": "친근한 한국어 메시지",
@@ -348,15 +398,52 @@ public class ChatBotService {
             - "5일차 만들어줘" (현재 2일차까지만 있음) → JSON 응답으로 3일차, 4일차, 5일차 create (날짜는 마지막 날짜 +1일, +2일, +3일)
             - **"4일차 점심에 회 맛집 추가해줘" (현재 2일차까지만 있음)** → JSON 응답으로 3일차, 4일차만 create. userMessage에 "3일차, 4일차를 생성했어요! 이제 다시 장소 추가를 요청해주세요."
             - "1일차 점심에 일정 삭제해줘" → JSON 응답 (delete, 점심 시간대(11:00~14:00)의 블록 찾아서 삭제)
-            - "경복궁 삭제해줘" → JSON 응답 (delete, blockId=20)
+            - "경복궁 삭제해줘" → JSON 응답 (delete, 해당 blockId 찾아서 삭제)
             - "시작 시간 1시간 뒤로 미뤄줘" → JSON 응답 (update)
 
             ### 최종 지시
             - 장소 검색 요청이면: 함수 호출
-            - 수정/삭제 요청이면: 반드시 JSON만 반환
+            - 수정/삭제/일차 생성 요청이면: 반드시 JSON만 반환
             - 사용자에게 다시 물어보지 마세요. 현재 데이터를 기반으로 최선의 판단을 내리고 바로 실행하세요.
             - 예: "점심에 일정 삭제"라고 하면, 점심 시간대(11:00~14:00)와 겹치는 블록을 찾아서 바로 삭제하세요.
-            """.formatted(planJson, timeTablesJson, timeTablePlaceBlocksJson, dayMapping);
+            """.formatted(planJson, timeTablesJson, timeTablePlaceBlocksJson, dayMappingStr);
+    }
+
+    private Map<String, Object> buildPlanContextMap(Integer planId) {
+        try {
+            PlanDto planDto = PlanDto.fromEntity(redisService.findPlanByPlanId(planId));
+            List<TimeTableDto> timeTables = redisService.findTimeTablesByPlanId(planId)
+                    .stream()
+                    .map(TimeTableDto::fromEntity)
+                    .toList();
+
+            List<TimeTablePlaceBlockDto> timeTablePlaceBlocks = new ArrayList<>();
+            for (TimeTableDto timeTable : timeTables) {
+                List<TimeTablePlaceBlockDto> blocks = redisService.findTimeTablePlaceBlocksByTimeTableId(timeTable.timeTableId())
+                        .stream()
+                        .map(TimeTablePlaceBlockDto::fromEntity)
+                        .toList();
+                timeTablePlaceBlocks.addAll(blocks);
+            }
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JavaTimeModule());
+            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+
+            // Map 형태로 반환
+            Map<String, Object> contextMap = new java.util.HashMap<>();
+            contextMap.put("TravelName", planDto.planName() != null ? planDto.planName() : "");
+            contextMap.put("PlanId", planDto.planId());
+            contextMap.put("TimeTables", timeTables);
+            contextMap.put("TimeTablePlaceBlocks", timeTablePlaceBlocks);
+
+            return contextMap;
+
+        } catch (Exception e) {
+            log.error("Error building plan context map: {}", e.getMessage());
+            return Map.of(); // 빈 맵 반환
+        }
     }
 
     private ChatBotActionResponse executePlanAction(String action, Object target, int planId) {
@@ -381,7 +468,7 @@ public class ChatBotService {
             return null;
         }
     }
-
+    
     private ChatBotActionResponse executeTimeTableAction(String action, Object target, int planId) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -416,16 +503,16 @@ public class ChatBotService {
             return null;
         }
     }
-
+    
     private ChatBotActionResponse executeTimeTablePlaceBlockAction(String action, Object target, int planId) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.registerModule(new JavaTimeModule());
-
+            
             @SuppressWarnings("unchecked")
             Map<String, Object> placeBlockMap = (Map<String, Object>) target;
             String placeBlockJson = objectMapper.writeValueAsString(placeBlockMap);
-
+            
             switch (action) {
                 case "create":
                     Integer timeTableId = (Integer) placeBlockMap.get("timeTableId");
