@@ -39,17 +39,20 @@ public class ChatBotService {
     @Value("${python.chatbot.api.url:http://localhost:8010/api/chatbot/generate}")
     private String pythonApiUrl;
     
-    public ChatBotActionResponse getChatResponse(String message, Integer planId, String planContext) {
+    public ChatBotActionResponse getChatResponse(String message, Integer planId) {
         try {
 
             String systemPromptContext = buildSystemPromptContext(planId);
+
+            // planContext를 객체 형태로 생성
+            Map<String, Object> planContextMap = buildPlanContextMap(planId);
 
             // 2. Python 서버로 전송할 요청 본문 구성
             Map<String, Object> requestBody = Map.of(
                     "planId", planId,
                     "message", message,
                     "systemPromptContext", systemPromptContext,
-                    "planContext", planContext != null ? planContext : ""
+                    "planContext", planContextMap
             );
             
             HttpHeaders headers = new HttpHeaders();
@@ -96,122 +99,105 @@ public class ChatBotService {
 
         List<ChatBotActionResponse.ActionData> aggregatedActions = new ArrayList<>();
 
-        // 음수 timeTableId -> 실제 생성된 timeTableId 매핑
-        Map<Integer, Integer> tempIdToRealIdMap = new java.util.HashMap<>();
-        // 날짜 -> 실제 생성된 timeTableId 매핑 (임시 ID가 없는 경우 대비)
-        Map<String, Integer> dateToRealIdMap = new java.util.HashMap<>();
+        // 날짜 → timeTableId 매핑용 Map
+        java.util.Map<String, Integer> dateToTimeTableIdMap = new java.util.HashMap<>();
 
-        // 1단계: timeTable 생성 액션 먼저 실행
+        // 1단계: timeTable 생성 액션 먼저 실행 (Redis에 직접 저장)
         for (ChatBotActionResponse.ActionData actionData : actions) {
             if ("timeTable".equals(actionData.getTargetName()) && "create".equals(actionData.getAction())) {
-                // Python에서 보낸 원본 데이터 저장 (날짜 추출용)
-                String originalDate = null;
-                Integer originalTempId = null;
-                Object originalTarget = actionData.getTarget();
-                if (originalTarget instanceof Map) {
+                try {
+                    // target에서 날짜 추출
+                    Object target = actionData.getTarget();
+                    if (!(target instanceof java.util.Map)) {
+                        log.warn("TimeTable target is not a Map");
+                        continue;
+                    }
+
                     @SuppressWarnings("unchecked")
-                    Map<String, Object> originalMap = (Map<String, Object>) originalTarget;
-                    originalDate = (String) originalMap.get("date");
-                    originalTempId = (Integer) originalMap.get("timeTableId");
-                }
+                    java.util.Map<String, Object> targetMap = (java.util.Map<String, Object>) target;
+                    String dateStr = (String) targetMap.get("date");
 
-                ChatBotActionResponse actionResult = executeAction(actionData, planId);
-                if (actionResult == null) {
-                    log.warn("No action result returned for timeTable creation");
-                    continue;
-                }
+                    if (dateStr == null) {
+                        log.warn("TimeTable target has no date");
+                        continue;
+                    }
 
-                if (actionResult.getUserMessage() != null && !actionResult.getUserMessage().isBlank()) {
+                    java.time.LocalDate date = java.time.LocalDate.parse(dateStr);
+                    java.time.LocalTime startTime = java.time.LocalTime.of(9, 0);
+                    java.time.LocalTime endTime = java.time.LocalTime.of(20, 0);
+
+                    // Plan 조회
+                    var plan = redisService.findPlanByPlanId(planId);
+
+                    // TimeTable 엔티티 생성
+                    var timeTable = com.example.planmate.domain.plan.entity.TimeTable.builder()
+                        .plan(plan)
+                        .date(date)
+                        .timeTableStartTime(startTime)
+                        .timeTableEndTime(endTime)
+                        .build();
+
+                    // Redis에 직접 저장
+                    int createdId = redisService.createTimeTable(planId, timeTable);
+
+                    log.info("Created TimeTable with ID {} for date {}", createdId, date);
+
+                    // 날짜 → ID 매핑 저장
+                    dateToTimeTableIdMap.put(dateStr, createdId);
+
+                    // 응답용 액션 데이터 생성
+                    var responseVO = new com.example.planmate.common.valueObject.TimetableVO();
+                    responseVO.setTimetableId(createdId);
+                    responseVO.setDate(date);
+                    responseVO.setStartTime(startTime);
+                    responseVO.setEndTime(endTime);
+
+                    var request = new com.example.planmate.domain.webSocket.dto.WTimetableRequest();
+                    request.setTimetableVOs(java.util.List.of(responseVO));
+
+                    var responseAction = new ChatBotActionResponse.ActionData("create", "timeTable", request);
+                    aggregatedActions.add(responseAction);
+
                     if (combinedMessage.length() > 0) {
                         combinedMessage.append("\n");
                     }
-                    combinedMessage.append(actionResult.getUserMessage().trim());
-                }
+                    combinedMessage.append("새로운 타임테이블을 생성했습니다! 📅");
 
-                if (actionResult.isHasAction() && actionResult.getActions() != null && !actionResult.getActions().isEmpty()) {
-                    aggregatedActions.addAll(actionResult.getActions());
-
-                    // 생성된 timeTable의 실제 ID 추출
-                    for (ChatBotActionResponse.ActionData resultAction : actionResult.getActions()) {
-                        if ("timeTable".equals(resultAction.getTargetName())) {
-                            Object target = resultAction.getTarget();
-                            if (target instanceof Map) {
-                                @SuppressWarnings("unchecked")
-                                Map<String, Object> targetMap = (Map<String, Object>) target;
-
-                                // timetableVOs 배열에서 실제 생성된 ID 추출
-                                if (targetMap.containsKey("timetableVOs")) {
-                                    @SuppressWarnings("unchecked")
-                                    List<Map<String, Object>> timetableVOs = (List<Map<String, Object>>) targetMap.get("timetableVOs");
-                                    if (!timetableVOs.isEmpty()) {
-                                        Map<String, Object> ttVO = timetableVOs.get(0);
-                                        Integer realId = (Integer) ttVO.get("timetableId");
-                                        String createdDate = null;
-
-                                        // 날짜 추출 (LocalDate 객체일 수도 있음)
-                                        Object dateObj = ttVO.get("date");
-                                        if (dateObj != null) {
-                                            createdDate = dateObj.toString();
-                                        }
-
-                                        if (realId != null && realId > 0) {
-                                            // 임시 ID가 있으면 매핑
-                                            if (originalTempId != null && originalTempId < 0) {
-                                                tempIdToRealIdMap.put(originalTempId, realId);
-                                                log.info("Mapped temp timeTableId {} to real ID {}", originalTempId, realId);
-                                            }
-
-                                            // 날짜로도 매핑 (임시 ID가 없는 경우 대비)
-                                            if (originalDate != null) {
-                                                dateToRealIdMap.put(originalDate, realId);
-                                                log.info("Mapped date {} to real timeTableId {}", originalDate, realId);
-                                            } else if (createdDate != null) {
-                                                dateToRealIdMap.put(createdDate, realId);
-                                                log.info("Mapped created date {} to real timeTableId {}", createdDate, realId);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                } catch (Exception e) {
+                    log.error("Failed to create TimeTable: {}", e.getMessage(), e);
                 }
             }
         }
 
-        // 2단계: timeTable이 아닌 다른 액션 실행 (placeBlock 등)
+        // 2단계: PlaceBlock 액션 실행 (음수 timeTableId를 날짜로 매핑)
         for (ChatBotActionResponse.ActionData actionData : actions) {
             // timeTable create는 이미 실행했으므로 건너뜀
             if ("timeTable".equals(actionData.getTargetName()) && "create".equals(actionData.getAction())) {
                 continue;
             }
 
-            // placeBlock의 음수 timeTableId를 실제 ID로 교체
+            // PlaceBlock의 음수 timeTableId를 실제 ID로 교체
             if ("timeTablePlaceBlock".equals(actionData.getTargetName())) {
                 Object target = actionData.getTarget();
-                if (target instanceof Map) {
+                if (target instanceof java.util.Map) {
                     @SuppressWarnings("unchecked")
-                    Map<String, Object> targetMap = (Map<String, Object>) target;
-                    Integer timeTableId = (Integer) targetMap.get("timeTableId");
-                    String placeBlockDate = (String) targetMap.get("date");
+                    java.util.Map<String, Object> targetMap = (java.util.Map<String, Object>) target;
 
-                    // 방법 1: 음수 임시 ID를 실제 ID로 교체
-                    if (timeTableId != null && timeTableId < 0) {
-                        Integer realId = tempIdToRealIdMap.get(timeTableId);
+                    Object timeTableIdObj = targetMap.get("timeTableId");
+                    String dateStr = (String) targetMap.get("date");
 
-                        // 방법 2: 임시 ID로 매핑 실패 시, 날짜로 매핑 시도
-                        if (realId == null && placeBlockDate != null) {
-                            realId = dateToRealIdMap.get(placeBlockDate);
+                    // timeTableId가 음수면 날짜로 매핑
+                    if (timeTableIdObj instanceof Integer) {
+                        int timeTableId = (Integer) timeTableIdObj;
+                        if (timeTableId < 0 && dateStr != null) {
+                            Integer realId = dateToTimeTableIdMap.get(dateStr);
                             if (realId != null) {
-                                log.info("Mapped placeBlock date {} to real timeTableId {}", placeBlockDate, realId);
+                                targetMap.put("timeTableId", realId);
+                                log.info("Mapped PlaceBlock date {} to timeTableId {} (was {})", dateStr, realId, timeTableId);
+                            } else {
+                                log.error("날짜 {}에 해당하는 TimeTable을 찾을 수 없습니다.", dateStr);
+                                continue;
                             }
-                        }
-
-                        if (realId != null) {
-                            targetMap.put("timeTableId", realId);
-                            log.info("Replaced temp timeTableId {} with real ID {} in placeBlock", timeTableId, realId);
-                        } else {
-                            log.warn("Could not find real timeTableId for temp ID {} or date {}", timeTableId, placeBlockDate);
                         }
                     }
                 }
@@ -475,6 +461,43 @@ public class ChatBotService {
             - 키값은 ""로 반드시 감싼다.
             - **반드시 action이 있으면 target도 포함되도록** 응답을 생성한다.
             """.formatted(planJson, timeTablesJson, timeTablePlaceBlocksJson);
+    }
+
+    private Map<String, Object> buildPlanContextMap(Integer planId) {
+        try {
+            PlanDto planDto = PlanDto.fromEntity(redisService.findPlanByPlanId(planId));
+            List<TimeTableDto> timeTables = redisService.findTimeTablesByPlanId(planId)
+                    .stream()
+                    .map(TimeTableDto::fromEntity)
+                    .toList();
+
+            List<TimeTablePlaceBlockDto> timeTablePlaceBlocks = new ArrayList<>();
+            for (TimeTableDto timeTable : timeTables) {
+                List<TimeTablePlaceBlockDto> blocks = redisService.findTimeTablePlaceBlocksByTimeTableId(timeTable.timeTableId())
+                        .stream()
+                        .map(TimeTablePlaceBlockDto::fromEntity)
+                        .toList();
+                timeTablePlaceBlocks.addAll(blocks);
+            }
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JavaTimeModule());
+            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+
+            // Map 형태로 반환
+            Map<String, Object> contextMap = new java.util.HashMap<>();
+            contextMap.put("TravelName", planDto.planName() != null ? planDto.planName() : "");
+            contextMap.put("PlanId", planDto.planId());
+            contextMap.put("TimeTables", timeTables);
+            contextMap.put("TimeTablePlaceBlocks", timeTablePlaceBlocks);
+
+            return contextMap;
+
+        } catch (Exception e) {
+            log.error("Error building plan context map: {}", e.getMessage());
+            return Map.of(); // 빈 맵 반환
+        }
     }
 
     private ChatBotActionResponse executePlanAction(String action, Object target, int planId) {

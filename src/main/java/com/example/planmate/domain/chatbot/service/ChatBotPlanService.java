@@ -270,8 +270,18 @@ public class ChatBotPlanService {
                 (Double) placeBlockMap.get("xLocation"),
                 (Double) placeBlockMap.get("yLocation")
             );
-            getSearchPlace(placeBlockVO);
-            
+
+            // Python에서 이미 장소 정보(placeId, 좌표 등)를 제공했으므로 재검색 불필요
+            // 이미지만 가져오기
+            try {
+                if (placeBlockVO.getPlaceId() != null && !placeBlockVO.getPlaceId().isEmpty()) {
+                    imageService.getGooglePlaceImage(placeBlockVO.getPlaceId());
+                    log.info("장소 이미지 가져오기 성공: {}", placeBlockVO.getPlaceName());
+                }
+            } catch (Exception e) {
+                log.warn("장소 이미지 가져오기 실패 (계속 진행): {}", e.getMessage());
+            }
+
             request.setTimetablePlaceBlockVO(placeBlockVO);
             
             String userMessage = "새로운 장소를 일정에 추가했습니다! 📍";
