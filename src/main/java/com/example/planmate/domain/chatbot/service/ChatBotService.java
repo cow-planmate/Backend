@@ -96,7 +96,127 @@ public class ChatBotService {
 
         List<ChatBotActionResponse.ActionData> aggregatedActions = new ArrayList<>();
 
+        // 음수 timeTableId -> 실제 생성된 timeTableId 매핑
+        Map<Integer, Integer> tempIdToRealIdMap = new java.util.HashMap<>();
+        // 날짜 -> 실제 생성된 timeTableId 매핑 (임시 ID가 없는 경우 대비)
+        Map<String, Integer> dateToRealIdMap = new java.util.HashMap<>();
+
+        // 1단계: timeTable 생성 액션 먼저 실행
         for (ChatBotActionResponse.ActionData actionData : actions) {
+            if ("timeTable".equals(actionData.getTargetName()) && "create".equals(actionData.getAction())) {
+                // Python에서 보낸 원본 데이터 저장 (날짜 추출용)
+                String originalDate = null;
+                Integer originalTempId = null;
+                Object originalTarget = actionData.getTarget();
+                if (originalTarget instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> originalMap = (Map<String, Object>) originalTarget;
+                    originalDate = (String) originalMap.get("date");
+                    originalTempId = (Integer) originalMap.get("timeTableId");
+                }
+
+                ChatBotActionResponse actionResult = executeAction(actionData, planId);
+                if (actionResult == null) {
+                    log.warn("No action result returned for timeTable creation");
+                    continue;
+                }
+
+                if (actionResult.getUserMessage() != null && !actionResult.getUserMessage().isBlank()) {
+                    if (combinedMessage.length() > 0) {
+                        combinedMessage.append("\n");
+                    }
+                    combinedMessage.append(actionResult.getUserMessage().trim());
+                }
+
+                if (actionResult.isHasAction() && actionResult.getActions() != null && !actionResult.getActions().isEmpty()) {
+                    aggregatedActions.addAll(actionResult.getActions());
+
+                    // 생성된 timeTable의 실제 ID 추출
+                    for (ChatBotActionResponse.ActionData resultAction : actionResult.getActions()) {
+                        if ("timeTable".equals(resultAction.getTargetName())) {
+                            Object target = resultAction.getTarget();
+                            if (target instanceof Map) {
+                                @SuppressWarnings("unchecked")
+                                Map<String, Object> targetMap = (Map<String, Object>) target;
+
+                                // timetableVOs 배열에서 실제 생성된 ID 추출
+                                if (targetMap.containsKey("timetableVOs")) {
+                                    @SuppressWarnings("unchecked")
+                                    List<Map<String, Object>> timetableVOs = (List<Map<String, Object>>) targetMap.get("timetableVOs");
+                                    if (!timetableVOs.isEmpty()) {
+                                        Map<String, Object> ttVO = timetableVOs.get(0);
+                                        Integer realId = (Integer) ttVO.get("timetableId");
+                                        String createdDate = null;
+
+                                        // 날짜 추출 (LocalDate 객체일 수도 있음)
+                                        Object dateObj = ttVO.get("date");
+                                        if (dateObj != null) {
+                                            createdDate = dateObj.toString();
+                                        }
+
+                                        if (realId != null && realId > 0) {
+                                            // 임시 ID가 있으면 매핑
+                                            if (originalTempId != null && originalTempId < 0) {
+                                                tempIdToRealIdMap.put(originalTempId, realId);
+                                                log.info("Mapped temp timeTableId {} to real ID {}", originalTempId, realId);
+                                            }
+
+                                            // 날짜로도 매핑 (임시 ID가 없는 경우 대비)
+                                            if (originalDate != null) {
+                                                dateToRealIdMap.put(originalDate, realId);
+                                                log.info("Mapped date {} to real timeTableId {}", originalDate, realId);
+                                            } else if (createdDate != null) {
+                                                dateToRealIdMap.put(createdDate, realId);
+                                                log.info("Mapped created date {} to real timeTableId {}", createdDate, realId);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2단계: timeTable이 아닌 다른 액션 실행 (placeBlock 등)
+        for (ChatBotActionResponse.ActionData actionData : actions) {
+            // timeTable create는 이미 실행했으므로 건너뜀
+            if ("timeTable".equals(actionData.getTargetName()) && "create".equals(actionData.getAction())) {
+                continue;
+            }
+
+            // placeBlock의 음수 timeTableId를 실제 ID로 교체
+            if ("timeTablePlaceBlock".equals(actionData.getTargetName())) {
+                Object target = actionData.getTarget();
+                if (target instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> targetMap = (Map<String, Object>) target;
+                    Integer timeTableId = (Integer) targetMap.get("timeTableId");
+                    String placeBlockDate = (String) targetMap.get("date");
+
+                    // 방법 1: 음수 임시 ID를 실제 ID로 교체
+                    if (timeTableId != null && timeTableId < 0) {
+                        Integer realId = tempIdToRealIdMap.get(timeTableId);
+
+                        // 방법 2: 임시 ID로 매핑 실패 시, 날짜로 매핑 시도
+                        if (realId == null && placeBlockDate != null) {
+                            realId = dateToRealIdMap.get(placeBlockDate);
+                            if (realId != null) {
+                                log.info("Mapped placeBlock date {} to real timeTableId {}", placeBlockDate, realId);
+                            }
+                        }
+
+                        if (realId != null) {
+                            targetMap.put("timeTableId", realId);
+                            log.info("Replaced temp timeTableId {} with real ID {} in placeBlock", timeTableId, realId);
+                        } else {
+                            log.warn("Could not find real timeTableId for temp ID {} or date {}", timeTableId, placeBlockDate);
+                        }
+                    }
+                }
+            }
+
             ChatBotActionResponse actionResult = executeAction(actionData, planId);
             if (actionResult == null) {
                 log.warn("No action result returned for action: {} target: {}", actionData.getAction(), actionData.getTargetName());
