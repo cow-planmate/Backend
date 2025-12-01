@@ -43,6 +43,12 @@ public class GooglePlaceImageWorker {
                     return CompletableFuture.completedFuture(placePhotoRepository.findById(placeId).get());
                 }
             }
+            String fileLocation = imgUrl + placeId + ".webp";
+            PlacePhoto photo = PlacePhoto.builder()
+                    .placeId(placeId)
+                    .photoUrl(fileLocation)
+                    .build();
+            placePhotoRepository.save(photo);
 
             String detailsUrl = "https://maps.googleapis.com/maps/api/place/details/json?placeid=" + placeId + "&fields=photos&key=" + googleApiKey;
             ResponseEntity<Map<String, Object>> detailsResponse = restTemplate.exchange(
@@ -69,7 +75,7 @@ public class GooglePlaceImageWorker {
             byte[] webpBytes = image.bytes(new WebpWriter(6, 80, 4, false));
             if (webpBytes == null) return CompletableFuture.completedFuture(null);
 
-            String fileLocation = imgUrl + placeId + ".webp";
+            fileLocation = imgUrl + placeId + ".webp";
             File outputFile = new File(fileLocation);
             File parent = outputFile.getParentFile();
             if (parent != null && !parent.exists()) {
@@ -78,7 +84,7 @@ public class GooglePlaceImageWorker {
             try (FileOutputStream fos = new FileOutputStream(outputFile)) {
                 fos.write(webpBytes);
             }
-            PlacePhoto photo = PlacePhoto.builder()
+            photo = PlacePhoto.builder()
                     .placeId(placeId)
                     .photoUrl(fileLocation)
                     .build();

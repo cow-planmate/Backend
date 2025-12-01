@@ -1,23 +1,18 @@
 package com.example.planmate.domain.chatbot.service;
 
-import com.example.planmate.common.externalAPI.GoogleMap;
-import com.example.planmate.common.valueObject.SearchPlaceVO;
+import com.example.planmate.common.externalAPI.GooglePlaceImageWorker;
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
-import com.example.planmate.domain.image.service.ImageService;
 import com.example.planmate.domain.webSocket.dto.WPlanRequest;
 import com.example.planmate.domain.webSocket.dto.WTimeTablePlaceBlockRequest;
 import com.example.planmate.domain.webSocket.dto.WTimetableRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.List;
 
 /**
  * AI 챗봇이 호출할 수 있는 여행 계획 관련 함수들을 정의
@@ -27,8 +22,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ChatBotPlanService {
-    private final GoogleMap googleMap;
-    private final ImageService imageService;
+    private final GooglePlaceImageWorker googlePlaceImageWorker;
     
     /**
      * 전체 계획 정보 업데이트 (JSON 형태로 받은 모든 필드를 처리)
@@ -199,6 +193,7 @@ public class ChatBotPlanService {
             } else {
                 timetableVO.setEndTime(LocalTime.of(20, 0)); // 기본값: 20:00
             }
+
             
             request.setTimetableVOs(java.util.List.of(timetableVO));
             
@@ -275,7 +270,7 @@ public class ChatBotPlanService {
             // 이미지만 가져오기
             try {
                 if (placeBlockVO.getPlaceId() != null && !placeBlockVO.getPlaceId().isEmpty()) {
-                    imageService.getGooglePlaceImage(placeBlockVO.getPlaceId());
+                    googlePlaceImageWorker.fetchSinglePlaceImageAsync(placeBlockVO.getPlaceId());
                     log.info("장소 이미지 가져오기 성공: {}", placeBlockVO.getPlaceName());
                 }
             } catch (Exception e) {

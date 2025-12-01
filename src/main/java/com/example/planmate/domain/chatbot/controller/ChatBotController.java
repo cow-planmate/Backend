@@ -1,5 +1,10 @@
 package com.example.planmate.domain.chatbot.controller;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -7,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
+import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
 import com.example.planmate.domain.chatbot.dto.ChatBotRequest;
 import com.example.planmate.domain.chatbot.dto.ChatBotResponse;
@@ -77,16 +84,18 @@ public class ChatBotController {
             return;
         }
 
+        Map<Integer, Integer> tempTimetableIdMap = new HashMap<>();
+
         for (ChatBotActionResponse.ActionData action : actionResponse.getActions()) {
             try {
-                handleAction(action, planId);
+                handleAction(action, planId, tempTimetableIdMap);
             } catch (Exception e) {
                 log.error("Failed to execute ChatBot action: {}", e.getMessage(), e);
             }
         }
     }
 
-    private void handleAction(ChatBotActionResponse.ActionData action, Integer planId) {
+    private void handleAction(ChatBotActionResponse.ActionData action, Integer planId, Map<Integer, Integer> tempTimetableIdMap) {
         if (action == null) {
             log.warn("Received null action from ChatBotActionResponse.");
             return;
@@ -126,9 +135,30 @@ public class ChatBotController {
                 return;
             }
 
+            List<Integer> placeholderIds = new ArrayList<>();
+            if (request.getTimetableVOs() != null) {
+                for (TimetableVO vo : request.getTimetableVOs()) {
+                    if (vo != null && vo.getTimetableId() != null && vo.getTimetableId() < 0) {
+                        placeholderIds.add(vo.getTimetableId());
+                    }
+                }
+            }
+
             switch (actionType) {
                 case "create":
                     var createResponse = webSocketPlanService.createTimetable(planId, request);
+
+                    if (!placeholderIds.isEmpty() && createResponse.getTimetableVOs() != null) {
+                        List<TimetableVO> createdVOs = createResponse.getTimetableVOs();
+                        for (int i = 0; i < Math.min(placeholderIds.size(), createdVOs.size()); i++) {
+                            Integer placeholderId = placeholderIds.get(i);
+                            Integer realId = createdVOs.get(i).getTimetableId();
+                            if (placeholderId != null && realId != null) {
+                                tempTimetableIdMap.put(placeholderId, realId);
+                            }
+                        }
+                    }
+
                     messagingTemplate.convertAndSend(
                         "/topic/plan/" + planId + "/create/timetable",
                         createResponse
@@ -166,6 +196,14 @@ public class ChatBotController {
                 log.warn("Expected WTimeTablePlaceBlockRequest target for place block action but received: {}",
                     action.getTarget() != null ? action.getTarget().getClass().getName() : "null");
                 return;
+            }
+
+            TimetablePlaceBlockVO timetablePlaceBlockVO = request.getTimetablePlaceBlockVO();
+            if (timetablePlaceBlockVO != null && timetablePlaceBlockVO.getTimetableId() != 0) {
+                Integer mappedId = tempTimetableIdMap.get(timetablePlaceBlockVO.getTimetableId());
+                if (mappedId != null) {
+                    timetablePlaceBlockVO.setTimetableId(mappedId);
+                }
             }
 
             switch (actionType) {

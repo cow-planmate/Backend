@@ -145,6 +145,10 @@ public class RedisService {
         return tempId;
     }
 
+    public int getNewTimeTableId(TimeTable timeTable) {
+        return timeTableTempIdGenerator.getAndDecrement();
+    }
+
     public void deleteRedisTimeTable(List<Integer> timetableIds) {
     List<String> timetableKeys = timetableIds.stream()
         .map(id -> ECasheKey.TIMETABLE.key(id))
