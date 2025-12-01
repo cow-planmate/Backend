@@ -15,8 +15,8 @@ java {
 
 dependencies {
     // ✅ sharedsync 프레임워크 의존성 추가 (GitHub Packages)
-    implementation "com.sharedsync:sharedsync-starter:1.1.8"
-    annotationProcessor "com.sharedsync:sharedsync-autoconfigure:1.1.8"
+    implementation "com.sharedsync:sharedsync-starter:1.1.11"
+    annotationProcessor "com.sharedsync:sharedsync-autoconfigure:1.1.11"
 
     // ✅ 애플리케이션 전용 의존성
     implementation 'org.springframework.boot:spring-boot-starter'
