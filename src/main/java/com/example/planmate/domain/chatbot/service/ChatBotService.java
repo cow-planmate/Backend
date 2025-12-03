@@ -17,8 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -275,9 +277,14 @@ public class ChatBotService {
     private String buildSystemPromptContext(Integer planId) throws JsonProcessingException {
         PlanDto planDto = PlanDto.fromEntity(redisService.findPlanByPlanId(planId));
         List<TimeTableDto> timeTables = redisService.findTimeTablesByPlanId(planId)
-                .stream()
-                .map(TimeTableDto::fromEntity)
-                .toList();
+            .stream()
+            .map(TimeTableDto::fromEntity)
+            .collect(Collectors.toCollection(ArrayList::new));
+
+        // 날짜 순으로 정렬 (오름차순)
+        timeTables.sort(Comparator.comparing(TimeTableDto::date));
+
+
 
         List<TimeTablePlaceBlockDto> timeTablePlaceBlocks = new ArrayList<>();
         for (TimeTableDto timeTable : timeTables) {
@@ -347,8 +354,20 @@ public class ChatBotService {
                    ]
                  }
 
-            3. **일정 수정/삭제**: 사용자가 기존 일정을 수정하거나 삭제하고 싶을 때 반드시 JSON 응답을 반환하세요.
-               - 시간 변경, 제목 변경, 일정 삭제 등
+            3. **일정 수정/삭제/변경**: 사용자가 기존 일정을 수정하거나 삭제하고 싶을 때 반드시 JSON 응답을 반환하세요.
+               - **시간/필드만 수정**: update 액션 사용 (예: 시작 시간을 1시간 뒤로, 제목 변경 등)
+               - **일정 삭제**: delete 액션 사용
+               - **장소 자체를 변경**: 기존 장소를 delete하고 새 장소를 검색/추가하는 함수 호출을 **한 번에** 처리
+                 * 중요: actions 배열에 delete 액션과 함수 호출 결과를 함께 담아서 반환하세요
+                 * 예: "1일차 점심 명동 맛집을 강남 맛집으로 바꿔줘"
+                   → actions: [
+                       {action: "delete", targetName: "timeTablePlaceBlock", target: {blockId: 기존_명동_맛집_ID}},
+                       search_and_create_place_block("강남 맛집", timeTableId, startTime, endTime) 호출 후 결과를 create 액션으로 추가
+                     ]
+                 * 예: "경복궁을 남산타워로 변경해줘"
+                   → 1) 경복궁 블록 찾아서 delete
+                   → 2) 같은 timeTableId와 시간대에 남산타워 검색/추가
+                 * 기존 블록의 시간(blockStartTime, blockEndTime)과 위치(timeTableId)를 새 장소에도 동일하게 적용
                - "점심"은 11:00~14:00, "저녁"은 17:00~20:00 시간대를 의미합니다.
                - 사용자가 "점심에 일정 삭제"라고 하면 해당 시간대의 블록을 찾아서 삭제하세요.
 
@@ -393,22 +412,34 @@ public class ChatBotService {
             - "1일차 점심에 일정 삭제해줘" → JSON 응답 (delete, 점심 시간대(11:00~14:00)의 블록 찾아서 삭제)
             - "경복궁 삭제해줘" → JSON 응답 (delete, 해당 blockId 찾아서 삭제)
             - "시작 시간 1시간 뒤로 미뤄줘" → JSON 응답 (update)
+            - **"1일차 점심 명동 맛집을 강남 맛집으로 바꿔줘"** → 명동 맛집 블록 찾기 → delete 액션 + search_and_create_place_block("강남 맛집") 함수 호출하여 create 액션 생성 → actions 배열에 [delete, create] 순서로 반환
+            - **"경복궁을 남산타워로 변경해줘"** → 경복궁 블록 찾기 → delete 액션 + 같은 시간/위치에 남산타워 검색/추가 → [delete, create] 순서로 한 번에 처리
 
             ### 최종 지시
-            - 장소 검색 요청이면: 함수 호출
+            - 장소 검색/추가 요청이면: 함수 호출
             - 수정/삭제/일차 생성 요청이면: 반드시 JSON만 반환
+            - **장소 변경 요청이면**:
+              1) 기존 장소 정보 확인 (blockId, timeTableId, blockStartTime, blockEndTime)
+              2) **중요** delete 액션으로 기존 장소 삭제(blockId)
+              3) search_and_create_place_block 함수 호출하여 새 장소 검색 및 추가 (같은 timeTableId, 시간대 사용)
+              4) **actions 배열에 [delete 액션, create 액션]을 순서대로 담아서 한 번에 반환**
+              5) userMessage: "기존 장소를 새 장소로 변경했습니다!"
             - 사용자에게 다시 물어보지 마세요. 현재 데이터를 기반으로 최선의 판단을 내리고 바로 실행하세요.
-            - 예: "점심에 일정 삭제"라고 하면, 점심 시간대(11:00~14:00)와 겹치는 블록을 찾아서 바로 삭제하세요.
+            - 예: "1일차 점심에 일정 삭제"라고 하면, 1일차를 찾고 점심 시간대(11:00~14:00)와 겹치는 블록을 찾아서 바로 삭제하세요.
+            - 예: "경복궁을 남산타워로 바꿔줘"라고 하면, 경복궁 블록을 찾아서 삭제하고, 같은 시간/위치에 남산타워를 검색/추가하여 한 번에 처리하세요.
             """.formatted(planJson, timeTablesJson, timeTablePlaceBlocksJson, dayMappingStr);
     }
 
     private Map<String, Object> buildPlanContextMap(Integer planId) {
         try {
             PlanDto planDto = PlanDto.fromEntity(redisService.findPlanByPlanId(planId));
-            List<TimeTableDto> timeTables = redisService.findTimeTablesByPlanId(planId)
+                List<TimeTableDto> timeTables = redisService.findTimeTablesByPlanId(planId)
                     .stream()
                     .map(TimeTableDto::fromEntity)
-                    .toList();
+                    .collect(Collectors.toCollection(ArrayList::new));
+
+                // 날짜 순으로 정렬 (오름차순)
+                timeTables.sort(Comparator.comparing(TimeTableDto::date));
 
             List<TimeTablePlaceBlockDto> timeTablePlaceBlocks = new ArrayList<>();
             for (TimeTableDto timeTable : timeTables) {
