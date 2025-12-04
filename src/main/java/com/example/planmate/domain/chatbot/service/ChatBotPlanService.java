@@ -1,18 +1,25 @@
 package com.example.planmate.domain.chatbot.service;
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
+import org.springframework.data.util.Pair;
+import org.springframework.stereotype.Service;
+
+import com.example.planmate.common.externalAPI.GoogleMap;
 import com.example.planmate.common.externalAPI.GooglePlaceImageWorker;
+import com.example.planmate.common.valueObject.SearchPlaceVO;
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
 import com.example.planmate.domain.webSocket.dto.WPlanRequest;
 import com.example.planmate.domain.webSocket.dto.WTimeTablePlaceBlockRequest;
 import com.example.planmate.domain.webSocket.dto.WTimetableRequest;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
 
 /**
  * AI 챗봇이 호출할 수 있는 여행 계획 관련 함수들을 정의
@@ -23,6 +30,7 @@ import java.time.LocalTime;
 @RequiredArgsConstructor
 public class ChatBotPlanService {
     private final GooglePlaceImageWorker googlePlaceImageWorker;
+    private final GoogleMap googleMap;
     
     /**
      * 전체 계획 정보 업데이트 (JSON 형태로 받은 모든 필드를 처리)
@@ -306,21 +314,87 @@ public class ChatBotPlanService {
             // WTimeTablePlaceBlockRequest 객체 생성
             WTimeTablePlaceBlockRequest request = new WTimeTablePlaceBlockRequest();
             
+            // timeTableId 가져오기 (키 이름 변형 처리: timeTableId 또는 timetableId)
+            Integer timeTableId = null;
+            if (placeBlockMap.containsKey("timeTableId")) {
+                timeTableId = (Integer) placeBlockMap.get("timeTableId");
+            } else if (placeBlockMap.containsKey("timetableId")) {
+                timeTableId = (Integer) placeBlockMap.get("timetableId");
+            }
+            
+            // blockStartTime/blockEndTime 가져오기 (키 이름 변형 처리)
+            LocalTime startTime = null;
+            LocalTime endTime = null;
+            
+            if (placeBlockMap.containsKey("blockStartTime")) {
+                startTime = LocalTime.parse((String) placeBlockMap.get("blockStartTime"));
+            } else if (placeBlockMap.containsKey("startTime")) {
+                startTime = LocalTime.parse((String) placeBlockMap.get("startTime"));
+            }
+            
+            if (placeBlockMap.containsKey("blockEndTime")) {
+                endTime = LocalTime.parse((String) placeBlockMap.get("blockEndTime"));
+            } else if (placeBlockMap.containsKey("endTime")) {
+                endTime = LocalTime.parse((String) placeBlockMap.get("endTime"));
+            }
+            
+            // AI가 준 값 가져오기
+            String placeName = (String) placeBlockMap.get("placeName");
+            String placeId = (String) placeBlockMap.get("placeId");
+            String placeAddress = (String) placeBlockMap.get("placeAddress");
+            String placeLink = (String) placeBlockMap.get("placeLink");
+            Float placeRating = getFloatValue(placeBlockMap.get("placeRating"));
+            Double xLocation = getDoubleValue(placeBlockMap.get("xLocation"));
+            Double yLocation = getDoubleValue(placeBlockMap.get("yLocation"));
+            Integer placeCategoryId = (Integer) placeBlockMap.get("placeCategoryId");
+            
+            // placeName이 있고 placeId/좌표가 없거나 기본값일 때 Google API로 검색
+            if (placeName != null) {
+
+                try {
+                    log.info("Google Places API로 장소 검색: {}", placeName);
+                    Pair<List<SearchPlaceVO>, List<String>> searchResult = googleMap.getSearchPlace(placeName);
+                    List<SearchPlaceVO> places = searchResult.getFirst();
+                    
+                    if (places != null && !places.isEmpty()) {
+                        SearchPlaceVO foundPlace = places.get(0); // 첫 번째 결과 사용
+                        
+                        // 검색 결과로 누락된 정보 채우기
+                        placeId = foundPlace.getPlaceId();
+                        placeAddress = foundPlace.getFormatted_address();
+                        placeLink = foundPlace.getUrl();
+                        placeRating = foundPlace.getRating();
+                        xLocation = foundPlace.getXLocation();
+                        yLocation = foundPlace.getYLocation();
+                        
+                        
+                        log.info("Google API 검색 성공 - placeId: {}, address: {}, 좌표: ({}, {})", 
+                                placeId, placeAddress, xLocation, yLocation);
+                    } else {
+                        log.warn("Google API 검색 결과 없음: {}", placeName);
+                    }
+                } catch (IOException e) {
+                    log.error("Google Places API 검색 실패: {}", e.getMessage());
+                    // 검색 실패해도 업데이트는 계속 진행
+                }
+                
+            }
+            
             // TimetablePlaceBlockVO의 AllArgsConstructor를 사용해서 생성
             TimetablePlaceBlockVO placeBlockVO = new TimetablePlaceBlockVO(
-                (Integer) placeBlockMap.get("timetableId"),
+                timeTableId != null ? timeTableId : 0,
                 placeBlockId, // timetablePlaceBlockId
-                (Integer) placeBlockMap.get("placeCategoryId"),
-                (String) placeBlockMap.get("placeName"),
-                getFloatValue(placeBlockMap.get("placeRating")),
-                (String) placeBlockMap.get("placeAddress"),
-                (String) placeBlockMap.get("placeLink"),
-                (String) placeBlockMap.get("placeId"),
+                placeCategoryId,
+                placeName,
+                placeRating,
+                placeAddress,
+                placeLink,
+                placeId,
                 (String) placeBlockMap.get("date"),
-                placeBlockMap.containsKey("startTime") ? LocalTime.parse((String) placeBlockMap.get("startTime")) : null,
-                placeBlockMap.containsKey("endTime") ? LocalTime.parse((String) placeBlockMap.get("endTime")) : null,
-                (Double) placeBlockMap.get("xLocation"),
-                (Double) placeBlockMap.get("yLocation")
+                startTime,
+                endTime,
+                xLocation,
+                yLocation
             );
             
             request.setTimetablePlaceBlockVO(placeBlockVO);
@@ -386,6 +460,23 @@ public class ChatBotPlanService {
                 return Float.parseFloat((String) rawValue);
             } catch (NumberFormatException ex) {
                 log.warn("placeRating 파싱 실패: {}", rawValue);
+            }
+        }
+        return null;
+    }
+
+    private Double getDoubleValue(Object rawValue) {
+        if (rawValue == null) {
+            return null;
+        }
+        if (rawValue instanceof Number) {
+            return ((Number) rawValue).doubleValue();
+        }
+        if (rawValue instanceof String) {
+            try {
+                return Double.parseDouble((String) rawValue);
+            } catch (NumberFormatException ex) {
+                log.warn("Double 파싱 실패: {}", rawValue);
             }
         }
         return null;

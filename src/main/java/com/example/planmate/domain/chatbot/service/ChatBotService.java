@@ -325,10 +325,10 @@ public class ChatBotService {
             %s
 
             ### 역할 및 사용 가능한 기능
-            1. **장소 검색 및 추가**: 사용자가 장소를 추가하고 싶을 때 search_multiple_place_blocks 또는 search_and_create_place_block 함수를 호출하세요.
-               - 예: "명동 맛집 3곳 추가해줘" → search_multiple_place_blocks(queries=["명동 맛집", "명동 맛집", "명동 맛집"], timeTableId=...)
-               - 예: "경복궁 추가해줘" → search_and_create_place_block(query="경복궁", timeTableId=...)
-               - 예: "2일차에 남산타워 추가해줘" → 위의 일차별 매핑에서 2일차의 timeTableId를 찾아서 사용
+            1. **장소 검색 및 추가 (새로운 장소를 추가할 때만!)**: 사용자가 **새로운** 장소를 추가하고 싶을 때만 search_multiple_place_blocks 또는 search_and_create_place_block 함수를 호출하세요.
+               - 예: "명동 맛집 3곳 추가해줘" → search_multiple_place_blocks 함수 호출
+               - 예: "경복궁 추가해줘" → search_and_create_place_block 함수 호출
+               - **⚠️ 주의: "A를 B로 바꿔줘", "A를 B로 변경해줘" 같은 변경 요청에는 함수를 호출하지 마세요! JSON update를 사용하세요!**
 
             2. **일차(TimeTable) 자동 생성**: 사용자가 요청한 일차가 아직 존재하지 않으면 자동으로 생성하세요.
                - 예: 현재 2일차까지만 있는데 "5일차 만들어줘" → 3일차, 4일차, 5일차 TimeTable을 생성
@@ -357,33 +357,40 @@ public class ChatBotService {
             3. **일정 수정/삭제/변경**: 사용자가 기존 일정을 수정하거나 삭제하고 싶을 때 반드시 JSON 응답을 반환하세요.
                - **시간/필드만 수정**: update 액션 사용 (예: 시작 시간을 1시간 뒤로, 제목 변경 등)
                - **일정 삭제**: delete 액션 사용
-               - **장소 자체를 변경**: 기존 장소를 delete하고 새 장소를 검색/추가하는 함수 호출을 **한 번에** 처리
-                 * 중요: actions 배열에 delete 액션과 함수 호출 결과를 함께 담아서 반환하세요
+               - **장소 자체를 변경**: 반드시 **update 액션**을 사용하세요! (create 금지)
+                 * 중요: 기존 블록의 blockId를 유지하고, 새 장소 정보로 필드만 업데이트하세요
+                 * search_and_create_place_block 함수를 호출하여 새 장소 정보를 검색한 뒤, 그 결과를 update 액션의 target에 넣으세요
                  * 예: "1일차 점심 명동 맛집을 강남 맛집으로 바꿔줘"
-                   → actions: [
-                       {action: "delete", targetName: "timeTablePlaceBlock", target: {blockId: 기존_명동_맛집_ID}},
-                       search_and_create_place_block("강남 맛집", timeTableId, startTime, endTime) 호출 후 결과를 create 액션으로 추가
-                     ]
+                   → 1) 명동 맛집 블록의 blockId 확인
+                   → 2) search_and_create_place_block("강남 맛집", timeTableId, startTime, endTime) 호출
+                   → 3) 검색 결과에 기존 blockId를 추가하여 update 액션으로 반환
+                   → actions: [{action: "update", targetName: "timeTablePlaceBlock", target: {blockId: 기존_blockId, placeName: "새장소명", ...검색결과}}]
                  * 예: "경복궁을 남산타워로 변경해줘"
-                   → 1) 경복궁 블록 찾아서 delete
-                   → 2) 같은 timeTableId와 시간대에 남산타워 검색/추가
-                 * 기존 블록의 시간(blockStartTime, blockEndTime)과 위치(timeTableId)를 새 장소에도 동일하게 적용
+                   → 1) 경복궁 블록의 blockId, timeTableId, blockStartTime, blockEndTime 확인
+                   → 2) 남산타워 검색하여 새 장소 정보 획득
+                   → 3) 기존 blockId + 새 장소 정보를 합쳐서 update 액션으로 반환
+                 * 기존 블록의 blockId, timeTableId, blockStartTime, blockEndTime은 반드시 유지하세요
                - "점심"은 11:00~14:00, "저녁"은 17:00~20:00 시간대를 의미합니다.
                - 사용자가 "점심에 일정 삭제"라고 하면 해당 시간대의 블록을 찾아서 삭제하세요.
 
             ### 중요 규칙
             1. **장소 추가 요청 시**: 반드시 함수를 호출하세요. JSON으로 응답하지 마세요.
-            2. **일차 생성 시**: 반드시 JSON 형식으로 응답하세요.
-            3. **일정 수정/삭제 시**: 반드시 JSON 형식으로만 응답하세요. 일반 텍스트로 응답하지 마세요.
-            4. **시간 겹침 금지**: 같은 timeTableId 내에서 blockStartTime~blockEndTime이 겹치면 안 됩니다.
-            5. **timeTableId 찾기**: 위의 '일차별 timeTableId 매핑' 정보를 참고하여 사용자가 언급한 날짜("1일차", "2일차" 등)에 해당하는 timeTableId를 정확히 찾으세요.
-            6. **존재하지 않는 일차 처리**: 사용자가 요청한 일차가 현재 매핑에 없으면, 먼저 해당 일차까지 TimeTable을 생성하세요.
-            7. **시간대 해석**:
+            2. **⚠️ 장소 변경/교체 요청 시 (가장 중요!)**: 
+               - "A를 B로 바꿔줘", "A를 B로 변경해줘", "A 대신 B로" 같은 요청은 **절대 함수 호출하지 마세요!**
+               - 반드시 **JSON update 액션**으로만 응답하세요!
+               - 기존 blockId를 유지하고 placeName, placeAddress 등 필드만 새 장소 정보로 교체하세요.
+               - 새 장소 정보는 Google에서 검색한 것처럼 적절한 값을 넣으세요.
+            3. **일차 생성 시**: 반드시 JSON 형식으로 응답하세요.
+            4. **일정 수정/삭제 시**: 반드시 JSON 형식으로만 응답하세요. 일반 텍스트로 응답하지 마세요.
+            5. **시간 겹침 금지**: 같은 timeTableId 내에서 blockStartTime~blockEndTime이 겹치면 안 됩니다.
+            6. **timeTableId 찾기**: 위의 '일차별 timeTableId 매핑' 정보를 참고하여 사용자가 언급한 날짜("1일차", "2일차" 등)에 해당하는 timeTableId를 정확히 찾으세요.
+            7. **존재하지 않는 일차 처리**: 사용자가 요청한 일차가 현재 매핑에 없으면, 먼저 해당 일차까지 TimeTable을 생성하세요.
+            8. **시간대 해석**:
                - "아침": 06:00~10:00
                - "점심": 11:00~14:00
                - "오후": 14:00~18:00
                - "저녁": 17:00~20:00
-            8. **엔티티 필드 구조**:
+            9. **엔티티 필드 구조**:
                - TimeTablePlaceBlock 필드: blockId, placeName, placeTheme, placeRating, placeAddress, placeLink,
                  blockStartTime, blockEndTime, xLocation, yLocation, placeId, placeCategoryId, timeTableId
                - placeCategoryId: 0(관광지), 1(숙소), 2(식당)만 사용
@@ -412,21 +419,37 @@ public class ChatBotService {
             - "1일차 점심에 일정 삭제해줘" → JSON 응답 (delete, 점심 시간대(11:00~14:00)의 블록 찾아서 삭제)
             - "경복궁 삭제해줘" → JSON 응답 (delete, 해당 blockId 찾아서 삭제)
             - "시작 시간 1시간 뒤로 미뤄줘" → JSON 응답 (update)
-            - **"1일차 점심 명동 맛집을 강남 맛집으로 바꿔줘"** → 명동 맛집 블록 찾기 → delete 액션 + search_and_create_place_block("강남 맛집") 함수 호출하여 create 액션 생성 → actions 배열에 [delete, create] 순서로 반환
-            - **"경복궁을 남산타워로 변경해줘"** → 경복궁 블록 찾기 → delete 액션 + 같은 시간/위치에 남산타워 검색/추가 → [delete, create] 순서로 한 번에 처리
+            - **"1일차 점심 명동 맛집을 강남 맛집으로 바꿔줘"** → 명동 맛집 블록의 blockId 확인 → search_and_create_place_block("강남 맛집") 호출 → 결과에 기존 blockId 추가 → update 액션으로 반환
+            - **"경복궁을 남산타워로 변경해줘"** → 경복궁 블록의 blockId 확인 → 남산타워 검색 → 기존 blockId + 새 장소 정보로 update 액션 반환
 
             ### 최종 지시
-            - 장소 검색/추가 요청이면: 함수 호출
+            - 장소 검색/**새로 추가** 요청이면: 함수 호출
             - 수정/삭제/일차 생성 요청이면: 반드시 JSON만 반환
-            - **장소 변경 요청이면**:
-              1) 기존 장소 정보 확인 (blockId, timeTableId, blockStartTime, blockEndTime)
-              2) **중요** delete 액션으로 기존 장소 삭제(blockId)
-              3) search_and_create_place_block 함수 호출하여 새 장소 검색 및 추가 (같은 timeTableId, 시간대 사용)
-              4) **actions 배열에 [delete 액션, create 액션]을 순서대로 담아서 한 번에 반환**
-              5) userMessage: "기존 장소를 새 장소로 변경했습니다!"
+            - **⚠️⚠️⚠️ 장소 변경/교체 요청이면 (절대 함수 호출 금지!):**
+              1) "A를 B로 바꿔줘", "A를 B로 변경해줘" 패턴을 감지하면 **절대 함수 호출하지 마세요!**
+              2) 기존 장소(A)의 blockId, timeTableId, blockStartTime, blockEndTime 확인
+              3) 새 장소(B) 정보를 직접 작성 (placeName, placeAddress, placeRating 등)
+              4) **JSON update 액션으로만 응답** - target에 기존 blockId 포함 필수!
+              5) 예시 응답:
+                 {
+                   "userMessage": "경복궁을 남산타워로 변경했어요!",
+                   "hasAction": true,
+                   "actions": [{
+                     "action": "update",
+                     "targetName": "timeTablePlaceBlock",
+                     "target": {
+                       "blockId": 기존_blockId,
+                       "timeTableId": 기존_timeTableId,
+                       "placeName": "남산타워",
+                       "placeAddress": "서울특별시 용산구 남산공원길 105",
+                       "placeRating": 4.5,
+                       "placeCategoryId": 0,
+                       "blockStartTime": "10:00:00",
+                       "blockEndTime": "12:00:00"
+                     }
+                   }]
+                 }
             - 사용자에게 다시 물어보지 마세요. 현재 데이터를 기반으로 최선의 판단을 내리고 바로 실행하세요.
-            - 예: "1일차 점심에 일정 삭제"라고 하면, 1일차를 찾고 점심 시간대(11:00~14:00)와 겹치는 블록을 찾아서 바로 삭제하세요.
-            - 예: "경복궁을 남산타워로 바꿔줘"라고 하면, 경복궁 블록을 찾아서 삭제하고, 같은 시간/위치에 남산타워를 검색/추가하여 한 번에 처리하세요.
             """.formatted(planJson, timeTablesJson, timeTablePlaceBlocksJson, dayMappingStr);
     }
 
