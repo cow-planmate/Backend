@@ -166,4 +166,81 @@ public class UserService {
 
         return response;
     }
+
+    @Transactional
+    public User findOrCreateOAuthUser(String provider, String providerId, String email, String nickname) {
+
+        // 1) provider + providerId 기준으로 기존 유저 조회
+        return userRepository.findByProviderAndProviderId(provider, providerId)
+                .orElseGet(() -> {
+                    // 2) 없으면 새로 생성 (SNS는 password 필요 없음)
+                    User newUser = User.builder()
+                            .provider(provider)
+                            .providerId(providerId)
+                            .email(email)
+                            .nickname(nickname)
+                            .password(null)   // SNS 로그인은 비번 없음
+                            .age(null)
+                            .gender(null)
+                            .build();
+
+                    return userRepository.save(newUser);
+                });
+    }
+
+    public String resolveUniqueNickname(String baseNickname) {
+
+        // 닉네임 중복 체크
+        if (!userRepository.findByNickname(baseNickname).isPresent()) {
+            return baseNickname; // 바로 사용 가능
+        }
+
+        // 중복이면 숫자 증가
+        int index = 1;
+        String newNickname;
+
+        while (true) {
+            newNickname = baseNickname + index;
+
+            if (!userRepository.findByNickname(newNickname).isPresent()) {
+                return newNickname;
+            }
+
+            index++;
+        }
+    }
+
+    public String sanitizeNickname(String nickname) {
+
+        if (nickname == null || nickname.isBlank()) {
+            return "user";
+        }
+
+        String cleaned = nickname;
+
+        // 1) 앞뒤 공백 제거
+        cleaned = cleaned.trim();
+
+        // 2) 모든 공백 제거 (중간 공백도)
+        cleaned = cleaned.replaceAll("\\s+", "");
+
+        // 3) 이모지 제거 (유니코드 범위 기준)
+        cleaned = cleaned.replaceAll("[\\p{So}\\p{Cn}]", "");
+
+        // 4) 특수문자 제거 (한글, 영문, 숫자만 허용)
+        cleaned = cleaned.replaceAll("[^a-zA-Z0-9가-힣]", "");
+
+        // 5) sanitize 후 값이 비면 fallback
+        if (cleaned.isBlank()) {
+            cleaned = "user";
+        }
+
+        // 6) 너무 길면 20자 제한 (선택 — UX상 좋음)
+        if (cleaned.length() > 20) {
+            cleaned = cleaned.substring(0, 20);
+        }
+
+        return cleaned;
+    }
+
 }
