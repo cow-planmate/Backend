@@ -6,8 +6,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(
@@ -61,7 +59,7 @@ public class TimeTablePlaceBlock {
     private TimeTable timeTable;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "place_id", nullable = false)
+    @JoinColumn(name = "place_id")
     private PlacePhoto placePhoto;
 
     public void changeId(Integer newId) {

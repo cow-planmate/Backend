@@ -1,19 +1,25 @@
 package com.example.planmate.domain.chatbot.service;
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
+import org.springframework.data.util.Pair;
+import org.springframework.stereotype.Service;
+
+import com.example.planmate.common.externalAPI.GoogleMap;
+import com.example.planmate.common.externalAPI.GooglePlaceImageWorker;
+import com.example.planmate.common.valueObject.SearchPlaceVO;
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
 import com.example.planmate.domain.webSocket.dto.WPlanRequest;
 import com.example.planmate.domain.webSocket.dto.WTimeTablePlaceBlockRequest;
 import com.example.planmate.domain.webSocket.dto.WTimetableRequest;
-import com.example.planmate.domain.webSocket.service.WebSocketPlanService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
 
 /**
  * AI 챗봇이 호출할 수 있는 여행 계획 관련 함수들을 정의
@@ -23,269 +29,8 @@ import java.time.LocalTime;
 @Service
 @RequiredArgsConstructor
 public class ChatBotPlanService {
-    
-    private final WebSocketPlanService webSocketPlanService;
-    private final SimpMessagingTemplate messagingTemplate;
-    
-    /**
-     * 계획 이름 변경
-     */
-    public ChatBotActionResponse changePlanName(int planId, String planName) {
-        try {
-            log.info("AI 요청: 계획 이름 변경 - planId: {}, planName: {}", planId, planName);
-            
-            // 액션 데이터 구성
-            WPlanRequest request = new WPlanRequest();
-            request.setPlanName(planName);
-            
-            // 사용자 메시지
-            String userMessage = "여행 계획 이름을 '" + planName + "'으로 변경했습니다! ✅";
-            
-            return ChatBotActionResponse.withAction(userMessage, "update", "plan", request);
-            
-        } catch (Exception e) {
-            log.error("계획 이름 변경 실패: {}", e.getMessage());
-            return ChatBotActionResponse.simpleMessage("계획 이름 변경에 실패했습니다: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * 출발지 변경
-     */
-    public ChatBotActionResponse changeDeparture(int planId, String departure) {
-        try {
-            log.info("AI 요청: 출발지 변경 - planId: {}, departure: {}", planId, departure);
-            
-            WPlanRequest request = new WPlanRequest();
-            request.setDeparture(departure);
-            
-            String userMessage = "출발지를 '" + departure + "'로 변경했습니다! 🚗";
-            
-            return ChatBotActionResponse.withAction(userMessage, "update", "plan", request);
-            
-        } catch (Exception e) {
-            log.error("출발지 변경 실패: {}", e.getMessage());
-            return ChatBotActionResponse.simpleMessage("출발지 변경에 실패했습니다: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * 인원 수 변경
-     */
-    public ChatBotActionResponse changePersonCount(int planId, Integer adultCount, Integer childCount) {
-        try {
-            log.info("AI 요청: 인원 수 변경 - planId: {}, adult: {}, child: {}", 
-                    planId, adultCount, childCount);
-            
-            WPlanRequest request = new WPlanRequest();
-            if (adultCount != null) request.setAdultCount(adultCount);
-            if (childCount != null) request.setChildCount(childCount);
-            
-            String userMessage = "인원 수를 변경했습니다! 👥";
-            if (adultCount != null) userMessage += " 성인: " + adultCount + "명";
-            if (childCount != null) userMessage += " 어린이: " + childCount + "명";
-            
-            return ChatBotActionResponse.withAction(userMessage, "update", "plan", request);
-            
-        } catch (Exception e) {
-            log.error("인원 수 변경 실패: {}", e.getMessage());
-            return ChatBotActionResponse.simpleMessage("인원 수 변경에 실패했습니다: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * 교통수단 변경
-     */
-    public ChatBotActionResponse changeTransportation(int planId, int transportationId) {
-        try {
-            log.info("AI 요청: 교통수단 변경 - planId: {}, transportationId: {}", 
-                    planId, transportationId);
-            
-            WPlanRequest request = new WPlanRequest();
-            request.setTransportationCategoryId(transportationId);
-            
-            String transportName = getTransportationName(transportationId);
-            String userMessage = "교통수단을 '" + transportName + "'로 변경했습니다! " + getTransportationEmoji(transportationId);
-            
-            return ChatBotActionResponse.withAction(userMessage, "update", "plan", request);
-            
-        } catch (Exception e) {
-            log.error("교통수단 변경 실패: {}", e.getMessage());
-            return ChatBotActionResponse.simpleMessage("교통수단 변경에 실패했습니다: " + e.getMessage());
-        }
-    }
-    
-    private String getTransportationName(int id) {
-        return switch (id) {
-            case 1 -> "도보";
-            case 2 -> "자전거";
-            case 3 -> "자동차";
-            case 4 -> "대중교통";
-            default -> "알 수 없음";
-        };
-    }
-    
-    private String getTransportationEmoji(int id) {
-        return switch (id) {
-            case 1 -> "🚶";
-            case 2 -> "🚴";
-            case 3 -> "🚗";
-            case 4 -> "🚌";
-            default -> "🚀";
-        };
-    }
-    
-    // ===== TimeTable 관련 메소드들 =====
-    
-    /**
-     * 타임테이블 생성
-     */
-    public ChatBotActionResponse createTimetable(int planId, LocalDate date, LocalTime startTime, LocalTime endTime) {
-        try {
-            log.info("AI 요청: 타임테이블 생성 - planId: {}, date: {}", planId, date);
-            
-            TimetableVO timetableVO = new TimetableVO();
-            timetableVO.setDate(date);
-            timetableVO.setStartTime(startTime);
-            timetableVO.setEndTime(endTime);
-            
-            WTimetableRequest request = new WTimetableRequest();
-            request.getTimetableVOs().add(timetableVO);
-            
-            String userMessage = String.format("%s 날짜의 새로운 일정을 생성했습니다! 📅", date.toString());
-            
-            return ChatBotActionResponse.withAction(userMessage, "create", "timeTable", request);
-            
-        } catch (Exception e) {
-            log.error("타임테이블 생성 실패: {}", e.getMessage());
-            return ChatBotActionResponse.simpleMessage("타임테이블 생성에 실패했습니다: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * 타임테이블 수정
-     */
-    public ChatBotActionResponse updateTimetable(int timetableId, LocalDate date, LocalTime startTime, LocalTime endTime) {
-        try {
-            log.info("AI 요청: 타임테이블 수정 - timetableId: {}, date: {}", timetableId, date);
-            
-            TimetableVO timetableVO = new TimetableVO();
-            timetableVO.setTimetableId(timetableId);
-            timetableVO.setDate(date);
-            timetableVO.setStartTime(startTime);
-            timetableVO.setEndTime(endTime);
-            
-            WTimetableRequest request = new WTimetableRequest();
-            request.getTimetableVOs().add(timetableVO);
-            
-            String userMessage = String.format("일정을 %s로 수정했습니다! ✏️", date.toString());
-            
-            return ChatBotActionResponse.withAction(userMessage, "update", "timeTable", request);
-            
-        } catch (Exception e) {
-            log.error("타임테이블 수정 실패: {}", e.getMessage());
-            return ChatBotActionResponse.simpleMessage("타임테이블 수정에 실패했습니다: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * 타임테이블 삭제
-     */
-    public ChatBotActionResponse deleteTimetable(int timetableId) {
-        try {
-            log.info("AI 요청: 타임테이블 삭제 - timetableId: {}", timetableId);
-            
-            TimetableVO timetableVO = new TimetableVO();
-            timetableVO.setTimetableId(timetableId);
-            
-            WTimetableRequest request = new WTimetableRequest();
-            request.getTimetableVOs().add(timetableVO);
-            
-            String userMessage = "일정을 삭제했습니다! 🗑️";
-            
-            return ChatBotActionResponse.withAction(userMessage, "delete", "timeTable", request);
-            
-        } catch (Exception e) {
-            log.error("타임테이블 삭제 실패: {}", e.getMessage());
-            return ChatBotActionResponse.simpleMessage("타임테이블 삭제에 실패했습니다: " + e.getMessage());
-        }
-    }
-    
-    // ===== TimeTablePlaceBlock 관련 메소드들 =====
-    
-    /**
-     * 장소 블록 생성
-     */
-    public ChatBotActionResponse createPlaceBlock(int timetableId, String placeName, String placeAddress, 
-                                                 LocalTime startTime, LocalTime endTime, Float rating) {
-        try {
-            log.info("AI 요청: 장소 블록 생성 - timetableId: {}, placeName: {}", timetableId, placeName);
-            
-            TimetablePlaceBlockVO placeBlockVO = new TimetablePlaceBlockVO(
-                timetableId, null, null, placeName, rating, placeAddress, null, null, null, startTime, endTime, null, null
-            );
-            
-            WTimeTablePlaceBlockRequest request = new WTimeTablePlaceBlockRequest();
-            request.setTimetablePlaceBlockVO(placeBlockVO);
-            
-            String userMessage = String.format("'%s' 장소를 일정에 추가했습니다! 📍", placeName);
-            
-            return ChatBotActionResponse.withAction(userMessage, "create", "timeTablePlaceBlock", request);
-            
-        } catch (Exception e) {
-            log.error("장소 블록 생성 실패: {}", e.getMessage());
-            return ChatBotActionResponse.simpleMessage("장소 추가에 실패했습니다: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * 장소 블록 수정
-     */
-    public ChatBotActionResponse updatePlaceBlock(int blockId, String placeName, String placeAddress, 
-                                                 LocalTime startTime, LocalTime endTime, Float rating) {
-        try {
-            log.info("AI 요청: 장소 블록 수정 - blockId: {}, placeName: {}", blockId, placeName);
-            
-            TimetablePlaceBlockVO placeBlockVO = new TimetablePlaceBlockVO(
-                0, blockId, null, placeName, rating, placeAddress, null, null, null, startTime, endTime, null, null
-            );
-            
-            WTimeTablePlaceBlockRequest request = new WTimeTablePlaceBlockRequest();
-            request.setTimetablePlaceBlockVO(placeBlockVO);
-            
-            String userMessage = String.format("'%s' 장소 정보를 수정했습니다! ✏️", placeName);
-            
-            return ChatBotActionResponse.withAction(userMessage, "update", "timeTablePlaceBlock", request);
-            
-        } catch (Exception e) {
-            log.error("장소 블록 수정 실패: {}", e.getMessage());
-            return ChatBotActionResponse.simpleMessage("장소 수정에 실패했습니다: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * 장소 블록 삭제
-     */
-    public ChatBotActionResponse deletePlaceBlock(int timetableId, int blockId) {
-        try {
-            log.info("AI 요청: 장소 블록 삭제 - blockId: {}", blockId);
-            
-            TimetablePlaceBlockVO placeBlockVO = new TimetablePlaceBlockVO(
-                timetableId, blockId, null, null, null, null, null, null, null, null, null, null, null
-            );
-            
-            WTimeTablePlaceBlockRequest request = new WTimeTablePlaceBlockRequest();
-            request.setTimetablePlaceBlockVO(placeBlockVO);
-            
-            String userMessage = "장소를 일정에서 제거했습니다! 🗑️";
-            
-            return ChatBotActionResponse.withAction(userMessage, "delete", "timeTablePlaceBlock", request);
-            
-        } catch (Exception e) {
-            log.error("장소 블록 삭제 실패: {}", e.getMessage());
-            return ChatBotActionResponse.simpleMessage("장소 삭제에 실패했습니다: " + e.getMessage());
-        }
-    }
+    private final GooglePlaceImageWorker googlePlaceImageWorker;
+    private final GoogleMap googleMap;
     
     /**
      * 전체 계획 정보 업데이트 (JSON 형태로 받은 모든 필드를 처리)
@@ -399,6 +144,8 @@ public class ChatBotPlanService {
             } else {
                 timetableVO.setEndTime(LocalTime.of(20, 0)); // 기본값: 20:00
             }
+
+
             
             request.setTimetableVOs(java.util.List.of(timetableVO));
             
@@ -411,6 +158,8 @@ public class ChatBotPlanService {
             return ChatBotActionResponse.simpleMessage("타임테이블 생성에 실패했습니다: " + e.getMessage());
         }
     }
+
+    
     
     /**
      * 타임테이블 업데이트
@@ -452,6 +201,7 @@ public class ChatBotPlanService {
             } else {
                 timetableVO.setEndTime(LocalTime.of(20, 0)); // 기본값: 20:00
             }
+
             
             request.setTimetableVOs(java.util.List.of(timetableVO));
             
@@ -513,17 +263,28 @@ public class ChatBotPlanService {
                 null, // timetablePlaceBlockId - 생성 시에는 null
                 (Integer) placeBlockMap.get("placeCategoryId"),
                 (String) placeBlockMap.get("placeName"),
-                (Float) placeBlockMap.get("placeRating"),
+                getFloatValue(placeBlockMap.get("placeRating")),
                 (String) placeBlockMap.get("placeAddress"),
                 (String) placeBlockMap.get("placeLink"),
                 (String) placeBlockMap.get("placeId"),
                 (String) placeBlockMap.get("date"),
-                placeBlockMap.containsKey("startTime") ? LocalTime.parse((String) placeBlockMap.get("startTime")) : LocalTime.parse(placeBlockJson),
-                placeBlockMap.containsKey("endTime") ? LocalTime.parse((String) placeBlockMap.get("endTime")) : null,
+                LocalTime.parse((String) placeBlockMap.get("blockStartTime")),
+                LocalTime.parse((String) placeBlockMap.get("blockEndTime")),
                 (Double) placeBlockMap.get("xLocation"),
                 (Double) placeBlockMap.get("yLocation")
             );
-            
+
+            // Python에서 이미 장소 정보(placeId, 좌표 등)를 제공했으므로 재검색 불필요
+            // 이미지만 가져오기
+            try {
+                if (placeBlockVO.getPlaceId() != null && !placeBlockVO.getPlaceId().isEmpty()) {
+                    googlePlaceImageWorker.fetchSinglePlaceImageAsync(placeBlockVO.getPlaceId());
+                    log.info("장소 이미지 가져오기 성공: {}", placeBlockVO.getPlaceName());
+                }
+            } catch (Exception e) {
+                log.warn("장소 이미지 가져오기 실패 (계속 진행): {}", e.getMessage());
+            }
+
             request.setTimetablePlaceBlockVO(placeBlockVO);
             
             String userMessage = "새로운 장소를 일정에 추가했습니다! 📍";
@@ -535,7 +296,7 @@ public class ChatBotPlanService {
             return ChatBotActionResponse.simpleMessage("장소 추가에 실패했습니다: " + e.getMessage());
         }
     }
-    
+
     /**
      * 장소 블록 업데이트
      */
@@ -553,21 +314,87 @@ public class ChatBotPlanService {
             // WTimeTablePlaceBlockRequest 객체 생성
             WTimeTablePlaceBlockRequest request = new WTimeTablePlaceBlockRequest();
             
+            // timeTableId 가져오기 (키 이름 변형 처리: timeTableId 또는 timetableId)
+            Integer timeTableId = null;
+            if (placeBlockMap.containsKey("timeTableId")) {
+                timeTableId = (Integer) placeBlockMap.get("timeTableId");
+            } else if (placeBlockMap.containsKey("timetableId")) {
+                timeTableId = (Integer) placeBlockMap.get("timetableId");
+            }
+            
+            // blockStartTime/blockEndTime 가져오기 (키 이름 변형 처리)
+            LocalTime startTime = null;
+            LocalTime endTime = null;
+            
+            if (placeBlockMap.containsKey("blockStartTime")) {
+                startTime = LocalTime.parse((String) placeBlockMap.get("blockStartTime"));
+            } else if (placeBlockMap.containsKey("startTime")) {
+                startTime = LocalTime.parse((String) placeBlockMap.get("startTime"));
+            }
+            
+            if (placeBlockMap.containsKey("blockEndTime")) {
+                endTime = LocalTime.parse((String) placeBlockMap.get("blockEndTime"));
+            } else if (placeBlockMap.containsKey("endTime")) {
+                endTime = LocalTime.parse((String) placeBlockMap.get("endTime"));
+            }
+            
+            // AI가 준 값 가져오기
+            String placeName = (String) placeBlockMap.get("placeName");
+            String placeId = (String) placeBlockMap.get("placeId");
+            String placeAddress = (String) placeBlockMap.get("placeAddress");
+            String placeLink = (String) placeBlockMap.get("placeLink");
+            Float placeRating = getFloatValue(placeBlockMap.get("placeRating"));
+            Double xLocation = getDoubleValue(placeBlockMap.get("xLocation"));
+            Double yLocation = getDoubleValue(placeBlockMap.get("yLocation"));
+            Integer placeCategoryId = (Integer) placeBlockMap.get("placeCategoryId");
+            
+            // placeName이 있고 placeId/좌표가 없거나 기본값일 때 Google API로 검색
+            if (placeName != null) {
+
+                try {
+                    log.info("Google Places API로 장소 검색: {}", placeName);
+                    Pair<List<SearchPlaceVO>, List<String>> searchResult = googleMap.getSearchPlace(placeName);
+                    List<SearchPlaceVO> places = searchResult.getFirst();
+                    
+                    if (places != null && !places.isEmpty()) {
+                        SearchPlaceVO foundPlace = places.get(0); // 첫 번째 결과 사용
+                        
+                        // 검색 결과로 누락된 정보 채우기
+                        placeId = foundPlace.getPlaceId();
+                        placeAddress = foundPlace.getFormatted_address();
+                        placeLink = foundPlace.getUrl();
+                        placeRating = foundPlace.getRating();
+                        xLocation = foundPlace.getXLocation();
+                        yLocation = foundPlace.getYLocation();
+                        
+                        
+                        log.info("Google API 검색 성공 - placeId: {}, address: {}, 좌표: ({}, {})", 
+                                placeId, placeAddress, xLocation, yLocation);
+                    } else {
+                        log.warn("Google API 검색 결과 없음: {}", placeName);
+                    }
+                } catch (IOException e) {
+                    log.error("Google Places API 검색 실패: {}", e.getMessage());
+                    // 검색 실패해도 업데이트는 계속 진행
+                }
+                
+            }
+            
             // TimetablePlaceBlockVO의 AllArgsConstructor를 사용해서 생성
             TimetablePlaceBlockVO placeBlockVO = new TimetablePlaceBlockVO(
-                (Integer) placeBlockMap.get("timetableId"),
+                timeTableId != null ? timeTableId : 0,
                 placeBlockId, // timetablePlaceBlockId
-                (Integer) placeBlockMap.get("placeCategoryId"),
-                (String) placeBlockMap.get("placeName"),
-                (Float) placeBlockMap.get("placeRating"),
-                (String) placeBlockMap.get("placeAddress"),
-                (String) placeBlockMap.get("placeLink"),
-                (String) placeBlockMap.get("placeId"),
+                placeCategoryId,
+                placeName,
+                placeRating,
+                placeAddress,
+                placeLink,
+                placeId,
                 (String) placeBlockMap.get("date"),
-                placeBlockMap.containsKey("startTime") ? LocalTime.parse((String) placeBlockMap.get("startTime")) : null,
-                placeBlockMap.containsKey("endTime") ? LocalTime.parse((String) placeBlockMap.get("endTime")) : null,
-                (Double) placeBlockMap.get("xLocation"),
-                (Double) placeBlockMap.get("yLocation")
+                startTime,
+                endTime,
+                xLocation,
+                yLocation
             );
             
             request.setTimetablePlaceBlockVO(placeBlockVO);
@@ -619,5 +446,39 @@ public class ChatBotPlanService {
             log.error("장소 블록 삭제 실패: {}", e.getMessage());
             return ChatBotActionResponse.simpleMessage("장소 삭제에 실패했습니다: " + e.getMessage());
         }
+    }
+
+    private Float getFloatValue(Object rawValue) {
+        if (rawValue == null) {
+            return null;
+        }
+        if (rawValue instanceof Number) {
+            return ((Number) rawValue).floatValue();
+        }
+        if (rawValue instanceof String) {
+            try {
+                return Float.parseFloat((String) rawValue);
+            } catch (NumberFormatException ex) {
+                log.warn("placeRating 파싱 실패: {}", rawValue);
+            }
+        }
+        return null;
+    }
+
+    private Double getDoubleValue(Object rawValue) {
+        if (rawValue == null) {
+            return null;
+        }
+        if (rawValue instanceof Number) {
+            return ((Number) rawValue).doubleValue();
+        }
+        if (rawValue instanceof String) {
+            try {
+                return Double.parseDouble((String) rawValue);
+            } catch (NumberFormatException ex) {
+                log.warn("Double 파싱 실패: {}", rawValue);
+            }
+        }
+        return null;
     }
 }

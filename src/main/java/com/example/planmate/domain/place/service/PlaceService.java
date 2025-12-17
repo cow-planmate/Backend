@@ -137,6 +137,8 @@ public class PlaceService {
         return response;
     }
 
+    
+
     public PlaceResponse getNextPlace(List<String> nextPageToken) throws IOException {
         PlaceResponse response = new PlaceResponse();
         Pair<List<SearchPlaceVO>, List<String>> pair = googleMap.getNextPagePlace(nextPageToken);

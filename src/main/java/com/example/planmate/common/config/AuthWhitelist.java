@@ -24,7 +24,19 @@ public class AuthWhitelist {
             "/logs/**",
             "/image/**",
             "/api/oauth/**"
+            "/image/**",
+            "/v3/api-docs/**",
+            "/v3/api-docs",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/swagger-ui/index.html",
+            // 챗봇 테스트용 임시 추가
+            "/api/test/**",
+            "/api/chatbot/**"
     );
+
+
+
 
     public static boolean isWhitelisted(String uri) {
         return PATHS.stream().anyMatch(pattern -> pathMatcher.match(pattern, uri));
