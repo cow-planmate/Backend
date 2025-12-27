@@ -4,8 +4,10 @@ import java.io.IOException;
 
 import com.example.planmate.common.oauth.dto.OAuthCompleteRequest;
 import com.example.planmate.common.oauth.dto.OAuthCompleteResponse;
+import com.example.planmate.common.oauth.dto.TokenResponse;
 import com.example.planmate.common.oauth.enums.OAuthProvider;
 import com.example.planmate.common.oauth.service.OAuthCompleteService;
+import com.example.planmate.common.oauth.service.OAuthExchangeService;
 import com.example.planmate.common.oauth.service.OAuthLoginService;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +21,8 @@ public class OAuthController {
 
     private final OAuthLoginService oAuthLoginService;
     private final OAuthCompleteService oAuthCompleteService;
+    private final OAuthExchangeService oAuthExchangeService;
+
 
     // 1) SNS 로그인 시작
     @GetMapping("/{provider}")
@@ -51,5 +55,11 @@ public class OAuthController {
     public OAuthCompleteResponse complete(@RequestBody OAuthCompleteRequest request) {
         return oAuthCompleteService.completeRegistration(request);
     }
+
+    @PostMapping("/exchange")
+    public TokenResponse exchange(@RequestParam String code) {
+        return oAuthExchangeService.exchange(code);
+    }
+
 }
 
