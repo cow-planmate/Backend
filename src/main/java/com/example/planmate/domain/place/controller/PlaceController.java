@@ -27,21 +27,21 @@ public class PlaceController {
     @GetMapping("/{planId}/lodging")
     public ResponseEntity<PlaceResponse> getLodgingPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
-    PlaceResponse response = placeService.getLodgingPlace(userId, planId);
+        PlaceResponse response = placeService.getLodgingPlace(userId, planId);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{planId}/tour")
     public ResponseEntity<PlaceResponse> getTourPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
-    PlaceResponse response = placeService.getTourPlace(userId, planId);
+        PlaceResponse response = placeService.getTourPlace(userId, planId);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{planId}/restaurant")
     public ResponseEntity<PlaceResponse> getRestaurantPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
-    PlaceResponse response = placeService.getRestaurantPlace(userId, planId);
+        PlaceResponse response = placeService.getRestaurantPlace(userId, planId);
         return ResponseEntity.ok(response);
     }
 
@@ -52,7 +52,7 @@ public class PlaceController {
         @PathVariable("query") String query
     ) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
-    PlaceResponse response = placeService.getSearchPlace(userId, planId, query);
+        PlaceResponse response = placeService.getSearchPlace(userId, planId, query);
         return ResponseEntity.ok(response);
     }
 
@@ -61,7 +61,7 @@ public class PlaceController {
         @PathVariable("travelCategoryName") String travelCategoryName,
         @PathVariable("travelName") String travelName
     ) throws IOException {
-    PlaceResponse response = placeService.getLodgingPlace(travelCategoryName, travelName);
+        PlaceResponse response = placeService.getLodgingPlace(travelCategoryName, travelName);
         return ResponseEntity.ok(response);
     }
 
@@ -70,7 +70,7 @@ public class PlaceController {
         @PathVariable("travelCategoryName") String travelCategoryName,
         @PathVariable("travelName") String travelName
     ) throws IOException {
-    PlaceResponse response = placeService.getTourPlace(travelCategoryName, travelName);
+        PlaceResponse response = placeService.getTourPlace(travelCategoryName, travelName);
         return ResponseEntity.ok(response);
     }
 
@@ -79,13 +79,13 @@ public class PlaceController {
         @PathVariable("travelCategoryName") String travelCategoryName,
         @PathVariable("travelName") String travelName
     ) throws IOException {
-    PlaceResponse response = placeService.getRestaurantPlace(travelCategoryName, travelName);
+        PlaceResponse response = placeService.getRestaurantPlace(travelCategoryName, travelName);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/place/{query}")
     public ResponseEntity<PlaceResponse> getPlace(@PathVariable("query") String query) throws IOException {
-    PlaceResponse response = placeService.getSearchPlace(query);
+        PlaceResponse response = placeService.getSearchPlace(query);
         return ResponseEntity.ok(response);
     }
 
@@ -95,7 +95,7 @@ public class PlaceController {
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());
-    PlaceResponse response = placeService.getNextPlace(tokens);
+        PlaceResponse response = placeService.getNextPlace(tokens);
         return ResponseEntity.ok(response);
     }
 }

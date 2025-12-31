@@ -48,7 +48,7 @@ public class GooglePlaceImageWorker {
             String fileLocation = imgUrl + placeId + ".webp";
             PlacePhoto photo = PlacePhoto.builder()
                     .placeId(placeId)
-                    .photoUrl(fileLocation)
+                    .photoUrl("")
                     .build();
             placePhotoRepository.save(photo);
 
@@ -88,7 +88,7 @@ public class GooglePlaceImageWorker {
             }
             photo = PlacePhoto.builder()
                     .placeId(placeId)
-                    .photoUrl("")
+                    .photoUrl(fileLocation)
                     .build();
             placePhotoRepository.save(photo);
             return CompletableFuture.completedFuture(photo);

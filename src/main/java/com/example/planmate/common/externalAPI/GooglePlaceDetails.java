@@ -33,6 +33,27 @@ public class GooglePlaceDetails {
     private final PlacePhotoRepository placePhotoRepository;
 
     /**
+     * Triggers async image fetching for missing photos but does not wait for them.
+     */
+    public void fetchMissingImagesInBackground(List<? extends PlaceVO> placeVOs) {
+        List<String> placeIds = placeVOs.stream()
+            .map(PlaceVO::getPlaceId)
+            .toList();
+        
+        List<PlacePhoto> existingPhotos = placePhotoRepository.findAllById(placeIds);
+        Map<String, PlacePhoto> existingPhotoMap = existingPhotos.stream()
+            .collect(Collectors.toMap(PlacePhoto::getPlaceId, p -> p));
+        
+        List<? extends PlaceVO> missingPlaceVOs = placeVOs.stream()
+            .filter(vo -> !existingPhotoMap.containsKey(vo.getPlaceId()))
+            .toList();
+            
+        if (!missingPlaceVOs.isEmpty()) {
+             missingPlaceVOs.forEach(vo -> googlePlaceImageWorker.fetchSinglePlaceImageAsync(vo.getPlaceId()));
+        }
+    }
+
+    /**
      * Async bulk fetch that blocks until all individual async tasks complete.
      */
     public List<? extends PlaceVO> searchGooglePlaceDetailsAsyncBlocking(List<? extends PlaceVO> placeVOs) {

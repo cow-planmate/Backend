@@ -76,8 +76,11 @@ public class PlaceService {
 
         Pair rawPair = googleMapFn.apply(travelCategoryName + " " + travelName, preferredThemeNames);
         Pair<List<? extends SearchPlaceVO>, List<String>> pair = (Pair) rawPair;
-        List<?> detailedRaw = (List<?>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
-        List<SearchPlaceVO> detailed = (List<SearchPlaceVO>) detailedRaw;
+        
+        // Trigger background image fetch without blocking
+        googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
+        
+        List<SearchPlaceVO> detailed = (List<SearchPlaceVO>) pair.getFirst();
         response.addPlace(detailed);
         response.addNextPageToken(pair.getSecond());
         return response;
@@ -99,8 +102,11 @@ public class PlaceService {
         PlaceResponse response = new PlaceResponse();
         planAccessValidator.validateUserHasAccessToPlan(userId, planId);
         Pair<List<SearchPlaceVO>, List<String>> pair = googleMap.getSearchPlace(query);
-        List<SearchPlaceVO> searchPlaceVOs = (List<SearchPlaceVO>) googlePlaceDetails.searchGooglePlaceDetailsAsyncBlocking(pair.getFirst());
-        response.addPlace(searchPlaceVOs);
+        
+        // Trigger background image fetch without blocking
+        googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
+        
+        response.addPlace(pair.getFirst());
         response.addNextPageToken(pair.getSecond());
         return response;
     }
