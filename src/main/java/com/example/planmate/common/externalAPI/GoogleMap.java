@@ -1,14 +1,5 @@
 package com.example.planmate.common.externalAPI;
 
-import com.example.planmate.common.valueObject.*;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.util.Pair;
-import org.springframework.stereotype.Component;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -20,6 +11,20 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.util.Pair;
+import org.springframework.stereotype.Component;
+
+import com.example.planmate.common.valueObject.DepartureVO;
+import com.example.planmate.common.valueObject.LodgingPlaceVO;
+import com.example.planmate.common.valueObject.RestaurantPlaceVO;
+import com.example.planmate.common.valueObject.SearchPlaceVO;
+import com.example.planmate.common.valueObject.TourPlaceVO;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @Component
 public class GoogleMap {
@@ -244,15 +249,15 @@ public class GoogleMap {
         List<String> nextPageTokens = new ArrayList<>();
 
         for (String theme : themes) {
+            String currentQuery = fullQuery;
+            if (theme != null && !theme.isBlank()) {
+                currentQuery += " " + theme;
+            }
+
             StringBuilder url = new StringBuilder(base)
-                    .append("?query=").append(enc(fullQuery))
+                    .append("?query=").append(enc(currentQuery))
                     .append("&language=ko")
                     .append("&key=").append(enc(googleApiKey));
-
-            // keyword(테마) 추가. 빈 문자열이면 붙이지 않는다.
-            if (theme != null && !theme.isBlank()) {
-                url.append("&keyword=").append(enc(theme));
-            }
 
             // 좌표 기반 검색 옵션
             if (lat != null && lng != null) {
