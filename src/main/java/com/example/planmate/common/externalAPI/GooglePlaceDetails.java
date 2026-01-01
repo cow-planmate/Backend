@@ -1,6 +1,5 @@
 package com.example.planmate.common.externalAPI;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -76,24 +75,6 @@ public class GooglePlaceDetails {
                     .map(vo -> googlePlaceImageWorker.fetchSinglePlaceImageAsync(vo.getPlaceId()))
                     .collect(Collectors.toList());
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-            List<PlacePhoto> newPhotos = futures.stream()
-                .map(CompletableFuture::join)
-                .filter(p -> p != null)
-                .toList();
-            
-            if (!newPhotos.isEmpty()) {
-                // Deduplicate by placeId and save new photos
-                Map<String, PlacePhoto> unique = new LinkedHashMap<>();
-                for (PlacePhoto p : newPhotos) {
-                    unique.putIfAbsent(p.getPlaceId(), p);
-                }
-                List<PlacePhoto> toSave = unique.values().stream()
-                    .filter(p -> !placePhotoRepository.existsById(p.getPlaceId()))
-                    .toList();
-                if (!toSave.isEmpty()) {
-                    placePhotoRepository.saveAll(toSave);
-                }
-            }
         }
         
         return placeVOs;
@@ -125,24 +106,6 @@ public class GooglePlaceDetails {
                 .map(vo -> googlePlaceImageWorker.fetchSinglePlaceImageAsync(vo.getPlaceId()))
                 .toList();
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-        .thenApply(v -> {
-            List<PlacePhoto> newPhotos = futures.stream()
-                .map(CompletableFuture::join)
-                .filter(p -> p != null)
-                .toList();
-            if (!newPhotos.isEmpty()) {
-                Map<String, PlacePhoto> unique = new LinkedHashMap<>();
-                for (PlacePhoto p : newPhotos) {
-                    unique.putIfAbsent(p.getPlaceId(), p);
-                }
-                List<PlacePhoto> toSave = unique.values().stream()
-                    .filter(p -> !placePhotoRepository.existsById(p.getPlaceId()))
-                    .toList();
-                if (!toSave.isEmpty()) {
-                    placePhotoRepository.saveAll(toSave);
-                }
-            }
-            return placeVOs;
-        });
+                .thenApply(v -> placeVOs);
     }
 }

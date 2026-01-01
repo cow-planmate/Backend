@@ -5,10 +5,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -34,24 +37,19 @@ public class GooglePlaceImageWorker {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final PlacePhotoRepository placePhotoRepository;
+    private final java.util.Set<String> processingIds = ConcurrentHashMap.newKeySet();
 
     @SuppressWarnings("unchecked")
     @Async("placeExecutor")
     public CompletableFuture<PlacePhoto> fetchSinglePlaceImageAsync(String placeId) {
+        if (placeId == null || !processingIds.add(placeId)) {
+            return CompletableFuture.completedFuture(null);
+        }
         try {
-            if(placePhotoRepository.existsById(placeId)) {
-                PlacePhoto photo = placePhotoRepository.findById(placeId).get();
-                if(photo.getPhotoUrl() != null && !photo.getPhotoUrl().isEmpty()) {
-                    return CompletableFuture.completedFuture(placePhotoRepository.findById(placeId).get());
-                }
+            Optional<PlacePhoto> existing = placePhotoRepository.findById(placeId);
+            if (existing.isPresent() && existing.get().getPhotoUrl() != null && !existing.get().getPhotoUrl().isEmpty()) {
+                return CompletableFuture.completedFuture(existing.get());
             }
-            String fileLocation = imgUrl + placeId + ".webp";
-            PlacePhoto photo = PlacePhoto.builder()
-                    .placeId(placeId)
-                    .photoUrl("")
-                    .build();
-            placePhotoRepository.save(photo);
-
             String detailsUrl = "https://maps.googleapis.com/maps/api/place/details/json?placeid=" + placeId + "&fields=photos&key=" + googleApiKey;
             ResponseEntity<Map<String, Object>> detailsResponse = restTemplate.exchange(
                     detailsUrl,
@@ -77,7 +75,7 @@ public class GooglePlaceImageWorker {
             byte[] webpBytes = image.bytes(new WebpWriter(6, 80, 4, false));
             if (webpBytes == null) return CompletableFuture.completedFuture(null);
 
-            fileLocation = imgUrl + placeId + ".webp";
+            String fileLocation = imgUrl + placeId + ".webp";
             File outputFile = new File(fileLocation);
             File parent = outputFile.getParentFile();
             if (parent != null && !parent.exists()) {
@@ -86,16 +84,22 @@ public class GooglePlaceImageWorker {
             try (FileOutputStream fos = new FileOutputStream(outputFile)) {
                 fos.write(webpBytes);
             }
-            photo = PlacePhoto.builder()
+            PlacePhoto photo = PlacePhoto.builder()
                     .placeId(placeId)
                     .photoUrl(fileLocation)
                     .build();
-            placePhotoRepository.save(photo);
+            try {
+                photo = placePhotoRepository.save(photo);
+            } catch (DataIntegrityViolationException e) {
+                photo = placePhotoRepository.findById(placeId).orElse(photo);
+            }
             return CompletableFuture.completedFuture(photo);
         } catch (IOException e) {
             System.err.println("[ASYNC_IO_ERROR] placeId=" + placeId + " msg=" + e.getMessage());
         } catch (Exception e) {
             System.err.println("[ASYNC_ERROR] placeId=" + placeId + " msg=" + e.getMessage());
+        } finally {
+            processingIds.remove(placeId);
         }
 
         return CompletableFuture.completedFuture(null);

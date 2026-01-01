@@ -1,5 +1,10 @@
 package com.example.planmate.domain.webSocket.service;
 
+import java.util.List;
+
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.image.repository.PlacePhotoRepository;
@@ -8,12 +13,16 @@ import com.example.planmate.domain.plan.entity.TimeTable;
 import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
 import com.example.planmate.domain.plan.entity.TransportationCategory;
 import com.example.planmate.domain.travel.entity.Travel;
-import com.example.planmate.domain.webSocket.dto.*;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.stereotype.Service;
+import com.example.planmate.domain.webSocket.dto.WPlanRequest;
+import com.example.planmate.domain.webSocket.dto.WPlanResponse;
+import com.example.planmate.domain.webSocket.dto.WPresencesRequest;
+import com.example.planmate.domain.webSocket.dto.WPresencesResponse;
+import com.example.planmate.domain.webSocket.dto.WTimeTablePlaceBlockRequest;
+import com.example.planmate.domain.webSocket.dto.WTimeTablePlaceBlockResponse;
+import com.example.planmate.domain.webSocket.dto.WTimetableRequest;
+import com.example.planmate.domain.webSocket.dto.WTimetableResponse;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +34,10 @@ public class WebSocketPlanService {
     public WPlanResponse updatePlan(int planId, WPlanRequest request) {
         WPlanResponse response = new WPlanResponse();
         Plan plan = redisService.findPlanByPlanId(planId);
+
+        if (plan == null) {
+            throw new IllegalArgumentException("Plan not found in cache for ID: " + planId);
+        }
 
         if(request.getPlanName() != null) {
             plan.changePlanName(request.getPlanName());
@@ -62,6 +75,9 @@ public class WebSocketPlanService {
         List<TimetableVO> timetableVOs = request.getTimetableVOs();
 
         Plan plan = redisService.findPlanByPlanId(planId);
+        if (plan == null) {
+            throw new IllegalArgumentException("Plan not found in cache for ID: " + planId);
+        }
         for(TimetableVO timetableVO : timetableVOs) {
             TimeTable timeTable = TimeTable.builder()
                     .plan(plan)
@@ -106,6 +122,9 @@ public class WebSocketPlanService {
         for(TimetableVO timetableVO : timetableVOs) {
             int timetableId = timetableVO.getTimetableId();
             TimeTable timetable = redisService.findTimeTableByTimeTableId(timetableId);
+            if (timetable == null) {
+                throw new IllegalArgumentException("Timetable not found in cache for ID: " + timetableId);
+            }
             if(timetable.getPlan().getPlanId() != planId) {
                 throw new AccessDeniedException("timetable 접근 권한이 없습니다");
             }
@@ -124,7 +143,10 @@ public class WebSocketPlanService {
         if(timetablePlaceBlockVO.getTimetablePlaceBlockId() == null) {
             return response;
         }
-    TimeTablePlaceBlock timetablePlaceBlock = redisService.findTimeTablePlaceBlockByBlockId(timetablePlaceBlockVO.getTimetablePlaceBlockId());
+        TimeTablePlaceBlock timetablePlaceBlock = redisService.findTimeTablePlaceBlockByBlockId(timetablePlaceBlockVO.getTimetablePlaceBlockId());
+        if (timetablePlaceBlock == null) {
+            throw new IllegalArgumentException("TimetablePlaceBlock not found in cache for ID: " + timetablePlaceBlockVO.getTimetablePlaceBlockId());
+        }
         if (timetablePlaceBlockVO.getPlaceName() != null) {
             timetablePlaceBlock.changePlaceName(timetablePlaceBlockVO.getPlaceName());
         }
