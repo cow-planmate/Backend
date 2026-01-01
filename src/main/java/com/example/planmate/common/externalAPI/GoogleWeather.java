@@ -41,14 +41,25 @@ public class GoogleWeather {
             double lat = location.get("lat");
             double lng = location.get("lng");
 
-            // 2. Call Open-Meteo API (Global coverage, Free, No key required)
             LocalDate start = LocalDate.parse(startDateStr);
             LocalDate end = LocalDate.parse(endDateStr);
-            
-            String url = String.format(
-                "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weathercode,temperature_2m_max,temperature_2m_min,apparent_temperature_max&timezone=auto&start_date=%s&end_date=%s",
-                lat, lng, startDateStr, endDateStr
-            );
+            LocalDate today = LocalDate.now();
+            LocalDate forecastLimit = today.plusDays(15);
+
+            String url;
+            // 16일 이후의 날짜가 포함되어 있으면 과거 데이터(작년) API 사용
+            if (end.isAfter(forecastLimit)) {
+                url = String.format(
+                    "https://archive-api.open-meteo.com/v1/archive?latitude=%f&longitude=%f&daily=weathercode,temperature_2m_max,temperature_2m_min,apparent_temperature_max&timezone=auto&start_date=%s&end_date=%s",
+                    lat, lng, start.minusYears(1).toString(), end.minusYears(1).toString()
+                );
+            } else {
+                // 16일 이내면 실시간 예보 API 사용
+                url = String.format(
+                    "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weathercode,temperature_2m_max,temperature_2m_min,apparent_temperature_max&timezone=auto&start_date=%s&end_date=%s",
+                    lat, lng, startDateStr, endDateStr
+                );
+            }
 
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
             if (!response.getStatusCode().is2xxSuccessful()) {
@@ -67,14 +78,17 @@ public class GoogleWeather {
             List<SimpleWeatherInfo> weatherList = new ArrayList<>();
 
             for (int i = 0; i < timeArr.size(); i++) {
-                String dateStr = timeArr.get(i).asText();
+                // 결과 데이터의 날짜를 요청한 날짜(올해)로 매핑
+                LocalDate resultDate = LocalDate.parse(timeArr.get(i).asText());
+                String displayDate = end.isAfter(forecastLimit) ? resultDate.plusYears(1).toString() : resultDate.toString();
+                
                 int code = weatherCodeArr.get(i).asInt();
                 double maxTemp = tempMaxArr.get(i).asDouble();
                 double minTemp = tempMinArr.get(i).asDouble();
                 double feelsLike = feelsLikeArr.get(i).asDouble();
 
                 weatherList.add(SimpleWeatherInfo.builder()
-                        .date(dateStr)
+                        .date(displayDate)
                         .description(getWeatherDescription(code))
                         .temp_min(Math.round(minTemp))
                         .temp_max(Math.round(maxTemp))
