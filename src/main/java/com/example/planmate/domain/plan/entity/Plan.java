@@ -7,6 +7,9 @@ import com.example.planmate.domain.collaborationRequest.entity.CollaborationRequ
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.user.entity.User;
+import com.sharedsync.shared.annotation.CacheEntity;
+import com.sharedsync.shared.annotation.CacheId;
+import com.sharedsync.shared.presence.annotation.PresenceRoot;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -33,10 +36,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+@CacheEntity
+@PresenceRoot(channel = "plan-presence", idField = "planId")
 public class Plan {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @CacheId
     private Integer planId;
 
     @Column(nullable = false)

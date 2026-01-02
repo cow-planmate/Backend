@@ -15,12 +15,17 @@ java {
 
 repositories {
     mavenCentral()
+    mavenLocal()
     maven {
         url "https://repo.luciad.com/maven2"
     }
 }
 
 dependencies {
+    // SharedSync Framework
+    implementation "com.sharedsync:sharedsync-starter:1.1.27"
+    annotationProcessor "com.sharedsync:sharedsync-autoconfigure:1.1.27"
+
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

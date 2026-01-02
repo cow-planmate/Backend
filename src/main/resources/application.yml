@@ -36,6 +36,20 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+sharedsync:
+  websocket:
+    endpoint: "/ws"
+    allowed-origins:
+      - "http://localhost:5173"
+      - "https://planmate.site"
+  presence:
+    enabled: true
+  auth:
+    enabled: true
+  cache:
+    type: redis
+  
+
 logging:
   level:
     org.springframework: WARN

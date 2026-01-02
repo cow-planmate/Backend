@@ -12,6 +12,7 @@ import com.example.planmate.domain.webSocket.auth.JwtHandshakeInterceptor;
 
 import lombok.RequiredArgsConstructor;
 
+/*
 @Configuration
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor
@@ -42,3 +43,4 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     }
 
 }
+*/

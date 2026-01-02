@@ -1,11 +1,28 @@
 package com.example.planmate.domain.plan.entity;
 
+import java.time.LocalTime;
+
 import com.example.planmate.domain.image.entity.PlacePhoto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.*;
-import lombok.*;
+import com.sharedsync.shared.annotation.CacheEntity;
+import com.sharedsync.shared.annotation.CacheId;
+import com.sharedsync.shared.annotation.ParentId;
 
-import java.time.LocalTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
@@ -17,10 +34,12 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
+@CacheEntity
 public class TimeTablePlaceBlock {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @CacheId
     private Integer blockId;
 
     @Column(nullable = false)
@@ -56,6 +75,7 @@ public class TimeTablePlaceBlock {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "time_table_id", nullable = false)
+    @ParentId(TimeTable.class)
     private TimeTable timeTable;
 
     @ManyToOne(fetch = FetchType.EAGER)

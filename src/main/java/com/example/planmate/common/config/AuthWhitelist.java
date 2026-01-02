@@ -15,6 +15,7 @@ public class AuthWhitelist {
             "/api/travel",
             "/api/departure",
             "/ws-plan/**",
+            "/ws/**",
             "/api/auth/token",
             "/api/plan/tour",
             "/api/plan/restaurant",

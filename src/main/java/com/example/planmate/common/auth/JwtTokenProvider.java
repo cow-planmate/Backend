@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
 import com.example.planmate.domain.refreshToken.service.RefreshTokenStore;
+import com.sharedsync.shared.auth.AuthenticationTokenResolver;
 
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -19,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-public class JwtTokenProvider {
+public class JwtTokenProvider implements AuthenticationTokenResolver{
 
     private Key accessKey;
     private Key refreshKey;
@@ -112,6 +113,16 @@ public class JwtTokenProvider {
             return false;
         }
     }
+
+	@Override
+	public boolean validate(String token) {
+		return validateToken(token);
+	}
+
+	@Override
+	public String extractPrincipalId(String token) {
+		return getSubject(token);
+	}
 
 
 }
