@@ -6,11 +6,18 @@ import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
 import com.example.planmate.domain.chatbot.dto.ChatBotRequest;
 import com.example.planmate.domain.chatbot.dto.ChatBotResponse;
 import com.example.planmate.domain.chatbot.service.ChatBotService;
-import com.example.planmate.domain.webSocket.dto.WPlanRequest;
-import com.example.planmate.domain.webSocket.dto.WPlanResponse;
-import com.example.planmate.domain.webSocket.dto.WTimeTablePlaceBlockRequest;
-import com.example.planmate.domain.webSocket.dto.WTimetableRequest;
-import com.example.planmate.domain.webSocket.service.WebSocketPlanService;
+import sharedsync.wsdto.WPlanRequest;
+import sharedsync.wsdto.WPlanResponse;
+import sharedsync.wsdto.WTimeTablePlaceBlockRequest;
+import sharedsync.wsdto.WTimeTablePlaceBlockResponse;
+import sharedsync.wsdto.WTimeTableRequest;
+import sharedsync.wsdto.WTimeTableResponse;
+import sharedsync.service.SharedPlanService;
+import sharedsync.service.SharedTimeTableService;
+import sharedsync.service.SharedTimeTablePlaceBlockService;
+import sharedsync.dto.TimeTableDto;
+import sharedsync.dto.TimeTablePlaceBlockDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -32,8 +39,11 @@ import java.util.Map;
 public class ChatBotController {
     
     private final ChatBotService chatBotService;
-    private final WebSocketPlanService webSocketPlanService;
+    private final SharedPlanService sharedPlanService;
+    private final SharedTimeTableService sharedTimeTableService;
+    private final SharedTimeTablePlaceBlockService sharedTimeTablePlaceBlockService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ObjectMapper objectMapper;
     
     @PostMapping("/chat")
     public ResponseEntity<ChatBotResponse> chat(@RequestBody ChatBotRequest request) {
@@ -111,7 +121,7 @@ public class ChatBotController {
             }
 
             if ("update".equals(actionType)) {
-                WPlanResponse response = webSocketPlanService.updatePlan(planId, request);
+                WPlanResponse response = sharedPlanService.update(request);
 
                 messagingTemplate.convertAndSend(
                     "/topic/plan/" + planId + "/update/plan",
@@ -127,30 +137,30 @@ public class ChatBotController {
 
         // TimeTable 액션 처리 (create, update, delete)
         if ("timeTable".equals(targetName)) {
-            if (!(action.getTarget() instanceof WTimetableRequest request)) {
-                log.warn("Expected WTimetableRequest target for timetable action but received: {}",
+            if (!(action.getTarget() instanceof WTimeTableRequest request)) {
+                log.warn("Expected WTimeTableRequest target for timetable action but received: {}",
                     action.getTarget() != null ? action.getTarget().getClass().getName() : "null");
                 return;
             }
 
             List<Integer> placeholderIds = new ArrayList<>();
-            if (request.getTimetableVOs() != null) {
-                for (TimetableVO vo : request.getTimetableVOs()) {
-                    if (vo != null && vo.getTimetableId() != null && vo.getTimetableId() < 0) {
-                        placeholderIds.add(vo.getTimetableId());
+            if (request.getTimeTableDtos() != null) {
+                for (TimeTableDto dto : request.getTimeTableDtos()) {
+                    if (dto != null && dto.getTimeTableId() != null && dto.getTimeTableId() < 0) {
+                        placeholderIds.add(dto.getTimeTableId());
                     }
                 }
             }
 
             switch (actionType) {
                 case "create":
-                    var createResponse = webSocketPlanService.createTimetable(planId, request);
+                    var createResponse = sharedTimeTableService.create(request);
 
-                    if (!placeholderIds.isEmpty() && createResponse.getTimetableVOs() != null) {
-                        List<TimetableVO> createdVOs = createResponse.getTimetableVOs();
-                        for (int i = 0; i < Math.min(placeholderIds.size(), createdVOs.size()); i++) {
+                    if (!placeholderIds.isEmpty() && createResponse.getTimeTableDtos() != null) {
+                        List<TimeTableDto> createdDtos = createResponse.getTimeTableDtos();
+                        for (int i = 0; i < Math.min(placeholderIds.size(), createdDtos.size()); i++) {
                             Integer placeholderId = placeholderIds.get(i);
-                            Integer realId = createdVOs.get(i).getTimetableId();
+                            Integer realId = createdDtos.get(i).getTimeTableId();
                             if (placeholderId != null && realId != null) {
                                 tempTimetableIdMap.put(placeholderId, realId);
                             }
@@ -165,7 +175,7 @@ public class ChatBotController {
                     break;
 
                 case "update":
-                    var updateResponse = webSocketPlanService.updateTimetable(planId, request);
+                    var updateResponse = sharedTimeTableService.update(request);
                     messagingTemplate.convertAndSend(
                         "/topic/plan/" + planId + "/update/timetable",
                         updateResponse
@@ -174,7 +184,7 @@ public class ChatBotController {
                     break;
 
                 case "delete":
-                    var deleteResponse = webSocketPlanService.deleteTimetable(planId, request);
+                    var deleteResponse = sharedTimeTableService.delete(request);
                     messagingTemplate.convertAndSend(
                         "/topic/plan/" + planId + "/delete/timetable",
                         deleteResponse
@@ -196,17 +206,29 @@ public class ChatBotController {
                 return;
             }
 
-            TimetablePlaceBlockVO timetablePlaceBlockVO = request.getTimetablePlaceBlockVO();
-            if (timetablePlaceBlockVO != null && timetablePlaceBlockVO.getTimetableId() != 0) {
-                Integer mappedId = tempTimetableIdMap.get(timetablePlaceBlockVO.getTimetableId());
-                if (mappedId != null) {
-                    timetablePlaceBlockVO.setTimetableId(mappedId);
+            if (request.getTimeTablePlaceBlockDtos() != null) {
+                for (TimeTablePlaceBlockDto dto : request.getTimeTablePlaceBlockDtos()) {
+                    Map<String, Object> dtoMap = objectMapper.convertValue(dto, Map.class);
+                    Integer ttId = (Integer) dtoMap.get("timeTableId");
+                    if (dto != null && ttId != null && ttId != 0) {
+                        Integer mappedId = tempTimetableIdMap.get(ttId);
+                        if (mappedId != null) {
+                            // Use reflection to set timeTableId since there's no setter
+                            try {
+                                java.lang.reflect.Field field = TimeTablePlaceBlockDto.class.getDeclaredField("timeTableId");
+                                field.setAccessible(true);
+                                field.set(dto, mappedId);
+                            } catch (Exception e) {
+                                log.error("Failed to set timeTableId via reflection", e);
+                            }
+                        }
+                    }
                 }
             }
 
             switch (actionType) {
                 case "create":
-                    var createResponse = webSocketPlanService.createTimetablePlaceBlock(request);
+                    var createResponse = sharedTimeTablePlaceBlockService.create(request);
                     messagingTemplate.convertAndSend(
                         "/topic/plan/" + planId + "/create/timetableplaceblock",
                         createResponse
@@ -215,7 +237,7 @@ public class ChatBotController {
                     break;
 
                 case "update":
-                    var updateResponse = webSocketPlanService.updateTimetablePlaceBlock(request);
+                    var updateResponse = sharedTimeTablePlaceBlockService.update(request);
                     messagingTemplate.convertAndSend(
                         "/topic/plan/" + planId + "/update/timetableplaceblock",
                         updateResponse
@@ -224,7 +246,7 @@ public class ChatBotController {
                     break;
 
                 case "delete":
-                    var deleteResponse = webSocketPlanService.deleteTimetablePlaceBlock(request);
+                    var deleteResponse = sharedTimeTablePlaceBlockService.delete(request);
                     messagingTemplate.convertAndSend(
                         "/topic/plan/" + planId + "/delete/timetableplaceblock",
                         deleteResponse

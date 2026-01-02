@@ -48,7 +48,6 @@ import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.travel.repository.TravelRepository;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
-import com.example.planmate.domain.webSocket.service.RedisService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -65,9 +64,7 @@ public class PlanService {
     private final PlaceCategoryRepository placeCategoryRepository;
     private final PlanEditorRepository planEditorRepository;
     private final PlanShareRepository planShareRepository;
-    private final RedisService redisService;
     private final PlacePhotoRepository placePhotoRepository;
-    private final com.example.planmate.domain.webSocket.service.PresenceTrackingService presenceTrackingService;
 
 
     public MakePlanResponse makeService(int userId, String departure, int travelId, int transportationCategoryId, List<LocalDate> dates, int adultCount, int childCount) {
@@ -123,22 +120,14 @@ public class PlanService {
 
     public GetPlanResponse getPlan(int userId, int planId) {
         GetPlanResponse response = new GetPlanResponse();
-        Plan plan = redisService.findPlanByPlanId(planId);
-        List<TimeTable> timeTables;
+        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+        List<TimeTable> timeTables = timeTableRepository.findByPlanPlanId(planId);
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
-        if(plan != null) {
-            timeTables = redisService.findTimeTablesByPlanId(planId);
-            for(TimeTable timeTable : timeTables) {
-                timeTablePlaceBlocks.add(redisService.findTimeTablePlaceBlocksByTimeTableId(timeTable.getTimeTableId()));
-            }
+        
+        for (TimeTable timeTable : timeTables) {
+            timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
         }
-        else {
-            plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-            timeTables = timeTableRepository.findByPlanPlanId(planId);
-            for (TimeTable timeTable : timeTables) {
-                timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
-            }
-        }
+        
         // 날짜 순으로 타임테이블 정렬
         timeTables.sort(Comparator.comparing(TimeTable::getDate));
 
@@ -178,7 +167,7 @@ public class PlanService {
                 }
             }
         }
-    response.setUserDayIndexes(presenceTrackingService.getPlanTracker(planId));
+        // response.setUserDayIndexes(presenceTrackingService.getPlanTracker(planId));
         return response; // DTO 변환
     }
 
@@ -326,22 +315,14 @@ public class PlanService {
     public GetCompletePlanResponse getCompletePlan(int planId) {
         GetCompletePlanResponse response = new GetCompletePlanResponse();
 
-        Plan plan = redisService.findPlanByPlanId(planId);
-        List<TimeTable> timeTables;
+        Plan plan = planRepository.findById(planId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
+        List<TimeTable> timeTables = timeTableRepository.findByPlanPlanId(planId);
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
-        if(plan != null) {
-            timeTables = redisService.findTimeTablesByPlanId(planId);
-            for(TimeTable timeTable : timeTables) {
-                timeTablePlaceBlocks.add(redisService.findTimeTablePlaceBlocksByTimeTableId(timeTable.getTimeTableId()));
-            }
+        
+        for (TimeTable timeTable : timeTables) {
+            timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
         }
-        else {
-            plan = planRepository.findById(planId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
-            timeTables = timeTableRepository.findByPlanPlanId(planId);
-            for (TimeTable timeTable : timeTables) {
-                timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
-            }
-        }
+        
         response.addPlanFrame(
                 planId,
                 plan.getPlanName(),

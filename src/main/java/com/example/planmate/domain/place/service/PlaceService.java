@@ -19,7 +19,6 @@ import com.example.planmate.domain.plan.auth.PlanAccessValidator;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.user.entity.PreferredTheme;
 import com.example.planmate.domain.user.repository.UserRepository;
-import com.example.planmate.domain.webSocket.service.RedisService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,7 +30,6 @@ public class PlaceService {
     private final UserRepository userRepository;
     private final GoogleMap googleMap;
     private final GooglePlaceDetails googlePlaceDetails;
-    private final RedisService redisService;
 
     @FunctionalInterface
     private interface ThrowingBiFunction<T, U, R> {
@@ -56,16 +54,11 @@ public class PlaceService {
                                                  ThrowingBiFunction<String, List<String>, Pair> googleMapFn) throws IOException {
         PlaceResponse response = new PlaceResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-        Plan cachePlan = redisService.findPlanByPlanId(planId);
 
-        String travelCategoryName = (cachePlan != null)
-            ? cachePlan.getTravel().getTravelCategory().getTravelCategoryName()
-            : plan.getTravel().getTravelCategory().getTravelCategoryName();
+        String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
 
         // preserve original behavior where travelName included category (keeps semantics identical)
-        String travelName = (cachePlan != null)
-            ? travelCategoryName + " " + cachePlan.getTravel().getTravelName()
-            : travelCategoryName + " " + plan.getTravel().getTravelName();
+        String travelName = travelCategoryName + " " + plan.getTravel().getTravelName();
 
         List<PreferredTheme> preferredThemes = userRepository.findById(userId).get().getPreferredThemes();
         preferredThemes.removeIf(preferredTheme -> preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryId() != preferredThemeCategoryId);

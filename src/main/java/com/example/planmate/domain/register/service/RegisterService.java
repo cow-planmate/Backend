@@ -8,7 +8,6 @@ import com.example.planmate.domain.register.dto.RegisterRequest;
 import com.example.planmate.domain.register.dto.RegisterResponse;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
-import com.example.planmate.domain.webSocket.service.PresenceTrackingService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,7 +17,6 @@ public class RegisterService{
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final PresenceTrackingService presenceTrackingService;
 
     public RegisterResponse register(String email, RegisterRequest request) {
         RegisterResponse response = new RegisterResponse();
@@ -42,7 +40,6 @@ public class RegisterService{
 
 
         userRepository.save(user);
-        presenceTrackingService.insertNickname(user.getUserId(), user.getNickname());
         response.setMessage("User registered successfully");
         response.setUserId(user.getUserId());
         return response;

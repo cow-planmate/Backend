@@ -4,7 +4,7 @@ import com.example.planmate.common.dto.CommonResponse;
 import com.example.planmate.common.valueObject.PlaceBlockVO;
 import com.example.planmate.common.valueObject.PlanFrameVO;
 import com.example.planmate.common.valueObject.TimetableVO;
-import com.example.planmate.domain.webSocket.valueObject.UserDayIndexVO;
+// import com.example.planmate.domain.webSocket.valueObject.UserDayIndexVO;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,7 +18,7 @@ public class GetPlanResponse extends CommonResponse {
     private PlanFrameVO planFrame;
     private List<PlaceBlockVO> placeBlocks;
     private List<TimetableVO> timetables;
-    private List<UserDayIndexVO> userDayIndexes;
+    // private List<UserDayIndexVO> userDayIndexes;
     public GetPlanResponse() {
         placeBlocks = new ArrayList<>();
         timetables = new ArrayList<>();

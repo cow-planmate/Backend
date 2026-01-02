@@ -1,10 +1,16 @@
 package com.example.planmate.domain.chatbot.service;
 
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
-import com.example.planmate.domain.webSocket.lazydto.PlanDto;
-import com.example.planmate.domain.webSocket.lazydto.TimeTableDto;
-import com.example.planmate.domain.webSocket.lazydto.TimeTablePlaceBlockDto;
-import com.example.planmate.domain.webSocket.service.RedisService;
+import sharedsync.dto.PlanDto;
+import sharedsync.dto.TimeTableDto;
+import sharedsync.dto.TimeTablePlaceBlockDto;
+import sharedsync.cache.PlanCache;
+import sharedsync.cache.TimeTableCache;
+import sharedsync.cache.TimeTablePlaceBlockCache;
+import com.example.planmate.domain.plan.entity.Plan;
+import com.example.planmate.domain.plan.entity.TimeTable;
+import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
+import sharedsync.wsdto.WTimeTableRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -21,6 +27,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -29,7 +36,9 @@ public class ChatBotService {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final ChatBotPlanService chatBotPlanService;
-    private final RedisService redisService;
+    private final PlanCache planCache;
+    private final TimeTableCache timeTableCache;
+    private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
 
     @Value("${python.chatbot.api.url:http://localhost:8010/api/chatbot/generate}")
     private String pythonApiUrl;
@@ -93,7 +102,7 @@ public class ChatBotService {
         // 날짜 → timeTableId 매핑용 Map
         java.util.Map<String, Integer> dateToTimeTableIdMap = new java.util.HashMap<>();
 
-        // 1단계: timeTable 생성 액션 먼저 실행 (Redis에 직접 저장)
+        // 1단계: timeTable 생성 액션 먼저 실행 (Cache에 직접 저장)
         for (ChatBotActionResponse.ActionData actionData : actions) {
             if ("timeTable".equals(actionData.getTargetName()) && "create".equals(actionData.getAction())) {
                 try {
@@ -117,19 +126,18 @@ public class ChatBotService {
                     java.time.LocalTime startTime = java.time.LocalTime.of(9, 0);
                     java.time.LocalTime endTime = java.time.LocalTime.of(20, 0);
 
-                    // Plan 조회
-                    var plan = redisService.findPlanByPlanId(planId);
+                    // TimeTableDto 생성 및 저장
+                    TimeTableDto timeTableDto = new TimeTableDto(
+                        null, // timeTableId (auto-generated)
+                        date,
+                        startTime,
+                        endTime,
+                        planId,
+                        new ArrayList<>() // placeBlocksIds
+                    );
 
-                    // TimeTable 엔티티 생성
-                    var timeTable = com.example.planmate.domain.plan.entity.TimeTable.builder()
-                        .plan(plan)
-                        .date(date)
-                        .timeTableStartTime(startTime)
-                        .timeTableEndTime(endTime)
-                        .build();
-
-                    // Redis에 직접 저장
-                    int createdId = redisService.getNewTimeTableId(timeTable);
+                    TimeTableDto savedDto = timeTableCache.save(timeTableDto);
+                    int createdId = savedDto.getTimeTableId();
 
                     log.info("Created TimeTable with ID {} for date {}", createdId, date);
 
@@ -137,14 +145,8 @@ public class ChatBotService {
                     dateToTimeTableIdMap.put(dateStr, createdId);
 
                     // 응답용 액션 데이터 생성
-                    var responseVO = new com.example.planmate.common.valueObject.TimetableVO();
-                    responseVO.setTimetableId(createdId);
-                    responseVO.setDate(date);
-                    responseVO.setStartTime(startTime);
-                    responseVO.setEndTime(endTime);
-
-                    var request = new com.example.planmate.domain.webSocket.dto.WTimetableRequest();
-                    request.setTimetableVOs(java.util.List.of(responseVO));
+                    WTimeTableRequest request = new WTimeTableRequest();
+                    request.setTimeTableDtos(java.util.List.of(savedDto));
 
                     var responseAction = new ChatBotActionResponse.ActionData("create", "timeTable", request);
                     aggregatedActions.add(responseAction);
@@ -275,30 +277,35 @@ public class ChatBotService {
     }
 
     private String buildSystemPromptContext(Integer planId) throws JsonProcessingException {
-        PlanDto planDto = PlanDto.fromEntity(redisService.findPlanByPlanId(planId));
-        List<TimeTableDto> timeTables = redisService.findTimeTablesByPlanId(planId)
+        Plan plan = planCache.findById(planId).orElseThrow(() -> new RuntimeException("Plan not found: " + planId));
+        PlanDto planDto = PlanDto.fromEntity(plan);
+        
+        List<TimeTableDto> timeTables = timeTableCache.findByParentId(planId)
             .stream()
             .map(TimeTableDto::fromEntity)
             .collect(Collectors.toCollection(ArrayList::new));
-
-        // 날짜 순으로 정렬 (오름차순)
-        timeTables.sort(Comparator.comparing(TimeTableDto::date));
-
-
-
-        List<TimeTablePlaceBlockDto> timeTablePlaceBlocks = new ArrayList<>();
-        for (TimeTableDto timeTable : timeTables) {
-            List<TimeTablePlaceBlockDto> blocks = redisService.findTimeTablePlaceBlocksByTimeTableId(timeTable.timeTableId())
-                    .stream()
-                    .map(TimeTablePlaceBlockDto::fromEntity)
-                    .toList();
-            timeTablePlaceBlocks.addAll(blocks);
-        }
 
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+
+        // 날짜 순으로 정렬 (오름차순)
+        timeTables.sort(Comparator.comparing(tt -> {
+            Map<String, Object> m = objectMapper.convertValue(tt, Map.class);
+            return (Integer) m.get("timeTableId");
+        }));
+
+        List<TimeTablePlaceBlockDto> timeTablePlaceBlocks = new ArrayList<>();
+        for (TimeTableDto timeTable : timeTables) {
+            Map<String, Object> ttMap = objectMapper.convertValue(timeTable, Map.class);
+            Integer ttId = (Integer) ttMap.get("timeTableId");
+            List<TimeTablePlaceBlockDto> blocks = timeTablePlaceBlockCache.findByParentId(ttId)
+                    .stream()
+                    .map(TimeTablePlaceBlockDto::fromEntity)
+                    .toList();
+            timeTablePlaceBlocks.addAll(blocks);
+        }
 
         String planJson = objectMapper.writeValueAsString(planDto);
         String timeTablesJson = objectMapper.writeValueAsString(timeTables);
@@ -308,8 +315,9 @@ public class ChatBotService {
         StringBuilder dayMapping = new StringBuilder();
         for (int i = 0; i < timeTables.size(); i++) {
             TimeTableDto tt = timeTables.get(i);
+            Map<String, Object> ttMap = objectMapper.convertValue(tt, Map.class);
             dayMapping.append(String.format("%d일차: timeTableId=%d (date=%s)\n",
-                i + 1, tt.timeTableId(), tt.date()));
+                i + 1, ttMap.get("timeTableId"), ttMap.get("date")));
         }
         String dayMappingStr = dayMapping.toString();
 
@@ -455,33 +463,42 @@ public class ChatBotService {
 
     private Map<String, Object> buildPlanContextMap(Integer planId) {
         try {
-            PlanDto planDto = PlanDto.fromEntity(redisService.findPlanByPlanId(planId));
-                List<TimeTableDto> timeTables = redisService.findTimeTablesByPlanId(planId)
-                    .stream()
-                    .map(TimeTableDto::fromEntity)
-                    .collect(Collectors.toCollection(ArrayList::new));
-
-                // 날짜 순으로 정렬 (오름차순)
-                timeTables.sort(Comparator.comparing(TimeTableDto::date));
-
-            List<TimeTablePlaceBlockDto> timeTablePlaceBlocks = new ArrayList<>();
-            for (TimeTableDto timeTable : timeTables) {
-                List<TimeTablePlaceBlockDto> blocks = redisService.findTimeTablePlaceBlocksByTimeTableId(timeTable.timeTableId())
-                        .stream()
-                        .map(TimeTablePlaceBlockDto::fromEntity)
-                        .toList();
-                timeTablePlaceBlocks.addAll(blocks);
-            }
+            Plan plan = planCache.findById(planId).orElseThrow(() -> new RuntimeException("Plan not found: " + planId));
+            PlanDto planDto = PlanDto.fromEntity(plan);
+            
+            List<TimeTableDto> timeTables = timeTableCache.findByParentId(planId)
+                .stream()
+                .map(TimeTableDto::fromEntity)
+                .collect(Collectors.toCollection(ArrayList::new));
 
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.registerModule(new JavaTimeModule());
             objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
             objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
+            // 날짜 순으로 정렬 (오름차순)
+            timeTables.sort(Comparator.comparing(tt -> {
+                Map<String, Object> m = objectMapper.convertValue(tt, Map.class);
+                return (Integer) m.get("timeTableId");
+            }));
+
+            List<TimeTablePlaceBlockDto> timeTablePlaceBlocks = new ArrayList<>();
+            for (TimeTableDto timeTable : timeTables) {
+                Map<String, Object> ttMap = objectMapper.convertValue(timeTable, Map.class);
+                Integer ttId = (Integer) ttMap.get("timeTableId");
+                List<TimeTablePlaceBlockDto> blocks = timeTablePlaceBlockCache.findByParentId(ttId)
+                        .stream()
+                        .map(TimeTablePlaceBlockDto::fromEntity)
+                        .toList();
+                timeTablePlaceBlocks.addAll(blocks);
+            }
+
             // Map 형태로 반환
             Map<String, Object> contextMap = new java.util.HashMap<>();
-            contextMap.put("TravelName", planDto.planName() != null ? planDto.planName() : "");
-            contextMap.put("PlanId", planDto.planId());
+            Map<String, Object> planMap = objectMapper.convertValue(planDto, Map.class);
+            
+            contextMap.put("TravelName", planMap.get("planName") != null ? planMap.get("planName") : "");
+            contextMap.put("PlanId", planMap.get("planId"));
             contextMap.put("TimeTables", timeTables);
             contextMap.put("TimeTablePlaceBlocks", timeTablePlaceBlocks);
 
