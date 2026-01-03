@@ -32,7 +32,8 @@ public class AuthWhitelist {
             "/swagger-ui/index.html",
             // 챗봇 테스트용 임시 추가
             "/api/test/**",
-            "/api/chatbot/**"
+            "/api/chatbot/**",
+            "/api/beta/**"
     );
 
 
