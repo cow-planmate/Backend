@@ -61,6 +61,7 @@ public class LoginService {
             response.setRefreshToken(jwtTokenProvider.generateRefreshToken(userDetails.getUserId()));
             response.setUserId(userDetails.getUserId());
             response.setNickname(userDetails.getNickname());
+            response.setEmail(userDetails.getEmail());
             response.setMessage("Login successful");
             response.setLoginSuccess(true);
             return response;

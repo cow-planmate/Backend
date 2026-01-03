@@ -12,4 +12,5 @@ public class OAuthCompleteResponse {
     private String refreshToken;
     private Integer userId;
     private String nickname;
+    private String email;
 }
