@@ -23,7 +23,7 @@ public class AuthWhitelist {
             "/api/plan/nextPlace",
             "/logs/**",
             "/image/**",
-            "/api/oauth/**"
+            "/api/oauth/**",
             "/image/**",
             "/v3/api-docs/**",
             "/v3/api-docs",
