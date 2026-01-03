@@ -3,7 +3,7 @@ name: Deploy Docker Image
 on:
   push:
     branches:
-      - test
+      - main  # main 브랜치에 push될 때만 실행
 
 jobs:
   build-and-push:
@@ -33,5 +33,5 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t cycle123/planmate:test .
-          docker push cycle123/planmate:test
+          docker build -t cycle123/planmate:latest .
+          docker push cycle123/planmate:latest

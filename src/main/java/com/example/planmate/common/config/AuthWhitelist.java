@@ -23,7 +23,7 @@ public class AuthWhitelist {
             "/api/plan/nextPlace",
             "/logs/**",
             "/image/**",
-            "/api/oauth/**",
+            "/api/oauth/**"
             "/image/**",
             "/v3/api-docs/**",
             "/v3/api-docs",
@@ -32,8 +32,7 @@ public class AuthWhitelist {
             "/swagger-ui/index.html",
             // 챗봇 테스트용 임시 추가
             "/api/test/**",
-            "/api/chatbot/**",
-            "/api/beta/**"
+            "/api/chatbot/**"
     );
 
 
