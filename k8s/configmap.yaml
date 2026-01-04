@@ -7,5 +7,6 @@ data:
   SPRING_PROFILES_ACTIVE: "prod"
   REDIS_HOST: "redis-service"
   REDIS_PORT: "6379"
-  DB_URL: "jdbc:postgresql://postgres-service:5432/postgres"
+  DB_URL: "jdbc:p6spy:postgresql://postgres-service:5432/postgres"
   IMG_URL: "/app/images/googleplace/"
+  GOOGLE_GEMINI_API_URL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent"
