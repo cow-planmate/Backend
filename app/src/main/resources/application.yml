@@ -65,5 +65,7 @@ sharedsync:
       - "http://localhost:63771"
       - "https://planmate.site"
       - "https://www.planmate.site"
+    redis-sync:
+      enabled: true
 
 
