@@ -1,36 +1,36 @@
 package com.example.planmate.domain.chatbot.controller;
 
-import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
-import com.example.planmate.common.valueObject.TimetableVO;
-import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
-import com.example.planmate.domain.chatbot.dto.ChatBotRequest;
-import com.example.planmate.domain.chatbot.dto.ChatBotResponse;
-import com.example.planmate.domain.chatbot.service.ChatBotService;
-import sharedsync.wsdto.WPlanRequest;
-import sharedsync.wsdto.WPlanResponse;
-import sharedsync.wsdto.WTimeTablePlaceBlockRequest;
-import sharedsync.wsdto.WTimeTablePlaceBlockResponse;
-import sharedsync.wsdto.WTimeTableRequest;
-import sharedsync.wsdto.WTimeTableResponse;
-import sharedsync.service.SharedPlanService;
-import sharedsync.service.SharedTimeTableService;
-import sharedsync.service.SharedTimeTablePlaceBlockService;
-import sharedsync.dto.TimeTableDto;
-import sharedsync.dto.TimeTablePlaceBlockDto;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
+import com.example.planmate.domain.chatbot.dto.ChatBotRequest;
+import com.example.planmate.domain.chatbot.dto.ChatBotResponse;
+import com.example.planmate.domain.chatbot.service.ChatBotService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sharedsync.shared.sync.RedisSyncService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+
+import sharedsync.dto.TimeTableDto;
+import sharedsync.dto.TimeTablePlaceBlockDto;
+import sharedsync.service.SharedPlanService;
+import sharedsync.service.SharedTimeTablePlaceBlockService;
+import sharedsync.service.SharedTimeTableService;
+import sharedsync.wsdto.WPlanRequest;
+import sharedsync.wsdto.WPlanResponse;
+import sharedsync.wsdto.WTimeTablePlaceBlockRequest;
+import sharedsync.wsdto.WTimeTableRequest;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -42,7 +42,7 @@ public class ChatBotController {
     private final SharedPlanService sharedPlanService;
     private final SharedTimeTableService sharedTimeTableService;
     private final SharedTimeTablePlaceBlockService sharedTimeTablePlaceBlockService;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final RedisSyncService redisSyncService;
     private final ObjectMapper objectMapper;
     
     @PostMapping("/chat")
@@ -123,7 +123,7 @@ public class ChatBotController {
             if ("update".equals(actionType)) {
                 WPlanResponse response = sharedPlanService.update(request);
 
-                messagingTemplate.convertAndSend(
+                redisSyncService.publish(
                     "/topic/plan/" + planId + "/update/plan",
                     response
                 );
@@ -167,7 +167,7 @@ public class ChatBotController {
                         }
                     }
 
-                    messagingTemplate.convertAndSend(
+                    redisSyncService.publish(
                         "/topic/plan/" + planId + "/create/timetable",
                         createResponse
                     );
@@ -176,7 +176,7 @@ public class ChatBotController {
 
                 case "update":
                     var updateResponse = sharedTimeTableService.update(request);
-                    messagingTemplate.convertAndSend(
+                    redisSyncService.publish(
                         "/topic/plan/" + planId + "/update/timetable",
                         updateResponse
                     );
@@ -185,7 +185,7 @@ public class ChatBotController {
 
                 case "delete":
                     var deleteResponse = sharedTimeTableService.delete(request);
-                    messagingTemplate.convertAndSend(
+                    redisSyncService.publish(
                         "/topic/plan/" + planId + "/delete/timetable",
                         deleteResponse
                     );
@@ -229,7 +229,7 @@ public class ChatBotController {
             switch (actionType) {
                 case "create":
                     var createResponse = sharedTimeTablePlaceBlockService.create(request);
-                    messagingTemplate.convertAndSend(
+                    redisSyncService.publish(
                         "/topic/plan/" + planId + "/create/timetableplaceblock",
                         createResponse
                     );
@@ -238,7 +238,7 @@ public class ChatBotController {
 
                 case "update":
                     var updateResponse = sharedTimeTablePlaceBlockService.update(request);
-                    messagingTemplate.convertAndSend(
+                    redisSyncService.publish(
                         "/topic/plan/" + planId + "/update/timetableplaceblock",
                         updateResponse
                     );
@@ -247,7 +247,7 @@ public class ChatBotController {
 
                 case "delete":
                     var deleteResponse = sharedTimeTablePlaceBlockService.delete(request);
-                    messagingTemplate.convertAndSend(
+                    redisSyncService.publish(
                         "/topic/plan/" + planId + "/delete/timetableplaceblock",
                         deleteResponse
                     );

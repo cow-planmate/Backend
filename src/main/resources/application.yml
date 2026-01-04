@@ -42,6 +42,8 @@ sharedsync:
     allowed-origins:
       - "http://localhost:5173"
       - "https://planmate.site"
+    redis-sync:
+      enabled: true
   presence:
     enabled: true
   auth:
