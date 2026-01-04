@@ -39,6 +39,11 @@ spec:
             secretKeyRef:
               name: planmate-secret
               key: DB_PASSWORD
+        - name: SPRING_MAIL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: MAIL_USERNAME
         - name: SPRING_MAIL_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -54,16 +59,16 @@ spec:
             secretKeyRef:
               name: planmate-secret
               key: JWT_REFRESH_SECRET
-        - name: GOOGLE_API_KEY
+        - name: API_GOOGLE_KEY
           valueFrom:
             secretKeyRef:
               name: planmate-secret
-              key: GOOGLE_API_KEY
-        - name: GEMINI_API_KEY
+              key: API_GOOGLE_KEY
+        - name: GOOGLE_GEMINI_API_KEY
           valueFrom:
             secretKeyRef:
               name: planmate-secret
-              key: GEMINI_API_KEY
+              key: GOOGLE_GEMINI_API_KEY
         resources:
           requests:
             memory: "512Mi"
