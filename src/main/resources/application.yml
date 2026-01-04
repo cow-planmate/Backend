@@ -70,5 +70,16 @@ server:
       force: true
       charset: UTF-8
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+
 
 
