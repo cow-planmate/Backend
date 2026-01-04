@@ -23,6 +23,7 @@ spec:
       containers:
       - name: planmate-backend
         image: cycle123/planmate:latest # docker-compose에 있던 이미지명으로 수정
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         envFrom:
