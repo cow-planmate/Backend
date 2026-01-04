@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: planmate-backend-service
+  namespace: default
+spec:
+  selector:
+    app: planmate-backend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer # 또는 NodePort, Ingress 사용 시 ClusterIP

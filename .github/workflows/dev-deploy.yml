@@ -33,5 +33,17 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t cycle123/planmate:test .
-          docker push cycle123/planmate:test
+          docker build -t cycle123/planmate:test-${{ github.sha }} .
+          docker push cycle123/planmate:test-${{ github.sha }}
+
+      - name: Update Kubernetes resources
+        run: |
+          sed -i "s|image: cycle123/planmate:.*|image: cycle123/planmate:test-${{ github.sha }}|g" k8s/deployment.yaml
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add k8s/deployment.yaml
+          git commit -m "deploy: update dev image to ${{ github.sha }} [skip ci]"
+          git push

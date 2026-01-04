@@ -43,3 +43,4 @@ out/
 **/application-secret.yml
 # 이미지
 *.webp
+k8s/secret.yaml

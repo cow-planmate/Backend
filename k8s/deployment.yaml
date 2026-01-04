@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: planmate-backend
+  namespace: default
+  labels:
+    app: planmate-backend
+spec:
+  replicas: 2 # 서버 이중화를 위해 2개 이상의 복제본 설정
+  selector:
+    matchLabels:
+      app: planmate-backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: planmate-backend
+    spec:
+      containers:
+      - name: planmate-backend
+        image: cycle123/planmate:latest # docker-compose에 있던 이미지명으로 수정
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: planmate-config
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://postgres-service:5432/planmate"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "postgres"
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: DB_PASSWORD
+        - name: SPRING_MAIL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: MAIL_PASSWORD
+        - name: JWT_ACCESS_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: JWT_ACCESS_SECRET
+        - name: JWT_REFRESH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: JWT_REFRESH_SECRET
+        - name: GOOGLE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: GOOGLE_API_KEY
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: GEMINI_API_KEY
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
