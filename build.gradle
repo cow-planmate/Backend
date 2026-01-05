@@ -52,6 +52,7 @@ dependencies {
     implementation 'com.sksamuel.scrimage:scrimage-webp:4.0.33'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-hibernate6'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'io.minio:minio:8.5.12'
 }
 
 tasks.named('test') {

@@ -79,6 +79,31 @@ spec:
             configMapKeyRef:
               name: planmate-config
               key: GOOGLE_GEMINI_API_URL
+        - name: STORAGE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: planmate-config
+              key: STORAGE_TYPE
+        - name: MINIO_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: planmate-config
+              key: MINIO_ENDPOINT
+        - name: MINIO_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: planmate-config
+              key: MINIO_BUCKET
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: MINIO_ACCESS_KEY
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: MINIO_SECRET_KEY
         resources:
           requests:
             memory: "512Mi"
@@ -98,10 +123,3 @@ spec:
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 10
-        volumeMounts:
-        - name: image-storage
-          mountPath: /app/images/googleplace/
-      volumes:
-      - name: image-storage
-        persistentVolumeClaim:
-          claimName: image-pvc

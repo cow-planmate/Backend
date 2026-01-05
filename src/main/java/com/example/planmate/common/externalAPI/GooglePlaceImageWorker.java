@@ -1,7 +1,5 @@
 package com.example.planmate.common.externalAPI;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +17,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.example.planmate.domain.image.entity.PlacePhoto;
 import com.example.planmate.domain.image.repository.PlacePhotoRepository;
+import com.example.planmate.domain.image.service.ImageStorageInterface;
 import com.sksamuel.scrimage.ImmutableImage;
 import com.sksamuel.scrimage.webp.WebpWriter;
 
@@ -32,11 +31,9 @@ public class GooglePlaceImageWorker {
     @Value("${api.google.key}")
     private String googleApiKey;
 
-    @Value("${spring.img.url}")
-    private String imgUrl;
-
     private final RestTemplate restTemplate = new RestTemplate();
     private final PlacePhotoRepository placePhotoRepository;
+    private final ImageStorageInterface imageStorageService;
     private final java.util.Set<String> processingIds = ConcurrentHashMap.newKeySet();
 
     @SuppressWarnings("unchecked")
@@ -75,18 +72,12 @@ public class GooglePlaceImageWorker {
             byte[] webpBytes = image.bytes(new WebpWriter(6, 80, 4, false));
             if (webpBytes == null) return CompletableFuture.completedFuture(null);
 
-            String fileLocation = imgUrl + placeId + ".webp";
-            File outputFile = new File(fileLocation);
-            File parent = outputFile.getParentFile();
-            if (parent != null && !parent.exists()) {
-                parent.mkdirs();
-            }
-            try (FileOutputStream fos = new FileOutputStream(outputFile)) {
-                fos.write(webpBytes);
-            }
+            String objectName = placeId + ".webp";
+            String photoUrlResult = imageStorageService.uploadImage(objectName, webpBytes, "image/webp");
+
             PlacePhoto photo = PlacePhoto.builder()
                     .placeId(placeId)
-                    .photoUrl(fileLocation)
+                    .photoUrl(photoUrlResult)
                     .build();
             try {
                 photo = placePhotoRepository.save(photo);
