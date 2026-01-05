@@ -32,11 +32,6 @@ spec:
         env:
         - name: SPRING_DATASOURCE_URL
           value: "jdbc:p6spy:postgresql://postgres-service:5432/planmate"
-        - name: SPRING_IMG_URL
-          valueFrom:
-            configMapKeyRef:
-              name: planmate-config
-              key: IMG_URL
         - name: SPRING_DATASOURCE_USERNAME
           value: "postgres"
         - name: SPRING_DATASOURCE_PASSWORD
