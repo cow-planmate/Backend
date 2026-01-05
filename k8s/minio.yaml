@@ -58,6 +58,7 @@ metadata:
   name: minio-service
   namespace: default
 spec:
+  type: LoadBalancer
   selector:
     app: minio
   ports:
