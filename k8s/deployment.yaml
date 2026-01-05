@@ -49,6 +49,12 @@ spec:
             secretKeyRef:
               name: planmate-secret
               key: MAIL_PASSWORD
+        - name: ELASTIC_APM_SERVER_URLS
+          value: "http://apm-server-service:8200"
+        - name: ELASTIC_APM_SERVICE_NAME
+          value: "planmate-backend"
+        - name: ELASTIC_APM_ENVIRONMENT
+          value: "prod"
         - name: JWT_ACCESS_SECRET
           valueFrom:
             secretKeyRef:
