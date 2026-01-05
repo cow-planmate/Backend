@@ -98,3 +98,10 @@ spec:
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 10
+        volumeMounts:
+        - name: image-storage
+          mountPath: /app/images/googleplace/
+      volumes:
+      - name: image-storage
+        persistentVolumeClaim:
+          claimName: image-pvc
