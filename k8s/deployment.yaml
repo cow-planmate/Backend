@@ -6,7 +6,8 @@ metadata:
   labels:
     app: planmate-backend
 spec:
-  replicas: 2 # 서버 이중화를 위해 2개 이상의 복제본 설정
+  replicas: 2
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: planmate-backend
