@@ -14,9 +14,15 @@ spec:
     helm:
       parameters:
         - name: image.tag
-          value: "7.2.4"
+          value: "latest"
+        - name: image.digest
+          value: "sha256:7e3094cf9ffcad22a45e7684ac0df4d412325d720f017f8a761ed5fa3c338a99"
+
         - name: sentinel.image.tag
-          value: "7.2.4"
+          value: "latest"
+        - name: sentinel.image.digest
+          value: "sha256:7e3094cf9ffcad22a45e7684ac0df4d412325d720f017f8a761ed5fa3c338a99"
+
 
         - name: fullnameOverride
           value: "redis"
