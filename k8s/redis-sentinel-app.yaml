@@ -22,7 +22,7 @@ spec:
         - name: sentinel.masterSet
           value: "mymaster" # 백엔드 ConfigMap 설정과 일치
         - name: auth.password
-          value: "1234"
+          value: "redis1234"
         # 리소스 제한 (요청하신 부분)
         - name: master.resources.requests.cpu
           value: "50m"
