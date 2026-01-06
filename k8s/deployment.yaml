@@ -32,7 +32,7 @@ spec:
             name: planmate-config
         env:
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:p6spy:postgresql://postgres-service:5432/planmate"
+          value: "jdbc:p6spy:postgresql://planmate-db-rw:5432/planmate"
         - name: SPRING_DATASOURCE_USERNAME
           value: "postgres"
         - name: SPRING_DATASOURCE_PASSWORD

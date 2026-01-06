@@ -1,0 +1,31 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: planmate-db
+  namespace: default
+spec:
+  instances: 3
+  imageName: ghcr.io/cloudnative-pg/postgresql:15
+
+  # DB 초기화 설정
+  bootstrap:
+    initdb:
+      database: planmate
+      owner: postgres
+      secret:
+        name: planmate-db-user-password
+
+  # 저장소 설정 (로컬 환경에 맞춰서 1Gi로 설정)
+  storage:
+    size: 1Gi
+---
+# DB 비밀번호를 관리할 Secret (기존 secret.yaml과 별개로 CNPG 형식을 따름)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: planmate-db-user-password
+  namespace: default
+type: Opaque
+stringData:
+  password: "1234"
+  username: "postgres"
