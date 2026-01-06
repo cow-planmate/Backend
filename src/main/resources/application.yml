@@ -8,6 +8,9 @@ spring:
   main:
     web-application-type: servlet
 
+  jackson:
+    time-zone: Asia/Seoul
+
   datasource:
     url: jdbc:p6spy:postgresql://localhost:5432/postgres
     username: postgres
