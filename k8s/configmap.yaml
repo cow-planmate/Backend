@@ -7,6 +7,8 @@ data:
   SPRING_PROFILES_ACTIVE: "prod"
   SPRING_DATA_REDIS_SENTINEL_MASTER: "mymaster"
   SPRING_DATA_REDIS_SENTINEL_NODES: "redis:26379"
+  SPRING_DATA_REDIS_HOST: "redis"
+  SPRING_DATA_REDIS_PORT: "6379"
   DB_URL: "jdbc:p6spy:postgresql://planmate-db-rw:5432/planmate"
   STORAGE_TYPE: "minio"
   MINIO_ENDPOINT: "http://minio-service:9000"
