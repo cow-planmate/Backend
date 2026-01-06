@@ -13,11 +13,11 @@ spec:
     targetRevision: 20.2.1
     helm:
       parameters:
-        # --- [추가된 부분] 이미지 다운로드 에러 방지용 ---
+        # --- [수정된 부분] 확실히 존재하는 태그로 변경 ---
         - name: image.tag
-          value: "7.4"
+          value: "7.2.5-debian-12-r0"
         - name: sentinel.image.tag
-          value: "7.4"
+          value: "7.2.5-debian-12-r0"
         # ---------------------------------------------
         - name: fullnameOverride
           value: "redis"
@@ -28,10 +28,10 @@ spec:
         - name: sentinel.masterSet
           value: "mymaster"
         - name: auth.password
-          value: "redis1234"     # 문자열 처리 Good!
-        # 리소스 제한 (요청하신 부분)
+          value: "redis1234"
+        # 리소스 제한
         - name: master.resources.requests.cpu
-          value: "50m"           # 용량 축소 Good!
+          value: "50m"
         - name: master.resources.limits.cpu
           value: "200m"
         - name: replica.resources.requests.cpu
