@@ -13,12 +13,7 @@ spec:
     targetRevision: 20.2.1
     helm:
       parameters:
-        # --- [수정된 부분] 확실히 존재하는 태그로 변경 ---
-        - name: image.tag
-          value: "7.2.5-debian-12-r0"
-        - name: sentinel.image.tag
-          value: "7.2.5-debian-12-r0"
-        # ---------------------------------------------
+
         - name: fullnameOverride
           value: "redis"
         - name: architecture
