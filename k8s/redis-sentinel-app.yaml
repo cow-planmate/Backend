@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: redis-sentinel
+  namespace: argocd # Argo CD가 설치된 네임스페이스 (보통 argocd)
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    chart: redis
+    repoURL: https://charts.bitnami.com/bitnami
+    targetRevision: 20.x.x # 최신 버전 대역
+    helm:
+      parameters:
+        - name: architecture
+          value: replication
+        - name: sentinel.enabled
+          value: "true"
+        - name: auth.password
+          value: "1234"
+        # CPU 제한 설정 (아까 요청하신 부분)
+        - name: master.resources.requests.cpu
+          value: "100m"
+        - name: master.resources.limits.cpu
+          value: "200m"
+        - name: replica.resources.requests.cpu
+          value: "100m"
+        - name: replica.resources.limits.cpu
+          value: "200m"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default # Redis가 설치될 네임스페이스
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
