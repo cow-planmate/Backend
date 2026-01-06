@@ -10,22 +10,28 @@ spec:
   source:
     chart: redis
     repoURL: https://charts.bitnami.com/bitnami
-    targetRevision: 20.2.1 # 특정 버전으로 고정 (현재 최신 안정화)
+    targetRevision: 20.2.1
     helm:
       parameters:
+        # --- [추가된 부분] 이미지 다운로드 에러 방지용 ---
+        - name: image.tag
+          value: "7.4"
+        - name: sentinel.image.tag
+          value: "7.4"
+        # ---------------------------------------------
         - name: fullnameOverride
-          value: "redis" # 서비스 이름을 'redis'로 고정
+          value: "redis"
         - name: architecture
           value: replication
         - name: sentinel.enabled
           value: "true"
         - name: sentinel.masterSet
-          value: "mymaster" # 백엔드 ConfigMap 설정과 일치
+          value: "mymaster"
         - name: auth.password
-          value: "redis1234"
+          value: "redis1234"     # 문자열 처리 Good!
         # 리소스 제한 (요청하신 부분)
         - name: master.resources.requests.cpu
-          value: "50m"
+          value: "50m"           # 용량 축소 Good!
         - name: master.resources.limits.cpu
           value: "200m"
         - name: replica.resources.requests.cpu
