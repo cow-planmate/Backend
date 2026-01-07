@@ -16,9 +16,13 @@ spec:
             requests:
               storage: 500Mi
           storageClassName: local-path
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution: []
   image: minio/minio:RELEASE.2024-01-18T22-51-28Z
   credsSecret:
     name: minio-creds-secret
+  requestAutoCert: false
   mountPath: /export
 
 
