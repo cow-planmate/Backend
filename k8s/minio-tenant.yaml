@@ -1,4 +1,4 @@
-apiVersion: minio.min.io/v2
+apiVersion: minio.min.io/v1
 kind: Tenant
 metadata:
   name: planmate-minio
