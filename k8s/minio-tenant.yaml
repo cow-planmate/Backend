@@ -7,28 +7,24 @@ spec:
   image: minio/minio:RELEASE.2024-01-18T22-51-28Z
   imagePullPolicy: IfNotPresent
   
-  # 1. 시크릿 연결
-  credsSecret:
+  # ✅ [수정됨] credsSecret 대신 configuration 사용!
+  configuration:
     name: minio-creds-secret
 
   pools:
     - name: pool-0
-      servers: 4                # 서버 4개
-      volumesPerServer: 1       # 서버당 볼륨 1개
-      
-      # 2. [수정] 축약형 대신 정석대로 작성 (필수)
+      servers: 4
+      volumesPerServer: 1
       volumeClaimTemplate:
         metadata:
           name: data
         spec:
           accessModes:
             - ReadWriteOnce
-          storageClassName: local-path  # 확인된 SC 이름
+          storageClassName: local-path
           resources:
             requests:
               storage: 500Mi
-
-      # 3. 단일 노드 강제 실행 설정 (K3s 필수)
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution: []
