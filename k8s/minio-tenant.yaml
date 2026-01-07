@@ -1,0 +1,33 @@
+apiVersion: minio.min.io/v2
+kind: Tenant
+metadata:
+  name: planmate-minio
+  namespace: default
+spec:
+  image: minio/minio:RELEASE.2024-01-01T16-36-33Z
+  pools:
+    - servers: 4
+      volumesPerServer: 1
+      size: 500Mi
+      storageClassName: standard # 환경에 맞는 StorageClass 사용 (없으면 기본값 사용 시 에러날 수 있음)
+  
+  # 관리자 계정 설정 (기존 Secret 사용)
+  credsSecret:
+    name: minio-creds-secret
+
+  # 노출 설정
+  exposeServices:
+    minio: true
+    console: true
+
+---
+# MinIO 전용 자격 증명 Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-creds-secret
+  namespace: default
+type: Opaque
+stringData:
+  accesskey: "minioadmin"
+  secretkey: "minioadmin"

@@ -25,7 +25,7 @@ spec:
   # Live 상태와 맞추기 위해 redisConfig는 비워둡니다.
   redisConfig: {}
 
-  # 저장소 설정 (1Gi)
+  # 저장소 설정 (500Mi)
   storage:
     volumeClaimTemplate:
       spec:
@@ -33,4 +33,4 @@ spec:
           - ReadWriteOnce
         resources:
           requests:
-            storage: 1Gi
+            storage: 300Mi
