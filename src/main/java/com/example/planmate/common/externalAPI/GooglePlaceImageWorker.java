@@ -10,6 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -47,23 +50,28 @@ public class GooglePlaceImageWorker {
             if (existing.isPresent() && existing.get().getPhotoUrl() != null && !existing.get().getPhotoUrl().isEmpty()) {
                 return CompletableFuture.completedFuture(existing.get());
             }
-            String detailsUrl = "https://maps.googleapis.com/maps/api/place/details/json?placeid=" + placeId + "&fields=photos&key=" + googleApiKey;
+            
+            String detailsUrl = "https://places.googleapis.com/v1/places/" + placeId;
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Goog-Api-Key", googleApiKey);
+            headers.set("X-Goog-FieldMask", "photos");
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+
             ResponseEntity<Map<String, Object>> detailsResponse = restTemplate.exchange(
                     detailsUrl,
-                    org.springframework.http.HttpMethod.GET,
-                    null,
+                    HttpMethod.GET,
+                    entity,
                     new ParameterizedTypeReference<Map<String, Object>>() {}
             );
             Map<String, Object> body = detailsResponse.getBody();
             if (body == null) return CompletableFuture.completedFuture(null);
-            Map<String, Object> result = (Map<String, Object>) body.get("result");
-            if (result == null) return CompletableFuture.completedFuture(null);
-            List<Map<String, Object>> photos = (List<Map<String, Object>>) result.get("photos");
+            
+            List<Map<String, Object>> photos = (List<Map<String, Object>>) body.get("photos");
             if (photos == null || photos.isEmpty()) return CompletableFuture.completedFuture(null);
-            String photoReference = (String) photos.get(0).get("photo_reference");
-            if (photoReference == null) return CompletableFuture.completedFuture(null);
+            String photoName = (String) photos.get(0).get("name");
+            if (photoName == null) return CompletableFuture.completedFuture(null);
 
-            String photoUrl = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=" + photoReference + "&key=" + googleApiKey;
+            String photoUrl = "https://places.googleapis.com/v1/" + photoName + "/media?maxHeightPx=400&maxWidthPx=400&key=" + googleApiKey;
             ResponseEntity<byte[]> photoBytesResponse = restTemplate.getForEntity(photoUrl, byte[].class);
             byte[] imageBytes = photoBytesResponse.getBody();
             if (imageBytes == null || imageBytes.length == 0) return CompletableFuture.completedFuture(null);
