@@ -1,0 +1,33 @@
+apiVersion: redis.redis.opstreelabs.in/v1beta1
+kind: RedisReplication
+metadata:
+  name: planmate-redis
+  namespace: default
+spec:
+  # 인스턴스 개수 (Master 1 + Replica 2)
+  clusterSize: 3
+  
+  kubernetesConfig:
+    image: redis:7.2.4
+    imagePullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+  # 보안 설정 (기존 redis-sentinel-app.yaml의 비번 반영)
+  redisConfig:
+    password: redis1234
+
+  # 저장소 설정 (1Gi)
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
