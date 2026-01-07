@@ -10,6 +10,10 @@ spec:
   kubernetesConfig:
     image: redis:7.2.4
     imagePullPolicy: IfNotPresent
+    # 비밀번호를 직접 쓰지 않고 Secret에서 가져옵니다.
+    redisSecret:
+      name: planmate-secret
+      key: REDIS_PASSWORD
     resources:
       requests:
         cpu: 50m
@@ -18,9 +22,8 @@ spec:
         cpu: 200m
         memory: 256Mi
 
-  # 보안 설정 (기존 redis-sentinel-app.yaml의 비번 반영)
-  redisConfig:
-    password: redis1234
+  # Live 상태와 맞추기 위해 redisConfig는 비워둡니다.
+  redisConfig: {}
 
   # 저장소 설정 (1Gi)
   storage:
