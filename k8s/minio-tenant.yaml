@@ -20,14 +20,4 @@ spec:
     minio: true
     console: true
 
----
-# MinIO 전용 자격 증명 Secret
-apiVersion: v1
-kind: Secret
-metadata:
-  name: minio-creds-secret
-  namespace: default
-type: Opaque
-stringData:
-  accesskey: "minioadmin"
-  secretkey: "minioadmin"
+
