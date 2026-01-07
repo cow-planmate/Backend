@@ -5,10 +5,17 @@ metadata:
   namespace: default
 spec:
   pools:
-    - servers: 4
+    - name: pool-0
+      servers: 4
       volumesPerServer: 1
-      size: 500Mi
-      storageClassName: local-path
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 500Mi
+          storageClassName: local-path
   image: minio/minio:RELEASE.2024-01-18T22-51-28Z
   credsSecret:
     name: minio-creds-secret

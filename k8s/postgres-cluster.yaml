@@ -15,6 +15,6 @@ spec:
       secret:
         name: planmate-db-user-password
 
-  # 저장소 설정 (로컬 환경에 맞춰서 500Mi로 설정)
+  # 저장소 설정 (기존 1Gi 유지 - 축소 불가)
   storage:
-    size: 500Mi
+    size: 1Gi
