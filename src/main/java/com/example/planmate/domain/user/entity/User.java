@@ -33,7 +33,7 @@ import lombok.NoArgsConstructor;
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
     @AllArgsConstructor
     @Builder
-    @PresenceUser(idField = "userId", nameField = "nickname")
+    @PresenceUser(fields = {"nickname", "email"})
     public class User {
     
         @Id
