@@ -34,12 +34,15 @@ spec:
         - name: SPRING_DATASOURCE_URL
           value: "jdbc:p6spy:postgresql://planmate-db-rw:5432/planmate"
         - name: SPRING_DATASOURCE_USERNAME
-          value: "postgres"
+          valueFrom:
+            secretKeyRef:
+              name: planmate-db-user-password
+              key: username
         - name: SPRING_DATASOURCE_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: planmate-secret
-              key: DB_PASSWORD
+              name: planmate-db-user-password
+              key: password
         - name: SPRING_MAIL_USERNAME
           valueFrom:
             secretKeyRef:
