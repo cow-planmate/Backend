@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @ConditionalOnProperty(name = "storage.type", havingValue = "local", matchIfMissing = true)
 public class LocalStorageService implements ImageStorageInterface {
 
-    @Value("${spring.img.url:images/googleplace/}")
+    @Value("${spring.img.url:images/}")
     private String imgUrl;
 
     @Override
