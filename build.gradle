@@ -24,8 +24,8 @@ repositories {
 
 dependencies {
     // SharedSync Framework
-    implementation "com.sharedsync:sharedsync-starter:23b48ccf2e"
-    annotationProcessor "com.sharedsync:sharedsync-autoconfigure:23b48ccf2e"
+    implementation "com.github.cow-planmate.sharedsync:sharedsync-starter:23b48ccf2e"
+    annotationProcessor "com.github.cow-planmate.sharedsync:sharedsync-autoconfigure:23b48ccf2e"
 
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -36,6 +36,8 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     implementation 'org.postgresql:postgresql:42.7.3'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'

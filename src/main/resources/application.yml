@@ -25,6 +25,10 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
   mail:
     host: smtps.hiworks.com
     port: 465
