@@ -80,7 +80,7 @@ public class GooglePlaceImageWorker {
             byte[] webpBytes = image.bytes(new WebpWriter(6, 80, 4, false));
             if (webpBytes == null) return CompletableFuture.completedFuture(null);
 
-            String objectName = "googlePlace/" + placeId + ".webp";
+            String objectName = "googleplace/" + placeId + ".webp";
             String photoUrlResult = imageStorageService.uploadImage(objectName, webpBytes, "image/webp");
 
             PlacePhoto photo = PlacePhoto.builder()
