@@ -9,10 +9,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - pmserver1.salakis.online
+    - pmserver1.salmakis.online
     secretName: planmate-backend-tls
   rules:
-  - host: pmserver1.salakis.online
+  - host: pmserver1.salmakis.online
     http:
       paths:
       - path: /
