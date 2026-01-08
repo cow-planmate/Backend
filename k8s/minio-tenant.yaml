@@ -32,12 +32,10 @@ spec:
   mountPath: /export
   requestAutoCert: false
 
-  # ✅ Console(관리자 화면)을 LoadBalancer로 설정하여 외부 접속 허용
-  console:
-    service:
-      type: LoadBalancer
+  # ✅ 오퍼레이터가 인식할 수 있는 올바른 서비스 노출 방식
+  exposeServices:
+    console: true
+    minio: true
 
-  # ✅ MinIO API(9000 포트)도 외부 접속이 필요하다면 LoadBalancer로 설정 가능
-  # exposeServices:
-  #   minio:
-  #     type: LoadBalancer
+  # 서비스 타입 변경은 아래 주석처리된 부분을 활용하거나 별도의 Service 리소스로 관리해야 합니다.
+  # 현재는 CPU 부하를 방지하기 위해 기본값(ClusterIP)으로 원복합니다.
