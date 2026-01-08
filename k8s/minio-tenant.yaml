@@ -1,7 +1,7 @@
 apiVersion: minio.min.io/v2
 kind: Tenant
 metadata:
-  name: planmate-minio
+  name: minio
   namespace: default
 spec:
   image: minio/minio:RELEASE.2024-01-18T22-51-28Z
