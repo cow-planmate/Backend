@@ -10,6 +10,7 @@ import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,14 +28,21 @@ public class MinioService implements ImageStorageInterface {
     @Value("${minio.endpoint}")
     private String endpoint;
 
-    public String uploadImage(String objectName, byte[] data, String contentType) {
+    @PostConstruct
+    public void init() {
         try {
-            // 버킷이 없으면 생성
             boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
             if (!found) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+                log.info("MinIO bucket '{}' created successfully.", bucketName);
             }
+        } catch (Exception e) {
+            log.error("Failed to initialize MinIO bucket: {}", e.getMessage());
+        }
+    }
 
+    public String uploadImage(String objectName, byte[] data, String contentType) {
+        try {
             // 파일 업로드
             minioClient.putObject(
                     PutObjectArgs.builder()
