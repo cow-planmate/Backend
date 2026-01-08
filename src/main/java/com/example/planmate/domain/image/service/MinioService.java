@@ -1,12 +1,16 @@
 package com.example.planmate.domain.image.service;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import io.minio.BucketExistsArgs;
+import io.minio.GetObjectArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -60,6 +64,26 @@ public class MinioService implements ImageStorageInterface {
         } catch (Exception e) {
             log.error("MinIO upload error: {}", e.getMessage());
             throw new RuntimeException("Failed to upload image to MinIO", e);
+        }
+    }
+
+    @Override
+    public Resource getImage(String photoURL) {
+        try {
+            // photoURL 예: http://minio:9000/planmate-images/googleplace/xxx.webp
+            String prefix = endpoint + "/" + bucketName + "/";
+            String objectName = photoURL.replace(prefix, "");
+
+            InputStream stream = minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(objectName)
+                            .build()
+            );
+            return new InputStreamResource(stream);
+        } catch (Exception e) {
+            log.error("Failed to get image from MinIO: {}", e.getMessage());
+            return null;
         }
     }
 }

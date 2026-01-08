@@ -6,6 +6,8 @@ import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,5 +33,10 @@ public class LocalStorageService implements ImageStorageInterface {
         } catch (IOException e) {
             throw new RuntimeException("Failed to save image locally", e);
         }
+    }
+
+    @Override
+    public Resource getImage(String photoURL) {
+        return new FileSystemResource(photoURL);
     }
 }

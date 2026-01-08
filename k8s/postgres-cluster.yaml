@@ -11,11 +11,12 @@ spec:
   bootstrap:
     initdb:
       database: planmate
-      owner: postgres
+      owner: planmate
       secret:
         name: planmate-db-user-password
 
-  # 저장소 설정 (기존 1Gi 유지 - 축소 불가)
+  # 저장소 설정
   storage:
     size: 1Gi
+    storageClassName: local-path
 # kubectl exec -it planmate-db-1 -- psql -U postgres -c "ALTER USER postgres WITH PASSWORD '1234';"
