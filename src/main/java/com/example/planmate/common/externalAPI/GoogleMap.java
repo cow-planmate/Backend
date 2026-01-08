@@ -68,6 +68,9 @@ public class GoogleMap {
                 double xLocation = location.path("longitude").asDouble(0.0);
                 double yLocation = location.path("latitude").asDouble(0.0);
                 String iconUrl = result.path("iconMaskBaseUri").asText("");
+                if (!iconUrl.isEmpty()) {
+                    iconUrl += ".svg";
+                }
 
                 TourPlaceVO place = new TourPlaceVO(placeId, 0, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
                 places.add(place);
@@ -93,6 +96,9 @@ public class GoogleMap {
                 double xLocation = location.path("longitude").asDouble(0.0);
                 double yLocation = location.path("latitude").asDouble(0.0);
                 String iconUrl = result.path("iconMaskBaseUri").asText("");
+                if (!iconUrl.isEmpty()) {
+                    iconUrl += ".svg";
+                }
 
                 LodgingPlaceVO place = new LodgingPlaceVO(placeId, 1, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
                 places.add(place);
@@ -117,6 +123,9 @@ public class GoogleMap {
                 double xLocation = location.path("longitude").asDouble(0.0);
                 double yLocation = location.path("latitude").asDouble(0.0);
                 String iconUrl = result.path("iconMaskBaseUri").asText("");
+                if (!iconUrl.isEmpty()) {
+                    iconUrl += ".svg";
+                }
 
                 RestaurantPlaceVO place = new RestaurantPlaceVO(placeId, 2, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
                 places.add(place);
@@ -142,6 +151,9 @@ public class GoogleMap {
                 double xLocation = location.path("longitude").asDouble(0.0);
                 double yLocation = location.path("latitude").asDouble(0.0);
                 String iconUrl = result.path("iconMaskBaseUri").asText("");
+                if (!iconUrl.isEmpty()) {
+                    iconUrl += ".svg";
+                }
 
                 places.add(new SearchPlaceVO(placeId, 4, url, name, formatted_address, rating, xLocation, yLocation, iconUrl));
             }
@@ -186,6 +198,9 @@ public class GoogleMap {
                 double xLocation = location.path("longitude").asDouble(0.0);
                 double yLocation = location.path("latitude").asDouble(0.0);
                 String iconUrl = result.path("iconMaskBaseUri").asText("");
+                if (!iconUrl.isEmpty()) {
+                    iconUrl += ".svg";
+                }
 
                 places.add(new SearchPlaceVO(placeId, 4, url, name, formatted_address, rating, xLocation, yLocation, iconUrl));
             }
