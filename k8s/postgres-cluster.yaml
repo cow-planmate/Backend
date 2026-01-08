@@ -15,13 +15,6 @@ spec:
       secret:
         name: planmate-db-user-password
 
-  # 매번 비밀번호를 수동으로 설정하지 않도록 Secret과 역할을 동기화합니다.
-  managed:
-    roles:
-      - name: postgres
-        passwordSecret:
-          name: planmate-db-user-password
-
   # 저장소 설정 (기존 1Gi 유지 - 축소 불가)
   storage:
     size: 1Gi
