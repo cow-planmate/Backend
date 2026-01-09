@@ -234,8 +234,8 @@ public class PlanService {
         for (TimetableVO timetable : timetableVOs) {
             timeTables.add(TimeTable.builder()
                     .date(timetable.getDate())
-                    .timeTableStartTime(timetable.getStartTime())
-                    .timeTableEndTime(timetable.getEndTime())
+                    .timeTableStartTime(timetable.getTimeTableStartTime())
+                    .timeTableEndTime(timetable.getTimeTableEndTime())
                     .plan(plan)
                     .build());
             timeTableRepository.saveAll(timeTables);

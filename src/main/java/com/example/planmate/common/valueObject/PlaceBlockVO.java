@@ -1,10 +1,10 @@
 package com.example.planmate.common.valueObject;
 
+import java.time.LocalTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalTime;
 
 @Getter
 @AllArgsConstructor
@@ -12,15 +12,15 @@ import java.time.LocalTime;
 public class PlaceBlockVO {
     private int blockId;
     private int timeTableId;
-    private int placeCategory;
+    private int placeCategoryId;
     private String placeName;
     private String placeTheme;
     private float placeRating;
     private String placeAddress;
     private String placeLink;
-    private String placeId;
+    private String placePhotoId;
     private double xLocation;
     private double yLocation;
-    private LocalTime startTime;
-    private LocalTime endTime;
+    private LocalTime blockStartTime;
+    private LocalTime blockEndTime;
 }
