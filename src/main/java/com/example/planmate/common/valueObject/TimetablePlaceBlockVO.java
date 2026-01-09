@@ -13,7 +13,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class TimetablePlaceBlockVO {
-    private int timetableId;
+    private int timeTableId;
     private Integer timetablePlaceBlockId;
     private Integer placeCategoryId;
     private String placeName;
