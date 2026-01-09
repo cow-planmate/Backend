@@ -20,12 +20,12 @@ spec:
         name: planmate-db-user-password
 
   resources:
-  requests:
-    cpu: "50m"
-    memory: "256Mi"
-  limits:
-    cpu: "200m"
-    memory: "512Mi"
+    requests:
+      cpu: "50m"
+      memory: "256Mi"
+    limits:
+      cpu: "200m"
+      memory: "512Mi"
 
   # 저장소 설정
   storage:
