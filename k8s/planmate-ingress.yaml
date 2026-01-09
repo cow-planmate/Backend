@@ -10,8 +10,6 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-hide-headers: "Content-Security-Policy"
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /$2
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      more_set_headers "Content-Security-Policy: default-src 'self' 'unsafe-eval' 'unsafe-inline' https://static.cloudflareinsights.com blob: data:;";
 spec:
   tls:
   - hosts:
