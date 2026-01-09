@@ -31,6 +31,8 @@ spec:
         - configMapRef:
             name: planmate-config
         env:
+        - name: TZ
+          value: "Asia/Seoul"
         - name: SPRING_DATASOURCE_URL
           value: "jdbc:p6spy:postgresql://planmate-db-rw:5432/planmate"
         - name: SPRING_DATASOURCE_USERNAME
