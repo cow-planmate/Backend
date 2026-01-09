@@ -24,8 +24,8 @@ repositories {
 
 dependencies {
     // SharedSync Framework
-    implementation "com.github.cow-planmate.sharedsync:sharedsync-starter:23b48ccf2e"
-    annotationProcessor "com.github.cow-planmate.sharedsync:sharedsync-autoconfigure:23b48ccf2e"
+    implementation "com.github.cow-planmate.sharedsync:sharedsync-starter:3c65d5360f"
+    annotationProcessor "com.github.cow-planmate.sharedsync:sharedsync-autoconfigure:3c65d5360f"
 
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'

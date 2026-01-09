@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: planmate-backend
-        image: cycle123/planmate:test-f18c8dde16dcabe183d1f47c2c2e86c9e010f794
+        image: cycle123/planmate:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
