@@ -9,7 +9,7 @@ spec:
 
   # 슈퍼유저(postgres) 비밀번호 자동 설정
   superuserSecret:
-    name: planmate-db-user-password
+    name: planmate-db-superuser-password
 
   # DB 초기화 설정
   bootstrap:
@@ -30,5 +30,5 @@ spec:
   # 저장소 설정
   storage:
     size: 1Gi
-    storageClassName: local-path
+    storageClass: local-path
 # kubectl exec -it planmate-db-1 -- psql -U postgres -c "ALTER USER postgres WITH PASSWORD '1234';"
