@@ -19,7 +19,7 @@ spec:
 
   pools:
     - name: pool-0
-      servers: 4
+      servers: 2
       volumesPerServer: 1
       resources:
         requests:
