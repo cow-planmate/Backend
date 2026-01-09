@@ -19,7 +19,7 @@ public class OAuthCompleteService {
 
         User user = userRepository.findByProviderAndProviderId(
                 req.getProvider(), req.getProviderId()
-        ).orElseThrow(() -> new IllegalArgumentException("OAuth User not found"));
+        ).orElseThrow(() -> new IllegalArgumentException("SNS 계정 정보를 찾을 수 없습니다"));
 
         // 이메일 업데이트 (카카오 null 대응)
         if (req.getEmail() != null && !req.getEmail().isBlank()) {
@@ -37,7 +37,7 @@ public class OAuthCompleteService {
 
         return new OAuthCompleteResponse(
                 true,
-                "OAuth registration complete",
+                "SNS 회원가입이 완료되었습니다",
                 access,
                 refresh,
                 user.getUserId(),
