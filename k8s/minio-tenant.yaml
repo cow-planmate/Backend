@@ -20,7 +20,7 @@ spec:
   pools:
     - name: pool-0
       servers: 2
-      volumesPerServer: 1
+      volumesPerServer: 2
       resources:
         requests:
           cpu: "50m"
