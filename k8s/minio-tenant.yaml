@@ -12,12 +12,7 @@ spec:
       value: "https://pmserver1.salmakis.online/minio"
     - name: MINIO_SERVER_URL
       value: "https://pmserver1.salmakis.online"
-    - name: CONSOLE_CSP_DISABLED
-      value: "true"
-    - name: MINIO_BROWSER_CSP_DISABLED
-      value: "true"
 
-  # ✅ [수정됨] credsSecret 대신 configuration 사용!
   configuration:
     name: minio-creds-secret
 
