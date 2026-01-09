@@ -41,7 +41,8 @@ public class OAuthCompleteService {
                 access,
                 refresh,
                 user.getUserId(),
-                user.getNickname()
+                user.getNickname(),
+                user.getEmail()
         );
     }
 }

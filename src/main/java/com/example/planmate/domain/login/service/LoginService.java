@@ -62,6 +62,7 @@ public class LoginService {
             response.setUserId(userDetails.getUserId());
             response.setNickname(userDetails.getNickname());
             response.setMessage("성공적으로 로그인하였습니다");
+            response.setEmail(userDetails.getEmail());
             response.setLoginSuccess(true);
             return response;
         } catch (AuthenticationException e) {
