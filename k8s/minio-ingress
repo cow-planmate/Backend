@@ -12,7 +12,7 @@ spec:
   - hosts:
     - pmserver1.salmakis.online
     secretName: planmate-backend-tls
-rules:
+  rules:
   - host: pmserver1.salmakis.online
     http:
       paths:
