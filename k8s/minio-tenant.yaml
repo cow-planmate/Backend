@@ -7,6 +7,10 @@ spec:
   image: minio/minio:RELEASE.2024-01-18T22-51-28Z
   imagePullPolicy: IfNotPresent
   
+  env:
+    - name: MINIO_BROWSER_REDIRECT_URL
+      value: "https://pmserver1.salmakis.online/minio"
+
   # ✅ [수정됨] credsSecret 대신 configuration 사용!
   configuration:
     name: minio-creds-secret
@@ -15,6 +19,13 @@ spec:
     - name: pool-0
       servers: 4
       volumesPerServer: 1
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "128Mi"
+        limits:
+          cpu: "100m"
+          memory: "256Mi"
       volumeClaimTemplate:
         metadata:
           name: data
@@ -36,6 +47,3 @@ spec:
   exposeServices:
     console: true
     minio: true
-
-  # 서비스 타입 변경은 아래 주석처리된 부분을 활용하거나 별도의 Service 리소스로 관리해야 합니다.
-  # 현재는 CPU 부하를 방지하기 위해 기본값(ClusterIP)으로 원복합니다.
