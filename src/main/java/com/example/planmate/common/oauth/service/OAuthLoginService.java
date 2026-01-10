@@ -1,6 +1,5 @@
 package com.example.planmate.common.oauth.service;
 
-import com.example.planmate.common.auth.JwtTokenProvider;
 import com.example.planmate.common.oauth.config.OAuthProperties;
 import com.example.planmate.common.oauth.dto.OAuthUserProfile;
 import com.example.planmate.common.oauth.dto.google.GoogleTokenResponse;
@@ -13,7 +12,6 @@ import com.example.planmate.common.oauth.enums.OAuthProvider;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
 import com.example.planmate.domain.user.service.UserService;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -33,11 +31,10 @@ public class OAuthLoginService {
 
     private final OAuthProperties oAuthProperties;
     private final UserService userService;
-    private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+    private final OAuthCodeService oauthCodeService; // ✅ 추가
 
     private final RestTemplate restTemplate = new RestTemplate();
-
 
     /** 1. 로그인 시작 URL 생성 */
     public String buildAuthorizeUrl(OAuthProvider provider) {
@@ -55,12 +52,12 @@ public class OAuthLoginService {
             case NAVER -> builder.queryParam("state", "RANDOM_STATE");
         }
 
-        if (config.getScope() != null)
+        if (config.getScope() != null) {
             builder.queryParam("scope", config.getScope());
+        }
 
         return builder.toUriString();
     }
-
 
     /** 2. callback 처리 */
     @Transactional
@@ -78,21 +75,20 @@ public class OAuthLoginService {
         String email = profile.getEmail();
         String providerId = profile.getProviderId();
 
-        // ⭐ 2) 이미 SNS로 가입된 유저인지 먼저 체크 (provider + providerId)
+        // 2) 이미 SNS로 가입된 유저인지 체크
         Optional<User> existedSNSUser =
                 userRepository.findByProviderAndProviderId(providerName, providerId);
 
         if (existedSNSUser.isPresent()) {
             User user = existedSNSUser.get();
 
-            // 바로 JWT 발급 → 로그인
-            String access = jwtTokenProvider.generateAccessToken(user.getUserId());
-            String refresh = jwtTokenProvider.generateRefreshToken(user.getUserId());
+            // ✅ JWT 발급 ❌ → 1회용 loginCode 발급 ⭕
+            String loginCode = oauthCodeService.issueLoginCode(user.getUserId());
 
-            return buildFrontendRedirectUrl(access, refresh);
+            return buildLoginCodeRedirect(loginCode);
         }
 
-        // ⭐ 3) 이메일 충돌 체크 (local ↔ sns 충돌)
+        // 3) 이메일 충돌 체크 (local ↔ sns)
         if (email != null) {
             Optional<User> existing = userRepository.findByEmailIgnoreCase(email);
 
@@ -104,24 +100,23 @@ public class OAuthLoginService {
             }
         }
 
-        // ⭐ 4) 신규 SNS 유저 생성 (DB INSERT)
+        // 4) 신규 SNS 유저 생성
         String sanitized = userService.sanitizeNickname(profile.getNickname());
         String finalNickname = userService.resolveUniqueNickname(sanitized);
 
         User newUser = User.builder()
                 .provider(providerName)
                 .providerId(providerId)
-                .email(email)              // null 가능 → complete에서 채움
+                .email(email)          // null 가능
                 .nickname(finalNickname)
-                .password(null)            // SNS는 패스워드 없음
+                .password(null)        // SNS는 패스워드 없음
                 .age(null)
                 .gender(null)
                 .build();
 
-        newUser = userRepository.save(newUser); // DB 저장
+        userRepository.save(newUser);
 
-        // ⭐ 5) 추가 정보 입력 필요 → 프론트로 redirect
-        // (닉네임/이메일/아이디 모두 프론트에서 표시)
+        // 5) 추가 정보 입력 필요
         return buildAdditionalInfoRedirect(
                 providerName,
                 providerId,
@@ -130,10 +125,17 @@ public class OAuthLoginService {
         );
     }
 
+    /** 기존 SNS 유저 로그인 → loginCode redirect */
+    private String buildLoginCodeRedirect(String code) {
+        return UriComponentsBuilder
+                .fromUriString(oAuthProperties.getFrontendRedirectUri())
+                .queryParam("status", "SUCCESS")
+                .queryParam("code", code)
+                .build(true)
+                .toUriString();
+    }
 
-
-
-    /** 프론트에서 추가정보 입력하라고 보내는 redirect */
+    /** 신규 SNS 유저 → 추가정보 입력 redirect */
     private String buildAdditionalInfoRedirect(
             String provider,
             String providerId,
@@ -147,33 +149,15 @@ public class OAuthLoginService {
                 .queryParam("providerId", UriUtils.encode(providerId, StandardCharsets.UTF_8))
                 .queryParam("email", UriUtils.encode(email == null ? "" : email, StandardCharsets.UTF_8))
                 .queryParam("nickname", UriUtils.encode(nickname, StandardCharsets.UTF_8))
-                .build(true)  // ★ 반드시 넣어야 함
-                .toUriString();
-    }
-
-
-
-
-    /** 정상 로그인 redirect */
-    private String buildFrontendRedirectUrl(String access, String refresh) {
-        return UriComponentsBuilder
-                .fromUriString(oAuthProperties.getFrontendRedirectUri())
-                .queryParam("status", UriUtils.encode("SUCCESS", StandardCharsets.UTF_8))
-                .queryParam("access", UriUtils.encode(access, StandardCharsets.UTF_8))
-                .queryParam("refresh", UriUtils.encode(refresh, StandardCharsets.UTF_8))
                 .build(true)
                 .toUriString();
     }
 
-
-
-
-    /** =========== PROVIDER 구현부 =========== */
+    /* ================= PROVIDER 구현부 ================= */
 
     private OAuthUserProfile fetchKakaoProfile(String code) {
         OAuthProperties.Provider config = oAuthProperties.getProvider(OAuthProvider.KAKAO);
 
-        // token 요청
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -190,7 +174,6 @@ public class OAuthLoginService {
                 KakaoTokenResponse.class
         );
 
-        // user info 요청
         HttpHeaders infoHeaders = new HttpHeaders();
         infoHeaders.setBearerAuth(token.getAccessToken());
 
@@ -209,7 +192,6 @@ public class OAuthLoginService {
                 d.getKakaoAccount().getProfile().getNickname()
         );
     }
-
 
     private OAuthUserProfile fetchGoogleProfile(String code) {
         OAuthProperties.Provider config = oAuthProperties.getProvider(OAuthProvider.GOOGLE);
@@ -248,7 +230,6 @@ public class OAuthLoginService {
                 d.getName()
         );
     }
-
 
     private OAuthUserProfile fetchNaverProfile(String code, String state) {
         OAuthProperties.Provider config = oAuthProperties.getProvider(OAuthProvider.NAVER);

@@ -34,7 +34,8 @@ public class AuthWhitelist {
             // 챗봇 테스트용 임시 추가
             "/api/test/**",
             "/api/chatbot/**",
-            "/actuator/**"
+            "/actuator/**",
+            "/api/beta/**"
     );
 
 

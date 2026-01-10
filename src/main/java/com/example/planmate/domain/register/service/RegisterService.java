@@ -21,11 +21,11 @@ public class RegisterService{
     public RegisterResponse register(String email, RegisterRequest request) {
         RegisterResponse response = new RegisterResponse();
         if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
-            response.setMessage("Email already exists");
+            response.setMessage("이미 회원가입 되어있는 이메일입니다");
             return response;
         }
         if (userRepository.findByNickname(request.getNickname()).isPresent()) {
-            response.setMessage("Username already exists");
+            response.setMessage("이미 사용중인 닉네임입니다");
             return response;
         }
         User user = User.builder()
@@ -40,7 +40,8 @@ public class RegisterService{
 
 
         userRepository.save(user);
-        response.setMessage("User registered successfully");
+        presenceTrackingService.insertNickname(user.getUserId(), user.getNickname());
+        response.setMessage("성공적으로 회원가입하였습니다");
         response.setUserId(user.getUserId());
         return response;
     }
@@ -48,7 +49,7 @@ public class RegisterService{
     public NicknameVerificationResponse verifyNickname(String nickname) {
         NicknameVerificationResponse response = new NicknameVerificationResponse();
         if(userRepository.findByNickname(nickname).isPresent()) {
-            response.setMessage("이미 존재하는 닉네임입니다");
+            response.setMessage("이미 사용중인 닉네임입니다");
             response.setNicknameAvailable(false);
             return response;
         }
