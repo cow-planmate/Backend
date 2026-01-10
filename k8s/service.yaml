@@ -10,4 +10,4 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 8080
-  type: LoadBalancer # 또는 NodePort, Ingress 사용 시 ClusterIP
+  type: ClusterIP # 또는 NodePort, Ingress 사용 시 ClusterIP

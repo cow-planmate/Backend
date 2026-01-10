@@ -37,6 +37,7 @@ spec:
 
   mountPath: /export
   requestAutoCert: false
+  serviceType: ClusterIP
 
   # ✅ 오퍼레이터가 인식할 수 있는 올바른 서비스 노출 방식
   exposeServices:
