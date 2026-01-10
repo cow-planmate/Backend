@@ -6,6 +6,12 @@ metadata:
 spec:
   image: minio/minio:RELEASE.2024-01-18T22-51-28Z
   imagePullPolicy: IfNotPresent
+  
+  env:
+    - name: MINIO_BROWSER_REDIRECT_URL
+      value: "https://pmserver1.salmakis.online/minio"
+    - name: MINIO_SERVER_URL
+      value: "https://pmserver1.salmakis.online"
 
   configuration:
     name: minio-creds-secret
