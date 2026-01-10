@@ -13,18 +13,22 @@ spec:
   tls:
   - hosts:
     - pmserver1.salmakis.online
+    - minio.salmakis.online
     secretName: planmate-backend-tls
   rules:
-  - host: pmserver1.salmakis.online
+  - host: minio.salmakis.online
     http:
       paths:
-      - path: /minio(/|$)(.*)
+      - path: /()(.*)
         pathType: ImplementationSpecific
         backend:
           service:
             name: minio-console
             port:
               number: 9090
+  - host: pmserver1.salmakis.online
+    http:
+      paths:
       - path: /()(.*)
         pathType: ImplementationSpecific
         backend:
