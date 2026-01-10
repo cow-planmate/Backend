@@ -19,7 +19,7 @@ public class BetaFeedbackService {
         BetaFeedbackResponse response = new BetaFeedbackResponse();
 
         if (request.getContent() == null || request.getContent().isBlank()) {
-            response.setMessage("피드백 내용은 비어 있을 수 없다");
+            response.setMessage("피드백 내용이 비어있습니다");
             return response;
         }
 

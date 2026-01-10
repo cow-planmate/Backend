@@ -33,7 +33,7 @@ public class LoginService {
                 .orElse(null);
 
         if (user == null) {
-            response.setMessage("Invalid username or password");
+            response.setMessage("이메일 또는 비밀번호가 올바르지 않습니다");
             response.setLoginSuccess(false);
             return response;
         }
@@ -61,12 +61,12 @@ public class LoginService {
             response.setRefreshToken(jwtTokenProvider.generateRefreshToken(userDetails.getUserId()));
             response.setUserId(userDetails.getUserId());
             response.setNickname(userDetails.getNickname());
+            response.setMessage("성공적으로 로그인하였습니다");
             response.setEmail(userDetails.getEmail());
-            response.setMessage("Login successful");
             response.setLoginSuccess(true);
             return response;
         } catch (AuthenticationException e) {
-            response.setMessage("Invalid username or password");
+            response.setMessage("이메일 또는 비밀번호가 올바르지 않습니다");
             response.setLoginSuccess(false);
             return response;
         }
@@ -76,7 +76,7 @@ public class LoginService {
     Integer userId1 = refreshTokenStore.findUserIdByRefreshToken(refreshToken);
         if(userId1 == null) {
             LogoutResponse response = new LogoutResponse(false);
-            response.setMessage("Invalid refresh token");
+            response.setMessage("유효하지 않은 토큰입니다");
             return response;
         }
         refreshTokenStore.deleteRefreshToken(refreshToken);

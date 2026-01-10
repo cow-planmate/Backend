@@ -39,7 +39,7 @@ public class OAuthCodeService {
 
         String userIdStr = redisTemplate.opsForValue().get(key);
         if (userIdStr == null) {
-            throw new IllegalArgumentException("Invalid or expired login code");
+            throw new IllegalArgumentException("유효하지 않거나 만료된 로그인 코드입니다");
         }
 
         // 🔥 1회용 보장
