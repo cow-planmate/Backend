@@ -1,9 +1,9 @@
 package com.example.planmate.common.config;
 
-import java.util.List;
-
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.AntPathMatcher;
+
+import java.util.List;
 @Configuration
 public class AuthWhitelist {
     private static final AntPathMatcher pathMatcher = new AntPathMatcher();
@@ -17,10 +17,10 @@ public class AuthWhitelist {
             "/ws-plan/**",
             "/ws/**",
             "/api/auth/token",
-            "/api/plan/tour",
-            "/api/plan/restaurant",
-            "/api/plan/lodging",
-            "/api/plan/place",
+            "/api/plan/tour/**",
+            "/api/plan/restaurant/**",
+            "/api/plan/lodging/**",
+            "/api/plan/place/**",
             "/api/plan/nextPlace",
             "/logs/**",
             "/image/**",
