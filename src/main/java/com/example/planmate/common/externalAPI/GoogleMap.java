@@ -1,12 +1,6 @@
 package com.example.planmate.common.externalAPI;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,7 +8,11 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import com.example.planmate.common.valueObject.DepartureVO;
 import com.example.planmate.common.valueObject.LodgingPlaceVO;
@@ -30,22 +28,26 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class GoogleMap {
     @Value("${api.google.key}")
     private String googleApiKey;
+
+    private final RestTemplate restTemplate = new RestTemplate();
+
     public StringBuilder searchGoogle(String query) throws IOException {
-        String urlStr = "https://maps.googleapis.com/maps/api/place/textsearch/json?query=" +
-                java.net.URLEncoder.encode(query, "UTF-8") + "&language=ko" + "&key=" + googleApiKey;
+        // Updated to use Places API (New) for searchDeparture consistency
+        String url = "https://places.googleapis.com/v1/places:searchText";
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-Goog-Api-Key", googleApiKey);
+        headers.set("X-Goog-FieldMask", "places.id,places.displayName,places.formattedAddress");
 
-        URL url = new URL(urlStr);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("textQuery", query);
+        body.put("languageCode", "ko");
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-        String inputLine;
-        StringBuilder response = new StringBuilder();
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+        String response = restTemplate.postForObject(url, entity, String.class);
 
-        while ((inputLine = in.readLine()) != null)
-            response.append(inputLine);
-        in.close();
-        return response;
+        return new StringBuilder(response != null ? response : "");
     }
 
     public Pair<List<TourPlaceVO>, List<String>> getTourPlace(String locationText, List<String> preferredThemeNames) throws IOException {
@@ -56,16 +58,19 @@ public class GoogleMap {
 
         if (results.isArray()) {
             for (JsonNode result : results) {
-                String placeId = result.path("place_id").asText("");
+                String placeId = result.path("id").asText("");
                 String url = "https://www.google.com/maps/place/?q=place_id:" + placeId;
-                String name = result.path("name").asText("");
-                String formatted_address = result.path("formatted_address").asText("").replaceAll("…", "");
+                String name = result.path("displayName").path("text").asText("");
+                String formatted_address = result.path("formattedAddress").asText("").replaceAll("…", "");
                 float rating = (float) result.path("rating").asDouble(0.0);
 
-                JsonNode location = result.path("geometry").path("location");
-                double xLocation = location.path("lng").asDouble(0.0);
-                double yLocation = location.path("lat").asDouble(0.0);
-                String iconUrl = result.path("icon").asText("");
+                JsonNode location = result.path("location");
+                double xLocation = location.path("longitude").asDouble(0.0);
+                double yLocation = location.path("latitude").asDouble(0.0);
+                String iconUrl = result.path("iconMaskBaseUri").asText("");
+                if (!iconUrl.isEmpty()) {
+                    iconUrl += ".svg";
+                }
 
                 TourPlaceVO place = new TourPlaceVO(placeId, 0, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
                 places.add(place);
@@ -81,16 +86,19 @@ public class GoogleMap {
         List<String> nextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
             for (JsonNode result : results) {
-                String placeId = result.path("place_id").asText("");
+                String placeId = result.path("id").asText("");
                 String url = "https://www.google.com/maps/place/?q=place_id:" + placeId;
-                String name = result.path("name").asText("");
-                String formatted_address = result.path("formatted_address").asText("").replaceAll("…", "");
+                String name = result.path("displayName").path("text").asText("");
+                String formatted_address = result.path("formattedAddress").asText("").replaceAll("…", "");
                 float rating = (float) result.path("rating").asDouble(0.0);
 
-                JsonNode location = result.path("geometry").path("location");
-                double xLocation = location.path("lng").asDouble(0.0);
-                double yLocation = location.path("lat").asDouble(0.0);
-                String iconUrl = result.path("icon").asText("");
+                JsonNode location = result.path("location");
+                double xLocation = location.path("longitude").asDouble(0.0);
+                double yLocation = location.path("latitude").asDouble(0.0);
+                String iconUrl = result.path("iconMaskBaseUri").asText("");
+                if (!iconUrl.isEmpty()) {
+                    iconUrl += ".svg";
+                }
 
                 LodgingPlaceVO place = new LodgingPlaceVO(placeId, 1, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
                 places.add(place);
@@ -105,16 +113,19 @@ public class GoogleMap {
         List<String> nextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
             for (JsonNode result : results) {
-                String placeId = result.path("place_id").asText("");
+                String placeId = result.path("id").asText("");
                 String url = "https://www.google.com/maps/place/?q=place_id:" + placeId;
-                String name = result.path("name").asText("");
-                String formatted_address = result.path("formatted_address").asText("").replaceAll("…", "");
+                String name = result.path("displayName").path("text").asText("");
+                String formatted_address = result.path("formattedAddress").asText("").replaceAll("…", "");
                 float rating = (float) result.path("rating").asDouble(0.0);
 
-                JsonNode location = result.path("geometry").path("location");
-                double xLocation = location.path("lng").asDouble(0.0);
-                double yLocation = location.path("lat").asDouble(0.0);
-                String iconUrl = result.path("icon").asText("");
+                JsonNode location = result.path("location");
+                double xLocation = location.path("longitude").asDouble(0.0);
+                double yLocation = location.path("latitude").asDouble(0.0);
+                String iconUrl = result.path("iconMaskBaseUri").asText("");
+                if (!iconUrl.isEmpty()) {
+                    iconUrl += ".svg";
+                }
 
                 RestaurantPlaceVO place = new RestaurantPlaceVO(placeId, 2, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
                 places.add(place);
@@ -130,16 +141,19 @@ public class GoogleMap {
         List<String> nextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
             for (JsonNode result : results) {
-                String placeId = result.path("place_id").asText("");
+                String placeId = result.path("id").asText("");
                 String url = "https://www.google.com/maps/place/?q=place_id:" + placeId;
-                String name = result.path("name").asText("");
-                String formatted_address = result.path("formatted_address").asText("").replaceAll("…", "");
+                String name = result.path("displayName").path("text").asText("");
+                String formatted_address = result.path("formattedAddress").asText("").replaceAll("…", "");
                 float rating = (float) result.path("rating").asDouble(0.0);
 
-                JsonNode location = result.path("geometry").path("location");
-                double xLocation = location.path("lng").asDouble(0.0);
-                double yLocation = location.path("lat").asDouble(0.0);
-                String iconUrl = result.path("icon").asText("");
+                JsonNode location = result.path("location");
+                double xLocation = location.path("longitude").asDouble(0.0);
+                double yLocation = location.path("latitude").asDouble(0.0);
+                String iconUrl = result.path("iconMaskBaseUri").asText("");
+                if (!iconUrl.isEmpty()) {
+                    iconUrl += ".svg";
+                }
 
                 places.add(new SearchPlaceVO(placeId, 4, url, name, formatted_address, rating, xLocation, yLocation, iconUrl));
             }
@@ -153,14 +167,14 @@ public class GoogleMap {
 
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode root = objectMapper.readTree(sb.toString());
-        JsonNode results = root.get("results");
+        JsonNode results = root.get("places");
 
         if (results != null && results.isArray()) {
             for (JsonNode result : results) {
-                String placeId = result.path("place_id").asText("");
+                String placeId = result.path("id").asText("");
                 String url = "https://www.google.com/maps/place/?q=place_id:" + placeId;
-                String name = result.path("name").asText("");
-                String formatted_address = result.path("formatted_address").asText("").replaceAll("…", "");
+                String name = result.path("displayName").path("text").asText("");
+                String formatted_address = result.path("formattedAddress").asText("").replaceAll("…", "");
                 departures.add(new DepartureVO(placeId, url, name, formatted_address));
             }
         }
@@ -174,16 +188,19 @@ public class GoogleMap {
         List<String> nextNextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
             for (JsonNode result : results) {
-                String placeId = result.path("place_id").asText("");
+                String placeId = result.path("id").asText("");
                 String url = "https://www.google.com/maps/place/?q=place_id:" + placeId;
-                String name = result.path("name").asText("");
-                String formatted_address = result.path("formatted_address").asText("").replaceAll("…", "");
+                String name = result.path("displayName").path("text").asText("");
+                String formatted_address = result.path("formattedAddress").asText("").replaceAll("…", "");
                 float rating = (float) result.path("rating").asDouble(0.0);
 
-                JsonNode location = result.path("geometry").path("location");
-                double xLocation = location.path("lng").asDouble(0.0);
-                double yLocation = location.path("lat").asDouble(0.0);
-                String iconUrl = result.path("icon").asText("");
+                JsonNode location = result.path("location");
+                double xLocation = location.path("longitude").asDouble(0.0);
+                double yLocation = location.path("latitude").asDouble(0.0);
+                String iconUrl = result.path("iconMaskBaseUri").asText("");
+                if (!iconUrl.isEmpty()) {
+                    iconUrl += ".svg";
+                }
 
                 places.add(new SearchPlaceVO(placeId, 4, url, name, formatted_address, rating, xLocation, yLocation, iconUrl));
             }
@@ -191,36 +208,6 @@ public class GoogleMap {
         return Pair.of(places, nextNextPageTokens);
     }
 
-    private String httpGet(String urlStr) throws IOException {
-        URL url = new URL(urlStr);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-            StringBuilder raw = new StringBuilder();
-            String line;
-            while ((line = in.readLine()) != null) raw.append(line);
-            return raw.toString();
-        }
-    }
-
-    // ===== URL 쿼리 파라미터 안전 인코딩 =====
-    private String enc(String s) {
-        return URLEncoder.encode(s, StandardCharsets.UTF_8);
-    }
-
-    /**
-     * OR 검색 + 별점/리뷰수 필터 + (선택) 위치 문자열/좌표 반경.
-     *
-     * @param query               기본 검색어 (예: "맛집", "카페")
-     * @param preferredThemeNames 선호 테마 목록 (각 테마별로 별도 호출 → OR 효과)
-     * @param locationText        위치 키워드(예: "강남", "부산 해운대"). null 가능.
-     * @param lat                 중심 위도. null 가능.
-     * @param lng                 중심 경도. null 가능.
-     * @param radiusMeters        반경(m). lat/lng 주면 함께 사용. null 가능.
-     * @param minRating           최소 별점(기본 4.0 추천)
-     * @param minReviews          최소 리뷰 수(노이즈 방지용, 예: 50). 0이면 미적용.
-     * @return                    합쳐진 JSON(results 배열 포함)을 StringBuilder로 반환
-     */
     private Pair<JsonNode, List<String>> searchGoogleOrWithJackson(
             String query,
             List<String> preferredThemeNames,
@@ -232,7 +219,7 @@ public class GoogleMap {
             int minReviews
     ) throws IOException {
 
-        final String base = "https://maps.googleapis.com/maps/api/place/textsearch/json";
+        final String url = "https://places.googleapis.com/v1/places:searchText";
         ObjectMapper mapper = new ObjectMapper();
         // query + (선택) 위치 문자열을 합친다.
         String fullQuery = (locationText == null || locationText.isBlank())
@@ -240,83 +227,130 @@ public class GoogleMap {
                 : (query + " " + locationText);
 
 
-        // place_id → place(JsonNode) 저장: LinkedHashMap으로 순서 보존
+        // id → place(JsonNode) 저장: LinkedHashMap으로 순서 보존
         Map<String, JsonNode> placeMap = new LinkedHashMap<>();
 
-        // 테마가 비었을 경우를 대비해 1회 호출(키워드 없이)도 가능하게 처리
+        // 테마 기반 검색 수행
         List<String> themes = (preferredThemeNames == null || preferredThemeNames.isEmpty())
-                ? List.of("") : preferredThemeNames;
+                ? new ArrayList<>() : new ArrayList<>(preferredThemeNames);
+        
         List<String> nextPageTokens = new ArrayList<>();
 
+        // 1차 검색: 테마 기반
         for (String theme : themes) {
-            String currentQuery = fullQuery;
-            if (theme != null && !theme.isBlank()) {
-                currentQuery += " " + theme;
-            }
-
-            StringBuilder url = new StringBuilder(base)
-                    .append("?query=").append(enc(currentQuery))
-                    .append("&language=ko")
-                    .append("&key=").append(enc(googleApiKey));
-
-            // 좌표 기반 검색 옵션
-            if (lat != null && lng != null) {
-                url.append("&location=").append(lat).append(",").append(lng);
-                if (radiusMeters != null && radiusMeters > 0) {
-                    url.append("&radius=").append(radiusMeters);
-                }
-            }
-            minRating = 4.0;
-
-            String raw = httpGet(url.toString());
-            JsonNode root = mapper.readTree(raw);
-            nextPageTokens.add(root.path("next_page_token").asText(null));
-            JsonNode results = root.path("results");
-            if (results.isArray()) {
-                for (JsonNode place : results) {
-                    double rating = place.path("rating").asDouble(0.0);
-                    int reviews = place.path("user_ratings_total").asInt(0);
-                    if (rating >= minRating && (minReviews <= 0 || reviews >= minReviews)) {
-                        String placeId = place.path("place_id").asText(null);
-                        if (placeId != null && !placeId.isBlank()) {
-                            placeMap.put(placeId, place); // 중복이면 덮어쓴다.
-                        }
-                    }
-                }
-            }
+            searchAndFillMap(fullQuery, theme, placeMap, nextPageTokens, lat, lng, radiusMeters, minRating, minReviews);
         }
+
+        // 2차 검색: 결과가 10개 미만일 경우에만 기본(Baseline) 검색 추가
+        if (placeMap.size() < 10) {
+            searchAndFillMap(fullQuery, "", placeMap, nextPageTokens, lat, lng, radiusMeters, minRating, minReviews);
+        }
+
         // 최종 JSON 구성
         ObjectNode finalJson = mapper.createObjectNode();
         ArrayNode merged = mapper.createArrayNode();
         placeMap.values().forEach(merged::add);
-        finalJson.set("results", merged);
+        finalJson.set("places", merged);
         JsonNode root = mapper.readTree(finalJson.toString());
-        JsonNode results = root.get("results");
+        JsonNode results = root.get("places");
         return Pair.of(results, nextPageTokens);
+    }
+
+    private void searchAndFillMap(
+            String fullQuery,
+            String theme,
+            Map<String, JsonNode> placeMap,
+            List<String> nextPageTokens,
+            Double lat,
+            Double lng,
+            Integer radiusMeters,
+            Double minRating,
+            int minReviews
+    ) throws IOException {
+        final String url = "https://places.googleapis.com/v1/places:searchText";
+        ObjectMapper mapper = new ObjectMapper();
+        
+        String currentQuery = fullQuery;
+        if (theme != null && !theme.isBlank()) {
+            currentQuery += " " + theme;
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-Goog-Api-Key", googleApiKey);
+        headers.set("X-Goog-FieldMask", "places.id,places.displayName,places.formattedAddress,places.rating,places.location,places.iconMaskBaseUri,places.userRatingCount,nextPageToken");
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("textQuery", currentQuery);
+        body.put("languageCode", "ko");
+
+        if (lat != null && lng != null) {
+            Map<String, Object> locationBias = new LinkedHashMap<>();
+            Map<String, Object> circle = new LinkedHashMap<>();
+            Map<String, Object> center = new LinkedHashMap<>();
+            center.put("latitude", lat);
+            center.put("longitude", lng);
+            circle.put("center", center);
+            circle.put("radius", radiusMeters != null ? radiusMeters.doubleValue() : 5000.0);
+            locationBias.put("circle", circle);
+            body.put("locationBias", locationBias);
+        }
+
+        // 별점 필터는 4.0 유지
+        double currentMinRating = (minRating != null && minRating > 0) ? minRating : 4.0;
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+        String raw = restTemplate.postForObject(url, entity, String.class);
+        JsonNode root = mapper.readTree(raw);
+        
+        String token = root.path("nextPageToken").asText(null);
+        if (token != null) nextPageTokens.add(token);
+
+        JsonNode results = root.path("places");
+        if (results.isArray()) {
+            for (JsonNode place : results) {
+                double rating = place.path("rating").asDouble(0.0);
+                int reviews = place.path("userRatingCount").asInt(0);
+                if (rating >= currentMinRating && (minReviews <= 0 || reviews >= minReviews)) {
+                    String placeId = place.path("id").asText(null);
+                    if (placeId != null && !placeId.isBlank()) {
+                        placeMap.put(placeId, place);
+                    }
+                }
+            }
+        }
     }
 
     private Pair<JsonNode, List<String>> searchGoogleNextPagePlace(List<String> nextPageTokens, Double minRating) throws IOException {
 
-        final String base = "https://maps.googleapis.com/maps/api/place/textsearch/json";
+        final String url = "https://places.googleapis.com/v1/places:searchText";
         ObjectMapper mapper = new ObjectMapper();
         List<String> nextNextPageTokens = new ArrayList<>();
         Map<String, JsonNode> placeMap = new LinkedHashMap<>();
 
         for (String nextPageToken : nextPageTokens) {
-            StringBuilder url = new StringBuilder(base)
-                    .append("?language=ko")
-                    .append("&key=").append(enc(googleApiKey))
-                    .append("&pagetoken=").append(enc(nextPageToken));
+            if (nextPageToken == null || nextPageToken.isBlank()) continue;
 
-            String raw = httpGet(url.toString());
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-Goog-Api-Key", googleApiKey);
+            headers.set("X-Goog-FieldMask", "places.id,places.displayName,places.formattedAddress,places.rating,places.location,places.iconMaskBaseUri,nextPageToken");
+
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("pageToken", nextPageToken);
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+            String raw = restTemplate.postForObject(url, entity, String.class);
             JsonNode root = mapper.readTree(raw);
-            nextNextPageTokens.add(root.path("next_page_token").asText(null));
-            JsonNode results = root.path("results");
-            if (results.isArray()) {
+            
+            nextNextPageTokens.add(root.path("nextPageToken").asText(null));
+            JsonNode results = root.path("places");
+            if (results != null && results.isArray()) {
                 for (JsonNode place : results) {
                     double rating = place.path("rating").asDouble(0.0);
-                    if (rating >= minRating) {
-                        String placeId = place.path("place_id").asText(null);
+                    double currentMinRating = (minRating != null && minRating > 0) ? minRating : 4.0;
+                    if (rating >= currentMinRating) {
+                        String placeId = place.path("id").asText(null);
                         if (placeId != null && !placeId.isBlank()) {
                             placeMap.put(placeId, place); // 중복이면 덮어쓴다.
                         }
@@ -328,9 +362,9 @@ public class GoogleMap {
         ObjectNode finalJson = mapper.createObjectNode();
         ArrayNode merged = mapper.createArrayNode();
         placeMap.values().forEach(merged::add);
-        finalJson.set("results", merged);
+        finalJson.set("places", merged);
         JsonNode root = mapper.readTree(finalJson.toString());
-        JsonNode results = root.get("results");
+        JsonNode results = root.get("places");
         return Pair.of(results, nextNextPageTokens);
     }
 

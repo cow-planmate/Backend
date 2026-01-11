@@ -25,9 +25,6 @@ public class GooglePlaceDetails {
     @Value("${api.google.key}")
     private String googleApiKey;
 
-    @Value("${spring.img.url}")
-    private String imgUrl;
-
     private final GooglePlaceImageWorker googlePlaceImageWorker;
     private final PlacePhotoRepository placePhotoRepository;
 
