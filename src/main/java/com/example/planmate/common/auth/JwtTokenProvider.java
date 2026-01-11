@@ -30,9 +30,9 @@ public class JwtTokenProvider implements AuthenticationTokenResolver{
 
     private final RefreshTokenStore refreshTokenStore;
 
-    @Value("${jwt.access secret}")
+    @Value("${jwt.access-secret}")
     private String accessSecret;
-    @Value("${jwt.refresh secret}")
+    @Value("${jwt.refresh-secret}")
     private String refreshSecret;
 
     @PostConstruct

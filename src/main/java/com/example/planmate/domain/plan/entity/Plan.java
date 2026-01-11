@@ -9,6 +9,7 @@ import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.user.entity.User;
 import com.sharedsync.shared.annotation.CacheEntity;
 import com.sharedsync.shared.annotation.CacheId;
+import com.sharedsync.shared.annotation.IgnoreShared;
 import com.sharedsync.shared.presence.annotation.PresenceRoot;
 
 import jakarta.persistence.CascadeType;
@@ -69,15 +70,19 @@ public class Plan {
     @JoinColumn(name = "travel_id", nullable = false)
     private Travel travel;
 
+    @IgnoreShared
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<TimeTable> timeTables = new ArrayList<>();
 
+    @IgnoreShared
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<CollaborationRequest> collaborationRequests = new ArrayList<>();
 
+    @IgnoreShared
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<PlanEditor> editors = new ArrayList<>();
 
+    @IgnoreShared
     @OneToOne(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
     private PlanShare planShare;
 
