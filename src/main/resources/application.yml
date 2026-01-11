@@ -8,9 +8,12 @@ spring:
   main:
     web-application-type: servlet
 
+  jackson:
+    time-zone: Asia/Seoul
+
   datasource:
-    url: jdbc:p6spy:postgresql://localhost:5432/postgres
-    username: postgres
+    url: ${SPRING_DATASOURCE_URL:jdbc:p6spy:postgresql://localhost:5432/postgres}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
     driver-class-name: com.p6spy.engine.spy.P6SpyDriver
 
   jpa:
@@ -21,6 +24,10 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
 
   mail:
     host: smtps.hiworks.com
@@ -33,8 +40,9 @@ spring:
             enable: true
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
 
 sharedsync:
   websocket:
@@ -58,6 +66,7 @@ logging:
     org.hibernate: WARN
     org.apache.catalina: WARN
     org.springframework.data: WARN
+    com.sksamuel.scrimage: WARN
     com.example.planmate: DEBUG             # 우리 코드만 디버그
   file:
     name: ${LOG_PATH:logs}/app.log  # 환경변수로 바꿀 수 있음(기본 logs/)
@@ -69,6 +78,17 @@ server:
       enabled: true
       force: true
       charset: UTF-8
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
 
 
 

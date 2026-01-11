@@ -1,0 +1,36 @@
+apiVersion: redis.redis.opstreelabs.in/v1beta2
+kind: RedisReplication
+metadata:
+  name: planmate-redis
+  namespace: default
+spec:
+  # 인스턴스 개수 (Master 1 + Replica 2)
+  clusterSize: 3
+  
+  kubernetesConfig:
+    image: redis:7.2.4
+    imagePullPolicy: IfNotPresent
+    # 비밀번호를 전용 Secret에서 가져옵니다.
+    redisSecret:
+      name: planmate-redis-password
+      key: password
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+  # Live 상태와 맞추기 위해 redisConfig는 비워둡니다.
+  redisConfig: {}
+
+  # 저장소 설정 (500Mi)
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 300Mi

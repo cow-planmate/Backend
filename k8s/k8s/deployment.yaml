@@ -1,0 +1,137 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: planmate-backend
+  namespace: default
+  labels:
+    app: planmate-backend
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: planmate-backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: planmate-backend
+    spec:
+      containers:
+      - name: planmate-backend
+        image: cycle123/planmate:test-eebc19042b0992de06a9354aa9b32aa0782a92f0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: planmate-config
+        env:
+        - name: TZ
+          value: "Asia/Seoul"
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:p6spy:postgresql://planmate-db-rw:5432/planmate"
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: planmate-db-user-password
+              key: username
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: planmate-db-user-password
+              key: password
+        - name: SPRING_MAIL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: MAIL_USERNAME
+        - name: SPRING_MAIL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: MAIL_PASSWORD
+        # - name: ELASTIC_APM_SERVER_URLS
+        #   value: "http://apm-server-service:8200"
+        # - name: ELASTIC_APM_SERVICE_NAME
+        #   value: "planmate-backend"
+        # - name: ELASTIC_APM_ENVIRONMENT
+        #   value: "prod"
+        - name: JWT_ACCESS_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: JWT_ACCESS_SECRET
+        - name: JWT_REFRESH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: JWT_REFRESH_SECRET
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: REDIS_PASSWORD
+        - name: API_GOOGLE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: API_GOOGLE_KEY
+        - name: GOOGLE_GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: GOOGLE_GEMINI_API_KEY
+        - name: GOOGLE_GEMINI_API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: planmate-config
+              key: GOOGLE_GEMINI_API_URL
+        - name: STORAGE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: planmate-config
+              key: STORAGE_TYPE
+        - name: MINIO_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: planmate-config
+              key: MINIO_ENDPOINT
+        - name: MINIO_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: planmate-config
+              key: MINIO_BUCKET
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: MINIO_ACCESS_KEY
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: MINIO_SECRET_KEY
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10

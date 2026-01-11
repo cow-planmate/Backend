@@ -1,0 +1,34 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: planmate-db
+  namespace: default
+spec:
+  instances: 3
+  imageName: ghcr.io/cloudnative-pg/postgresql:15
+
+  # 슈퍼유저(postgres) 비밀번호 자동 설정
+  superuserSecret:
+    name: planmate-db-superuser-password
+
+  # DB 초기화 설정
+  bootstrap:
+    initdb:
+      database: planmate
+      owner: planmate
+      secret:
+        name: planmate-db-user-password
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "256Mi"
+    limits:
+      cpu: "200m"
+      memory: "512Mi"
+
+  # 저장소 설정
+  storage:
+    size: 1Gi
+    storageClass: local-path
+# kubectl exec -it planmate-db-1 -- psql -U postgres -c "ALTER USER postgres WITH PASSWORD '1234';"

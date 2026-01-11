@@ -24,17 +24,20 @@ repositories {
 
 dependencies {
     // SharedSync Framework
-    implementation "com.github.cow-planmate.sharedsync:sharedsync-starter:b1317f3666"
-    annotationProcessor "com.github.cow-planmate.sharedsync:sharedsync-autoconfigure:b1317f3666"
+    implementation "com.github.cow-planmate.sharedsync:sharedsync-starter:3c65d5360f"
+    annotationProcessor "com.github.cow-planmate.sharedsync:sharedsync-autoconfigure:3c65d5360f"
 
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     implementation 'org.postgresql:postgresql:42.7.3'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
@@ -51,6 +54,7 @@ dependencies {
     implementation 'com.sksamuel.scrimage:scrimage-webp:4.0.33'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-hibernate6'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'io.minio:minio:8.5.12'
 }
 
 tasks.named('test') {
