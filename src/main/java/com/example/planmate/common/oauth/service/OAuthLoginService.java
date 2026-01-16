@@ -93,12 +93,12 @@ public class OAuthLoginService {
             Optional<User> existing = userRepository.findByEmailIgnoreCase(email);
 
             if (existing.isPresent() && !existing.get().getProvider().equals(providerName)) {
-                throw new IllegalArgumentException(
-                        "이미 해당 이메일로 가입된 계정이 있습니다. 같은 방식("
-                                + existing.get().getProvider() + ")으로 로그인해주세요."
+                return buildFailRedirect(
+                        "이미 해당 이메일로 가입된 계정이 있습니다. planMate 계정으로 로그인해주세요."
                 );
             }
         }
+
 
         // 4) 신규 SNS 유저 생성
         String sanitized = userService.sanitizeNickname(profile.getNickname());
@@ -152,6 +152,19 @@ public class OAuthLoginService {
                 .build(true)
                 .toUriString();
     }
+
+    private String buildFailRedirect(String message) {
+        return UriComponentsBuilder
+                .fromUriString(oAuthProperties.getFrontendRedirectUri())
+                .queryParam("success", false)
+                .queryParam(
+                        "message",
+                        message
+                )
+                .build(true)
+                .toUriString();
+    }
+
 
     /* ================= PROVIDER 구현부 ================= */
 
