@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
-def sharedSyncVersion = 'd8b94b0e61'
+def sharedSyncVersion = 'e17f935793'
 
 java {
     toolchain {
