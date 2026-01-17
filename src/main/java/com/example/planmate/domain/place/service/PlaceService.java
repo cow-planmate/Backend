@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.example.planmate.common.externalAPI.GoogleMap;
 import com.example.planmate.common.externalAPI.GooglePlaceDetails;
 import com.example.planmate.common.valueObject.LodgingPlaceVO;
+import com.example.planmate.common.valueObject.NextPageTokenVO;
 import com.example.planmate.common.valueObject.RestaurantPlaceVO;
 import com.example.planmate.common.valueObject.SearchPlaceVO;
 import com.example.planmate.common.valueObject.TourPlaceVO;
@@ -56,8 +57,6 @@ public class PlaceService {
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
 
         String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
-
-        // preserve original behavior where travelName included category (keeps semantics identical)
         String travelName = travelCategoryName + " " + plan.getTravel().getTravelName();
 
         List<PreferredTheme> preferredThemes = userRepository.findById(userId).get().getPreferredThemes();
@@ -67,13 +66,28 @@ public class PlaceService {
             .map(PreferredTheme::getPreferredThemeName)
             .collect(Collectors.toList());
 
-        Pair rawPair = googleMapFn.apply(travelCategoryName + " " + travelName, preferredThemeNames);
-        Pair<List<? extends SearchPlaceVO>, List<String>> pair = (Pair) rawPair;
+        // Resolve coordinates for location bias
+        Pair<Double, Double> coords = googleMap.getCoordinates(travelName);
+        Double lat = (coords != null) ? coords.getFirst() : null;
+        Double lng = (coords != null) ? coords.getSecond() : null;
+
+        // Use custom logic for coordinate passing
+        Pair rawPair;
+        if (preferredThemeCategoryId == 0) {
+            rawPair = googleMap.getTourPlace(travelName, preferredThemeNames, lat, lng);
+        } else if (preferredThemeCategoryId == 1) {
+            rawPair = googleMap.getLodgingPlace(travelName, preferredThemeNames, lat, lng);
+        } else {
+            rawPair = googleMap.getRestaurantPlace(travelName, preferredThemeNames, lat, lng);
+        }
         
-        // Trigger background image fetch without blocking
-        googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
+        Pair<List<? extends SearchPlaceVO>, List<NextPageTokenVO>> pair = (Pair) rawPair;
         
         List<SearchPlaceVO> detailed = (List<SearchPlaceVO>) pair.getFirst();
+
+        // Trigger background image fetch without blocking
+        googlePlaceDetails.fetchMissingImagesInBackground(detailed);
+        
         response.addPlace(detailed);
         response.addNextPageToken(pair.getSecond());
         return response;
@@ -93,10 +107,32 @@ public class PlaceService {
 
     public PlaceResponse getSearchPlace(int userId, int planId, String query) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-        Pair<List<SearchPlaceVO>, List<String>> pair = googleMap.getSearchPlace(query);
-        
+        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+
+        String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
+        String travelName = travelCategoryName + " " + plan.getTravel().getTravelName();
+
+        // Get coordinates for the plan's destination to provide location-based search
+        Pair<Double, Double> coords = googleMap.getCoordinates(travelName);
+        Double lat = (coords != null) ? coords.getFirst() : null;
+        Double lng = (coords != null) ? coords.getSecond() : null;
+
+        Pair<List<SearchPlaceVO>, List<NextPageTokenVO>> pair = googleMap.getSearchPlace(query, travelName, lat, lng);
+
+        List<SearchPlaceVO> places = pair.getFirst();
+
         // Trigger background image fetch without blocking
+        googlePlaceDetails.fetchMissingImagesInBackground(places);
+
+        response.addPlace(places);
+        response.addNextPageToken(pair.getSecond());
+        return response;
+    }
+
+    public PlaceResponse getTourPlace(String travelCategoryName, String travelName) throws IOException {
+        PlaceResponse response = new PlaceResponse();
+        Pair<List<TourPlaceVO>, List<NextPageTokenVO>> pair = googleMap.getTourPlace(travelCategoryName + " " + travelName, new ArrayList<>());
+        
         googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
         
         response.addPlace(pair.getFirst());
@@ -104,17 +140,12 @@ public class PlaceService {
         return response;
     }
 
-    public PlaceResponse getTourPlace(String travelCategoryName, String travelName) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        Pair<List<TourPlaceVO>, List<String>> pair = googleMap.getTourPlace(travelCategoryName + " " + travelName, new ArrayList<>());
-        response.addPlace(pair.getFirst());
-        response.addNextPageToken(pair.getSecond());
-        return response;
-    }
-
     public PlaceResponse getLodgingPlace(String travelCategoryName, String travelName) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        Pair<List<LodgingPlaceVO>, List<String>> pair = googleMap.getLodgingPlace(travelCategoryName + " " + travelName, new ArrayList<>());
+        Pair<List<LodgingPlaceVO>, List<NextPageTokenVO>> pair = googleMap.getLodgingPlace(travelCategoryName + " " + travelName, new ArrayList<>());
+        
+        googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
+        
         response.addPlace(pair.getFirst());
         response.addNextPageToken(pair.getSecond());
         return response;
@@ -122,7 +153,10 @@ public class PlaceService {
 
     public PlaceResponse getRestaurantPlace(String travelCategoryName, String travelName) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        Pair<List<RestaurantPlaceVO>, List<String>> pair = googleMap.getRestaurantPlace(travelCategoryName + " " + travelName, new ArrayList<>());
+        Pair<List<RestaurantPlaceVO>, List<NextPageTokenVO>> pair = googleMap.getRestaurantPlace(travelCategoryName + " " + travelName, new ArrayList<>());
+        
+        googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
+        
         response.addPlace(pair.getFirst());
         response.addNextPageToken(pair.getSecond());
         return response;
@@ -130,7 +164,10 @@ public class PlaceService {
 
     public PlaceResponse getSearchPlace(String query) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        Pair<List<SearchPlaceVO>, List<String>> pair = googleMap.getSearchPlace(query);
+        Pair<List<SearchPlaceVO>, List<NextPageTokenVO>> pair = googleMap.getSearchPlace(query);
+        
+        googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
+        
         response.addPlace(pair.getFirst());
         response.addNextPageToken(pair.getSecond());
         return response;
@@ -138,9 +175,12 @@ public class PlaceService {
 
     
 
-    public PlaceResponse getNextPlace(List<String> nextPageToken) throws IOException {
+    public PlaceResponse getNextPlace(List<NextPageTokenVO> nextPageToken) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        Pair<List<SearchPlaceVO>, List<String>> pair = googleMap.getNextPagePlace(nextPageToken);
+        Pair<List<SearchPlaceVO>, List<NextPageTokenVO>> pair = googleMap.getNextPagePlace(nextPageToken);
+        
+        googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
+        
         response.addPlace(pair.getFirst());
         response.addNextPageToken(pair.getSecond());
         return response;

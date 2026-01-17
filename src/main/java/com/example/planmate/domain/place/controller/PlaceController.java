@@ -1,17 +1,17 @@
 package com.example.planmate.domain.place.controller;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.planmate.domain.place.dto.NextPlaceRequest;
 import com.example.planmate.domain.place.dto.PlaceResponse;
 import com.example.planmate.domain.place.service.PlaceService;
 
@@ -89,13 +89,9 @@ public class PlaceController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/nextplace/{nextPageTokens}")
-    public ResponseEntity<PlaceResponse> getNextPlace(@PathVariable("nextPageTokens") String nextPageTokensCsv) throws IOException {
-        List<String> tokens = Arrays.stream(nextPageTokensCsv.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toList());
-        PlaceResponse response = placeService.getNextPlace(tokens);
+    @PostMapping("/nextplace")
+    public ResponseEntity<PlaceResponse> getNextPlace(@RequestBody NextPlaceRequest request) throws IOException {
+        PlaceResponse response = placeService.getNextPlace(request.getTokens());
         return ResponseEntity.ok(response);
     }
 }

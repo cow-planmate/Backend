@@ -16,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.example.planmate.common.valueObject.DepartureVO;
 import com.example.planmate.common.valueObject.LodgingPlaceVO;
+import com.example.planmate.common.valueObject.NextPageTokenVO;
 import com.example.planmate.common.valueObject.RestaurantPlaceVO;
 import com.example.planmate.common.valueObject.SearchPlaceVO;
 import com.example.planmate.common.valueObject.TourPlaceVO;
@@ -50,11 +51,16 @@ public class GoogleMap {
         return new StringBuilder(response != null ? response : "");
     }
 
-    public Pair<List<TourPlaceVO>, List<String>> getTourPlace(String locationText, List<String> preferredThemeNames) throws IOException {
+    public Pair<List<TourPlaceVO>, List<NextPageTokenVO>> getTourPlace(String locationText, List<String> preferredThemeNames) throws IOException {
+        return getTourPlace(locationText, preferredThemeNames, null, null);
+    }
+
+    public Pair<List<TourPlaceVO>, List<NextPageTokenVO>> getTourPlace(String locationText, List<String> preferredThemeNames, Double lat, Double lng) throws IOException {
         List<TourPlaceVO> places = new ArrayList<>();
-        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson("관광지", preferredThemeNames, locationText, null, null, null, 0.0, 0);
+        // For recommendations, we SHOULD append the location name to the query
+        Pair<JsonNode, List<NextPageTokenVO>> pair = searchGoogleOrWithJackson("관광지", preferredThemeNames, locationText, lat, lng, 50000, 0.0, 0, true);
         JsonNode results = pair.getFirst();
-        List<String> nextPageTokens = pair.getSecond();
+        List<NextPageTokenVO> nextPageTokens = pair.getSecond();
 
         if (results.isArray()) {
             for (JsonNode result : results) {
@@ -79,11 +85,16 @@ public class GoogleMap {
         return Pair.of(places, nextPageTokens);
     }
 
-    public Pair<List<LodgingPlaceVO>, List<String>> getLodgingPlace(String locationText, List<String> preferredThemeNames) throws IOException {
+    public Pair<List<LodgingPlaceVO>, List<NextPageTokenVO>> getLodgingPlace(String locationText, List<String> preferredThemeNames) throws IOException {
+        return getLodgingPlace(locationText, preferredThemeNames, null, null);
+    }
+
+    public Pair<List<LodgingPlaceVO>, List<NextPageTokenVO>> getLodgingPlace(String locationText, List<String> preferredThemeNames, Double lat, Double lng) throws IOException {
         List<LodgingPlaceVO> places = new ArrayList<>();
-        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson("숙소", preferredThemeNames, locationText, null, null, null, 0.0, 0);
+        // For recommendations, we SHOULD append the location name to the query
+        Pair<JsonNode, List<NextPageTokenVO>> pair = searchGoogleOrWithJackson("숙소", preferredThemeNames, locationText, lat, lng, 50000, 0.0, 0, true);
         JsonNode results = pair.getFirst();
-        List<String> nextPageTokens = pair.getSecond();
+        List<NextPageTokenVO> nextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
             for (JsonNode result : results) {
                 String placeId = result.path("id").asText("");
@@ -106,11 +117,17 @@ public class GoogleMap {
         }
         return Pair.of(places, nextPageTokens);
     }
-    public Pair<List<RestaurantPlaceVO>, List<String>> getRestaurantPlace(String locationText, List<String> preferredThemeNames) throws IOException {
+
+    public Pair<List<RestaurantPlaceVO>, List<NextPageTokenVO>> getRestaurantPlace(String locationText, List<String> preferredThemeNames) throws IOException {
+        return getRestaurantPlace(locationText, preferredThemeNames, null, null);
+    }
+
+    public Pair<List<RestaurantPlaceVO>, List<NextPageTokenVO>> getRestaurantPlace(String locationText, List<String> preferredThemeNames, Double lat, Double lng) throws IOException {
         List<RestaurantPlaceVO> places = new ArrayList<>();
-        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson("식당", preferredThemeNames, locationText, null, null, null, 0.0, 0);
+        // For recommendations, we SHOULD append the location name to the query
+        Pair<JsonNode, List<NextPageTokenVO>> pair = searchGoogleOrWithJackson("식당", preferredThemeNames, locationText, lat, lng, 50000, 0.0, 0, true);
         JsonNode results = pair.getFirst();
-        List<String> nextPageTokens = pair.getSecond();
+        List<NextPageTokenVO> nextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
             for (JsonNode result : results) {
                 String placeId = result.path("id").asText("");
@@ -134,11 +151,50 @@ public class GoogleMap {
         return Pair.of(places, nextPageTokens);
     }
 
-    public Pair<List<SearchPlaceVO>, List<String>> getSearchPlace(String query) throws IOException {
+    public Pair<Double, Double> getCoordinates(String query) throws IOException {
+        String url = "https://places.googleapis.com/v1/places:searchText";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-Goog-Api-Key", googleApiKey);
+        headers.set("X-Goog-FieldMask", "places.location");
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("textQuery", query);
+        body.put("languageCode", "ko");
+        body.put("maxResultCount", 1);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+        String response = restTemplate.postForObject(url, entity, String.class);
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(response);
+        JsonNode places = root.path("places");
+
+        if (places.isArray() && places.size() > 0) {
+            JsonNode location = places.get(0).path("location");
+            double lat = location.path("latitude").asDouble(0.0);
+            double lng = location.path("longitude").asDouble(0.0);
+            return Pair.of(lat, lng);
+        }
+        return null;
+    }
+
+    public Pair<List<SearchPlaceVO>, List<NextPageTokenVO>> getSearchPlace(String query) throws IOException {
+        return getSearchPlace(query, null, null, null);
+    }
+
+    public Pair<List<SearchPlaceVO>, List<NextPageTokenVO>> getSearchPlace(String query, String locationText) throws IOException {
+        return getSearchPlace(query, locationText, null, null);
+    }
+
+    public Pair<List<SearchPlaceVO>, List<NextPageTokenVO>> getSearchPlace(String query, String locationText, Double lat, Double lng) throws IOException {
         List<SearchPlaceVO> places = new ArrayList<>();
-        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson(query, null, null, null, null, null, 0.0, 0);
+        // For general search, we should NOT append the location name (to allow global search like "Seoul Station")
+        // But we still apply locationBias via lat/lng if provided
+        Pair<JsonNode, List<NextPageTokenVO>> pair = searchGoogleOrWithJackson(query, null, locationText, lat, lng, 50000, 0.0, 0, false);
         JsonNode results = pair.getFirst();
-        List<String> nextPageTokens = pair.getSecond();
+        List<NextPageTokenVO> nextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
             for (JsonNode result : results) {
                 String placeId = result.path("id").asText("");
@@ -181,11 +237,11 @@ public class GoogleMap {
         return departures;
     }
 
-    public Pair<List<SearchPlaceVO>, List<String>> getNextPagePlace(List<String> nextPageTokens) throws IOException {
+    public Pair<List<SearchPlaceVO>, List<NextPageTokenVO>> getNextPagePlace(List<NextPageTokenVO> nextPageTokens) throws IOException {
         List<SearchPlaceVO> places = new ArrayList<>();
-        Pair<JsonNode, List<String>> pair = searchGoogleNextPagePlace(nextPageTokens, Double.valueOf(0));
+        Pair<JsonNode, List<NextPageTokenVO>> pair = searchGoogleNextPagePlace(nextPageTokens, Double.valueOf(0));
         JsonNode results = pair.getFirst();
-        List<String> nextNextPageTokens = pair.getSecond();
+        List<NextPageTokenVO> nextNextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
             for (JsonNode result : results) {
                 String placeId = result.path("id").asText("");
@@ -208,7 +264,7 @@ public class GoogleMap {
         return Pair.of(places, nextNextPageTokens);
     }
 
-    private Pair<JsonNode, List<String>> searchGoogleOrWithJackson(
+    private Pair<JsonNode, List<NextPageTokenVO>> searchGoogleOrWithJackson(
             String query,
             List<String> preferredThemeNames,
             String locationText,
@@ -216,15 +272,17 @@ public class GoogleMap {
             Double lng,
             Integer radiusMeters,
             Double minRating,
-            int minReviews
+            int minReviews,
+            boolean appendLocation
     ) throws IOException {
 
         final String url = "https://places.googleapis.com/v1/places:searchText";
         ObjectMapper mapper = new ObjectMapper();
-        // query + (선택) 위치 문자열을 합친다.
-        String fullQuery = (locationText == null || locationText.isBlank())
-                ? query
-                : (query + " " + locationText);
+        
+        // Use flag to decide whether to force location text into the query string
+        String fullQuery = (appendLocation && locationText != null && !locationText.isBlank())
+                ? (query + " " + locationText)
+                : query;
 
 
         // id → place(JsonNode) 저장: LinkedHashMap으로 순서 보존
@@ -234,7 +292,7 @@ public class GoogleMap {
         List<String> themes = (preferredThemeNames == null || preferredThemeNames.isEmpty())
                 ? new ArrayList<>() : new ArrayList<>(preferredThemeNames);
         
-        List<String> nextPageTokens = new ArrayList<>();
+        List<NextPageTokenVO> nextPageTokens = new ArrayList<>();
 
         // 1차 검색: 테마 기반
         for (String theme : themes) {
@@ -260,7 +318,7 @@ public class GoogleMap {
             String fullQuery,
             String theme,
             Map<String, JsonNode> placeMap,
-            List<String> nextPageTokens,
+            List<NextPageTokenVO> nextPageTokens,
             Double lat,
             Double lng,
             Integer radiusMeters,
@@ -304,7 +362,7 @@ public class GoogleMap {
         JsonNode root = mapper.readTree(raw);
         
         String token = root.path("nextPageToken").asText(null);
-        if (token != null) nextPageTokens.add(token);
+        if (token != null) nextPageTokens.add(new NextPageTokenVO(token, currentQuery));
 
         JsonNode results = root.path("places");
         if (results.isArray()) {
@@ -321,14 +379,16 @@ public class GoogleMap {
         }
     }
 
-    private Pair<JsonNode, List<String>> searchGoogleNextPagePlace(List<String> nextPageTokens, Double minRating) throws IOException {
+    private Pair<JsonNode, List<NextPageTokenVO>> searchGoogleNextPagePlace(List<NextPageTokenVO> nextPageTokens, Double minRating) throws IOException {
 
         final String url = "https://places.googleapis.com/v1/places:searchText";
         ObjectMapper mapper = new ObjectMapper();
-        List<String> nextNextPageTokens = new ArrayList<>();
+        List<NextPageTokenVO> nextNextPageTokens = new ArrayList<>();
         Map<String, JsonNode> placeMap = new LinkedHashMap<>();
 
-        for (String nextPageToken : nextPageTokens) {
+        for (NextPageTokenVO tokenInfo : nextPageTokens) {
+            String nextPageToken = tokenInfo.getToken();
+            String query = tokenInfo.getQuery();
             if (nextPageToken == null || nextPageToken.isBlank()) continue;
 
             HttpHeaders headers = new HttpHeaders();
@@ -337,13 +397,17 @@ public class GoogleMap {
             headers.set("X-Goog-FieldMask", "places.id,places.displayName,places.formattedAddress,places.rating,places.location,places.iconMaskBaseUri,nextPageToken");
 
             Map<String, Object> body = new LinkedHashMap<>();
+            body.put("textQuery", query != null ? query : "");
             body.put("pageToken", nextPageToken);
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
             String raw = restTemplate.postForObject(url, entity, String.class);
             JsonNode root = mapper.readTree(raw);
             
-            nextNextPageTokens.add(root.path("nextPageToken").asText(null));
+            String nextToken = root.path("nextPageToken").asText(null);
+            if (nextToken != null) {
+                nextNextPageTokens.add(new NextPageTokenVO(nextToken, query));
+            }
             JsonNode results = root.path("places");
             if (results != null && results.isArray()) {
                 for (JsonNode place : results) {

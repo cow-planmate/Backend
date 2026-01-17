@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.planmate.common.dto.CommonResponse;
+import com.example.planmate.common.valueObject.NextPageTokenVO;
 import com.example.planmate.common.valueObject.PlaceVO;
 
 import lombok.Getter;
@@ -11,7 +12,7 @@ import lombok.Getter;
 @Getter
 public class PlaceResponse extends CommonResponse {
     private final List<PlaceVO> places;
-    private final List<String> nextPageTokens;
+    private final List<NextPageTokenVO> nextPageTokens;
 
     public PlaceResponse() {
         places = new ArrayList<>();
@@ -22,7 +23,7 @@ public class PlaceResponse extends CommonResponse {
         this.places.addAll(places);
     }
 
-    public void addNextPageToken(List<String> nextPageTokens) {
+    public void addNextPageToken(List<NextPageTokenVO> nextPageTokens) {
         this.nextPageTokens.addAll(nextPageTokens);
     }
 }

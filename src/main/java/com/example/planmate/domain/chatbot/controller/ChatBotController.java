@@ -20,8 +20,6 @@ import com.sharedsync.shared.sync.RedisSyncService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-
 import sharedsync.dto.TimeTableDto;
 import sharedsync.dto.TimeTablePlaceBlockDto;
 import sharedsync.service.SharedPlanService;
@@ -124,7 +122,7 @@ public class ChatBotController {
                 WPlanResponse response = sharedPlanService.update(request);
 
                 redisSyncService.publish(
-                    "/topic/plan/" + planId + "/update/plan",
+                    "/topic/" + planId,
                     response
                 );
 
@@ -168,7 +166,7 @@ public class ChatBotController {
                     }
 
                     redisSyncService.publish(
-                        "/topic/plan/" + planId + "/create/timetable",
+                        "/topic/" + planId,
                         createResponse
                     );
                     log.info("Executed timetable create action via ChatBot for planId: {}", planId);
@@ -177,7 +175,7 @@ public class ChatBotController {
                 case "update":
                     var updateResponse = sharedTimeTableService.update(request);
                     redisSyncService.publish(
-                        "/topic/plan/" + planId + "/update/timetable",
+                        "/topic/" + planId,
                         updateResponse
                     );
                     log.info("Executed timetable update action via ChatBot for planId: {}", planId);
@@ -186,7 +184,7 @@ public class ChatBotController {
                 case "delete":
                     var deleteResponse = sharedTimeTableService.delete(request);
                     redisSyncService.publish(
-                        "/topic/plan/" + planId + "/delete/timetable",
+                        "/topic/" + planId,
                         deleteResponse
                     );
                     log.info("Executed timetable delete action via ChatBot for planId: {}", planId);
@@ -230,7 +228,7 @@ public class ChatBotController {
                 case "create":
                     var createResponse = sharedTimeTablePlaceBlockService.create(request);
                     redisSyncService.publish(
-                        "/topic/plan/" + planId + "/create/timetableplaceblock",
+                        "/topic/" + planId,
                         createResponse
                     );
                     log.info("Executed place block create action via ChatBot for planId: {}", planId);
@@ -239,7 +237,7 @@ public class ChatBotController {
                 case "update":
                     var updateResponse = sharedTimeTablePlaceBlockService.update(request);
                     redisSyncService.publish(
-                        "/topic/plan/" + planId + "/update/timetableplaceblock",
+                        "/topic/" + planId,
                         updateResponse
                     );
                     log.info("Executed place block update action via ChatBot for planId: {}", planId);
@@ -248,7 +246,7 @@ public class ChatBotController {
                 case "delete":
                     var deleteResponse = sharedTimeTablePlaceBlockService.delete(request);
                     redisSyncService.publish(
-                        "/topic/plan/" + planId + "/delete/timetableplaceblock",
+                        "/topic/" + planId,
                         deleteResponse
                     );
                     log.info("Executed place block delete action via ChatBot for planId: {}", planId);

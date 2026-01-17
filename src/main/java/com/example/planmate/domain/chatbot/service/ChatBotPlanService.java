@@ -1,10 +1,7 @@
 package com.example.planmate.domain.chatbot.service;
 
 import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 
 import org.springframework.data.util.Pair;
@@ -12,19 +9,19 @@ import org.springframework.stereotype.Service;
 
 import com.example.planmate.common.externalAPI.GoogleMap;
 import com.example.planmate.common.externalAPI.GooglePlaceImageWorker;
+import com.example.planmate.common.valueObject.NextPageTokenVO;
 import com.example.planmate.common.valueObject.SearchPlaceVO;
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
-import sharedsync.wsdto.WPlanRequest;
-import sharedsync.wsdto.WTimeTablePlaceBlockRequest;
-import sharedsync.wsdto.WTimeTableRequest;
-import sharedsync.dto.PlanDto;
-import sharedsync.dto.TimeTableDto;
-import sharedsync.dto.TimeTablePlaceBlockDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import sharedsync.dto.PlanDto;
+import sharedsync.dto.TimeTableDto;
+import sharedsync.dto.TimeTablePlaceBlockDto;
+import sharedsync.wsdto.WPlanRequest;
+import sharedsync.wsdto.WTimeTablePlaceBlockRequest;
+import sharedsync.wsdto.WTimeTableRequest;
 
 /**
  * AI 챗봇이 호출할 수 있는 여행 계획 관련 함수들을 정의
@@ -254,7 +251,7 @@ public class ChatBotPlanService {
             if (placeName != null && (!placeBlockMap.containsKey("placeId") || placeBlockMap.get("placeId") == null)) {
                 try {
                     log.info("Google Places API로 장소 검색: {}", placeName);
-                    Pair<List<SearchPlaceVO>, List<String>> searchResult = googleMap.getSearchPlace(placeName);
+                    Pair<List<SearchPlaceVO>, List<NextPageTokenVO>> searchResult = googleMap.getSearchPlace(placeName);
                     List<SearchPlaceVO> places = searchResult.getFirst();
                     
                     if (places != null && !places.isEmpty()) {
