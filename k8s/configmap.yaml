@@ -5,7 +5,8 @@ metadata:
   namespace: default
 data:
   SPRING_PROFILES_ACTIVE: "prod"
-  SPRING_DATA_REDIS_HOST: "planmate-redis"
+  SPRING_DATA_REDIS_HOST: "planmate-redis-master"
+  SPRING_DATA_REDIS_REPLICA_HOST: "planmate-redis-replica"
   SPRING_DATA_REDIS_PORT: "6379"
   DB_URL: "jdbc:p6spy:postgresql://planmate-db-rw:5432/planmate"
   STORAGE_TYPE: "minio"

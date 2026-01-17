@@ -1,9 +1,9 @@
 package com.example.planmate.common.config;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.AntPathMatcher;
-
-import java.util.List;
 @Configuration
 public class AuthWhitelist {
     private static final AntPathMatcher pathMatcher = new AntPathMatcher();
@@ -21,7 +21,7 @@ public class AuthWhitelist {
             "/api/plan/restaurant/**",
             "/api/plan/lodging/**",
             "/api/plan/place/**",
-            "/api/plan/nextPlace",
+            "/api/plan/nextplace",
             "/logs/**",
             "/image/**",
             "/api/oauth/**",
@@ -34,7 +34,8 @@ public class AuthWhitelist {
             // 챗봇 테스트용 임시 추가
             "/api/test/**",
             "/api/chatbot/**",
-            "/actuator/**"
+            "/actuator/**",
+            "/redis/**"
     );
 
 

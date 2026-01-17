@@ -50,6 +50,9 @@ import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import sharedsync.cache.PlanCache;
+import sharedsync.cache.TimeTableCache;
+import sharedsync.cache.TimeTablePlaceBlockCache;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +68,9 @@ public class PlanService {
     private final PlanEditorRepository planEditorRepository;
     private final PlanShareRepository planShareRepository;
     private final PlacePhotoRepository placePhotoRepository;
+    private final PlanCache planCache;
+    private final TimeTableCache timeTableCache;
+    private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
 
 
     public MakePlanResponse makeService(int userId, String departure, int travelId, int transportationCategoryId, List<LocalDate> dates, int adultCount, int childCount) {
@@ -120,15 +126,39 @@ public class PlanService {
 
     public GetPlanResponse getPlan(int userId, int planId) {
         GetPlanResponse response = new GetPlanResponse();
-        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-        List<TimeTable> timeTables = timeTableRepository.findByPlanPlanId(planId);
+
+        Plan plan;
+        List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
-        
-        for (TimeTable timeTable : timeTables) {
-            timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
+
+        // 1. Plan 캐시 확인 및 데이터 로드 분기
+        Optional<Plan> cachedPlan = planCache.findById(planId);
+
+        if (cachedPlan.isPresent()) {
+            // 캐시에 있는 경우: 연관 데이터도 모두 캐시에서 조회
+            plan = cachedPlan.get();
+            timeTables = new ArrayList<>(timeTableCache.findByParentId(planId));
+            for (TimeTable timeTable : timeTables) {
+                timeTablePlaceBlocks.add(timeTablePlaceBlockCache.findByParentId(timeTable.getTimeTableId()));
+            }
+        } else {
+            // 캐시에 없는 경우: DB에서 조회 (권한 검증 포함)
+            plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+            timeTables = new ArrayList<>(timeTableRepository.findByPlanPlanId(planId));
+            for (TimeTable timeTable : timeTables) {
+                timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
+            }
         }
-        
-        // 날짜 순으로 타임테이블 정렬
+
+        // 2. 권한 검증 (캐시에서 가져온 경우를 위해 재확인)
+        boolean isOwner = plan.getUser().getUserId().equals(userId);
+        boolean isEditor = planEditorRepository.existsByUserUserIdAndPlanPlanId(userId, planId);
+
+        if (!isOwner && !isEditor) {
+            throw new AccessDeniedException("요청 권한이 없습니다");
+        }
+
+        // 3. 데이터 정렬 및 응답 생성
         timeTables.sort(Comparator.comparing(TimeTable::getDate));
 
         response.addPlanFrame(
@@ -146,29 +176,28 @@ public class PlanService {
             response.addTimetable(timeTable.getTimeTableId(), timeTable.getDate(), timeTable.getTimeTableStartTime(), timeTable.getTimeTableEndTime());
         }
 
-        for (List<TimeTablePlaceBlock> timeTablePlaceBlock : timeTablePlaceBlocks) {
-            if(timeTablePlaceBlock!=null){
-                for (TimeTablePlaceBlock timeTablePlaceBlock1 : timeTablePlaceBlock) {
+        for (List<TimeTablePlaceBlock> blocks : timeTablePlaceBlocks) {
+            if (blocks != null) {
+                for (TimeTablePlaceBlock block : blocks) {
                     response.addPlaceBlock(
-                            timeTablePlaceBlock1.getBlockId(),
-                            timeTablePlaceBlock1.getTimeTable().getTimeTableId(),
-                            timeTablePlaceBlock1.getPlaceCategory().getPlaceCategoryId(),
-                            timeTablePlaceBlock1.getPlaceName(),
-                            timeTablePlaceBlock1.getPlaceTheme(),
-                            timeTablePlaceBlock1.getPlaceRating(),
-                            timeTablePlaceBlock1.getPlaceAddress(),
-                            timeTablePlaceBlock1.getPlaceLink(),
-                            timeTablePlaceBlock1.getPlacePhoto().getPlaceId(),
-                            timeTablePlaceBlock1.getXLocation(),
-                            timeTablePlaceBlock1.getYLocation(),
-                            timeTablePlaceBlock1.getBlockStartTime(),
-                            timeTablePlaceBlock1.getBlockEndTime()
+                            block.getBlockId(),
+                            block.getTimeTable().getTimeTableId(),
+                            block.getPlaceCategory().getPlaceCategoryId(),
+                            block.getPlaceName(),
+                            block.getPlaceTheme(),
+                            block.getPlaceRating(),
+                            block.getPlaceAddress(),
+                            block.getPlaceLink(),
+                            block.getPlacePhoto().getPlaceId(),
+                            block.getXLocation(),
+                            block.getYLocation(),
+                            block.getBlockStartTime(),
+                            block.getBlockEndTime()
                     );
                 }
             }
         }
-        // response.setUserDayIndexes(presenceTrackingService.getPlanTracker(planId));
-        return response; // DTO 변환
+        return response;
     }
 
     @Transactional

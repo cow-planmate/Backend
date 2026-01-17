@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redisinsight
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redisinsight
+  template:
+    metadata:
+      labels:
+        app: redisinsight
+    spec:
+      containers:
+      - name: redisinsight
+        image: redis/redisinsight:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: REDISINSIGHT_URL_PREFIX
+          value: /
+        - name: RI_REDIS_HOST
+          value: "planmate-redis"
+        - name: RI_REDIS_PORT
+          value: "6379"
+        - name: RI_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: planmate-redis-password
+              key: password
+        - name: RI_REDIS_ALIAS
+          value: "PlanMate-Redis"
+        ports:
+        - containerPort: 5540
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redisinsight-service
+  namespace: default
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 5540
+  selector:
+    app: redisinsight
