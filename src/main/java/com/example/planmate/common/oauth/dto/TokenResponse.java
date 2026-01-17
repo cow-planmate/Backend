@@ -5,12 +5,9 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class OAuthCompleteResponse {
-    private boolean success;
-    private String message;
+public class TokenResponse {
     private String accessToken;
     private String refreshToken;
-    private Integer userId;
     private String nickname;
     private String email;
 }

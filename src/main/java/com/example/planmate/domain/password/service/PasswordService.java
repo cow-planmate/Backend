@@ -73,7 +73,7 @@ public class PasswordService {
                 MailTemplate.PASSWORD_RESET.formatBody(tempPassword)
         );
 
-        response.setMessage("Temp password sent");
+        response.setMessage("임시 비밀번호를 전송했습니다");
 
         return response;
     }

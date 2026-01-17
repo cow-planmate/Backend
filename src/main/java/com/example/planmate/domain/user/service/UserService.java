@@ -71,7 +71,7 @@ public class UserService {
             response.addEditablePlanVO(plan.getPlanId(), plan.getPlanName());
         }
 
-        response.setMessage("Mypage info loaded successfully");
+        response.setMessage("성공적으로 마이페이지를 가져왔습니다");
         response.setUserId(user.getUserId());
         response.setEmail(user.getEmail());
         response.setNickname(user.getNickname());
@@ -91,7 +91,7 @@ public class UserService {
 
         user.changeNickname(nickname);
 
-        response.setMessage("Nickname changed successfully");
+        response.setMessage("성공적으로 닉네임이 변경되었습니다");
 
         return response;
     }
@@ -107,7 +107,7 @@ public class UserService {
 
         user.changeAge(age);
 
-        response.setMessage("Age changed successfully");
+        response.setMessage("성공적으로 나이가 변경되었습니다");
 
         return response;
     }
@@ -123,7 +123,7 @@ public class UserService {
 
         user.changeGender(gender);
 
-        response.setMessage("Gender changed successfully");
+        response.setMessage("성공적으로 성별이 변경되었습니다");
 
         return response;
     }
@@ -147,7 +147,7 @@ public class UserService {
 
         user.getPreferredThemes().addAll(newThemes);
 
-        response.setMessage("Preferred themes changed successfully");
+        response.setMessage("성공적으로 선호테마가 변경되었습니다");
 
         return response;
     }
@@ -162,7 +162,7 @@ public class UserService {
 
         userRepository.deleteById(userId);
 
-        response.setMessage("The account has been successfully deleted.");
+        response.setMessage("성공적으로 계정이 삭제되었습니다");
 
         return response;
     }
