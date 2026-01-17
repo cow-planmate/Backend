@@ -6,6 +6,7 @@ plugins {
 
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
+def sharedSyncVersion = 'd8b94b0e61'
 
 java {
     toolchain {
@@ -24,8 +25,13 @@ repositories {
 
 dependencies {
     // SharedSync Framework
-    implementation "com.github.cow-planmate.sharedsync:sharedsync-starter:3c65d5360f"
-    annotationProcessor "com.github.cow-planmate.sharedsync:sharedsync-autoconfigure:3c65d5360f"
+    if (project.hasProperty('useLocalSharedSync') && project.useLocalSharedSync == 'true') {
+        implementation 'com.sharedsync:sharedsync-starter'
+        annotationProcessor 'com.sharedsync:sharedsync-autoconfigure'
+    } else {
+        implementation "com.github.cow-planmate.sharedsync:sharedsync-starter:$sharedSyncVersion"
+        annotationProcessor "com.github.cow-planmate.sharedsync:sharedsync-autoconfigure:$sharedSyncVersion"
+    }
 
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
