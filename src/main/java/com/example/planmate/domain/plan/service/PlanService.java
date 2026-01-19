@@ -20,6 +20,7 @@ import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
 import com.example.planmate.domain.image.repository.PlacePhotoRepository;
 import com.example.planmate.domain.plan.auth.PlanAccessValidator;
+import com.example.planmate.domain.plan.dto.CreatePlanResponse;
 import com.example.planmate.domain.plan.dto.DeleteMultiplePlansResponse;
 import com.example.planmate.domain.plan.dto.DeletePlanResponse;
 import com.example.planmate.domain.plan.dto.EditPlanNameResponse;
@@ -30,7 +31,6 @@ import com.example.planmate.domain.plan.dto.GetShareLinkResponse;
 import com.example.planmate.domain.plan.dto.MakePlanResponse;
 import com.example.planmate.domain.plan.dto.RemoveEditorAccessByOwnerResponse;
 import com.example.planmate.domain.plan.dto.ResignEditorAccessResponse;
-import com.example.planmate.domain.plan.dto.SavePlanResponse;
 import com.example.planmate.domain.plan.entity.PlaceCategory;
 import com.example.planmate.domain.plan.entity.Plan;
 import com.example.planmate.domain.plan.entity.PlanShare;
@@ -229,7 +229,7 @@ public class PlanService {
 
 
     @Transactional
-    public SavePlanResponse savePlan(int userId, String departure, int travelId, int transportationCategoryId, int adultCount, int childCount, List<TimetableVO> timetableVOs, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockVOLists) {
+    public CreatePlanResponse createPlan(int userId, String departure, int travelId, int transportationCategoryId, int adultCount, int childCount, List<TimetableVO> timetableVOs, List<TimetablePlaceBlockVO> timetablePlaceBlockVOs) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
@@ -249,13 +249,13 @@ public class PlanService {
                 .build();
         Plan savedPlan = planRepository.save(plan);
 
-        List<TimeTable> timeTables = saveTimetable(plan, timetableVOs);
-        saveTimetablePlaceBlock(timeTables, timetablePlaceBlockVOLists);
-        SavePlanResponse savePlanResponse = new SavePlanResponse(savedPlan.getPlanId());
-        return savePlanResponse;
+        List<TimeTable> timeTables = createTimetable(plan, timetableVOs);
+        createTimetablePlaceBlock(timeTables, timetablePlaceBlockVOs);
+        CreatePlanResponse createPlanResponse = new CreatePlanResponse(savedPlan.getPlanId());
+        return createPlanResponse;
     }
 
-    private List<TimeTable> saveTimetable(Plan plan, List<TimetableVO> timetableVOs) {
+    private List<TimeTable> createTimetable(Plan plan, List<TimetableVO> timetableVOs) {
         if(timetableVOs == null || timetableVOs.isEmpty()) {
             return new ArrayList<>();
         }
@@ -267,35 +267,34 @@ public class PlanService {
                     .timeTableEndTime(timetable.getTimeTableEndTime())
                     .plan(plan)
                     .build());
-            timeTableRepository.saveAll(timeTables);
         }
-        return timeTables;
+        return timeTableRepository.saveAll(timeTables);
     }
-    private void saveTimetablePlaceBlock(List<TimeTable> timeTableVOs, List<List<TimetablePlaceBlockVO>> timetablePlaceBlockVOLists) {
-        if(timetablePlaceBlockVOLists == null || timetablePlaceBlockVOLists.isEmpty()) {
+    private void createTimetablePlaceBlock(List<TimeTable> savedTimeTables, List<TimetablePlaceBlockVO> timetablePlaceBlockVOs) {
+        if(timetablePlaceBlockVOs == null || timetablePlaceBlockVOs.isEmpty()) {
             return;
         }
         List<TimeTablePlaceBlock> timeTablePlaceBlocks = new ArrayList<>();
-        for(int i = 0; i < timetablePlaceBlockVOLists.size(); i++){
-            if(timeTableVOs.isEmpty()){
-                break;
-            }
-            TimeTable timetable = timeTableVOs.get(i);
-            for(int j = 0; j < timetablePlaceBlockVOLists.get(i).size(); j++){
-                TimetablePlaceBlockVO timeTablePlaceBlockVO = timetablePlaceBlockVOLists.get(i).get(j);
-                PlaceCategory placeCategory = placeCategoryRepository.getReferenceById(timeTablePlaceBlockVO.getPlaceCategoryId());
+        for (TimetablePlaceBlockVO vo : timetablePlaceBlockVOs) {
+            TimeTable targetTimetable = savedTimeTables.stream()
+                    .filter(tt -> tt.getDate().toString().equals(vo.getDate()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (targetTimetable != null) {
+                PlaceCategory placeCategory = placeCategoryRepository.getReferenceById(vo.getPlaceCategoryId());
                 timeTablePlaceBlocks.add(TimeTablePlaceBlock.builder()
-                        .timeTable(timetable)
-                        .placeName(timeTablePlaceBlockVO.getPlaceName())
+                        .timeTable(targetTimetable)
+                        .placeName(vo.getPlaceName())
                         .placeTheme("")
-                        .placeRating(timeTablePlaceBlockVO.getPlaceRating())
-                        .placeAddress(timeTablePlaceBlockVO.getPlaceAddress())
-                        .placeLink(timeTablePlaceBlockVO.getPlaceLink())
-                        .blockStartTime(timeTablePlaceBlockVO.getStartTime())
-                        .blockEndTime(timeTablePlaceBlockVO.getEndTime())
-                        .xLocation(timeTablePlaceBlockVO.getXLocation())
-                        .yLocation(timeTablePlaceBlockVO.getYLocation())
-                        .placePhoto(placePhotoRepository.getReferenceById(timeTablePlaceBlockVO.getPlaceId()))
+                        .placeRating(vo.getPlaceRating())
+                        .placeAddress(vo.getPlaceAddress())
+                        .placeLink(vo.getPlaceLink())
+                        .blockStartTime(vo.getStartTime())
+                        .blockEndTime(vo.getEndTime())
+                        .xLocation(vo.getXLocation())
+                        .yLocation(vo.getYLocation())
+                        .placePhoto(placePhotoRepository.getReferenceById(vo.getPlaceId()))
                         .placeCategory(placeCategory)
                         .build());
             }

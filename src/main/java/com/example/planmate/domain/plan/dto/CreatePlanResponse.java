@@ -1,9 +1,14 @@
 package com.example.planmate.domain.plan.dto;
 
 import com.example.planmate.common.dto.CommonResponse;
+
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 @AllArgsConstructor
-public class SavePlanResponse extends CommonResponse {
+@Getter
+@Setter
+public class CreatePlanResponse extends CommonResponse {
     private int planId;
 }

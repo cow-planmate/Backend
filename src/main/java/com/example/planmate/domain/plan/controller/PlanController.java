@@ -21,6 +21,8 @@ import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanResp
 import com.example.planmate.domain.collaborationRequest.dto.RequestEditAccessResponse;
 import com.example.planmate.domain.collaborationRequest.service.CollaborationRequestService;
 import com.example.planmate.domain.plan.auth.PlanAccessValidator;
+import com.example.planmate.domain.plan.dto.CreatePlanRequest;
+import com.example.planmate.domain.plan.dto.CreatePlanResponse;
 import com.example.planmate.domain.plan.dto.DeleteMultiplePlansRequest;
 import com.example.planmate.domain.plan.dto.DeleteMultiplePlansResponse;
 import com.example.planmate.domain.plan.dto.DeletePlanResponse;
@@ -34,8 +36,6 @@ import com.example.planmate.domain.plan.dto.MakePlanRequest;
 import com.example.planmate.domain.plan.dto.MakePlanResponse;
 import com.example.planmate.domain.plan.dto.RemoveEditorAccessByOwnerResponse;
 import com.example.planmate.domain.plan.dto.ResignEditorAccessResponse;
-import com.example.planmate.domain.plan.dto.SavePlanRequest;
-import com.example.planmate.domain.plan.dto.SavePlanResponse;
 import com.example.planmate.domain.plan.service.PlanService;
 
 import lombok.RequiredArgsConstructor;
@@ -96,10 +96,19 @@ public class PlanController {
         DeletePlanResponse response = planService.deletePlan(userId, planId);
         return ResponseEntity.ok(response);
     }
-    @PatchMapping("/save")
-    public ResponseEntity<SavePlanResponse> savePlan(Authentication authentication, @RequestBody SavePlanRequest request) {
+    @PostMapping("/create")
+    public ResponseEntity<CreatePlanResponse> createPlan(Authentication authentication, @RequestBody CreatePlanRequest request) {
         int userId = Integer.parseInt(authentication.getName());
-        SavePlanResponse response = planService.savePlan(userId, request.getDeparture(), request.getTravelId(), request.getTransportationCategoryId(), request.getAdultCount(), request.getChildCount(), request.getTimetables(), request.getTimetablePlaceBlocks());
+        CreatePlanResponse response = planService.createPlan(
+                userId,
+                request.getPlanFrame().getDeparture(),
+                request.getPlanFrame().getTravelId(),
+                request.getPlanFrame().getTransportationCategoryId(),
+                request.getPlanFrame().getAdultCount(),
+                request.getPlanFrame().getChildCount(),
+                request.getTimetables(),
+                request.getTimetablePlaceBlocks()
+        );
         return ResponseEntity.ok(response);
     }
     @DeleteMapping("")

@@ -1,19 +1,16 @@
 package com.example.planmate.domain.plan.dto;
+import java.util.List;
 
+import com.example.planmate.common.valueObject.PlanFrameVO;
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
+
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
 @Getter
 @Setter
-public class SavePlanRequest {
-    private String departure;
-    private int transportationCategoryId;
-    private int travelId;
-    private int adultCount;
-    private int childCount;
+public class CreatePlanRequest {
+    private PlanFrameVO planFrame;
     private List<TimetableVO> timetables;
-    private List<List<TimetablePlaceBlockVO>> timetablePlaceBlocks;
+    private List<TimetablePlaceBlockVO> timetablePlaceBlocks;
 }

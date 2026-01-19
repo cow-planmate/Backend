@@ -18,7 +18,6 @@ public class GetPlanResponse extends CommonResponse {
     private PlanFrameVO planFrame;
     private List<PlaceBlockVO> placeBlocks;
     private List<TimetableVO> timetables;
-    // private List<UserDayIndexVO> userDayIndexes;
     public GetPlanResponse() {
         placeBlocks = new ArrayList<>();
         timetables = new ArrayList<>();
