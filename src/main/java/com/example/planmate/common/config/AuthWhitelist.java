@@ -36,7 +36,8 @@ public class AuthWhitelist {
             "/api/chatbot/**",
             "/actuator/**",
             "/redis/**",
-            "/api/beta/**"
+            "/api/beta/**",
+            "/api/weather/recommendations"
     );
 
 
