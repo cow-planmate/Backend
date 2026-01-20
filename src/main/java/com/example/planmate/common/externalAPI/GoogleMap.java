@@ -362,7 +362,14 @@ public class GoogleMap {
         JsonNode root = mapper.readTree(raw);
         
         String token = root.path("nextPageToken").asText(null);
-        if (token != null) nextPageTokens.add(new NextPageTokenVO(token, currentQuery));
+        if (token != null) {
+            // 위치 정보를 쿼리 문자열 뒤에 구분자와 함께 인코딩 (query|lat|lng|radius)
+            String packedQuery = currentQuery;
+            if (lat != null && lng != null) {
+                packedQuery += "|" + lat + "|" + lng + "|" + (radiusMeters != null ? radiusMeters : 5000);
+            }
+            nextPageTokens.add(new NextPageTokenVO(token, packedQuery));
+        }
 
         JsonNode results = root.path("places");
         if (results.isArray()) {
@@ -388,8 +395,12 @@ public class GoogleMap {
 
         for (NextPageTokenVO tokenInfo : nextPageTokens) {
             String nextPageToken = tokenInfo.getToken();
-            String query = tokenInfo.getQuery();
+            String packedQuery = tokenInfo.getQuery();
             if (nextPageToken == null || nextPageToken.isBlank()) continue;
+
+            // packedQuery 파싱 (query|lat|lng|radius)
+            String[] parts = packedQuery.split("\\|");
+            String originalQuery = parts[0];
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -397,8 +408,29 @@ public class GoogleMap {
             headers.set("X-Goog-FieldMask", "places.id,places.displayName,places.formattedAddress,places.rating,places.location,places.iconMaskBaseUri,nextPageToken");
 
             Map<String, Object> body = new LinkedHashMap<>();
-            body.put("textQuery", query != null ? query : "");
+            body.put("textQuery", originalQuery);
+            body.put("languageCode", "ko");
             body.put("pageToken", nextPageToken);
+
+            if (parts.length >= 4) {
+                try {
+                    double lat = Double.parseDouble(parts[1]);
+                    double lng = Double.parseDouble(parts[2]);
+                    double radius = Double.parseDouble(parts[3]);
+
+                    Map<String, Object> locationBias = new LinkedHashMap<>();
+                    Map<String, Object> circle = new LinkedHashMap<>();
+                    Map<String, Object> center = new LinkedHashMap<>();
+                    center.put("latitude", lat);
+                    center.put("longitude", lng);
+                    circle.put("center", center);
+                    circle.put("radius", radius);
+                    locationBias.put("circle", circle);
+                    body.put("locationBias", locationBias);
+                } catch (NumberFormatException e) {
+                    // 파싱 실패 시 무시하고 진행
+                }
+            }
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
             String raw = restTemplate.postForObject(url, entity, String.class);
@@ -406,7 +438,7 @@ public class GoogleMap {
             
             String nextToken = root.path("nextPageToken").asText(null);
             if (nextToken != null) {
-                nextNextPageTokens.add(new NextPageTokenVO(nextToken, query));
+                nextNextPageTokens.add(new NextPageTokenVO(nextToken, packedQuery));
             }
             JsonNode results = root.path("places");
             if (results != null && results.isArray()) {
