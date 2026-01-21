@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import com.example.planmate.common.externalAPI.GoogleMap;
 import com.example.planmate.common.externalAPI.GooglePlaceDetails;
 import com.example.planmate.common.valueObject.LodgingPlaceVO;
-import com.example.planmate.common.valueObject.NextPageTokenVO;
 import com.example.planmate.common.valueObject.RestaurantPlaceVO;
 import com.example.planmate.common.valueObject.SearchPlaceVO;
 import com.example.planmate.common.valueObject.TourPlaceVO;
@@ -81,7 +80,7 @@ public class PlaceService {
             rawPair = googleMap.getRestaurantPlace(travelName, preferredThemeNames, lat, lng);
         }
         
-        Pair<List<? extends SearchPlaceVO>, List<NextPageTokenVO>> pair = (Pair) rawPair;
+        Pair<List<? extends SearchPlaceVO>, List<String>> pair = (Pair) rawPair;
         
         List<SearchPlaceVO> detailed = (List<SearchPlaceVO>) pair.getFirst();
 
@@ -117,7 +116,7 @@ public class PlaceService {
         Double lat = (coords != null) ? coords.getFirst() : null;
         Double lng = (coords != null) ? coords.getSecond() : null;
 
-        Pair<List<SearchPlaceVO>, List<NextPageTokenVO>> pair = googleMap.getSearchPlace(query, travelName, lat, lng);
+        Pair<List<SearchPlaceVO>, List<String>> pair = googleMap.getSearchPlace(query, travelName, lat, lng);
 
         List<SearchPlaceVO> places = pair.getFirst();
 
@@ -131,7 +130,7 @@ public class PlaceService {
 
     public PlaceResponse getTourPlace(String travelCategoryName, String travelName) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        Pair<List<TourPlaceVO>, List<NextPageTokenVO>> pair = googleMap.getTourPlace(travelCategoryName + " " + travelName, new ArrayList<>());
+        Pair<List<TourPlaceVO>, List<String>> pair = googleMap.getTourPlace(travelCategoryName + " " + travelName, new ArrayList<>());
         
         googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
         
@@ -142,7 +141,7 @@ public class PlaceService {
 
     public PlaceResponse getLodgingPlace(String travelCategoryName, String travelName) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        Pair<List<LodgingPlaceVO>, List<NextPageTokenVO>> pair = googleMap.getLodgingPlace(travelCategoryName + " " + travelName, new ArrayList<>());
+        Pair<List<LodgingPlaceVO>, List<String>> pair = googleMap.getLodgingPlace(travelCategoryName + " " + travelName, new ArrayList<>());
         
         googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
         
@@ -153,7 +152,7 @@ public class PlaceService {
 
     public PlaceResponse getRestaurantPlace(String travelCategoryName, String travelName) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        Pair<List<RestaurantPlaceVO>, List<NextPageTokenVO>> pair = googleMap.getRestaurantPlace(travelCategoryName + " " + travelName, new ArrayList<>());
+        Pair<List<RestaurantPlaceVO>, List<String>> pair = googleMap.getRestaurantPlace(travelCategoryName + " " + travelName, new ArrayList<>());
         
         googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
         
@@ -164,7 +163,7 @@ public class PlaceService {
 
     public PlaceResponse getSearchPlace(String query) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        Pair<List<SearchPlaceVO>, List<NextPageTokenVO>> pair = googleMap.getSearchPlace(query);
+        Pair<List<SearchPlaceVO>, List<String>> pair = googleMap.getSearchPlace(query);
         
         googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
         
@@ -175,9 +174,9 @@ public class PlaceService {
 
     
 
-    public PlaceResponse getNextPlace(List<NextPageTokenVO> nextPageToken) throws IOException {
+    public PlaceResponse getNextPlace(List<String> nextPageToken) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        Pair<List<SearchPlaceVO>, List<NextPageTokenVO>> pair = googleMap.getNextPagePlace(nextPageToken);
+        Pair<List<SearchPlaceVO>, List<String>> pair = googleMap.getNextPagePlace(nextPageToken);
         
         googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
         

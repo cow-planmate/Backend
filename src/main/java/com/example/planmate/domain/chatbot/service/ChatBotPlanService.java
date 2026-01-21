@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 
 import com.example.planmate.common.externalAPI.GoogleMap;
 import com.example.planmate.common.externalAPI.GooglePlaceImageWorker;
-import com.example.planmate.common.valueObject.NextPageTokenVO;
 import com.example.planmate.common.valueObject.SearchPlaceVO;
 import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -251,9 +250,9 @@ public class ChatBotPlanService {
             if (placeName != null && (!placeBlockMap.containsKey("placeId") || placeBlockMap.get("placeId") == null)) {
                 try {
                     log.info("Google Places API로 장소 검색: {}", placeName);
-                    Pair<List<SearchPlaceVO>, List<NextPageTokenVO>> searchResult = googleMap.getSearchPlace(placeName);
+                    Pair<List<SearchPlaceVO>, List<String>> searchResult = googleMap.getSearchPlace(placeName);
                     List<SearchPlaceVO> places = searchResult.getFirst();
-                    
+
                     if (places != null && !places.isEmpty()) {
                         SearchPlaceVO foundPlace = places.get(0);
                         
