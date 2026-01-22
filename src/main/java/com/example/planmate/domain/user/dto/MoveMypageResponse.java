@@ -19,6 +19,7 @@ public class MoveMypageResponse extends CommonResponse {
     private String nickname;
     private int age;
     private int gender;
+    private boolean isSocialLogin;
     private List<SimplePlanVO> myPlanVOs;
     private List<SimplePlanVO> editablePlanVOs;
     @Setter(AccessLevel.NONE)

@@ -77,6 +77,7 @@ public class UserService {
         response.setNickname(user.getNickname());
         response.setAge(user.getAge());
         response.setGender(user.getGender());
+        response.setSocialLogin(user.isSocialLogin());
 
         return response;
     }

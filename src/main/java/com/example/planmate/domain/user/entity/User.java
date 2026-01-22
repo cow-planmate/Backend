@@ -140,4 +140,9 @@ import lombok.NoArgsConstructor;
             this.email = email;
         }
 
+        public boolean isSocialLogin() {
+            return !"local".equalsIgnoreCase(this.provider);
+        }
+
+
     }
