@@ -1,76 +1,98 @@
 package com.example.planmate.domain.image.service;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Duration;
-
 import org.springframework.core.io.Resource;
-import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.example.planmate.common.externalAPI.GooglePlaceImageWorker;
-import com.example.planmate.domain.image.entity.PlacePhoto;
-import com.example.planmate.domain.image.repository.PlacePhotoRepository;
+import com.example.planmate.domain.place.repository.PlaceSearchResultRepository;
+import com.example.planmate.domain.plan.repository.TimeTablePlaceBlockRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ImageService {
 
-    private final PlacePhotoRepository placePhotoRepository;
     private final GooglePlaceImageWorker googlePlaceImageWorker;
     private final ImageStorageInterface imageStorage;
+    private final PlaceSearchResultRepository placeSearchResultRepository;
+    private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
 
+    @Transactional
     public ResponseEntity<Resource> getGooglePlaceImage(String placeId) {
         if (!StringUtils.hasText(placeId)) {
             return ResponseEntity.badRequest().build();
         }
 
-        PlacePhoto photo = placePhotoRepository.findById(placeId).orElse(null);
-        if (photo == null) {
+        // 1. Try to find photoUrl in current database records
+        String photoUrl = findPhotoUrlInDb(placeId);
+
+        // If explicitly set to empty string, it means "no photo available" - return 404 immediately
+        if ("".equals(photoUrl)) {
+            log.debug("Photo for placeId {} is marked as non-existent (empty string).", placeId);
             return ResponseEntity.notFound().build();
         }
 
-        String photoURL = photo.getPhotoUrl();
-        if (photoURL == null || photoURL.isBlank()) {
-            // Trigger async fetch if not already available
-            googlePlaceImageWorker.fetchSinglePlaceImageAsync(placeId);
-            return ResponseEntity.notFound().build();
-        }
-
-        try {
-            Resource resource = imageStorage.getImage(photoURL);
-            if (resource == null || !resource.exists()) {
-                // If it's a URL, it might not "exist" in FileSystem sense, but InputStreamResource is valid
-                if (!photoURL.startsWith("http")) {
-                    return ResponseEntity.notFound().build();
+        // 2. If not found in DB (null), try to trigger a fetch
+        if (photoUrl == null) {
+            try {
+                log.info("Photo URL not found in DB for placeId: {}. Triggering on-demand fetch.", placeId);
+                var details = googlePlaceImageWorker.fetchSinglePlaceDetailsAsync(placeId).get();
+                if (details != null && details.photoUrl() != null) {
+                    photoUrl = details.photoUrl();
+                    
+                    // Update photoUrl in PlaceSearchResult if it exists
+                    String finalPhotoUrl = photoUrl;
+                    placeSearchResultRepository.findAll().stream()
+                            .filter(r -> r.getPlaceId().equals(placeId) && r.getPhotoUrl() == null)
+                            .forEach(r -> {
+                                r.setPhotoUrl(finalPhotoUrl);
+                                placeSearchResultRepository.save(r);
+                            });
                 }
+            } catch (Exception e) {
+                log.error("Failed to fetch place details on-demand for placeId: {}", placeId, e);
             }
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setCacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic());
-            headers.setContentType(org.springframework.http.MediaType.parseMediaType("image/webp"));
-
-            // ETag 설정은 로컬 파일일 때만 시도 (MinIO는 별도 처리 필요하므로 일단 생략하거나 로그 방지)
-            if (!photoURL.startsWith("http")) {
-                try {
-                    Path photoPath = Paths.get(photoURL);
-                    long size = Files.size(photoPath);
-                    long mtime = Files.getLastModifiedTime(photoPath).toMillis();
-                    headers.setETag("\"" + size + '-' + mtime + "\"");
-                } catch (IOException ignore) {}
-            }
-
-            return new ResponseEntity<>(resource, headers, HttpStatus.OK);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+
+        // 3. Serve the image resource (only if photoUrl has content)
+        if (StringUtils.hasText(photoUrl)) {
+            try {
+                Resource resource = imageStorage.getImage(photoUrl);
+                if (resource != null && resource.exists()) {
+                    return ResponseEntity.ok()
+                            .header(HttpHeaders.CONTENT_TYPE, "image/webp")
+                            .header(HttpHeaders.CACHE_CONTROL, "public, max-age=86400")
+                            .body(resource);
+                }
+            } catch (Exception e) {
+                log.error("Error retrieving image resource for photoUrl: {}", photoUrl, e);
+            }
+        }
+
+        return ResponseEntity.notFound().build();
+    }
+
+    private String findPhotoUrlInDb(String placeId) {
+        // Try PlaceSearchResult first
+        String fromResult = placeSearchResultRepository.findFirstByPlaceIdAndPhotoUrlIsNotNull(placeId)
+                .map(res -> res.getPhotoUrl())
+                // .filter(StringUtils::hasText) // Remove this to allow ""
+                .orElse(null);
+        
+        if (fromResult != null) return fromResult;
+
+        // Then try TimeTablePlaceBlock
+        return timeTablePlaceBlockRepository.findFirstByPlaceIdAndPhotoUrlIsNotNull(placeId)
+                .map(block -> block.getPhotoUrl())
+                // .filter(StringUtils::hasText) // Remove this to allow ""
+                .orElse(null);
     }
 }
+

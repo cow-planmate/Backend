@@ -1,76 +1,56 @@
 package com.example.planmate.common.externalAPI;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.example.planmate.common.valueObject.PlaceVO;
-import com.example.planmate.domain.image.entity.PlacePhoto;
-import com.example.planmate.domain.image.repository.PlacePhotoRepository;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * Provides synchronous and aggregate asynchronous methods for fetching Google Place images.
- * Per-place asynchronous logic lives in {@link GooglePlaceImageWorker} to ensure @Async proxying.
+ * Provides synchronous and aggregate asynchronous methods for fetching Google Place details (images & summary).
  */
 @Component
 @RequiredArgsConstructor
 public class GooglePlaceDetails {
 
-    @Value("${api.google.key}")
-    private String googleApiKey;
-
     private final GooglePlaceImageWorker googlePlaceImageWorker;
-    private final PlacePhotoRepository placePhotoRepository;
 
     /**
-     * Triggers async image fetching for missing photos but does not wait for them.
+     * Triggers async image/detail fetching but does not wait for them.
      */
     public void fetchMissingImagesInBackground(List<? extends PlaceVO> placeVOs) {
-        List<String> placeIds = placeVOs.stream()
-            .map(PlaceVO::getPlaceId)
-            .toList();
+        if (placeVOs == null || placeVOs.isEmpty()) return;
         
-        List<PlacePhoto> existingPhotos = placePhotoRepository.findAllById(placeIds);
-        Map<String, PlacePhoto> existingPhotoMap = existingPhotos.stream()
-            .collect(Collectors.toMap(PlacePhoto::getPlaceId, p -> p));
-        
-        List<? extends PlaceVO> missingPlaceVOs = placeVOs.stream()
-            .filter(vo -> !existingPhotoMap.containsKey(vo.getPlaceId()))
-            .toList();
-            
-        if (!missingPlaceVOs.isEmpty()) {
-             missingPlaceVOs.forEach(vo -> googlePlaceImageWorker.fetchSinglePlaceImageAsync(vo.getPlaceId()));
-        }
+        placeVOs.stream()
+            .filter(vo -> vo.getPhotoUrl() == null)
+            .forEach(vo -> googlePlaceImageWorker.fetchSinglePlaceDetailsAsync(vo.getPlaceId())
+                .thenAccept(details -> {
+                    if (details != null) {
+                        vo.setPhotoUrl(details.photoUrl());
+                    }
+                }));
     }
 
     /**
      * Async bulk fetch that blocks until all individual async tasks complete.
      */
     public List<? extends PlaceVO> searchGooglePlaceDetailsAsyncBlocking(List<? extends PlaceVO> placeVOs) {
-        
-        // placePhotoRepository에서 기존 데이터 먼저 조회
-        List<String> placeIds = placeVOs.stream()
-            .map(PlaceVO::getPlaceId)
+        if (placeVOs == null || placeVOs.isEmpty()) return placeVOs;
+
+        List<CompletableFuture<Void>> futures = placeVOs.stream()
+            .filter(vo -> vo.getPhotoUrl() == null)
+            .map(vo -> googlePlaceImageWorker.fetchSinglePlaceDetailsAsync(vo.getPlaceId())
+                .thenAccept(details -> {
+                    if (details != null) {
+                        vo.setPhotoUrl(details.photoUrl());
+                    }
+                }))
             .toList();
-        List<PlacePhoto> existingPhotos = placePhotoRepository.findAllById(placeIds);
-        Map<String, PlacePhoto> existingPhotoMap = existingPhotos.stream()
-            .collect(Collectors.toMap(PlacePhoto::getPlaceId, p -> p));
-        
-        // 기존에 없는 placeId만 API 호출
-        List<? extends PlaceVO> missingPlaceVOs = placeVOs.stream()
-            .filter(vo -> !existingPhotoMap.containsKey(vo.getPlaceId()))
-            .toList();
-        
-        if (!missingPlaceVOs.isEmpty()) {
-            List<CompletableFuture<PlacePhoto>> futures = missingPlaceVOs.stream()
-                    .map(vo -> googlePlaceImageWorker.fetchSinglePlaceImageAsync(vo.getPlaceId()))
-                    .collect(Collectors.toList());
+
+        if (!futures.isEmpty()) {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         }
         
@@ -81,28 +61,26 @@ public class GooglePlaceDetails {
      * Fully async aggregate method returning a CompletableFuture.
      */
     public CompletableFuture<List<? extends PlaceVO>> searchGooglePlaceDetailsAsync(List<? extends PlaceVO> placeVOs) {
-        // placePhotoRepository에서 기존 데이터 먼저 조회
-        List<String> placeIds = placeVOs.stream()
-            .map(PlaceVO::getPlaceId)
-            .toList();
-        List<PlacePhoto> existingPhotos = placePhotoRepository.findAllById(placeIds);
-        Map<String, PlacePhoto> existingPhotoMap = existingPhotos.stream()
-            .collect(Collectors.toMap(PlacePhoto::getPlaceId, p -> p));
-        
-        // 기존에 없는 placeId만 API 호출
-        List<? extends PlaceVO> missingPlaceVOs = placeVOs.stream()
-            .filter(vo -> !existingPhotoMap.containsKey(vo.getPlaceId()))
-            .toList();
-        
-        if (missingPlaceVOs.isEmpty()) {
-            // 모든 데이터가 이미 존재하면 바로 반환
+        if (placeVOs == null || placeVOs.isEmpty()) {
             return CompletableFuture.completedFuture(placeVOs);
         }
+
+        List<CompletableFuture<Void>> futures = placeVOs.stream()
+            .filter(vo -> vo.getPhotoUrl() == null)
+            .map(vo -> googlePlaceImageWorker.fetchSinglePlaceDetailsAsync(vo.getPlaceId())
+                .thenAccept(details -> {
+                    if (details != null) {
+                        vo.setPhotoUrl(details.photoUrl());
+                    }
+                }))
+            .toList();
         
-        List<CompletableFuture<PlacePhoto>> futures = missingPlaceVOs.stream()
-                .map(vo -> googlePlaceImageWorker.fetchSinglePlaceImageAsync(vo.getPlaceId()))
-                .toList();
+        if (futures.isEmpty()) {
+            return CompletableFuture.completedFuture((List<PlaceVO>) placeVOs);
+        }
+        
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                .thenApply(v -> placeVOs);
+                .thenApply(v -> (List<PlaceVO>) placeVOs);
     }
 }
+

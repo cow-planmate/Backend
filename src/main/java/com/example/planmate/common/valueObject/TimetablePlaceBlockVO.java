@@ -22,6 +22,9 @@ public class TimetablePlaceBlockVO {
     private Float placeRating;
     private String placeAddress;
     private String placeLink;
+    private String photoUrl;
+    @JsonProperty("placeId")
+    @JsonAlias({ "placePhotoId" })
     private String placeId;
     private String date;
     @JsonProperty("startTime")

@@ -18,7 +18,8 @@ public class PlaceBlockVO {
     private float placeRating;
     private String placeAddress;
     private String placeLink;
-    private String placePhotoId;
+    private String photoUrl;
+    private String placeId;
     private double xLocation;
     private double yLocation;
     private LocalTime blockStartTime;
