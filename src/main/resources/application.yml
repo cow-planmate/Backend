@@ -71,7 +71,7 @@ logging:
     org.springframework.data: WARN
     com.sksamuel.scrimage: WARN
     com.example.planmate: DEBUG             # 우리 코드만 디버그
-    com.sharedsync: DEBUG                   # 공유 싱크 디버그
+    com.sharedsync: WARN                   # 공유 싱크 디버그
   file:
     name: ${LOG_PATH:logs}/app.log  # 환경변수로 바꿀 수 있음(기본 logs/)
 
