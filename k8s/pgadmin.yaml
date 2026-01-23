@@ -54,14 +54,18 @@ spec:
         volumeMounts:
         - name: pgadmin-data
           mountPath: /var/lib/pgadmin
+        - name: pgadmin-logs
+          mountPath: /var/log/pgadmin
       securityContext:
-        runAsUser: 505
-        runAsGroup: 505
-        fsGroup: 505
+        runAsUser: 5050
+        runAsGroup: 5050
+        fsGroup: 5050
       volumes:
       - name: pgadmin-data
         persistentVolumeClaim:
           claimName: pgadmin-pvc
+      - name: pgadmin-logs
+        emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
