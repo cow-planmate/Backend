@@ -145,27 +145,27 @@ public class PlaceService {
             // -------------------------------------------------------------
             // Save results to cache (per theme)
             // -------------------------------------------------------------
-            PlaceSearchCondition condition;
-            if (existingConditionOpt.isPresent()) {
-                condition = existingConditionOpt.get();
-                condition.setExpiredAt(LocalDateTime.now().plusDays(360));
-                placeSearchResultRepository.deleteAll(placeSearchResultRepository.findAllByCondition(condition));
-            } else {
-                condition = PlaceSearchCondition.builder()
-                        .travelId(travelId)
-                        .placeCategoryId(preferredThemeCategoryId)
-                        .preferredThemeId(targetThemeId)
-                        .cacheKey(cacheKey)
-                        .expiredAt(LocalDateTime.now().plusDays(360))
-                        .build();
-                condition = placeSearchConditionRepository.save(condition);
-            }
+            // Use native upsert to handle concurrent inserts of the same cacheKey without unique constraint violations
+            placeSearchConditionRepository.upsertCondition(
+                    travelId,
+                    preferredThemeCategoryId,
+                    targetThemeId,
+                    cacheKey,
+                    LocalDateTime.now().plusDays(360)
+            );
 
+            PlaceSearchCondition condition = placeSearchConditionRepository.findByCacheKey(cacheKey)
+                    .orElseThrow(() -> new RuntimeException("Condition should exist after upsert"));
+
+            // Clear old results using the optimized delete method
+            placeSearchResultRepository.deleteAllByCondition(condition);
+
+            List<PlaceSearchResult> resultsToSave = new ArrayList<>();
             for (PlaceVO vo : detailed) {
                 if (!aggregatedPlaces.containsKey(vo.getPlaceId())) {
                     aggregatedPlaces.put(vo.getPlaceId(), vo);
                 }
-                PlaceSearchResult result = PlaceSearchResult.builder()
+                resultsToSave.add(PlaceSearchResult.builder()
                         .condition(condition)
                         .placeId(vo.getPlaceId())
                         .placeName(vo.getName())
@@ -176,13 +176,15 @@ public class PlaceService {
                         .placeLink(vo.getUrl())
                         .xLocation(vo.getXLocation())
                         .yLocation(vo.getYLocation())
-                        .build();
-                placeSearchResultRepository.save(result);
+                        .build());
+            }
+            if (!resultsToSave.isEmpty()) {
+                placeSearchResultRepository.saveAll(resultsToSave);
             }
         }
 
         List<PlaceVO> finalPlaces = new ArrayList<>(aggregatedPlaces.values());
-        googlePlaceDetails.fetchMissingImagesInBackground(finalPlaces);
+        fetchImagesWithCacheCheck(finalPlaces);
         
         response.addPlace(finalPlaces);
         if (!aggregatedTokens.isEmpty()) {
@@ -223,8 +225,8 @@ public class PlaceService {
 
         List<PlaceVO> places = pair.getFirst();
 
-        // Trigger background image fetch without blocking
-        googlePlaceDetails.fetchMissingImagesInBackground(places);
+        // Trigger background image fetch with cache check
+        fetchImagesWithCacheCheck(places);
 
         response.addPlace(places);
         response.addNextPageToken(pair.getSecond());
@@ -235,7 +237,7 @@ public class PlaceService {
         PlaceResponse response = new PlaceResponse();
         Pair<List<TourPlaceVO>, List<String>> pair = googleMap.getTourPlace(travelCategoryName + " " + travelName, new ArrayList<>());
         
-        googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
+        fetchImagesWithCacheCheck(pair.getFirst());
         
         response.addPlace(pair.getFirst());
         response.addNextPageToken(pair.getSecond());
@@ -246,7 +248,7 @@ public class PlaceService {
         PlaceResponse response = new PlaceResponse();
         Pair<List<LodgingPlaceVO>, List<String>> pair = googleMap.getLodgingPlace(travelCategoryName + " " + travelName, new ArrayList<>());
         
-        googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
+        fetchImagesWithCacheCheck(pair.getFirst());
         
         response.addPlace(pair.getFirst());
         response.addNextPageToken(pair.getSecond());
@@ -257,7 +259,7 @@ public class PlaceService {
         PlaceResponse response = new PlaceResponse();
         Pair<List<RestaurantPlaceVO>, List<String>> pair = googleMap.getRestaurantPlace(travelCategoryName + " " + travelName, new ArrayList<>());
         
-        googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
+        fetchImagesWithCacheCheck(pair.getFirst());
         
         response.addPlace(pair.getFirst());
         response.addNextPageToken(pair.getSecond());
@@ -268,7 +270,7 @@ public class PlaceService {
         PlaceResponse response = new PlaceResponse();
         Pair<List<PlaceVO>, List<String>> pair = googleMap.getSearchPlace(query);
         
-        googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
+        fetchImagesWithCacheCheck(pair.getFirst());
         
         response.addPlace(pair.getFirst());
         response.addNextPageToken(pair.getSecond());
@@ -277,14 +279,40 @@ public class PlaceService {
 
     
 
+    @Transactional
     public PlaceResponse getNextPlace(List<String> nextPageToken) throws IOException {
         PlaceResponse response = new PlaceResponse();
         Pair<List<PlaceVO>, List<String>> pair = googleMap.getNextPagePlace(nextPageToken);
         
-        googlePlaceDetails.fetchMissingImagesInBackground(pair.getFirst());
+        fetchImagesWithCacheCheck(pair.getFirst());
         
         response.addPlace(pair.getFirst());
         response.addNextPageToken(pair.getSecond());
         return response;
+    }
+
+    /**
+     * Helper to check DB for existing images before calling Google,
+     * and sync newly fetched images back to DB.
+     */
+    private void fetchImagesWithCacheCheck(List<? extends PlaceVO> places) {
+        if (places == null || places.isEmpty()) return;
+
+        // 1. Try to fill from DB first to avoid unnecessary Google API calls
+        for (PlaceVO vo : places) {
+            if (vo.getPhotoUrl() == null || vo.getPhotoUrl().isBlank()) {
+                placeSearchResultRepository.findFirstByPlaceIdAndPhotoUrlIsNotNull(vo.getPlaceId())
+                        .ifPresent(existing -> vo.setPhotoUrl(existing.getPhotoUrl()));
+            }
+        }
+
+        // 2. Fetch missing from Google and update all matching records in DB when done
+        googlePlaceDetails.fetchMissingImagesInBackground(places, (placeId, photoUrl) -> {
+            try {
+                placeSearchResultRepository.updatePhotoUrlByPlaceId(placeId, photoUrl);
+            } catch (Exception e) {
+                // Ignore errors in background sync to not disrupt main flow
+            }
+        });
     }
 }

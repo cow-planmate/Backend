@@ -18,4 +18,19 @@ public class PlaceVO {
     private double xLocation;
     private double yLocation;
     private String iconUrl;
+    private String photoReference; 
+
+    public PlaceVO(String placeId, int categoryId, String url, String name, String formatted_address, float rating, String photoUrl, double xLocation, double yLocation, String iconUrl) {
+        this.placeId = placeId;
+        this.categoryId = categoryId;
+        this.url = url;
+        this.name = name;
+        this.formatted_address = formatted_address;
+        this.rating = rating;
+        this.photoUrl = photoUrl;
+        this.xLocation = xLocation;
+        this.yLocation = yLocation;
+        this.iconUrl = iconUrl;
+    }
 }
+

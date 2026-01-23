@@ -35,26 +35,18 @@ public class ImageService {
 
         // If explicitly set to empty string, it means "no photo available" - return 404 immediately
         if ("".equals(photoUrl)) {
-            log.debug("Photo for placeId {} is marked as non-existent (empty string).", placeId);
             return ResponseEntity.notFound().build();
         }
 
         // 2. If not found in DB (null), try to trigger a fetch
         if (photoUrl == null) {
             try {
-                log.info("Photo URL not found in DB for placeId: {}. Triggering on-demand fetch.", placeId);
-                var details = googlePlaceImageWorker.fetchSinglePlaceDetailsAsync(placeId).get();
+                var details = googlePlaceImageWorker.fetchSinglePlaceDetailsAsync(placeId, null).get();
                 if (details != null && details.photoUrl() != null) {
                     photoUrl = details.photoUrl();
                     
-                    // Update photoUrl in PlaceSearchResult if it exists
-                    String finalPhotoUrl = photoUrl;
-                    placeSearchResultRepository.findAll().stream()
-                            .filter(r -> r.getPlaceId().equals(placeId) && r.getPhotoUrl() == null)
-                            .forEach(r -> {
-                                r.setPhotoUrl(finalPhotoUrl);
-                                placeSearchResultRepository.save(r);
-                            });
+                    placeSearchResultRepository.updatePhotoUrlByPlaceId(placeId, photoUrl);
+                    timeTablePlaceBlockRepository.updatePhotoUrlByPlaceId(placeId, photoUrl);
                 }
             } catch (Exception e) {
                 log.error("Failed to fetch place details on-demand for placeId: {}", placeId, e);
