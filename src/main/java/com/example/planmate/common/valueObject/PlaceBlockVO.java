@@ -15,13 +15,13 @@ public class PlaceBlockVO {
     private int placeCategoryId;
     private String placeName;
     private String placeTheme;
-    private float placeRating;
+    private Float placeRating;
     private String placeAddress;
     private String placeLink;
     private String photoUrl;
     private String placeId;
-    private double xLocation;
-    private double yLocation;
+    private Double xLocation;
+    private Double yLocation;
     private LocalTime blockStartTime;
     private LocalTime blockEndTime;
 }
