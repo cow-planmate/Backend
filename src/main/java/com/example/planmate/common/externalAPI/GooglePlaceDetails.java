@@ -2,6 +2,7 @@ package com.example.planmate.common.externalAPI;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 
 import org.springframework.stereotype.Component;
 
@@ -22,14 +23,24 @@ public class GooglePlaceDetails {
      * Triggers async image/detail fetching but does not wait for them.
      */
     public void fetchMissingImagesInBackground(List<? extends PlaceVO> placeVOs) {
+        fetchMissingImagesInBackground(placeVOs, null);
+    }
+
+    /**
+     * Triggers async image/detail fetching with an optional callback for when a photo is found.
+     */
+    public void fetchMissingImagesInBackground(List<? extends PlaceVO> placeVOs, BiConsumer<String, String> onPhotoFetched) {
         if (placeVOs == null || placeVOs.isEmpty()) return;
         
         placeVOs.stream()
-            .filter(vo -> vo.getPhotoUrl() == null)
-            .forEach(vo -> googlePlaceImageWorker.fetchSinglePlaceDetailsAsync(vo.getPlaceId())
+            .filter(vo -> vo.getPhotoUrl() == null || vo.getPhotoUrl().isBlank())
+            .forEach(vo -> googlePlaceImageWorker.fetchSinglePlaceDetailsAsync(vo.getPlaceId(), vo.getPhotoReference())
                 .thenAccept(details -> {
-                    if (details != null) {
+                    if (details != null && details.photoUrl() != null && !details.photoUrl().isBlank()) {
                         vo.setPhotoUrl(details.photoUrl());
+                        if (onPhotoFetched != null) {
+                            onPhotoFetched.accept(vo.getPlaceId(), details.photoUrl());
+                        }
                     }
                 }));
     }
@@ -41,8 +52,8 @@ public class GooglePlaceDetails {
         if (placeVOs == null || placeVOs.isEmpty()) return placeVOs;
 
         List<CompletableFuture<Void>> futures = placeVOs.stream()
-            .filter(vo -> vo.getPhotoUrl() == null)
-            .map(vo -> googlePlaceImageWorker.fetchSinglePlaceDetailsAsync(vo.getPlaceId())
+            .filter(vo -> vo.getPhotoUrl() == null || vo.getPhotoUrl().isBlank())
+            .map(vo -> googlePlaceImageWorker.fetchSinglePlaceDetailsAsync(vo.getPlaceId(), vo.getPhotoReference())
                 .thenAccept(details -> {
                     if (details != null) {
                         vo.setPhotoUrl(details.photoUrl());
@@ -66,8 +77,8 @@ public class GooglePlaceDetails {
         }
 
         List<CompletableFuture<Void>> futures = placeVOs.stream()
-            .filter(vo -> vo.getPhotoUrl() == null)
-            .map(vo -> googlePlaceImageWorker.fetchSinglePlaceDetailsAsync(vo.getPlaceId())
+            .filter(vo -> vo.getPhotoUrl() == null || vo.getPhotoUrl().isBlank())
+            .map(vo -> googlePlaceImageWorker.fetchSinglePlaceDetailsAsync(vo.getPlaceId(), vo.getPhotoReference())
                 .thenAccept(details -> {
                     if (details != null) {
                         vo.setPhotoUrl(details.photoUrl());

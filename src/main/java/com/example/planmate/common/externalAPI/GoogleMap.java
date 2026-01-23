@@ -63,14 +63,18 @@ public class GoogleMap {
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
 
-                // If photos are missing, set photoUrl to empty string to mark as "no photo"
+                // Extract photo reference if available to avoid redundant Details API call later
                 String initialPhotoUrl = null;
+                String photoReference = null;
                 JsonNode photos = result.path("photos");
                 if (!photos.isArray() || photos.size() == 0) {
-                    initialPhotoUrl = "";
+                    initialPhotoUrl = ""; // Mark as "no photo"
+                } else {
+                    photoReference = photos.get(0).path("photo_reference").asText(null);
                 }
 
                 TourPlaceVO place = new TourPlaceVO(placeId, 0, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                place.setPhotoReference(photoReference);
                 places.add(place);
             }
         }
@@ -104,14 +108,18 @@ public class GoogleMap {
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
 
-                // If photos are missing, set photoUrl to empty string to mark as "no photo"
+                // Extract photo reference if available to avoid redundant Details API call later
                 String initialPhotoUrl = null;
+                String photoReference = null;
                 JsonNode photos = result.path("photos");
                 if (!photos.isArray() || photos.size() == 0) {
-                    initialPhotoUrl = "";
+                    initialPhotoUrl = ""; // Mark as "no photo"
+                } else {
+                    photoReference = photos.get(0).path("photo_reference").asText(null);
                 }
 
                 LodgingPlaceVO place = new LodgingPlaceVO(placeId, 1, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                place.setPhotoReference(photoReference);
                 places.add(place);
             }
         }
@@ -145,14 +153,18 @@ public class GoogleMap {
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
 
-                // If photos are missing, set photoUrl to empty string to mark as "no photo"
+                // Extract photo reference if available to avoid redundant Details API call later
                 String initialPhotoUrl = null;
+                String photoReference = null;
                 JsonNode photos = result.path("photos");
                 if (!photos.isArray() || photos.size() == 0) {
-                    initialPhotoUrl = "";
+                    initialPhotoUrl = ""; // Mark as "no photo"
+                } else {
+                    photoReference = photos.get(0).path("photo_reference").asText(null);
                 }
 
                 RestaurantPlaceVO place = new RestaurantPlaceVO(placeId, 2, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                place.setPhotoReference(photoReference);
                 places.add(place);
             }
         }
@@ -204,14 +216,19 @@ public class GoogleMap {
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
 
-                // If photos are missing, set photoUrl to empty string to mark as "no photo"
+                // Extract photo reference if available to avoid redundant Details API call later
                 String initialPhotoUrl = null;
+                String photoReference = null;
                 JsonNode photos = result.path("photos");
                 if (!photos.isArray() || photos.size() == 0) {
-                    initialPhotoUrl = "";
+                    initialPhotoUrl = ""; // Mark as "no photo"
+                } else {
+                    photoReference = photos.get(0).path("photo_reference").asText(null);
                 }
 
-                places.add(new PlaceVO(placeId, 4, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl));
+                PlaceVO place = new PlaceVO(placeId, 4, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                place.setPhotoReference(photoReference);
+                places.add(place);
             }
         }
         return Pair.of(places, nextPageTokens);
@@ -255,14 +272,19 @@ public class GoogleMap {
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
 
-                // If photos are missing, set photoUrl to empty string to mark as "no photo"
+                // Extract photo reference if available to avoid redundant Details API call later
                 String initialPhotoUrl = null;
+                String photoReference = null;
                 JsonNode photos = result.path("photos");
                 if (!photos.isArray() || photos.size() == 0) {
-                    initialPhotoUrl = "";
+                    initialPhotoUrl = ""; // Mark as "no photo"
+                } else {
+                    photoReference = photos.get(0).path("photo_reference").asText(null);
                 }
 
-                places.add(new PlaceVO(placeId, 4, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl));
+                PlaceVO place = new PlaceVO(placeId, 4, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                place.setPhotoReference(photoReference);
+                places.add(place);
             }
         }
         return Pair.of(places, nextNextPageTokens);

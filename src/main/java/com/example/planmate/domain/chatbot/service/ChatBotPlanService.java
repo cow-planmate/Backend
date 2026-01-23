@@ -205,12 +205,11 @@ public class ChatBotPlanService {
             // DTO 생성
             TimeTablePlaceBlockDto placeBlockDto = objectMapper.convertValue(placeBlockMap, TimeTablePlaceBlockDto.class);
 
-            // Python에서 이미 장소 정보(placeId, 좌표 등)를 제공했으므로 재검색 불필요
-            // 이미지만 가져오기
             String placeId = (String) placeBlockMap.get("placeId");
+            String photoReference = (String) placeBlockMap.get("photoReference");
             try {
                 if (placeId != null && !placeId.isEmpty()) {
-                    googlePlaceImageWorker.fetchSinglePlaceDetailsAsync(placeId);
+                    googlePlaceImageWorker.fetchSinglePlaceDetailsAsync(placeId, photoReference);
                 }
             } catch (Exception e) {
                 log.warn("장소 이미지 가져오기 실패 (계속 진행): {}", e.getMessage());
@@ -262,6 +261,10 @@ public class ChatBotPlanService {
                         placeBlockMap.put("placeRating", foundPlace.getRating());
                         placeBlockMap.put("xLocation", foundPlace.getXLocation());
                         placeBlockMap.put("yLocation", foundPlace.getYLocation());
+                        placeBlockMap.put("photoReference", foundPlace.getPhotoReference());
+                        
+                        // 구글 검색 성공 시 비동기 이미지 업데이트 트리거
+                        googlePlaceImageWorker.fetchSinglePlaceDetailsAsync(foundPlace.getPlaceId(), foundPlace.getPhotoReference());
                         
                         log.info("Google API 검색 성공 - placeId: {}", foundPlace.getPlaceId());
                     }

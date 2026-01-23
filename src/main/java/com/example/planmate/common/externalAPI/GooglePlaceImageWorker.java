@@ -36,33 +36,36 @@ public class GooglePlaceImageWorker {
 
     @SuppressWarnings("unchecked")
     @Async("placeExecutor")
-    public CompletableFuture<PlaceExtraDetails> fetchSinglePlaceDetailsAsync(String placeId) {
+    public CompletableFuture<PlaceExtraDetails> fetchSinglePlaceDetailsAsync(String placeId, String photoReference) {
         if (placeId == null || !processingIds.add(placeId)) {
             return CompletableFuture.completedFuture(null);
         }
         try {
-            String finalPhotoReference = null;
+            String finalPhotoReference = photoReference;
 
-            // Google Places API (Legacy) Detail URL
-            String detailsUrl = String.format(
-                    "https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=photos&key=%s",
-                    placeId, googleApiKey
-            );
+            // Only call Details API if photoReference is not provided
+            if (finalPhotoReference == null) {
+                // Google Places API (Legacy) Detail URL
+                String detailsUrl = String.format(
+                        "https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=photos&key=%s",
+                        placeId, googleApiKey
+                );
 
-            ResponseEntity<Map<String, Object>> detailsResponse = restTemplate.exchange(
-                    detailsUrl,
-                    HttpMethod.GET,
-                    null,
-                    new ParameterizedTypeReference<Map<String, Object>>() {}
-            );
+                ResponseEntity<Map<String, Object>> detailsResponse = restTemplate.exchange(
+                        detailsUrl,
+                        HttpMethod.GET,
+                        null,
+                        new ParameterizedTypeReference<Map<String, Object>>() {}
+                );
 
-            Map<String, Object> body = detailsResponse.getBody();
-            if (body != null && "OK".equals(body.get("status"))) {
-                Map<String, Object> result = (Map<String, Object>) body.get("result");
-                if (result != null) {
-                    List<Map<String, Object>> photos = (List<Map<String, Object>>) result.get("photos");
-                    if (photos != null && !photos.isEmpty()) {
-                        finalPhotoReference = (String) photos.get(0).get("photo_reference");
+                Map<String, Object> body = detailsResponse.getBody();
+                if (body != null && "OK".equals(body.get("status"))) {
+                    Map<String, Object> result = (Map<String, Object>) body.get("result");
+                    if (result != null) {
+                        List<Map<String, Object>> photos = (List<Map<String, Object>>) result.get("photos");
+                        if (photos != null && !photos.isEmpty()) {
+                            finalPhotoReference = (String) photos.get(0).get("photo_reference");
+                        }
                     }
                 }
             }
