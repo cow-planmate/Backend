@@ -4,7 +4,7 @@ metadata:
   name: minio
   namespace: default
 spec:
-  image: minio/minio:RELEASE.2024-01-18T22-51-28Z
+  image: minio/minio:RELEASE.2025-09-07T16-13-09Z
   imagePullPolicy: IfNotPresent
   
   configuration:
@@ -19,7 +19,7 @@ spec:
           cpu: "50m"
           memory: "256Mi"
         limits:
-          cpu: "200m"
+          cpu: "400m"
           memory: "512Mi"
       volumeClaimTemplate:
         metadata:

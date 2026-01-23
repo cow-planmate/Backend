@@ -1,3 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redisinsight-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-path
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -40,6 +53,13 @@ spec:
           limits:
             cpu: 500m
             memory: 512Mi
+        volumeMounts:
+        - name: redisinsight-data
+          mountPath: /data
+      volumes:
+      - name: redisinsight-data
+        persistentVolumeClaim:
+          claimName: redisinsight-pvc
 ---
 apiVersion: v1
 kind: Service

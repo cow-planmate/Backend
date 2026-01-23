@@ -6,7 +6,7 @@ metadata:
   labels:
     app: planmate-backend
 spec:
-  replicas: 1
+  replicas: 2
   revisionHistoryLimit: 3
   selector:
     matchLabels:
@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: planmate-backend
-        image: cycle123/planmate:test-82bf76ee4e09944827bdbc7f9860536b95f3bed4
+        image: cycle123/planmate:test-4686cef2fd767adabebcc4b226734ce5b79ca9af
         imagePullPolicy: Always
         ports:
         - containerPort: 8080

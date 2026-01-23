@@ -7,10 +7,6 @@ spec:
   # 인스턴스 개수 (Master 1 + Replica 2)
   clusterSize: 3
   
-  # Sentinel 설정 추가
-  sentinel:
-    enabled: true
-  
   kubernetesConfig:
     image: redis:7.2.4
     imagePullPolicy: IfNotPresent
