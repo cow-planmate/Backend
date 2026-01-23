@@ -26,7 +26,7 @@ public class GetCompletePlanResponse extends CommonResponse {
     public void addPlanFrame(int planId, String planName, String departure, String travelCategoryName, int travelId, String travelName, int adultCount, int childCount, int transportationCategoryId) {
         planFrame = new PlanFrameVO(planId, planName, departure, travelCategoryName, travelId, travelName,  adultCount, childCount, transportationCategoryId);
     }
-    public void addPlaceBlock(int blockId, int timeTableId, int placeCategory, String placeName, String placeTheme, float placeRating, String placeAddress, String placeLink, String photoUrl, String placeId, double xLocation, double yLocation, LocalTime startTime, LocalTime endTime) {
+    public void addPlaceBlock(int blockId, int timeTableId, int placeCategory, String placeName, String placeTheme, Float placeRating, String placeAddress, String placeLink, String photoUrl, String placeId, Double xLocation, Double yLocation, LocalTime startTime, LocalTime endTime) {
         placeBlocks.add(new PlaceBlockVO(blockId, timeTableId, placeCategory, placeName, placeTheme, placeRating, placeAddress, placeLink, photoUrl, placeId, xLocation, yLocation, startTime, endTime));
     }
     public void addTimetable(int timetableId, LocalDate date, LocalTime startTime, LocalTime endTime) {
