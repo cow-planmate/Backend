@@ -200,7 +200,7 @@ public class GoogleMap {
         List<PlaceVO> places = new ArrayList<>();
         // For general search, we should NOT append the location name (to allow global search like "Seoul Station")
         // But we still apply locationBias via lat/lng if provided
-        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson(query, null, locationText, lat, lng, 50000, 0.0, 0, false, true);
+        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson(query, null, locationText, lat, lng, 50000, 4.0, 0, false, true);
         JsonNode results = pair.getFirst();
         List<String> nextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
@@ -256,7 +256,7 @@ public class GoogleMap {
 
     public Pair<List<PlaceVO>, List<String>> getNextPagePlace(List<String> nextPageTokens) throws IOException {
         List<PlaceVO> places = new ArrayList<>();
-        Pair<JsonNode, List<String>> pair = searchGoogleNextPagePlace(nextPageTokens, Double.valueOf(0));
+        Pair<JsonNode, List<String>> pair = searchGoogleNextPagePlace(nextPageTokens, 4.0);
         JsonNode results = pair.getFirst();
         List<String> nextNextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
@@ -325,8 +325,8 @@ public class GoogleMap {
             searchAndFillMap(fullQuery, theme, placeMap, nextPageTokens, lat, lng, radiusMeters, minRating, minReviews);
         }
 
-        // 2차 검색: 결과가 10개 미만일 경우에만 기본(Baseline) 검색 추가 (includeBaseline 플래그 확인)
-        if (includeBaseline && placeMap.size() < 10) {
+        // 2차 검색: 결과가 20개 미만일 경우에만 기본(Baseline) 검색 추가 (includeBaseline 플래그 확인)
+        if (includeBaseline && placeMap.size() < 20) {
             searchAndFillMap(fullQuery, "", placeMap, nextPageTokens, lat, lng, radiusMeters, minRating, minReviews);
         }
 
@@ -380,6 +380,7 @@ public class GoogleMap {
             for (JsonNode place : results) {
                 double rating = place.path("rating").asDouble(0.0);
                 int reviews = place.path("user_ratings_total").asInt(0);
+                // 4.0 이상만 포함 (0.0 제외)
                 if (rating >= effectiveMinRating && (minReviews <= 0 || reviews >= minReviews)) {
                     String placeId = place.path("place_id").asText(null);
                     if (placeId != null && !placeId.isBlank()) {

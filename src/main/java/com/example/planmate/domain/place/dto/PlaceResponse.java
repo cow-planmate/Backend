@@ -11,7 +11,7 @@ import lombok.Getter;
 @Getter
 public class PlaceResponse extends CommonResponse {
     private final List<PlaceVO> places;
-    private final List<String> nextPageTokens;
+    private final List<NextPageTokenDTO> nextPageTokens;
 
     public PlaceResponse() {
         places = new ArrayList<>();
@@ -22,7 +22,7 @@ public class PlaceResponse extends CommonResponse {
         this.places.addAll(places);
     }
 
-    public void addNextPageToken(List<String> nextPageTokens) {
+    public void addNextPageToken(List<NextPageTokenDTO> nextPageTokens) {
         this.nextPageTokens.addAll(nextPageTokens);
     }
 }
