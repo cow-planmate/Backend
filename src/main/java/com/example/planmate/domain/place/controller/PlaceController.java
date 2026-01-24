@@ -35,7 +35,7 @@ public class PlaceController {
     public ResponseEntity<PlaceResponse> getTourPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
         int userId = Integer.parseInt(authentication.getName());
         PlaceResponse response = placeService.getTourPlace(userId, planId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(response); 
     }
 
     @GetMapping("/{planId}/restaurant")
@@ -91,7 +91,7 @@ public class PlaceController {
 
     @PostMapping("/nextplace")
     public ResponseEntity<PlaceResponse> getNextPlace(@RequestBody NextPlaceRequest request) throws IOException {
-        PlaceResponse response = placeService.getNextPlace(request.getTokens());
+        PlaceResponse response = placeService.getNextPlace(request);
         return ResponseEntity.ok(response);
     }
 }

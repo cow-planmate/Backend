@@ -25,4 +25,9 @@ public interface PlaceSearchResultRepository extends JpaRepository<PlaceSearchRe
     @Transactional
     @Query("UPDATE PlaceSearchResult psr SET psr.photoUrl = :photoUrl WHERE psr.placeId = :placeId AND (psr.photoUrl IS NULL OR psr.photoUrl = '')")
     void updatePhotoUrlByPlaceId(@Param("placeId") String placeId, @Param("photoUrl") String photoUrl);
+
+    @Query("SELECT COALESCE(MAX(psr.sortOrder), 0) FROM PlaceSearchResult psr WHERE psr.condition = :condition")
+    int findMaxSortOrderByCondition(@Param("condition") PlaceSearchCondition condition);
+
+    List<PlaceSearchResult> findByConditionAndSortOrderBetween(PlaceSearchCondition condition, int start, int end);
 }
