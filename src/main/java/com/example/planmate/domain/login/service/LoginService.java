@@ -1,7 +1,5 @@
 package com.example.planmate.domain.login.service;
 
-import com.example.planmate.domain.user.entity.User;
-import com.example.planmate.domain.user.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -14,6 +12,8 @@ import com.example.planmate.domain.login.dto.LoginResponse;
 import com.example.planmate.domain.login.dto.LogoutResponse;
 import com.example.planmate.domain.refreshToken.service.RefreshTokenStore;
 import com.example.planmate.domain.user.CustomUserDetails;
+import com.example.planmate.domain.user.entity.User;
+import com.example.planmate.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -73,13 +73,24 @@ public class LoginService {
     }
 
     public LogoutResponse logout(String refreshToken) {
-    Integer userId1 = refreshTokenStore.findUserIdByRefreshToken(refreshToken);
-        if(userId1 == null) {
+        if (refreshToken == null || refreshToken.isEmpty()) {
             LogoutResponse response = new LogoutResponse(false);
-            response.setMessage("유효하지 않은 토큰입니다");
+            response.setMessage("리프레시 토큰이 필요합니다");
             return response;
         }
+
+        Integer userId = refreshTokenStore.findUserIdByRefreshToken(refreshToken);
+        if (userId == null) {
+            LogoutResponse response = new LogoutResponse(false);
+            response.setMessage("유효하지 않거나 이미 만료된 리프레시 토큰입니다");
+            return response;
+        }
+
         refreshTokenStore.deleteRefreshToken(refreshToken);
-        return new LogoutResponse(true);
+        SecurityContextHolder.clearContext();
+
+        LogoutResponse response = new LogoutResponse(true);
+        response.setMessage("성공적으로 로그아웃되었습니다");
+        return response;
     }
 }
