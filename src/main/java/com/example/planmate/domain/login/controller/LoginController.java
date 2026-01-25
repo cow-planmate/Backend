@@ -1,15 +1,17 @@
 package com.example.planmate.domain.login.controller;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.example.planmate.domain.login.dto.LoginRequest;
 import com.example.planmate.domain.login.dto.LoginResponse;
 import com.example.planmate.domain.login.dto.LogoutRequest;
 import com.example.planmate.domain.login.dto.LogoutResponse;
 import com.example.planmate.domain.login.service.LoginService;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RestController
 public class LoginController {

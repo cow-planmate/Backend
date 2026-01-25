@@ -17,8 +17,19 @@ spec:
     - minio.salmakis.online
     - redis.salmakis.online
     - db.salmakis.online
+    - kibana.salmakis.online
     secretName: planmate-backend-tls
   rules:
+  - host: kibana.salmakis.online
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kibana-service
+            port:
+              number: 5601
   - host: minio.salmakis.online
     http:
       paths:
