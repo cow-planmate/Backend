@@ -29,7 +29,7 @@ metadata:
   name: kibana-service
   namespace: default
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: kibana
   ports:
