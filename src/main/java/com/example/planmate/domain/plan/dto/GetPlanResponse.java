@@ -10,15 +10,23 @@ import com.example.planmate.common.valueObject.PlaceBlockVO;
 import com.example.planmate.common.valueObject.PlanFrameVO;
 import com.example.planmate.common.valueObject.TimetableVO;
 
-// import com.example.planmate.domain.webSocket.valueObject.UserDayIndexVO;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
+
 @Getter
 @Setter
+@Schema(description = "플랜 상세 조회 응답 데이터")
 public class GetPlanResponse extends CommonResponse {
+    @Schema(description = "플랜의 기본 정보(프레임)")
     private PlanFrameVO planFrame;
+
+    @Schema(description = "플랜에 포함된 장소 블록 목록")
     private List<PlaceBlockVO> placeBlocks;
+
+    @Schema(description = "플랜의 타임테이블(일차별) 목록")
     private List<TimetableVO> timetables;
+
     public GetPlanResponse() {
         placeBlocks = new ArrayList<>();
         timetables = new ArrayList<>();
