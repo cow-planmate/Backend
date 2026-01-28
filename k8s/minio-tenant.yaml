@@ -12,7 +12,7 @@ spec:
 
   pools:
     - name: pool-0
-      servers: 2
+      servers: 4
       volumesPerServer: 2
       resources:
         requests:
@@ -33,7 +33,16 @@ spec:
               storage: 500Mi
       affinity:
         podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution: []
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: v1.min.io/tenant
+                  operator: In
+                  values:
+                  - minio
+              topologyKey: "kubernetes.io/hostname"
 
   mountPath: /export
   requestAutoCert: false

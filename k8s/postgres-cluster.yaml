@@ -4,7 +4,7 @@ metadata:
   name: planmate-db
   namespace: default
 spec:
-  instances: 3
+  instances: 4
   imageName: ghcr.io/cloudnative-pg/postgresql:15
 
   # 슈퍼유저(postgres) 비밀번호 자동 설정
@@ -26,6 +26,20 @@ spec:
     limits:
       cpu: "200m"
       memory: "512Mi"
+
+  # 노드 분산 설정 (Anti-Affinity)
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: cnpg.io/cluster
+              operator: In
+              values:
+              - planmate-db
+          topologyKey: "kubernetes.io/hostname"
 
   # 저장소 설정
   storage:

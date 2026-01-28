@@ -6,7 +6,7 @@ metadata:
   labels:
     app: planmate-backend
 spec:
-  replicas: 2
+  replicas: 4
   revisionHistoryLimit: 3
   selector:
     matchLabels:
@@ -21,6 +21,15 @@ spec:
       labels:
         app: planmate-backend
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: planmate-backend
+              topologyKey: "kubernetes.io/hostname"
       containers:
       - name: planmate-backend
         image: cycle123/planmate:test-6cd944c74d605afd19446d0cfc6ed1baad6dadcc
