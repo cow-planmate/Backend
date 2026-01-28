@@ -4,7 +4,7 @@ metadata:
   name: planmate-db
   namespace: default
 spec:
-  instances: 4
+  instances: 3
   imageName: ghcr.io/cloudnative-pg/postgresql:15
 
   # 슈퍼유저(postgres) 비밀번호 자동 설정
