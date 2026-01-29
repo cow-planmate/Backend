@@ -114,12 +114,16 @@ public class PlaceService {
 
                             if (!aggregatedPlaces.containsKey(r.getPlaceId())) {
                                 PlaceVO vo;
+                                double x = (r.getXLocation() != null) ? r.getXLocation() : 0.0;
+                                double y = (r.getYLocation() != null) ? r.getYLocation() : 0.0;
+                                String placeLink = "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId();
+
                                 if (preferredThemeCategoryId == 0) {
-                                    vo = new TourPlaceVO(r.getPlaceId(), 0, "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId(), r.getPlaceName(), r.getPlaceAddress(), r.getPlaceRating().floatValue(), r.getPhotoUrl(), r.getXLocation() != null ? r.getXLocation() : 0, r.getYLocation() != null ? r.getYLocation() : 0, r.getIconUrl());
+                                    vo = new TourPlaceVO(r.getPlaceId(), preferredThemeCategoryId, placeLink, r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
                                 } else if (preferredThemeCategoryId == 1) {
-                                    vo = new LodgingPlaceVO(r.getPlaceId(), 1, "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId(), r.getPlaceName(), r.getPlaceAddress(), r.getPlaceRating().floatValue(), r.getPhotoUrl(), r.getXLocation() != null ? r.getXLocation() : 0, r.getYLocation() != null ? r.getYLocation() : 0, r.getIconUrl());
+                                    vo = new LodgingPlaceVO(r.getPlaceId(), preferredThemeCategoryId, placeLink, r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
                                 } else {
-                                    vo = new RestaurantPlaceVO(r.getPlaceId(), 2, "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId(), r.getPlaceName(), r.getPlaceAddress(), r.getPlaceRating().floatValue(), r.getPhotoUrl(), r.getXLocation() != null ? r.getXLocation() : 0, r.getYLocation() != null ? r.getYLocation() : 0, r.getIconUrl());
+                                    vo = new RestaurantPlaceVO(r.getPlaceId(), preferredThemeCategoryId, placeLink, r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
                                 }
                                 aggregatedPlaces.put(vo.getPlaceId(), vo);
                             }
@@ -268,7 +272,7 @@ public class PlaceService {
         int travelId = plan.getTravel().getTravelId();
 
         // Use cache logic for general search too
-        String cacheKey = travelId + ":3:" + query;
+        String cacheKey = travelId + ":4:" + query;
         var existingConditionOpt = placeSearchConditionRepository.findByCacheKey(cacheKey);
 
         if (existingConditionOpt.isPresent()) {
@@ -282,7 +286,13 @@ public class PlaceService {
                                 double rating = (r.getPlaceRating() != null) ? r.getPlaceRating().doubleValue() : 0.0;
                                 return rating >= 4.0;
                             })
-                            .map(r -> new PlaceVO(r.getPlaceId(), 3, r.getPlaceLink(), r.getPlaceName(), r.getPlaceAddress(), r.getPlaceRating().floatValue(), r.getPhotoUrl(), r.getXLocation(), r.getYLocation(), r.getIconUrl()))
+                            .map(r -> {
+                                double x = (r.getXLocation() != null) ? r.getXLocation() : 0.0;
+                                double y = (r.getYLocation() != null) ? r.getYLocation() : 0.0;
+                                float rating = (r.getPlaceRating() != null) ? r.getPlaceRating().floatValue() : 0.0f;
+                                String placeLink = (r.getPlaceLink() != null) ? r.getPlaceLink() : "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId();
+                                return new PlaceVO(r.getPlaceId(), 4, placeLink, r.getPlaceName(), r.getPlaceAddress(), rating, r.getPhotoUrl(), x, y, r.getIconUrl());
+                            })
                             .collect(Collectors.toList());
                     fetchImagesWithCacheCheck(places);
                     response.addPlace(places);
@@ -309,7 +319,7 @@ public class PlaceService {
         List<String> nextTokens = initialPair.getSecond();
 
         // Save to Cache
-        placeSearchConditionRepository.upsertCondition(travelId, 3, null, cacheKey, LocalDateTime.now().plusDays(360));
+        placeSearchConditionRepository.upsertCondition(travelId, 4, null, cacheKey, LocalDateTime.now().plusDays(360));
         PlaceSearchCondition condition = placeSearchConditionRepository.findByCacheKey(cacheKey).orElseThrow();
         placeSearchResultRepository.deleteAllByCondition(condition);
 
@@ -349,7 +359,7 @@ public class PlaceService {
         response.addPlace(filteredDetailed);
 
         if (!nextTokens.isEmpty()) {
-            preFetchRemainingPages(cacheKey, nextTokens, currentSortOrder, 3);
+            preFetchRemainingPages(cacheKey, nextTokens, currentSortOrder, 4);
             response.addNextPageToken(List.of(NextPageTokenDTO.builder()
                     .token(cacheKey)
                     .page(2)
@@ -373,7 +383,7 @@ public class PlaceService {
                 }
 
                 try {
-                    Pair<List<PlaceVO>, List<String>> nextPair = googleMap.getNextPagePlace(tokens);
+                    Pair<List<PlaceVO>, List<String>> nextPair = googleMap.getNextPagePlace(tokens, categoryId);
                     if (nextPair.getFirst().isEmpty()) break;
 
                     List<PlaceVO> detailed = nextPair.getFirst();
@@ -435,10 +445,6 @@ public class PlaceService {
             String cacheKey = incoming.getToken();
             if (cacheKey == null || cacheKey.isEmpty() || incoming.getPage() == null) continue;
 
-            String[] parts = cacheKey.split(":");
-            if (parts.length < 2) continue;
-            int categoryId = Integer.parseInt(parts[1]);
-            
             Integer targetPage = incoming.getPage();
             int startOrder = (targetPage - 1) * 20 + 1;
             int endOrder = targetPage * 20;
@@ -447,6 +453,7 @@ public class PlaceService {
 
             if (conditionOpt.isPresent()) {
                 PlaceSearchCondition condition = conditionOpt.get();
+                int categoryId = condition.getPlaceCategoryId();
                 List<PlaceSearchResult> pageResults = placeSearchResultRepository.findByConditionAndSortOrderBetween(condition, startOrder, endOrder);
                 
                 if (pageResults.isEmpty()) {
@@ -462,15 +469,20 @@ public class PlaceService {
                     for (PlaceSearchResult r : pageResults) {
                         double rating = (r.getPlaceRating() != null) ? r.getPlaceRating().doubleValue() : 0.0;
                         if (rating < 4.0) continue; 
+
                         PlaceVO vo;
+                        double x = (r.getXLocation() != null) ? r.getXLocation() : 0.0;
+                        double y = (r.getYLocation() != null) ? r.getYLocation() : 0.0;
+                        String placeLink = "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId();
+
                         if (categoryId == 0) {
-                            vo = new TourPlaceVO(r.getPlaceId(), 0, "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId(), r.getPlaceName(), r.getPlaceAddress(), r.getPlaceRating().floatValue(), r.getPhotoUrl(), r.getXLocation() != null ? r.getXLocation() : 0, r.getYLocation() != null ? r.getYLocation() : 0, r.getIconUrl());
+                            vo = new TourPlaceVO(r.getPlaceId(), categoryId, placeLink, r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
                         } else if (categoryId == 1) {
-                            vo = new LodgingPlaceVO(r.getPlaceId(), 1, "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId(), r.getPlaceName(), r.getPlaceAddress(), r.getPlaceRating().floatValue(), r.getPhotoUrl(), r.getXLocation() != null ? r.getXLocation() : 0, r.getYLocation() != null ? r.getYLocation() : 0, r.getIconUrl());
+                            vo = new LodgingPlaceVO(r.getPlaceId(), categoryId, placeLink, r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
                         } else if (categoryId == 2) {
-                            vo = new RestaurantPlaceVO(r.getPlaceId(), 2, "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId(), r.getPlaceName(), r.getPlaceAddress(), r.getPlaceRating().floatValue(), r.getPhotoUrl(), r.getXLocation() != null ? r.getXLocation() : 0, r.getYLocation() != null ? r.getYLocation() : 0, r.getIconUrl());
+                            vo = new RestaurantPlaceVO(r.getPlaceId(), categoryId, placeLink, r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
                         } else {
-                            vo = new PlaceVO(r.getPlaceId(), 3, "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId(), r.getPlaceName(), r.getPlaceAddress(), r.getPlaceRating().floatValue(), r.getPhotoUrl(), r.getXLocation(), r.getYLocation(), r.getIconUrl());
+                            vo = new PlaceVO(r.getPlaceId(), categoryId, placeLink, r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
                         }
                         allPlaces.add(vo);
                     }

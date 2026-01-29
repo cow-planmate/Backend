@@ -254,7 +254,7 @@ public class GoogleMap {
         return departures;
     }
 
-    public Pair<List<PlaceVO>, List<String>> getNextPagePlace(List<String> nextPageTokens) throws IOException {
+    public Pair<List<PlaceVO>, List<String>> getNextPagePlace(List<String> nextPageTokens, int categoryId) throws IOException {
         List<PlaceVO> places = new ArrayList<>();
         Pair<JsonNode, List<String>> pair = searchGoogleNextPagePlace(nextPageTokens, 4.0);
         JsonNode results = pair.getFirst();
@@ -282,7 +282,16 @@ public class GoogleMap {
                     photoReference = photos.get(0).path("photo_reference").asText(null);
                 }
 
-                PlaceVO place = new PlaceVO(placeId, 4, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                PlaceVO place;
+                if (categoryId == 0) {
+                    place = new TourPlaceVO(placeId, 0, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                } else if (categoryId == 1) {
+                    place = new LodgingPlaceVO(placeId, 1, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                } else if (categoryId == 2) {
+                    place = new RestaurantPlaceVO(placeId, 2, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                } else {
+                    place = new PlaceVO(placeId, categoryId, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                }
                 place.setPhotoReference(photoReference);
                 places.add(place);
             }
