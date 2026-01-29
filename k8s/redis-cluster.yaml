@@ -4,8 +4,8 @@ metadata:
   name: planmate-redis
   namespace: default
 spec:
-  # 인스턴스 개수 (Master 1 + Replica 3)
-  clusterSize: 4
+  # 인스턴스 개수 (Master 1 + Replica 2)
+  clusterSize: 3
   
   kubernetesConfig:
     image: redis:7.2.4

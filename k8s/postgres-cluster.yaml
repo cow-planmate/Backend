@@ -45,4 +45,3 @@ spec:
   storage:
     size: 1Gi
     storageClass: local-path
-# kubectl exec -it planmate-db-1 -- psql -U postgres -c "ALTER USER postgres WITH PASSWORD '1234';"
