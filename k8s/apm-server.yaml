@@ -18,11 +18,30 @@ spec:
         image: docker.elastic.co/apm/apm-server:8.15.0
         env:
         - name: output.elasticsearch.hosts
-          value: '["http://elasticsearch-service:9200"]'
+          value: '["http://elasticsearch-service.default.svc.cluster.local:9200"]'
         - name: apm-server.kibana.enabled
           value: "true"
         - name: apm-server.kibana.host
-          value: "kibana-service:5601"
+          value: "kibana-service.default.svc.cluster.local:5601"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8200
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8200
+          initialDelaySeconds: 15
+          periodSeconds: 20
         ports:
         - containerPort: 8200
           name: http

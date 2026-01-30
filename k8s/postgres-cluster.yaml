@@ -27,20 +27,6 @@ spec:
       cpu: "200m"
       memory: "512Mi"
 
-  # 노드 분산 설정 (Anti-Affinity)
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-      - weight: 100
-        podAffinityTerm:
-          labelSelector:
-            matchExpressions:
-            - key: cnpg.io/cluster
-              operator: In
-              values:
-              - planmate-db
-          topologyKey: "kubernetes.io/hostname"
-
   # 저장소 설정
   storage:
     size: 1Gi
