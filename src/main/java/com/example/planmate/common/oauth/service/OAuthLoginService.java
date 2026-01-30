@@ -93,9 +93,7 @@ public class OAuthLoginService {
             Optional<User> existing = userRepository.findByEmailIgnoreCase(email);
 
             if (existing.isPresent() && !existing.get().getProvider().equals(providerName)) {
-                return buildFailRedirect(
-                        "이미 해당 이메일로 가입된 계정이 있습니다. planMate 계정으로 로그인해주세요."
-                );
+                return buildFailRedirect();
             }
         }
 
@@ -153,14 +151,11 @@ public class OAuthLoginService {
                 .toUriString();
     }
 
-    private String buildFailRedirect(String message) {
+    private String buildFailRedirect() {
         return UriComponentsBuilder
                 .fromUriString(oAuthProperties.getFrontendRedirectUri())
-                .queryParam("success", false)
-                .queryParam(
-                        "message",
-                        message
-                )
+                .queryParam("status", "FAIL")
+                .queryParam("reason", "EMAIL_CONFLICT")
                 .build(true)
                 .toUriString();
     }
