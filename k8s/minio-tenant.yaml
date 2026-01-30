@@ -47,6 +47,23 @@ spec:
   mountPath: /export
   requestAutoCert: false
 
+  audit:
+    - type: webhook
+      endpoint: "http://elasticsearch-service.default.svc.cluster.local:9200/minio-audit-log/_doc"
+
+  log:
+    db:
+      volumeClaimTemplate:
+        metadata:
+          name: log-minio
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          storageClassName: local-path
+          resources:
+            requests:
+              storage: 1Gi
+
   # ✅ 오퍼레이터가 인식할 수 있는 올바른 서비스 노출 방식
   exposeServices:
     console: false

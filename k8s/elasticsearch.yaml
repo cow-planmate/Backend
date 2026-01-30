@@ -49,6 +49,10 @@ spec:
         volumeMounts:
         - name: elasticsearch-data
           mountPath: /usr/share/elasticsearch/data
+          subPath: data
+        - name: elasticsearch-data
+          mountPath: /usr/share/elasticsearch/logs
+          subPath: logs
       volumes:
       - name: elasticsearch-data
         persistentVolumeClaim:
