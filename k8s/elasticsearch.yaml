@@ -1,72 +1,23 @@
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: elasticsearch-pvc
-  namespace: default
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: local-path
-  resources:
-    requests:
-      storage: 5Gi
----
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
 metadata:
   name: elasticsearch
   namespace: default
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: elasticsearch
-  template:
-    metadata:
-      labels:
-        app: elasticsearch
-    spec:
-      containers:
-      - name: elasticsearch
-        image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
-        env:
-        - name: discovery.type
-          value: "single-node"
-        - name: xpack.security.enabled
-          value: "false"
-        - name: ES_JAVA_OPTS
-          value: "-Xms2g -Xmx2g"
-        ports:
-        - containerPort: 9200
-          name: http
+  version: 8.15.0
+  nodeSets:
+  - name: default
+    count: 1
+    config:
+      node.store.allow_mmap: false
+      xpack.security.enabled: false
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
         resources:
           requests:
-            cpu: "200m"
-            memory: "2Gi"
-          limits:
-            cpu: "1000m"
-            memory: "4Gi"
-        volumeMounts:
-        - name: elasticsearch-data
-          mountPath: /usr/share/elasticsearch/data
-          subPath: data
-        - name: elasticsearch-data
-          mountPath: /usr/share/elasticsearch/logs
-          subPath: logs
-      volumes:
-      - name: elasticsearch-data
-        persistentVolumeClaim:
-          claimName: elasticsearch-pvc
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: elasticsearch-service
-  namespace: default
-spec:
-  selector:
-    app: elasticsearch
-  ports:
-    - protocol: TCP
-      port: 9200
-      targetPort: 9200
+            storage: 5Gi
+        storageClassName: local-path

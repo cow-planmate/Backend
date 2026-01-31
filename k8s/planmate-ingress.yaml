@@ -27,7 +27,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: kibana-service
+            name: kibana-kb-http
             port:
               number: 5601
   - host: minio.salmakis.online

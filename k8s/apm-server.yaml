@@ -1,60 +1,16 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: apm.k8s.elastic.co/v1
+kind: ApmServer
 metadata:
   name: apm-server
   namespace: default
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: apm-server
-  template:
-    metadata:
-      labels:
-        app: apm-server
-    spec:
-      containers:
-      - name: apm-server
-        image: docker.elastic.co/apm/apm-server:8.15.0
-        env:
-        - name: output.elasticsearch.hosts
-          value: '["http://elasticsearch-service.default.svc.cluster.local:9200"]'
-        - name: apm-server.kibana.enabled
-          value: "true"
-        - name: apm-server.kibana.host
-          value: "kibana-service.default.svc.cluster.local:5601"
-        resources:
-          requests:
-            cpu: "200m"
-            memory: "512Mi"
-          limits:
-            cpu: "1000m"
-            memory: "1Gi"
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 8200
-          initialDelaySeconds: 10
-          periodSeconds: 10
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 8200
-          initialDelaySeconds: 15
-          periodSeconds: 20
-        ports:
-        - containerPort: 8200
-          name: http
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: apm-server-service
-  namespace: default
-spec:
-  selector:
-    app: apm-server
-  ports:
-    - protocol: TCP
-      port: 8200
-      targetPort: 8200
+  version: 8.15.0
+  count: 1
+  elasticsearchRef:
+    name: elasticsearch
+  kibanaRef:
+    name: kibana
+  config:
+    output.elasticsearch:
+      protocol: http
+      ssl.enabled: false
