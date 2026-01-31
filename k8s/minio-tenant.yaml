@@ -15,7 +15,7 @@ spec:
     - name: MINIO_AUDIT_ELASTICSEARCH_ENABLE_minio-http-audit-elasticsearch
       value: "on"
     - name: MINIO_AUDIT_ELASTICSEARCH_ENDPOINT_minio-http-audit-elasticsearch
-      value: "https://elasticsearch-es-http.default.svc.cluster.local:9200/minio-audit-log/_doc"
+      value: "https://elasticsearch-es-http.default.svc:9200/minio-audit-log/_doc"
     - name: MINIO_AUDIT_ELASTICSEARCH_USERNAME_minio-http-audit-elasticsearch
       value: "elastic"
     # ECK Secret에서 비밀번호 자동 주입
