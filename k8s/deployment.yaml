@@ -65,7 +65,9 @@ spec:
               name: planmate-secret
               key: MAIL_PASSWORD
         - name: ELASTIC_APM_SERVER_URLS
-          value: "http://apm-server-apm-http:8200"
+          value: "https://apm-server-apm-http:8200"
+        - name: ELASTIC_APM_VERIFY_SERVER_CERT
+          value: "false"
         - name: ELASTIC_APM_SERVER_REQUEST_TIMEOUT
           value: "120s"
         - name: ELASTIC_APM_API_REQUEST_SIZE
