@@ -68,6 +68,11 @@ spec:
           value: "https://apm-server-apm-http:8200"
         - name: ELASTIC_APM_VERIFY_SERVER_CERT
           value: "false"
+        - name: ELASTIC_APM_SECRET_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: apm-server-apm-token  # Operator가 만든 Secret 이름
+              key: secret-token           # ECK가 기본적으로 사용하는 키 이름
         - name: ELASTIC_APM_SERVER_REQUEST_TIMEOUT
           value: "120s"
         - name: ELASTIC_APM_API_REQUEST_SIZE
