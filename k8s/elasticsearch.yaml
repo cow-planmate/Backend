@@ -2,21 +2,37 @@ apiVersion: elasticsearch.k8s.elastic.co/v1
 kind: Elasticsearch
 metadata:
   name: elasticsearch
+  namespace: default
 spec:
-  version: 8.12.0 # 사용 중인 버전
+  version: 8.15.0
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: true
   nodeSets:
   - name: default
     count: 1
     config:
       node.store.allow_mmap: false
-    # 바로 여기에 위치해야 합니다!
+      discovery.type: single-node
+    podTemplate:
+      spec:
+        containers:
+        - name: elasticsearch
+          resources:
+            requests:
+              memory: 2Gi
+              cpu: 500m
+            limits:
+              memory: 4Gi
+              cpu: 1
     volumeClaimTemplates:
     - metadata:
-        name: elasticsearch-data # 이 이름은 고정입니다.
+        name: elasticsearch-data
       spec:
         accessModes:
         - ReadWriteOnce
         resources:
           requests:
-            storage: 3Gi # MinIO처럼 너무 작지 않게 설정하세요.
+            storage: 3Gi
         storageClassName: local-path
