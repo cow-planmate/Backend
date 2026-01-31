@@ -10,6 +10,25 @@ spec:
   configuration:
     name: minio-creds-secret
 
+  # --- 추가된 환경 변수 설정 ---
+  env:
+    - name: MINIO_AUDIT_ELASTICSEARCH_ENABLE_minio-http-audit-elasticsearch
+      value: "on"
+    - name: MINIO_AUDIT_ELASTICSEARCH_ENDPOINT_minio-http-audit-elasticsearch
+      value: "https://elasticsearch-es-http.default.svc.cluster.local:9200/minio-audit-log/_doc"
+    - name: MINIO_AUDIT_ELASTICSEARCH_USERNAME_minio-http-audit-elasticsearch
+      value: "elastic"
+    # ECK Secret에서 비밀번호 자동 주입
+    - name: MINIO_AUDIT_ELASTICSEARCH_PASSWORD_minio-http-audit-elasticsearch
+      valueFrom:
+        secretKeyRef:
+          name: elasticsearch-es-elastic-user
+          key: elastic
+    # 인증서 검증 건너뛰기 (curl -k와 동일 효과)
+    - name: MINIO_AUDIT_ELASTICSEARCH_SKIP_VERIFY_minio-http-audit-elasticsearch
+      value: "on"
+  # ---------------------------
+
   pools:
     - name: pool-0
       servers: 2
