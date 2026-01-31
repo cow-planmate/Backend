@@ -18,7 +18,6 @@ import com.example.planmate.common.exception.UserNotFoundException;
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
-import com.example.planmate.domain.image.repository.PlacePhotoRepository;
 import com.example.planmate.domain.plan.auth.PlanAccessValidator;
 import com.example.planmate.domain.plan.dto.CreatePlanResponse;
 import com.example.planmate.domain.plan.dto.DeleteMultiplePlansResponse;
@@ -67,7 +66,6 @@ public class PlanService {
     private final PlaceCategoryRepository placeCategoryRepository;
     private final PlanEditorRepository planEditorRepository;
     private final PlanShareRepository planShareRepository;
-    private final PlacePhotoRepository placePhotoRepository;
     private final PlanCache planCache;
     private final TimeTableCache timeTableCache;
     private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
@@ -188,7 +186,8 @@ public class PlanService {
                             block.getPlaceRating(),
                             block.getPlaceAddress(),
                             block.getPlaceLink(),
-                            block.getPlacePhoto().getPlaceId(),
+                            block.getPhotoUrl(),
+                            block.getPlaceId(),
                             block.getXLocation(),
                             block.getYLocation(),
                             block.getBlockStartTime(),
@@ -285,16 +284,17 @@ public class PlanService {
                 PlaceCategory placeCategory = placeCategoryRepository.getReferenceById(vo.getPlaceCategoryId());
                 timeTablePlaceBlocks.add(TimeTablePlaceBlock.builder()
                         .timeTable(targetTimetable)
+                        .placeId(vo.getPlaceId())
                         .placeName(vo.getPlaceName())
                         .placeTheme("")
                         .placeRating(vo.getPlaceRating())
                         .placeAddress(vo.getPlaceAddress())
                         .placeLink(vo.getPlaceLink())
+                        .photoUrl(vo.getPhotoUrl())
                         .blockStartTime(vo.getStartTime())
                         .blockEndTime(vo.getEndTime())
                         .xLocation(vo.getXLocation())
                         .yLocation(vo.getYLocation())
-                        .placePhoto(placePhotoRepository.getReferenceById(vo.getPlaceId()))
                         .placeCategory(placeCategory)
                         .build());
             }
@@ -378,7 +378,8 @@ public class PlanService {
                             timeTablePlaceBlock1.getPlaceRating(),
                             timeTablePlaceBlock1.getPlaceAddress(),
                             timeTablePlaceBlock1.getPlaceLink(),
-                            timeTablePlaceBlock1.getPlacePhoto().getPlaceId(),
+                            timeTablePlaceBlock1.getPhotoUrl(),
+                            timeTablePlaceBlock1.getPlaceId(),
                             timeTablePlaceBlock1.getXLocation(),
                             timeTablePlaceBlock1.getYLocation(),
                             timeTablePlaceBlock1.getBlockStartTime(),

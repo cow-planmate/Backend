@@ -2,7 +2,6 @@ package com.example.planmate.domain.plan.entity;
 
 import java.time.LocalTime;
 
-import com.example.planmate.domain.image.entity.PlacePhoto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.sharedsync.shared.annotation.CacheEntity;
 import com.sharedsync.shared.annotation.CacheId;
@@ -42,20 +41,29 @@ public class TimeTablePlaceBlock {
     @CacheId
     private Integer blockId;
 
+    @Column(name = "place_id", length = 100)
+    private String placeId;
+
     @Column(nullable = false)
     private String placeName;
 
-    @Column(nullable = false)
+    @Column
     private String placeTheme;
 
-    @Column(nullable = false)
-    private float placeRating;
+    @Column
+    private Float placeRating;
 
-    @Column(nullable = false)
+    @Column
     private String placeAddress;
 
-    @Column(nullable = false)
+    @Column
     private String placeLink;
+
+    @Column(columnDefinition = "TEXT")
+    private String photoUrl;
+
+    @Column(columnDefinition = "TEXT")
+    private String memo;
 
     @Column(nullable = false)
     private LocalTime blockStartTime;
@@ -63,11 +71,11 @@ public class TimeTablePlaceBlock {
     @Column(nullable = false)
     private LocalTime blockEndTime;
 
-    @Column(nullable = false)
-    private double xLocation;
+    @Column
+    private Double xLocation;
 
-    @Column(nullable = false)
-    private double yLocation;
+    @Column
+    private Double yLocation;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "place_category_id", nullable = false)
@@ -77,10 +85,6 @@ public class TimeTablePlaceBlock {
     @JoinColumn(name = "time_table_id", nullable = false)
     @ParentId(TimeTable.class)
     private TimeTable timeTable;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "place_id")
-    private PlacePhoto placePhoto;
 
     public void changeId(Integer newId) {
         this.blockId = newId;
@@ -94,35 +98,23 @@ public class TimeTablePlaceBlock {
     }
 
     public void changePlaceTheme(String placeTheme) {
-        if (placeTheme == null || placeTheme.isBlank()) {
-            throw new IllegalArgumentException("장소 테마는 비어 있을 수 없습니다.");
-        }
         this.placeTheme = placeTheme;
     }
 
-    public void changeRating(float placeRating) {
-        if (placeRating < 0) {
-            throw new IllegalArgumentException("장소 평점은 0 이상이어야 합니다.");
-        }
+    public void changeRating(Float placeRating) {
         this.placeRating = placeRating;
     }
 
-    public void changeLocation(double x, double y) {
+    public void changeLocation(Double x, Double y) {
         this.xLocation = x;
         this.yLocation = y;
     }
 
     public void changeAddress(String address) {
-        if (address == null || address.isBlank()) {
-            throw new IllegalArgumentException("주소는 비어 있을 수 없습니다.");
-        }
         this.placeAddress = address;
     }
 
     public void changeLink(String link) {
-        if (link == null || link.isBlank()) {
-            throw new IllegalArgumentException("링크는 비어 있을 수 없습니다.");
-        }
         this.placeLink = link;
     }
 
@@ -149,34 +141,37 @@ public class TimeTablePlaceBlock {
     }
 
     public void updateBlockInfo(
+            String placeId,
             String placeName,
             String placeTheme,
-            float placeRating,
+            Float placeRating,
             String placeAddress,
             String placeLink,
+            String photoUrl,
+            String memo,
             LocalTime blockStartTime,
             LocalTime blockEndTime,
-            double xLocation,
-            double yLocation,
-            PlaceCategory placeCategory,
-            PlacePhoto placePhoto
+            Double xLocation,
+            Double yLocation,
+            PlaceCategory placeCategory
     ) {
         if (blockStartTime != null && blockEndTime != null && blockStartTime.isAfter(blockEndTime)) {
             throw new IllegalArgumentException("블록 시작 시간이 종료 시간보다 늦을 수 없습니다.");
         }
 
+        this.placeId = placeId;
         this.placeName = placeName;
         this.placeTheme = placeTheme;
         this.placeRating = placeRating;
         this.placeAddress = placeAddress;
         this.placeLink = placeLink;
+        this.photoUrl = photoUrl;
+        this.memo = memo;
         this.blockStartTime = blockStartTime;
         this.blockEndTime = blockEndTime;
         this.xLocation = xLocation;
         this.yLocation = yLocation;
         this.placeCategory = placeCategory;
-        this.placePhoto = placePhoto;
-
     }
 
     public void copyFrom(TimeTablePlaceBlock other) {
@@ -185,17 +180,19 @@ public class TimeTablePlaceBlock {
         }
 
         this.updateBlockInfo(
+                other.getPlaceId(),
                 other.getPlaceName(),
                 other.getPlaceTheme(),
                 other.getPlaceRating(),
                 other.getPlaceAddress(),
                 other.getPlaceLink(),
+                other.getPhotoUrl(),
+                other.getMemo(),
                 other.getBlockStartTime(),
                 other.getBlockEndTime(),
                 other.getXLocation(),
                 other.getYLocation(),
-                other.getPlaceCategory(),
-                other.getPlacePhoto()
+                other.getPlaceCategory()
         );
 
         this.assignTimeTable(other.getTimeTable());

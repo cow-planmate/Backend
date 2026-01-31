@@ -1,13 +1,13 @@
 package com.example.planmate.common.valueObject;
 
-import lombok.Getter;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import lombok.Getter;
 @Getter
 public class SearchPlaceTokenVO {
 
-    private List<SearchPlaceVO> places;
+    private List<PlaceVO> places;
     private List<String> nextPageTokens;
 
     public SearchPlaceTokenVO() {
@@ -17,7 +17,7 @@ public class SearchPlaceTokenVO {
     public void addNextPageToken(String nextPageToken) {
         nextPageTokens.add(nextPageToken);
     }
-    public void addPlace(SearchPlaceVO place) {
+    public void addPlace(PlaceVO place) {
         places.add(place);
     }
 }

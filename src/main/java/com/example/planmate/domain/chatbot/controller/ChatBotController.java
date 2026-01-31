@@ -18,6 +18,8 @@ import com.example.planmate.domain.chatbot.service.ChatBotService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sharedsync.shared.sync.RedisSyncService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import sharedsync.dto.TimeTableDto;
@@ -30,6 +32,7 @@ import sharedsync.wsdto.WPlanResponse;
 import sharedsync.wsdto.WTimeTablePlaceBlockRequest;
 import sharedsync.wsdto.WTimeTableRequest;
 
+@Tag(name = "Chatbot", description = "AI 챗봇 서비스 관련 API")
 @Slf4j
 @RequiredArgsConstructor
 @RestController
@@ -43,6 +46,7 @@ public class ChatBotController {
     private final RedisSyncService redisSyncService;
     private final ObjectMapper objectMapper;
     
+    @Operation(summary = "AI 대화 및 계획 수정", description = "사용자의 자연어 메시지를 분석하여 대답을 생성하고, 필요시 여행 계획을 자동으로 수정합니다.")
     @PostMapping("/chat")
     public ResponseEntity<ChatBotResponse> chat(@RequestBody ChatBotRequest request) {
         try {

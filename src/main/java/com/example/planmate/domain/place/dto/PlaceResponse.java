@@ -6,12 +6,17 @@ import java.util.List;
 import com.example.planmate.common.dto.CommonResponse;
 import com.example.planmate.common.valueObject.PlaceVO;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
 @Getter
+@Schema(description = "장소 검색 응답 데이터")
 public class PlaceResponse extends CommonResponse {
+    @Schema(description = "검색된 장소 목록")
     private final List<PlaceVO> places;
-    private final List<String> nextPageTokens;
+
+    @Schema(description = "다음 페이지 조회를 위한 토큰 목록")
+    private final List<NextPageTokenDTO> nextPageTokens;
 
     public PlaceResponse() {
         places = new ArrayList<>();
@@ -22,7 +27,7 @@ public class PlaceResponse extends CommonResponse {
         this.places.addAll(places);
     }
 
-    public void addNextPageToken(List<String> nextPageTokens) {
+    public void addNextPageToken(List<NextPageTokenDTO> nextPageTokens) {
         this.nextPageTokens.addAll(nextPageTokens);
     }
 }

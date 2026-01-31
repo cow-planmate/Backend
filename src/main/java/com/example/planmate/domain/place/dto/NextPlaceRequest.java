@@ -8,5 +8,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class NextPlaceRequest {
-    private List<String> tokens;
+    private List<NextPageTokenDTO> tokens;
 }

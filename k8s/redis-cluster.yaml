@@ -4,12 +4,8 @@ metadata:
   name: planmate-redis
   namespace: default
 spec:
-  # 인스턴스 개수 (Master 1 + Replica 2)
-  clusterSize: 3
-  
-  # Sentinel 설정 추가
-  sentinel:
-    enabled: true
+  # 인스턴스 개수 (Master 1 + Replica 1)
+  clusterSize: 2
   
   kubernetesConfig:
     image: redis:7.2.4
@@ -25,6 +21,20 @@ spec:
       limits:
         cpu: 200m
         memory: 256Mi
+
+  # 노드 분산 설정 (Anti-Affinity)
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - planmate-redis
+          topologyKey: "kubernetes.io/hostname"
 
   # Live 상태와 맞추기 위해 redisConfig는 비워둡니다.
   redisConfig: {}

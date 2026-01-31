@@ -13,8 +13,8 @@ import org.springframework.web.client.RestTemplate;
 
 import com.example.planmate.common.valueObject.DepartureVO;
 import com.example.planmate.common.valueObject.LodgingPlaceVO;
+import com.example.planmate.common.valueObject.PlaceVO;
 import com.example.planmate.common.valueObject.RestaurantPlaceVO;
-import com.example.planmate.common.valueObject.SearchPlaceVO;
 import com.example.planmate.common.valueObject.TourPlaceVO;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,9 +40,13 @@ public class GoogleMap {
     }
 
     public Pair<List<TourPlaceVO>, List<String>> getTourPlace(String locationText, List<String> preferredThemeNames, Double lat, Double lng) throws IOException {
+        return getTourPlace(locationText, preferredThemeNames, lat, lng, true);
+    }
+
+    public Pair<List<TourPlaceVO>, List<String>> getTourPlace(String locationText, List<String> preferredThemeNames, Double lat, Double lng, boolean includeBaseline) throws IOException {
         List<TourPlaceVO> places = new ArrayList<>();
         // For recommendations, we SHOULD append the location name to the query
-        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson("관광지", preferredThemeNames, locationText, lat, lng, 50000, 4.0, 0, true);
+        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson("관광지", preferredThemeNames, locationText, lat, lng, 50000, 4.0, 0, true, includeBaseline);
         JsonNode results = pair.getFirst();
         List<String> nextPageTokens = pair.getSecond();
 
@@ -59,7 +63,18 @@ public class GoogleMap {
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
 
-                TourPlaceVO place = new TourPlaceVO(placeId, 0, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
+                // Extract photo reference if available to avoid redundant Details API call later
+                String initialPhotoUrl = null;
+                String photoReference = null;
+                JsonNode photos = result.path("photos");
+                if (!photos.isArray() || photos.size() == 0) {
+                    initialPhotoUrl = ""; // Mark as "no photo"
+                } else {
+                    photoReference = photos.get(0).path("photo_reference").asText(null);
+                }
+
+                TourPlaceVO place = new TourPlaceVO(placeId, 0, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                place.setPhotoReference(photoReference);
                 places.add(place);
             }
         }
@@ -71,9 +86,13 @@ public class GoogleMap {
     }
 
     public Pair<List<LodgingPlaceVO>, List<String>> getLodgingPlace(String locationText, List<String> preferredThemeNames, Double lat, Double lng) throws IOException {
+        return getLodgingPlace(locationText, preferredThemeNames, lat, lng, true);
+    }
+
+    public Pair<List<LodgingPlaceVO>, List<String>> getLodgingPlace(String locationText, List<String> preferredThemeNames, Double lat, Double lng, boolean includeBaseline) throws IOException {
         List<LodgingPlaceVO> places = new ArrayList<>();
         // For recommendations, we SHOULD append the location name to the query
-        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson("숙소", preferredThemeNames, locationText, lat, lng, 50000, 4.0, 0, true);
+        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson("숙소", preferredThemeNames, locationText, lat, lng, 50000, 4.0, 0, true, includeBaseline);
         JsonNode results = pair.getFirst();
         List<String> nextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
@@ -89,7 +108,18 @@ public class GoogleMap {
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
 
-                LodgingPlaceVO place = new LodgingPlaceVO(placeId, 1, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
+                // Extract photo reference if available to avoid redundant Details API call later
+                String initialPhotoUrl = null;
+                String photoReference = null;
+                JsonNode photos = result.path("photos");
+                if (!photos.isArray() || photos.size() == 0) {
+                    initialPhotoUrl = ""; // Mark as "no photo"
+                } else {
+                    photoReference = photos.get(0).path("photo_reference").asText(null);
+                }
+
+                LodgingPlaceVO place = new LodgingPlaceVO(placeId, 1, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                place.setPhotoReference(photoReference);
                 places.add(place);
             }
         }
@@ -101,9 +131,13 @@ public class GoogleMap {
     }
 
     public Pair<List<RestaurantPlaceVO>, List<String>> getRestaurantPlace(String locationText, List<String> preferredThemeNames, Double lat, Double lng) throws IOException {
+        return getRestaurantPlace(locationText, preferredThemeNames, lat, lng, true);
+    }
+
+    public Pair<List<RestaurantPlaceVO>, List<String>> getRestaurantPlace(String locationText, List<String> preferredThemeNames, Double lat, Double lng, boolean includeBaseline) throws IOException {
         List<RestaurantPlaceVO> places = new ArrayList<>();
         // For recommendations, we SHOULD append the location name to the query
-        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson("식당", preferredThemeNames, locationText, lat, lng, 50000, 4.0, 0, true);
+        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson("식당", preferredThemeNames, locationText, lat, lng, 50000, 4.0, 0, true, includeBaseline);
         JsonNode results = pair.getFirst();
         List<String> nextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
@@ -119,7 +153,18 @@ public class GoogleMap {
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
 
-                RestaurantPlaceVO place = new RestaurantPlaceVO(placeId, 2, url, name, formatted_address, rating, xLocation, yLocation, iconUrl);
+                // Extract photo reference if available to avoid redundant Details API call later
+                String initialPhotoUrl = null;
+                String photoReference = null;
+                JsonNode photos = result.path("photos");
+                if (!photos.isArray() || photos.size() == 0) {
+                    initialPhotoUrl = ""; // Mark as "no photo"
+                } else {
+                    photoReference = photos.get(0).path("photo_reference").asText(null);
+                }
+
+                RestaurantPlaceVO place = new RestaurantPlaceVO(placeId, 2, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                place.setPhotoReference(photoReference);
                 places.add(place);
             }
         }
@@ -143,19 +188,19 @@ public class GoogleMap {
         return null;
     }
 
-    public Pair<List<SearchPlaceVO>, List<String>> getSearchPlace(String query) throws IOException {
+    public Pair<List<PlaceVO>, List<String>> getSearchPlace(String query) throws IOException {
         return getSearchPlace(query, null, null, null);
     }
 
-    public Pair<List<SearchPlaceVO>, List<String>> getSearchPlace(String query, String locationText) throws IOException {
+    public Pair<List<PlaceVO>, List<String>> getSearchPlace(String query, String locationText) throws IOException {
         return getSearchPlace(query, locationText, null, null);
     }
 
-    public Pair<List<SearchPlaceVO>, List<String>> getSearchPlace(String query, String locationText, Double lat, Double lng) throws IOException {
-        List<SearchPlaceVO> places = new ArrayList<>();
+    public Pair<List<PlaceVO>, List<String>> getSearchPlace(String query, String locationText, Double lat, Double lng) throws IOException {
+        List<PlaceVO> places = new ArrayList<>();
         // For general search, we should NOT append the location name (to allow global search like "Seoul Station")
         // But we still apply locationBias via lat/lng if provided
-        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson(query, null, locationText, lat, lng, 50000, 0.0, 0, false);
+        Pair<JsonNode, List<String>> pair = searchGoogleOrWithJackson(query, null, locationText, lat, lng, 50000, 4.0, 0, false, true);
         JsonNode results = pair.getFirst();
         List<String> nextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
@@ -171,7 +216,19 @@ public class GoogleMap {
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
 
-                places.add(new SearchPlaceVO(placeId, 4, url, name, formatted_address, rating, xLocation, yLocation, iconUrl));
+                // Extract photo reference if available to avoid redundant Details API call later
+                String initialPhotoUrl = null;
+                String photoReference = null;
+                JsonNode photos = result.path("photos");
+                if (!photos.isArray() || photos.size() == 0) {
+                    initialPhotoUrl = ""; // Mark as "no photo"
+                } else {
+                    photoReference = photos.get(0).path("photo_reference").asText(null);
+                }
+
+                PlaceVO place = new PlaceVO(placeId, 4, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                place.setPhotoReference(photoReference);
+                places.add(place);
             }
         }
         return Pair.of(places, nextPageTokens);
@@ -197,9 +254,9 @@ public class GoogleMap {
         return departures;
     }
 
-    public Pair<List<SearchPlaceVO>, List<String>> getNextPagePlace(List<String> nextPageTokens) throws IOException {
-        List<SearchPlaceVO> places = new ArrayList<>();
-        Pair<JsonNode, List<String>> pair = searchGoogleNextPagePlace(nextPageTokens, Double.valueOf(0));
+    public Pair<List<PlaceVO>, List<String>> getNextPagePlace(List<String> nextPageTokens, int categoryId) throws IOException {
+        List<PlaceVO> places = new ArrayList<>();
+        Pair<JsonNode, List<String>> pair = searchGoogleNextPagePlace(nextPageTokens, 4.0);
         JsonNode results = pair.getFirst();
         List<String> nextNextPageTokens = pair.getSecond();
         if (results != null && results.isArray()) {
@@ -215,7 +272,28 @@ public class GoogleMap {
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
 
-                places.add(new SearchPlaceVO(placeId, 4, url, name, formatted_address, rating, xLocation, yLocation, iconUrl));
+                // Extract photo reference if available to avoid redundant Details API call later
+                String initialPhotoUrl = null;
+                String photoReference = null;
+                JsonNode photos = result.path("photos");
+                if (!photos.isArray() || photos.size() == 0) {
+                    initialPhotoUrl = ""; // Mark as "no photo"
+                } else {
+                    photoReference = photos.get(0).path("photo_reference").asText(null);
+                }
+
+                PlaceVO place;
+                if (categoryId == 0) {
+                    place = new TourPlaceVO(placeId, 0, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                } else if (categoryId == 1) {
+                    place = new LodgingPlaceVO(placeId, 1, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                } else if (categoryId == 2) {
+                    place = new RestaurantPlaceVO(placeId, 2, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                } else {
+                    place = new PlaceVO(placeId, categoryId, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
+                }
+                place.setPhotoReference(photoReference);
+                places.add(place);
             }
         }
         return Pair.of(places, nextNextPageTokens);
@@ -230,7 +308,8 @@ public class GoogleMap {
             Integer radiusMeters,
             Double minRating,
             int minReviews,
-            boolean appendLocation
+            boolean appendLocation,
+            boolean includeBaseline
     ) throws IOException {
 
         ObjectMapper mapper = new ObjectMapper();
@@ -255,8 +334,8 @@ public class GoogleMap {
             searchAndFillMap(fullQuery, theme, placeMap, nextPageTokens, lat, lng, radiusMeters, minRating, minReviews);
         }
 
-        // 2차 검색: 결과가 10개 미만일 경우에만 기본(Baseline) 검색 추가
-        if (placeMap.size() < 10) {
+        // 2차 검색: 결과가 20개 미만일 경우에만 기본(Baseline) 검색 추가 (includeBaseline 플래그 확인)
+        if (includeBaseline && placeMap.size() < 20) {
             searchAndFillMap(fullQuery, "", placeMap, nextPageTokens, lat, lng, radiusMeters, minRating, minReviews);
         }
 
@@ -310,6 +389,7 @@ public class GoogleMap {
             for (JsonNode place : results) {
                 double rating = place.path("rating").asDouble(0.0);
                 int reviews = place.path("user_ratings_total").asInt(0);
+                // 4.0 이상만 포함 (0.0 제외)
                 if (rating >= effectiveMinRating && (minReviews <= 0 || reviews >= minReviews)) {
                     String placeId = place.path("place_id").asText(null);
                     if (placeId != null && !placeId.isBlank()) {

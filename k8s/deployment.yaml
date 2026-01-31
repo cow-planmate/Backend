@@ -6,7 +6,7 @@ metadata:
   labels:
     app: planmate-backend
 spec:
-  replicas: 1
+  replicas: 2
   revisionHistoryLimit: 3
   selector:
     matchLabels:
@@ -21,9 +21,18 @@ spec:
       labels:
         app: planmate-backend
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: planmate-backend
+              topologyKey: "kubernetes.io/hostname"
       containers:
       - name: planmate-backend
-        image: cycle123/planmate:f54ad81f383b1dfab3edb649940fd67ee0245b67
+        image: cycle123/planmate:test-0dc965833b7a68d4b14fa0eaf874c1cefe4e0b19
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
@@ -55,12 +64,29 @@ spec:
             secretKeyRef:
               name: planmate-secret
               key: MAIL_PASSWORD
-        # - name: ELASTIC_APM_SERVER_URLS
-        #   value: "http://apm-server-service:8200"
-        # - name: ELASTIC_APM_SERVICE_NAME
-        #   value: "planmate-backend"
-        # - name: ELASTIC_APM_ENVIRONMENT
-        #   value: "prod"
+        - name: ELASTIC_APM_SERVER_URLS
+          value: "https://apm-server-apm-http:8200"
+        - name: ELASTIC_APM_VERIFY_SERVER_CERT
+          value: "false"
+        - name: ELASTIC_APM_SECRET_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: apm-server-apm-token  # Operator가 만든 Secret 이름
+              key: secret-token           # ECK가 기본적으로 사용하는 키 이름
+        - name: ELASTIC_APM_SERVER_REQUEST_TIMEOUT
+          value: "120s"
+        - name: ELASTIC_APM_API_REQUEST_SIZE
+          value: "2mb"
+        - name: ELASTIC_APM_SERVICE_NAME
+          value: "planmate-backend"
+        - name: ELASTIC_APM_ENVIRONMENT
+          value: "prod"
+        - name: ELASTIC_APM_APPLICATION_PACKAGES
+          value: "com.example.planmate"
+        - name: ELASTIC_APM_LOG_SENDING
+          value: "true"
+        - name: ELASTIC_APM_LOG_LEVEL
+          value: "INFO"
         - name: JWT_ACCESS_SECRET
           valueFrom:
             secretKeyRef:
