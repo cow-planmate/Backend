@@ -10,11 +10,8 @@ spec:
     name: elasticsearch
   kibanaRef:
     name: kibana
-  http:
-    tls:
-      selfSignedCertificate:
-        disabled: true
   config:
     output.elasticsearch:
-      protocol: http
-      ssl.enabled: false
+      protocol: https
+      ssl.verification_mode: none
+      ssl.enabled: true
