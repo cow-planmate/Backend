@@ -1,22 +1,33 @@
 package com.example.planmate.domain.user.service;
 
-import com.example.planmate.common.exception.ResourceConflictException;
-import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
-import com.example.planmate.domain.plan.entity.Plan;
-import com.example.planmate.domain.plan.repository.PlanEditorRepository;
-import com.example.planmate.domain.user.dto.*;
-import com.example.planmate.domain.user.entity.PreferredTheme;
-import com.example.planmate.domain.user.entity.User;
-import com.example.planmate.common.exception.UserNotFoundException;
-import com.example.planmate.domain.plan.repository.PlanRepository;
-import com.example.planmate.domain.user.repository.PreferredThemeRepository;
-import com.example.planmate.domain.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.example.planmate.common.exception.ResourceConflictException;
+import com.example.planmate.common.exception.UserNotFoundException;
+import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
+import com.example.planmate.domain.plan.entity.Plan;
+import com.example.planmate.domain.plan.entity.TimeTable;
+import com.example.planmate.domain.plan.repository.PlanEditorRepository;
+import com.example.planmate.domain.plan.repository.PlanRepository;
+import com.example.planmate.domain.user.dto.ChangeAgeResponse;
+import com.example.planmate.domain.user.dto.ChangeGenderResponse;
+import com.example.planmate.domain.user.dto.ChangeNicknameResponse;
+import com.example.planmate.domain.user.dto.ChangePreferredThemesResponse;
+import com.example.planmate.domain.user.dto.GetPreferredThemeResponse;
+import com.example.planmate.domain.user.dto.MoveMypageResponse;
+import com.example.planmate.domain.user.dto.ResignAccountResponse;
+import com.example.planmate.domain.user.dto.SavePreferredThemeResponse;
+import com.example.planmate.domain.user.entity.PreferredTheme;
+import com.example.planmate.domain.user.entity.User;
+import com.example.planmate.domain.user.repository.PreferredThemeRepository;
+import com.example.planmate.domain.user.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -63,12 +74,32 @@ public class UserService {
         }
         List<Plan> myPlans = planRepository.findByUserUserId(userId);
         for (Plan plan : myPlans) {
-            response.addMyPlanVO(plan.getPlanId(), plan.getPlanName());
+            String startDate = plan.getTimeTables().stream()
+                    .map(TimeTable::getDate)
+                    .min(LocalDate::compareTo)
+                    .map(LocalDate::toString)
+                    .orElse(null);
+            String endDate = plan.getTimeTables().stream()
+                    .map(TimeTable::getDate)
+                    .max(LocalDate::compareTo)
+                    .map(LocalDate::toString)
+                    .orElse(null);
+            response.addMyPlanVO(plan.getPlanId(), plan.getPlanName(), startDate, endDate);
         }
         List<PlanEditor> editablePlanEditors = planEditorRepository.findByUserUserId(userId);
         for (PlanEditor editor : editablePlanEditors) {
             Plan plan = editor.getPlan();
-            response.addEditablePlanVO(plan.getPlanId(), plan.getPlanName());
+            String startDate = plan.getTimeTables().stream()
+                    .map(TimeTable::getDate)
+                    .min(LocalDate::compareTo)
+                    .map(LocalDate::toString)
+                    .orElse(null);
+            String endDate = plan.getTimeTables().stream()
+                    .map(TimeTable::getDate)
+                    .max(LocalDate::compareTo)
+                    .map(LocalDate::toString)
+                    .orElse(null);
+            response.addEditablePlanVO(plan.getPlanId(), plan.getPlanName(), startDate, endDate);
         }
 
         response.setMessage("성공적으로 마이페이지를 가져왔습니다");
