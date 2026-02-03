@@ -58,10 +58,24 @@ public class MoveMypageResponse extends CommonResponse {
                 preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryName());
         preferredThemes.add(preferredThemeVO);
     }
-    public void addMyPlanVO(int planId, String planName, String startDate, String endDate) {
-        myPlanVOs.add(new SimplePlanVO(planId, planName, startDate, endDate));
+    public void addMyPlanVO(int planId, String planName, String destination, String duration, String startDate, String endDate) {
+        myPlanVOs.add(SimplePlanVO.builder()
+                .planId(planId)
+                .planName(planName)
+                .destination(destination)
+                .duration(duration)
+                .startDate(startDate)
+                .endDate(endDate)
+                .build());
     }
-    public void addEditablePlanVO(int planId, String planName, String startDate, String endDate) {
-        editablePlanVOs.add(new SimplePlanVO(planId, planName, startDate, endDate));
+    public void addEditablePlanVO(int planId, String planName, String destination, String duration, String startDate, String endDate) {
+        editablePlanVOs.add(SimplePlanVO.builder()
+                .planId(planId)
+                .planName(planName)
+                .destination(destination)
+                .duration(duration)
+                .startDate(startDate)
+                .endDate(endDate)
+                .build());
     }
 }

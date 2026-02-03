@@ -74,32 +74,36 @@ public class UserService {
         }
         List<Plan> myPlans = planRepository.findByUserUserId(userId);
         for (Plan plan : myPlans) {
-            String startDate = plan.getTimeTables().stream()
+            List<TimeTable> tables = plan.getTimeTables();
+            String startDate = tables.stream()
                     .map(TimeTable::getDate)
                     .min(LocalDate::compareTo)
                     .map(LocalDate::toString)
                     .orElse(null);
-            String endDate = plan.getTimeTables().stream()
+            String endDate = tables.stream()
                     .map(TimeTable::getDate)
                     .max(LocalDate::compareTo)
                     .map(LocalDate::toString)
                     .orElse(null);
-            response.addMyPlanVO(plan.getPlanId(), plan.getPlanName(), startDate, endDate);
+            String duration = tables.isEmpty() ? null : (tables.size() - 1) + "박 " + tables.size() + "일";
+            response.addMyPlanVO(plan.getPlanId(), plan.getPlanName(), plan.getTravel().getTravelName(), duration, startDate, endDate);
         }
         List<PlanEditor> editablePlanEditors = planEditorRepository.findByUserUserId(userId);
         for (PlanEditor editor : editablePlanEditors) {
             Plan plan = editor.getPlan();
-            String startDate = plan.getTimeTables().stream()
+            List<TimeTable> tables = plan.getTimeTables();
+            String startDate = tables.stream()
                     .map(TimeTable::getDate)
                     .min(LocalDate::compareTo)
                     .map(LocalDate::toString)
                     .orElse(null);
-            String endDate = plan.getTimeTables().stream()
+            String endDate = tables.stream()
                     .map(TimeTable::getDate)
                     .max(LocalDate::compareTo)
                     .map(LocalDate::toString)
                     .orElse(null);
-            response.addEditablePlanVO(plan.getPlanId(), plan.getPlanName(), startDate, endDate);
+            String duration = tables.isEmpty() ? null : (tables.size() - 1) + "박 " + tables.size() + "일";
+            response.addEditablePlanVO(plan.getPlanId(), plan.getPlanName(), plan.getTravel().getTravelName(), duration, startDate, endDate);
         }
 
         response.setMessage("성공적으로 마이페이지를 가져왔습니다");

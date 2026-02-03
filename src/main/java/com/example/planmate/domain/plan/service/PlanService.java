@@ -9,12 +9,14 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.planmate.common.exception.UserNotFoundException;
+import com.example.planmate.common.valueObject.SimplePlanVO;
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
@@ -25,6 +27,7 @@ import com.example.planmate.domain.plan.dto.DeletePlanResponse;
 import com.example.planmate.domain.plan.dto.EditPlanNameResponse;
 import com.example.planmate.domain.plan.dto.GetCompletePlanResponse;
 import com.example.planmate.domain.plan.dto.GetEditorsResponse;
+import com.example.planmate.domain.plan.dto.GetMyPlansResponse;
 import com.example.planmate.domain.plan.dto.GetPlanResponse;
 import com.example.planmate.domain.plan.dto.GetShareLinkResponse;
 import com.example.planmate.domain.plan.dto.MakePlanResponse;
@@ -69,6 +72,39 @@ public class PlanService {
     private final PlanCache planCache;
     private final TimeTableCache timeTableCache;
     private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
+
+
+    @Transactional(readOnly = true)
+    public GetMyPlansResponse getMyPlans(int userId) {
+        List<Plan> myOwnPlans = planRepository.findByUserUserId(userId);
+        List<Plan> editablePlans = planEditorRepository.findByUserUserId(userId)
+                .stream()
+                .map(PlanEditor::getPlan)
+                .collect(Collectors.toList());
+
+        return GetMyPlansResponse.builder()
+                .myPlans(myOwnPlans.stream().map(this::convertToSimpleVO).collect(Collectors.toList()))
+                .editablePlans(editablePlans.stream().map(this::convertToSimpleVO).collect(Collectors.toList()))
+                .build();
+    }
+
+    private SimplePlanVO convertToSimpleVO(Plan plan) {
+        List<TimeTable> tables = timeTableRepository.findByPlanPlanId(plan.getPlanId());
+        tables.sort(Comparator.comparing(TimeTable::getDate));
+
+        String startDate = tables.isEmpty() ? null : tables.get(0).getDate().toString();
+        String endDate = tables.isEmpty() ? null : tables.get(tables.size() - 1).getDate().toString();
+        String duration = tables.isEmpty() ? null : (tables.size() - 1) + "박 " + tables.size() + "일";
+
+        return SimplePlanVO.builder()
+                .planId(plan.getPlanId())
+                .planName(plan.getPlanName())
+                .destination(plan.getTravel().getTravelName())
+                .duration(duration)
+                .startDate(startDate)
+                .endDate(endDate)
+                .build();
+    }
 
 
     public MakePlanResponse makeService(int userId, String departure, int travelId, int transportationCategoryId, List<LocalDate> dates, int adultCount, int childCount) {

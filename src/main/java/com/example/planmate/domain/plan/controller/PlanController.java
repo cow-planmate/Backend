@@ -30,6 +30,7 @@ import com.example.planmate.domain.plan.dto.EditPlanNameRequest;
 import com.example.planmate.domain.plan.dto.EditPlanNameResponse;
 import com.example.planmate.domain.plan.dto.GetCompletePlanResponse;
 import com.example.planmate.domain.plan.dto.GetEditorsResponse;
+import com.example.planmate.domain.plan.dto.GetMyPlansResponse;
 import com.example.planmate.domain.plan.dto.GetPlanResponse;
 import com.example.planmate.domain.plan.dto.GetShareLinkResponse;
 import com.example.planmate.domain.plan.dto.MakePlanRequest;
@@ -64,6 +65,14 @@ public class PlanController {
                 makePlanRequest.getAdultCount(),
                 makePlanRequest.getChildCount()
         );
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "내 플랜 목록 조회", description = "내가 생성했거나 편집 권한이 있는 플랫폼 목록을 조회합니다.")
+    @GetMapping("/my")
+    public ResponseEntity<GetMyPlansResponse> getMyPlans(Authentication authentication) {
+        int userId = Integer.parseInt(authentication.getName());
+        GetMyPlansResponse response = planService.getMyPlans(userId);
         return ResponseEntity.ok(response);
     }
 
