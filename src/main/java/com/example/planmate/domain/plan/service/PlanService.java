@@ -96,10 +96,14 @@ public class PlanService {
         String endDate = tables.isEmpty() ? null : tables.get(tables.size() - 1).getDate().toString();
         String duration = tables.isEmpty() ? null : (tables.size() - 1) + "박 " + tables.size() + "일";
 
+        String category = plan.getTravel().getTravelCategory().getTravelCategoryName();
+        String name = plan.getTravel().getTravelName();
+        String fullDestination = (name.contains(category) || category.contains(name)) ? name : category + " " + name;
+
         return SimplePlanVO.builder()
                 .planId(plan.getPlanId())
                 .planName(plan.getPlanName())
-                .destination(plan.getTravel().getTravelName())
+                .destination(fullDestination)
                 .duration(duration)
                 .startDate(startDate)
                 .endDate(endDate)
