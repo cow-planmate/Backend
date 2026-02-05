@@ -43,6 +43,8 @@ spec:
             # Configures tunnel run parameters
             - cloudflared
             - tunnel
+            - "--protocol"
+            - "http2"  
             - --no-autoupdate
             - --loglevel
             - info

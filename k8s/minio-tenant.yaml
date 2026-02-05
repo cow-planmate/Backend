@@ -12,9 +12,7 @@ metadata:
     app: minio                                               
     app.kubernetes.io/instance: planmate
   name: myminio                                          
-  namespace: tenant-ns                                   
-  resourceVersion: "2956936"               
-  uid: cc36caba-5e2e-4738-9eed-77257f5051aa              
+  namespace: tenant-ns          
 spec:                                                    
   configuration:                   
     name: minio-creds-secret                
