@@ -17,7 +17,7 @@ metadata:
   uid: cc36caba-5e2e-4738-9eed-77257f5051aa              
 spec:                                                    
   configuration:                   
-    name: myminio-env-configuration                      
+    name: minio-creds-secret                
   features:                                              
     bucketDNS: false                     
     enableSFTP: false                                    

@@ -11,3 +11,4 @@ spec:
       port: 80
       targetPort: 8080
   type: ClusterIP # 또는 NodePort, Ingress 사용 시 ClusterIP
+
