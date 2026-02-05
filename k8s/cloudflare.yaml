@@ -7,15 +7,15 @@ data:
   config.yaml: |
     ingress:
       - hostname: pmserver1.salmakis.online
-        service: https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:80
+        service: https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:443
       - hostname: minio.salmakis.online
-        service: https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:80
+        service: https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:443
       - hostname: redis.salmakis.online
-        service: https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:80
+        service: https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:443
       - hostname: db.salmakis.online
-        service: https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:80
+        service: https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:443
       - hostname: kibana.salmakis.online
-        service: https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:80
+        service: https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:443
       - service: http_status:404
 
 ---
