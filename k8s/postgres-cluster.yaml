@@ -7,6 +7,14 @@ spec:
   instances: 2
   imageName: ghcr.io/cloudnative-pg/postgresql:15
 
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            "cnpg.io/cluster": planmate-db
+        topologyKey: "kubernetes.io/hostname"
+
   # 슈퍼유저(postgres) 비밀번호 자동 설정
   superuserSecret:
     name: planmate-db-superuser-password
