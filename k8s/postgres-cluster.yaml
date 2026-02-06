@@ -9,11 +9,13 @@ spec:
 
   affinity:
     podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchLabels:
-            "cnpg.io/cluster": planmate-db
-        topologyKey: "kubernetes.io/hostname"
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              "cnpg.io/cluster": planmate-db
+          topologyKey: "kubernetes.io/hostname"
 
   # 슈퍼유저(postgres) 비밀번호 자동 설정
   superuserSecret:

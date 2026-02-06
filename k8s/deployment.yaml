@@ -23,11 +23,13 @@ spec:
     spec:
       affinity:
         podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchLabels:
-                app: planmate-backend
-            topologyKey: "kubernetes.io/hostname"
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: planmate-backend
+              topologyKey: "kubernetes.io/hostname"
       containers:
       - name: planmate-backend
         image: cycle123/planmate:test-8cf2550b760efed293d71b7755d39bbcb13dcc2c

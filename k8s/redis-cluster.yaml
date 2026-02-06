@@ -25,14 +25,16 @@ spec:
   # 노드 분산 설정 (Anti-Affinity)
   affinity:
     podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchExpressions:
-          - key: app
-            operator: In
-            values:
-            - planmate-redis
-        topologyKey: "kubernetes.io/hostname"
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - planmate-redis
+          topologyKey: "kubernetes.io/hostname"
 
   # Live 상태와 맞추기 위해 redisConfig는 비워둡니다.
   redisConfig: {}
