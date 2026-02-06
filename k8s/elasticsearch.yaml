@@ -14,9 +14,11 @@ spec:
     count: 1
     config:
       node.store.allow_mmap: false
-      discovery.type: single-node
     podTemplate:
       spec:
+        nodeSelector:
+          kubernetes.io/hostname: control.k8s
+        
         containers:
         - name: elasticsearch
           resources:
@@ -34,5 +36,5 @@ spec:
         - ReadWriteOnce
         resources:
           requests:
-            storage: 3Gi
+            storage: 10Gi
         storageClassName: local-path
