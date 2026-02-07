@@ -12,3 +12,7 @@ spec:
     tls:
       selfSignedCertificate:
         disabled: true
+    podTemplate:
+      spec:
+        nodeSelector:
+          kubernetes.io/hostname: control.k8s
