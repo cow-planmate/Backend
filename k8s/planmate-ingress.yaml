@@ -60,3 +60,14 @@ spec:
             name: planmate-backend-service
             port:
               number: 80
+
+  - host: minio.salmakis.online
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: myminio-console
+            port:
+              number: 9001
