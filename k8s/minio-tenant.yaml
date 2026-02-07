@@ -58,6 +58,3 @@ spec:
   prometheusOperator: false              
   requestAutoCert: false     
   subPath: /data
-  console:
-    port: 9001
-    externalPort: 9001
