@@ -67,5 +67,5 @@ spec:
   requestAutoCert: false
 
   exposeServices:
-    console: false
+    console: 
     minio: false
