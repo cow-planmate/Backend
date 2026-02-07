@@ -41,6 +41,7 @@ public class RegisterService{
 
         userRepository.save(user);
         response.setMessage("User registered successfully");
+        response.setRegistered(true);
         response.setUserId(user.getUserId());
         return response;
     }

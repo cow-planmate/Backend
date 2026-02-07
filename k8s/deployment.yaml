@@ -32,7 +32,7 @@ spec:
               topologyKey: "kubernetes.io/hostname"
       containers:
       - name: planmate-backend
-        image: cycle123/planmate:6d583e668c2089eb6383c6df3140cfcf853b8a7a
+        image: cycle123/planmate:test-65d15889014d3e2659756a0ea39d6a6d1639fb4f
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
@@ -71,8 +71,8 @@ spec:
         - name: ELASTIC_APM_SECRET_TOKEN
           valueFrom:
             secretKeyRef:
-              name: apm-server-apm-token  # Operator가 만든 Secret 이름
-              key: secret-token           # ECK가 기본적으로 사용하는 키 이름
+              name: apm-server-apm-token
+              key: secret-token
         - name: ELASTIC_APM_SERVER_REQUEST_TIMEOUT
           value: "120s"
         - name: ELASTIC_APM_API_REQUEST_SIZE
