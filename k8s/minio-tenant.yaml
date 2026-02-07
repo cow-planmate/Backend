@@ -12,7 +12,7 @@ metadata:
     app: minio                                               
     app.kubernetes.io/instance: planmate
   name: myminio                                          
-  namespace: tenant-ns          
+  namespace: default           
 spec:                                                    
   configuration:                   
     name: minio-creds-secret                
