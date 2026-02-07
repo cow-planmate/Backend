@@ -70,4 +70,4 @@ spec:
           service:
             name: myminio-console
             port:
-              number: 9443
+              number: 9001
