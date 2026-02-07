@@ -15,7 +15,3 @@ spec:
       protocol: https
       ssl.verification_mode: none
       ssl.enabled: true
-    podTemplate:
-      spec:
-        nodeSelector:
-          kubernetes.io/hostname: control.k8s
