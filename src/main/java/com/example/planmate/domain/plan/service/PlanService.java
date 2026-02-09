@@ -190,6 +190,7 @@ public class PlanService {
                             block.getPlaceId(),
                             block.getXLocation(),
                             block.getYLocation(),
+                            block.getMemo(),
                             block.getBlockStartTime(),
                             block.getBlockEndTime()
                     );
@@ -284,6 +285,7 @@ public class PlanService {
                         .placeAddress(vo.getPlaceAddress())
                         .placeLink(vo.getPlaceLink())
                         .photoUrl(vo.getPhotoUrl())
+                        .memo(vo.getMemo())
                         .blockStartTime(vo.getStartTime())
                         .blockEndTime(vo.getEndTime())
                         .xLocation(vo.getXLocation())
@@ -375,6 +377,7 @@ public class PlanService {
                             timeTablePlaceBlock1.getPlaceId(),
                             timeTablePlaceBlock1.getXLocation(),
                             timeTablePlaceBlock1.getYLocation(),
+                            timeTablePlaceBlock1.getMemo(),
                             timeTablePlaceBlock1.getBlockStartTime(),
                             timeTablePlaceBlock1.getBlockEndTime()
                     );

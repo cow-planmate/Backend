@@ -46,6 +46,9 @@ public class TimetablePlaceBlockVO {
     @JsonAlias({ "placePhotoId" })
     private String placeId;
 
+    @Schema(description = "메모", example = "점심 먹으러 가기")
+    private String memo;
+
     @Schema(description = "방문 날짜", example = "2023-10-01")
     private String date;
 

@@ -48,6 +48,9 @@ public class PlaceBlockVO {
     @Schema(description = "위도 (Y 좌표)", example = "37.5776087")
     private Double yLocation;
 
+    @Schema(description = "메모", example = "점심 먹으러 가기")
+    private String memo;
+
     @Schema(description = "시작 시간", example = "10:00:00")
     private LocalTime blockStartTime;
 
