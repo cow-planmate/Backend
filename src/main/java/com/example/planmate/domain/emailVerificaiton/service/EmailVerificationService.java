@@ -1,20 +1,18 @@
 package com.example.planmate.domain.emailVerificaiton.service;
 
-import com.example.planmate.common.auth.JwtTokenProvider;
-import com.example.planmate.common.service.CustomMailService;
-import com.example.planmate.common.enums.MailTemplate;
-import com.example.planmate.domain.emailVerificaiton.dto.SendEmailResponse;
-import com.example.planmate.domain.emailVerificaiton.dto.EmailVerificationResponse;
-import com.example.planmate.domain.emailVerificaiton.EmailVerification;
-import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
-import com.example.planmate.domain.user.repository.UserRepository;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import lombok.RequiredArgsConstructor;
+import java.security.SecureRandom;
+
 import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
-import java.util.concurrent.TimeUnit;
+import com.example.planmate.common.auth.JwtTokenProvider;
+import com.example.planmate.common.enums.MailTemplate;
+import com.example.planmate.common.service.CustomMailService;
+import com.example.planmate.domain.emailVerificaiton.dto.EmailVerificationResponse;
+import com.example.planmate.domain.emailVerificaiton.dto.SendEmailResponse;
+import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
+import com.example.planmate.domain.user.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -23,10 +21,7 @@ public class EmailVerificationService {
     private final SecureRandom secureRandom;
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomMailService customMailService;
-
-    private final Cache<String, EmailVerification> verificationCache = CacheBuilder.newBuilder()
-            .expireAfterWrite(5, TimeUnit.MINUTES)
-            .build();
+    private final EmailVerificationStore emailVerificationStore;
 
     public SendEmailResponse sendVerificationCode(String email, EmailVerificationPurpose purpose) {
         SendEmailResponse response = new SendEmailResponse();
@@ -47,10 +42,8 @@ public class EmailVerificationService {
             }
         }
 
-        String cacheKey = email + "_" + purpose.name();
         int code = secureRandom.nextInt(900000) + 100000;
-        EmailVerification verification = new EmailVerification(email, purpose, code);
-        verificationCache.put(cacheKey, verification);
+        emailVerificationStore.saveCode(email, purpose, String.valueOf(code));
 
         customMailService.sendSimpleMail(
                 email,
@@ -67,21 +60,20 @@ public class EmailVerificationService {
     // 인증 확인
     public EmailVerificationResponse registerEmailVerify(String email, EmailVerificationPurpose purpose, int inputCode) {
         EmailVerificationResponse response = new EmailVerificationResponse();
-        String cacheKey = email + "_" + purpose.name();
-        EmailVerification emailVerification = verificationCache.getIfPresent(cacheKey);
+        String storedCode = emailVerificationStore.getCode(email, purpose);
 
-        if(emailVerification == null) {
+        if(storedCode == null) {
             response.setMessage("Verification request not found or expired");
             response.setEmailVerified(false);
             return response;
         }
 
-        if(!emailVerification.verify(purpose, inputCode)){
+        if(!storedCode.equals(String.valueOf(inputCode))){
             response.setMessage("Invalid verification code");
             response.setEmailVerified(false);
             return response;
         }
-        verificationCache.invalidate(cacheKey);
+        emailVerificationStore.deleteCode(email, purpose);
 
         String token = jwtTokenProvider.generateEmailToken(email, purpose);
         response.setMessage("Verification completed successfully");
