@@ -12,8 +12,8 @@ import lombok.Setter;
 @AllArgsConstructor
 @Schema(description = "플랜 기본 정보 (프레임)")
 public class PlanFrameVO {
-    @Schema(description = "플랜 ID", example = "1")
-    private int planId;
+    @Schema(description = "플랜 ID", example = "550e8400-e29b-41d4-a716-446655440000")
+    private String planId;
 
     @Schema(description = "플랜 이름", example = "나의 서울 여행")
     private String planName;

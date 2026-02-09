@@ -10,5 +10,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CreatePlanResponse extends CommonResponse {
-    private int planId;
+    private String planId;
 }

@@ -1,6 +1,8 @@
 package com.example.planmate.common.log;
 
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.UUID;
+
 import org.slf4j.MDC;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -10,8 +12,7 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j(topic = "com.example.planmate.common.log.ws.WsAccessLogInterceptor")
@@ -24,7 +25,7 @@ public class WsAccessLogInterceptor implements ChannelInterceptor {
         // CONNECT 시 토큰 검증 → userId 세팅
         if (StompCommand.CONNECT.equals(acc.getCommand())) {
             String auth = first(acc.getNativeHeader("Authorization")); // "Bearer xxx"
-            Integer userId = validateAndGetUserId(auth);               // 직접 구현
+            String userId = validateAndGetUserId(auth);               // 직접 구현
             if (userId != null) {
                 acc.setUser(new UsernamePasswordAuthenticationToken(userId, null, List.of()));
             }
@@ -53,5 +54,5 @@ public class WsAccessLogInterceptor implements ChannelInterceptor {
     }
 
     private String first(List<String> v){ return (v==null||v.isEmpty())?null:v.get(0); }
-    private Integer validateAndGetUserId(String auth){ /* TODO */ return null; }
+    private String validateAndGetUserId(String auth){ /* TODO */ return null; }
 }

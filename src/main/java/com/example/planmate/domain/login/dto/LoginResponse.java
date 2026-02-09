@@ -13,8 +13,8 @@ public class LoginResponse extends CommonResponse {
     @Schema(description = "로그인 성공 여부", example = "true")
     private boolean loginSuccess;
 
-    @Schema(description = "사용자 고유 식별자", example = "1")
-    private int userId;
+    @Schema(description = "사용자 고유 식별자", example = "550e8400-e29b-41d4-a716-446655440000")
+    private String userId;
 
     @Schema(description = "사용자 닉네임", example = "플랜메이트")
     private String nickname;

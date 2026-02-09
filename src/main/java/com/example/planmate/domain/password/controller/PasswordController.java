@@ -29,7 +29,7 @@ public class PasswordController {
     @Operation(summary = "비밀번호 확인", description = "중요 작업 수행 전 현재 비밀번호가 올바른지 확인합니다.")
     @PostMapping("/verify")
     public ResponseEntity<VerifyPasswordResponse> verifyPassword(Authentication authentication, @RequestBody VerifyPasswordRequest request) {
-        int userId = Integer.parseInt(authentication.getName());
+        String userId = authentication.getName();
         VerifyPasswordResponse response = passwordService.verifyPassword(userId, request.getPassword());
         return ResponseEntity.ok(response);
     }
@@ -37,7 +37,7 @@ public class PasswordController {
     @Operation(summary = "비밀번호 변경", description = "로그인된 사용자의 비밀번호를 새로운 비밀번호로 변경합니다.")
     @PatchMapping("")
     public ResponseEntity<ChangePasswordResponse> changePassword(Authentication authentication, @RequestBody ChangePasswordRequest request) {
-        int userId = Integer.parseInt(authentication.getName());
+        String userId = authentication.getName();
         ChangePasswordResponse response = passwordService.changePassword(userId, request.getPassword(), request.getConfirmPassword());
         return ResponseEntity.ok(response);
     }

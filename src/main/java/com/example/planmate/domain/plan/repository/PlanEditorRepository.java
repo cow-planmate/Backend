@@ -14,12 +14,12 @@ public interface PlanEditorRepository extends JpaRepository<PlanEditor, Integer>
 
     boolean existsByUserAndPlan(User user, Plan plan);
 
-    List<PlanEditor> findByUserUserId(int userId);
+    List<PlanEditor> findByUserUserId(String userId);
 
-    Optional<PlanEditor> findByUser_UserIdAndPlan_PlanId(int userId, int planId);
+    Optional<PlanEditor> findByUser_UserIdAndPlan_PlanId(String userId, String planId);
 
-    List<PlanEditor> findByPlan_PlanId(int planId);
+    List<PlanEditor> findByPlan_PlanId(String planId);
 
-    boolean existsByUser_UserIdAndPlan_PlanId(int userId, int planId);
-    boolean existsByUserUserIdAndPlanPlanId(int userId, int planId);
+    boolean existsByUser_UserIdAndPlan_PlanId(String userId, String planId);
+    boolean existsByUserUserIdAndPlanPlanId(String userId, String planId);
 }

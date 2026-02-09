@@ -37,7 +37,7 @@ public class ChatBotPlanService {
     /**
      * 전체 계획 정보 업데이트 (JSON 형태로 받은 모든 필드를 처리)
      */
-    public ChatBotActionResponse updateFullPlan(int planId, String planJson) {
+    public ChatBotActionResponse updateFullPlan(String planId, String planJson) {
         try {
             log.info("AI 요청: 전체 계획 업데이트 - planId: {}, planData: {}", planId, planJson);
             
@@ -90,7 +90,7 @@ public class ChatBotPlanService {
     /**
      * 타임테이블 생성
      */
-    public ChatBotActionResponse createTimeTable(int planId, String timeTableJson) {
+    public ChatBotActionResponse createTimeTable(String planId, String timeTableJson) {
         try {
             log.info("AI 요청: 타임테이블 생성 - planId: {}, timeTableData: {}", planId, timeTableJson);
             

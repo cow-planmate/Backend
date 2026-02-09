@@ -1,16 +1,18 @@
 package com.example.planmate.domain.user;
 
-import com.example.planmate.domain.user.entity.User;
-import lombok.Data;
-import lombok.Getter;
+import java.util.Collection;
+import java.util.List;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.List;
+import com.example.planmate.domain.user.entity.User;
+
+import lombok.Data;
+import lombok.Getter;
 @Data
 public class CustomUserDetails implements UserDetails {
-    private final int userId;
+    private final String userId;
     private final String email;
     private final String password;
     @Getter

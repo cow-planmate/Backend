@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface TimeTableRepository extends JpaRepository<TimeTable, Integer> {
-    List<TimeTable> findByPlanPlanId(Integer planId);
+    List<TimeTable> findByPlanPlanId(String planId);
 
     void deleteByPlan(Plan plan);
 }

@@ -10,6 +10,6 @@ import lombok.Setter;
 @Setter
 @Schema(description = "플랜 초기 생성 응답 데이터")
 public class MakePlanResponse extends CommonResponse {
-    @Schema(description = "생성된 플랜 ID", example = "101")
-    private int planId;
+    @Schema(description = "생성된 플랜 ID", example = "550e8400-e29b-41d4-a716-446655440000")
+    private String planId;
 }

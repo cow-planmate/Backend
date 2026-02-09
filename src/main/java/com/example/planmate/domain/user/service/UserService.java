@@ -35,7 +35,7 @@ public class UserService {
         return response;
     }
 
-    public SavePreferredThemeResponse savePreferredTheme(int userId, List<Integer> preferredThemeIds) {
+    public SavePreferredThemeResponse savePreferredTheme(String userId, List<Integer> preferredThemeIds) {
         SavePreferredThemeResponse response = new SavePreferredThemeResponse();
 
         userRepository.findById(userId).ifPresent(user -> {
@@ -52,7 +52,7 @@ public class UserService {
         return response;
     }
 
-    public MoveMypageResponse getMypageInfo(int userId) {
+    public MoveMypageResponse getMypageInfo(String userId) {
         MoveMypageResponse response = new MoveMypageResponse();
 
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
@@ -82,7 +82,7 @@ public class UserService {
         return response;
     }
     @Transactional
-    public ChangeNicknameResponse changeNickname(int userId, String nickname) {
+    public ChangeNicknameResponse changeNickname(String userId, String nickname) {
         ChangeNicknameResponse response = new ChangeNicknameResponse();
 
         if (userRepository.findByNickname(nickname).isPresent()) {
@@ -97,7 +97,7 @@ public class UserService {
         return response;
     }
     @Transactional
-    public ChangeAgeResponse changeAge(int userId, int age) {
+    public ChangeAgeResponse changeAge(String userId, int age) {
         ChangeAgeResponse response = new ChangeAgeResponse();
 
         if (age < 0) {
@@ -113,7 +113,7 @@ public class UserService {
         return response;
     }
     @Transactional
-    public ChangeGenderResponse changeGender(int userId, int gender) {
+    public ChangeGenderResponse changeGender(String userId, int gender) {
         ChangeGenderResponse response = new ChangeGenderResponse();
 
         if (gender != 0 && gender != 1) {
@@ -130,7 +130,7 @@ public class UserService {
     }
 
     @Transactional
-    public ChangePreferredThemesResponse changePreferredThemes(int userId, int preferredThemeCategoryId, List<Integer> preferredThemeIds) {
+    public ChangePreferredThemesResponse changePreferredThemes(String userId, int preferredThemeCategoryId, List<Integer> preferredThemeIds) {
         ChangePreferredThemesResponse response = new ChangePreferredThemesResponse();
 
         if (preferredThemeCategoryId != 0 && preferredThemeCategoryId != 1 && preferredThemeCategoryId != 2) {
@@ -154,7 +154,7 @@ public class UserService {
     }
 
     @Transactional
-    public ResignAccountResponse resignAccount(int userId) {
+    public ResignAccountResponse resignAccount(String userId) {
         ResignAccountResponse response = new ResignAccountResponse();
 
         if (!userRepository.existsById(userId)) {

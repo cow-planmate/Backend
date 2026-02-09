@@ -8,5 +8,5 @@ import lombok.Setter;
 @Setter
 public class RegisterResponse extends CommonResponse {
     private  boolean isRegistered;
-    private int userId;
+    private String userId;
 }

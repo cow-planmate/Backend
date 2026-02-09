@@ -17,8 +17,8 @@ import lombok.Setter;
 @Setter
 @Schema(description = "마이페이지 정보 조회 응답 데이터")
 public class MoveMypageResponse extends CommonResponse {
-    @Schema(description = "사용자 고유 식별자", example = "1")
-    private int userId;
+    @Schema(description = "사용자 고유 식별자", example = "550e8400-e29b-41d4-a716-446655440000")
+    private String userId;
 
     @Schema(description = "사용자 이메일", example = "user@example.com")
     private String email;
@@ -58,10 +58,10 @@ public class MoveMypageResponse extends CommonResponse {
                 preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryName());
         preferredThemes.add(preferredThemeVO);
     }
-    public void addMyPlanVO(int planId, String planName) {
+    public void addMyPlanVO(String planId, String planName) {
         myPlanVOs.add(new SimplePlanVO(planId, planName));
     }
-    public void addEditablePlanVO(int planId, String planName) {
+    public void addEditablePlanVO(String planId, String planName) {
         editablePlanVOs.add(new SimplePlanVO(planId, planName));
     }
 }

@@ -6,6 +6,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class SimpleEditorVO {
-    private int userId;
+    private String userId;
     private String nickName;
 }

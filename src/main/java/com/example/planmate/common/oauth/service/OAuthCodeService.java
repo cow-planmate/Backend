@@ -1,11 +1,12 @@
 package com.example.planmate.common.oauth.service;
 
-import lombok.RequiredArgsConstructor;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -18,12 +19,12 @@ public class OAuthCodeService {
     /**
      * 로그인용 1회용 code 발급
      */
-    public String issueLoginCode(int userId) {
+    public String issueLoginCode(String userId) {
         String code = UUID.randomUUID().toString();
 
         redisTemplate.opsForValue().set(
                 loginKey(code),
-                String.valueOf(userId),
+                userId,
                 LOGIN_CODE_TTL,
                 TimeUnit.SECONDS
         );
@@ -34,7 +35,7 @@ public class OAuthCodeService {
     /**
      * loginCode 검증 + 소비 (1회용)
      */
-    public int consumeLoginCode(String code) {
+    public String consumeLoginCode(String code) {
         String key = loginKey(code);
 
         String userIdStr = redisTemplate.opsForValue().get(key);
@@ -45,7 +46,7 @@ public class OAuthCodeService {
         // 🔥 1회용 보장
         redisTemplate.delete(key);
 
-        return Integer.parseInt(userIdStr);
+        return userIdStr;
     }
 
     /**

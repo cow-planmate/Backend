@@ -64,8 +64,8 @@ public class PlaceService {
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Transactional
-    private PlaceResponse getPlaceForUserAndPlan(int userId,
-                                                 int planId,
+    private PlaceResponse getPlaceForUserAndPlan(String userId,
+                                                 String planId,
                                                  int preferredThemeCategoryId) throws IOException {
         PlaceResponse response = new PlaceResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
@@ -248,22 +248,22 @@ public class PlaceService {
     }
 
     @Transactional
-    public PlaceResponse getTourPlace(int userId, int planId) throws IOException {
+    public PlaceResponse getTourPlace(String userId, String planId) throws IOException {
         return getPlaceForUserAndPlan(userId, planId, 0);
     }
 
     @Transactional
-    public PlaceResponse getLodgingPlace(int userId, int planId) throws IOException {
+    public PlaceResponse getLodgingPlace(String userId, String planId) throws IOException {
         return getPlaceForUserAndPlan(userId, planId, 1);
     }
 
     @Transactional
-    public PlaceResponse getRestaurantPlace(int userId, int planId) throws IOException {
+    public PlaceResponse getRestaurantPlace(String userId, String planId) throws IOException {
         return getPlaceForUserAndPlan(userId, planId, 2);
     }
 
     @Transactional
-    public PlaceResponse getSearchPlace(int userId, int planId, String query) throws IOException {
+    public PlaceResponse getSearchPlace(String userId, String planId, String query) throws IOException {
         PlaceResponse response = new PlaceResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
 

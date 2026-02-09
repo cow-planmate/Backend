@@ -79,7 +79,7 @@ public class LoginService {
             return response;
         }
 
-        Integer userId = refreshTokenStore.findUserIdByRefreshToken(refreshToken);
+        String userId = refreshTokenStore.findUserIdByRefreshToken(refreshToken);
         if (userId == null) {
             LogoutResponse response = new LogoutResponse(false);
             response.setMessage("유효하지 않거나 이미 만료된 리프레시 토큰입니다");

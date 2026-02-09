@@ -37,8 +37,9 @@ import lombok.NoArgsConstructor;
     public class User {
     
         @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private Integer userId;
+        @GeneratedValue(strategy = GenerationType.UUID)
+        @Column(name = "user_id", columnDefinition = "VARCHAR(36)")
+        private String userId;
     
         @Column(nullable = false)
         private String provider;

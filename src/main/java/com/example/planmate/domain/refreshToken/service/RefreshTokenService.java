@@ -14,7 +14,7 @@ public class RefreshTokenService {
     private final JwtTokenProvider jwtTokenProvider;
     public RefreshTokenResponse getToken(String refreshToken) {
         RefreshTokenResponse response = new RefreshTokenResponse();
-    Integer userId = refreshTokenStore.findUserIdByRefreshToken(refreshToken);
+        String userId = refreshTokenStore.findUserIdByRefreshToken(refreshToken);
         if(userId != null){
             response.setAccessToken(jwtTokenProvider.generateAccessToken(userId));
         }

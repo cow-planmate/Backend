@@ -9,11 +9,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class RefreshTokenStore {
 
-    private final RedisTemplate<String, Integer> refreshTokenRedis;
+    private final RedisTemplate<String, String> refreshTokenRedis;
 
     public RefreshTokenStore(
             @Qualifier("refreshTokenRedis")
-            RedisTemplate<String, Integer> refreshTokenRedis
+            RedisTemplate<String, String> refreshTokenRedis
     ) {
         this.refreshTokenRedis = refreshTokenRedis;
     }
@@ -22,12 +22,12 @@ public class RefreshTokenStore {
         return "REFRESHTOKEN:" + suffix;
     }
 
-    public void insertRefreshToken(String token, int userId) {
+    public void insertRefreshToken(String token, String userId) {
         refreshTokenRedis.opsForValue()
                 .set(key(token), userId, 14L, TimeUnit.DAYS);
     }
 
-    public Integer findUserIdByRefreshToken(String refreshToken) {
+    public String findUserIdByRefreshToken(String refreshToken) {
         return refreshTokenRedis.opsForValue().get(key(refreshToken));
     }
 

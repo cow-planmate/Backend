@@ -8,9 +8,9 @@ import lombok.Getter;
 @AllArgsConstructor
 public class PendingRequestVO {
     private int requestId;
-    private int senderId;
+    private String senderId;
     private String senderNickname;
-    private int planId;
+    private String planId;
     private String planName;
     private String type;
 }

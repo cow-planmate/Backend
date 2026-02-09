@@ -29,24 +29,24 @@ public class PlaceController {
 
     @Operation(summary = "숙소 추천 조회", description = "플랜 ID를 바탕으로 해당 지역의 숙소(lodging) 추천 목록을 가져옵니다.")
     @GetMapping("/{planId}/lodging")
-    public ResponseEntity<PlaceResponse> getLodgingPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
-        int userId = Integer.parseInt(authentication.getName());
+    public ResponseEntity<PlaceResponse> getLodgingPlace(Authentication authentication, @PathVariable("planId") String planId) throws IOException {
+        String userId = authentication.getName();
         PlaceResponse response = placeService.getLodgingPlace(userId, planId);
         return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "관광지 추천 조회", description = "플랜 ID를 바탕으로 해당 지역의 관광지(tour) 추천 목록을 가져옵니다.")
     @GetMapping("/{planId}/tour")
-    public ResponseEntity<PlaceResponse> getTourPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
-        int userId = Integer.parseInt(authentication.getName());
+    public ResponseEntity<PlaceResponse> getTourPlace(Authentication authentication, @PathVariable("planId") String planId) throws IOException {
+        String userId = authentication.getName();
         PlaceResponse response = placeService.getTourPlace(userId, planId);
         return ResponseEntity.ok(response); 
     }
 
     @Operation(summary = "음식점 추천 조회", description = "플랜 ID를 바탕으로 해당 지역의 음식점(restaurant) 추천 목록을 가져옵니다.")
     @GetMapping("/{planId}/restaurant")
-    public ResponseEntity<PlaceResponse> getRestaurantPlace(Authentication authentication, @PathVariable("planId") int planId) throws IOException {
-        int userId = Integer.parseInt(authentication.getName());
+    public ResponseEntity<PlaceResponse> getRestaurantPlace(Authentication authentication, @PathVariable("planId") String planId) throws IOException {
+        String userId = authentication.getName();
         PlaceResponse response = placeService.getRestaurantPlace(userId, planId);
         return ResponseEntity.ok(response);
     }
@@ -55,10 +55,10 @@ public class PlaceController {
     @GetMapping("/{planId}/place/{query}")
     public ResponseEntity<PlaceResponse> getPlace(
         Authentication authentication,
-        @PathVariable("planId") int planId,
+        @PathVariable("planId") String planId,
         @PathVariable("query") String query
     ) throws IOException {
-        int userId = Integer.parseInt(authentication.getName());
+        String userId = authentication.getName();
         PlaceResponse response = placeService.getSearchPlace(userId, planId, query);
         return ResponseEntity.ok(response);
     }

@@ -5,12 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface PlanRepository extends JpaRepository<Plan, Integer> {
-    List<Plan> findByUserUserId(Integer userId);
-    boolean existsByUserUserIdAndPlanName(Integer userId, String planName);
-    boolean existsByPlanIdAndUserUserId(Integer planId, Integer userId);
+public interface PlanRepository extends JpaRepository<Plan, String> {
+    List<Plan> findByUserUserId(String userId);
+    boolean existsByUserUserIdAndPlanName(String userId, String planName);
+    boolean existsByPlanIdAndUserUserId(String planId, String userId);
 
-    boolean existsByUser_UserIdAndPlanName(int userId, String name);
+    boolean existsByUser_UserIdAndPlanName(String userId, String name);
 
-    List<Plan> findAllByPlanIdInAndUserUserId(List<Integer> planIds, int userId);
+    List<Plan> findAllByPlanIdInAndUserUserId(List<String> planIds, String userId);
 }

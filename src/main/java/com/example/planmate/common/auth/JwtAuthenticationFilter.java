@@ -1,22 +1,24 @@
 package com.example.planmate.common.auth;
 
-import com.example.planmate.common.config.AuthWhitelist;
-import com.example.planmate.common.config.OptionalAuthWhitelist;
-import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import com.example.planmate.common.config.AuthWhitelist;
+import com.example.planmate.common.config.OptionalAuthWhitelist;
+import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Component
@@ -53,7 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (purpose == null) {
                 // 일반 로그인 토큰 (subject = userId)
-                int userId = Integer.parseInt(subject);
+                String userId = subject;
                 Authentication auth = new UsernamePasswordAuthenticationToken(userId, null, List.of());
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } else {

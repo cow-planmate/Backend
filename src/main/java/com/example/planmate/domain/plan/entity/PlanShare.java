@@ -13,7 +13,8 @@ import java.time.LocalDateTime;
 public class PlanShare {
 
     @Id
-    private Integer planId;  // PK이자 FK
+    @Column(name = "plan_id", columnDefinition = "VARCHAR(36)")
+    private String planId;  // PK이자 FK
 
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId

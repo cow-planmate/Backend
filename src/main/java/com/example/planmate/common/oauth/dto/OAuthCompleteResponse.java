@@ -10,7 +10,7 @@ public class OAuthCompleteResponse {
     private String message;
     private String accessToken;
     private String refreshToken;
-    private Integer userId;
+    private String userId;
     private String nickname;
     private String email;
 }

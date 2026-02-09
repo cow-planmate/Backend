@@ -42,9 +42,10 @@ import lombok.NoArgsConstructor;
 public class Plan {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "plan_id", columnDefinition = "VARCHAR(36)")
     @CacheId
-    private Integer planId;
+    private String planId;
 
     @Column(nullable = false)
     private String planName;

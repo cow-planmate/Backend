@@ -1,33 +1,37 @@
 package com.example.planmate.domain.chatbot.service;
 
-import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
-import sharedsync.dto.PlanDto;
-import sharedsync.dto.TimeTableDto;
-import sharedsync.dto.TimeTablePlaceBlockDto;
-import sharedsync.cache.PlanCache;
-import sharedsync.cache.TimeTableCache;
-import sharedsync.cache.TimeTablePlaceBlockCache;
-import com.example.planmate.domain.plan.entity.Plan;
-import com.example.planmate.domain.plan.entity.TimeTable;
-import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
-import sharedsync.wsdto.WTimeTableRequest;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import com.example.planmate.domain.chatbot.dto.ChatBotActionResponse;
+import com.example.planmate.domain.plan.entity.Plan;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import sharedsync.cache.PlanCache;
+import sharedsync.cache.TimeTableCache;
+import sharedsync.cache.TimeTablePlaceBlockCache;
+import sharedsync.dto.PlanDto;
+import sharedsync.dto.TimeTableDto;
+import sharedsync.dto.TimeTablePlaceBlockDto;
+import sharedsync.wsdto.WTimeTableRequest;
 
 @Slf4j
 @Service
@@ -43,7 +47,7 @@ public class ChatBotService {
     @Value("${python.chatbot.api.url:http://localhost:8010/api/chatbot/generate}")
     private String pythonApiUrl;
     
-    public ChatBotActionResponse getChatResponse(String message, Integer planId) {
+    public ChatBotActionResponse getChatResponse(String message, String planId) {
         try {
 
             String systemPromptContext = buildSystemPromptContext(planId);
@@ -95,7 +99,7 @@ public class ChatBotService {
         }
     }
 
-    private ChatBotActionResponse executeActions(List<ChatBotActionResponse.ActionData> actions, Integer planId, String originalUserMessage) {
+    private ChatBotActionResponse executeActions(List<ChatBotActionResponse.ActionData> actions, String planId, String originalUserMessage) {
         List<ChatBotActionResponse.ActionData> aggregatedActions = new ArrayList<>();
         StringBuilder errorMessages = new StringBuilder();
 
@@ -240,7 +244,7 @@ public class ChatBotService {
         return new ChatBotActionResponse(finalMessage, true, aggregatedActions);
     }
 
-    private ChatBotActionResponse executeAction(ChatBotActionResponse.ActionData actionData, Integer planId) {
+    private ChatBotActionResponse executeAction(ChatBotActionResponse.ActionData actionData, String planId) {
         if (actionData == null) {
             return null;
         }
@@ -276,7 +280,7 @@ public class ChatBotService {
         }
     }
 
-    private String buildSystemPromptContext(Integer planId) throws JsonProcessingException {
+    private String buildSystemPromptContext(String planId) throws JsonProcessingException {
         Plan plan = planCache.findById(planId).orElseThrow(() -> new RuntimeException("Plan not found: " + planId));
         PlanDto planDto = PlanDto.fromEntity(plan);
         
@@ -461,7 +465,7 @@ public class ChatBotService {
             """.formatted(planJson, timeTablesJson, timeTablePlaceBlocksJson, dayMappingStr);
     }
 
-    private Map<String, Object> buildPlanContextMap(Integer planId) {
+    private Map<String, Object> buildPlanContextMap(String planId) {
         try {
             Plan plan = planCache.findById(planId).orElseThrow(() -> new RuntimeException("Plan not found: " + planId));
             PlanDto planDto = PlanDto.fromEntity(plan);
@@ -510,7 +514,7 @@ public class ChatBotService {
         }
     }
 
-    private ChatBotActionResponse executePlanAction(String action, Object target, int planId) {
+    private ChatBotActionResponse executePlanAction(String action, Object target, String planId) {
         try {
             if ("update".equals(action)) {
                 ObjectMapper objectMapper = new ObjectMapper();
@@ -533,7 +537,7 @@ public class ChatBotService {
         }
     }
     
-    private ChatBotActionResponse executeTimeTableAction(String action, Object target, int planId) {
+    private ChatBotActionResponse executeTimeTableAction(String action, Object target, String planId) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.registerModule(new JavaTimeModule());
@@ -568,7 +572,7 @@ public class ChatBotService {
         }
     }
     
-    private ChatBotActionResponse executeTimeTablePlaceBlockAction(String action, Object target, int planId) {
+    private ChatBotActionResponse executeTimeTablePlaceBlockAction(String action, Object target, String planId) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.registerModule(new JavaTimeModule());

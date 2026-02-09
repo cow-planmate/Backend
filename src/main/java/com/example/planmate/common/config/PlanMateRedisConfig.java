@@ -9,7 +9,6 @@ import org.springframework.data.redis.connection.RedisStaticMasterReplicaConfigu
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import io.lettuce.core.ReadFrom;
@@ -54,11 +53,11 @@ public class PlanMateRedisConfig {
     }
 
     @Bean(name = "refreshTokenRedis")
-    public RedisTemplate<String, Integer> refreshTokenRedis(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Integer> template = new RedisTemplate<>();
+    public RedisTemplate<String, String> refreshTokenRedis(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setValueSerializer(new StringRedisSerializer());
         template.afterPropertiesSet();
         return template;
     }

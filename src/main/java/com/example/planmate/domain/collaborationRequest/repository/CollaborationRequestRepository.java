@@ -16,5 +16,5 @@ public interface CollaborationRequestRepository extends JpaRepository<Collaborat
 
     Optional<CollaborationRequest> findBySenderAndReceiverAndPlanAndTypeAndStatus(User sender, User receiver, Plan plan, CollaborationRequestType collaborationRequestType, CollaborationRequestStatus collaborationRequestStatus);
 
-    List<CollaborationRequest> findByReceiver_UserIdAndStatus(int receiverId, CollaborationRequestStatus collaborationRequestStatus);
+    List<CollaborationRequest> findByReceiver_UserIdAndStatus(String userId, CollaborationRequestStatus status);
 }

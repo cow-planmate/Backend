@@ -1,12 +1,13 @@
 package com.example.planmate.domain.collaborationRequest.dto;
 
-import com.example.planmate.common.dto.CommonResponse;
-import com.example.planmate.common.valueObject.PendingRequestVO;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.example.planmate.common.dto.CommonResponse;
+import com.example.planmate.common.valueObject.PendingRequestVO;
+
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -19,9 +20,9 @@ public class GetReceivedPendingRequestsResponse extends CommonResponse {
 
     public void addPendingRequest(
             int requestId,
-            int senderId,
+            String senderId,
             String senderNickname,
-            int planId,
+            String planId,
             String planName,
             String type
     ) {

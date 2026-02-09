@@ -1,7 +1,17 @@
 package com.example.planmate.domain.collaborationRequest.service;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.planmate.domain.collaborationRequest.auth.CollaborationRequestValidator;
-import com.example.planmate.domain.collaborationRequest.dto.*;
+import com.example.planmate.domain.collaborationRequest.dto.AcceptRequestResponse;
+import com.example.planmate.domain.collaborationRequest.dto.GetReceivedPendingRequestsResponse;
+import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanResponse;
+import com.example.planmate.domain.collaborationRequest.dto.RejectRequestResponse;
+import com.example.planmate.domain.collaborationRequest.dto.RequestEditAccessResponse;
 import com.example.planmate.domain.collaborationRequest.entity.CollaborationRequest;
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
 import com.example.planmate.domain.collaborationRequest.enums.CollaborationRequestStatus;
@@ -13,12 +23,8 @@ import com.example.planmate.domain.plan.repository.PlanEditorRepository;
 import com.example.planmate.domain.plan.repository.PlanRepository;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +37,7 @@ public class CollaborationRequestService {
     private final CollaborationRequestValidator collaborationRequestValidator;
 
     @Transactional
-    public InviteUserToPlanResponse inviteUserToPlan(int senderId, int planId, String receiverNickname) {
+    public InviteUserToPlanResponse inviteUserToPlan(String senderId, String planId, String receiverNickname) {
         InviteUserToPlanResponse response = new InviteUserToPlanResponse();
 
         // 1. 사용자와 플랜 유효성 검증
@@ -77,7 +83,7 @@ public class CollaborationRequestService {
         return response;
     }
     @Transactional
-    public RequestEditAccessResponse requestEditAccess(int senderId, int planId) {
+    public RequestEditAccessResponse requestEditAccess(String senderId, String planId) {
         RequestEditAccessResponse response = new RequestEditAccessResponse();
 
         // 1. 사용자와 플랜 유효성 검증
@@ -129,7 +135,7 @@ public class CollaborationRequestService {
     }
 
     @Transactional
-    public AcceptRequestResponse acceptRequest(int receiverId, int collaborationRequestId) {
+    public AcceptRequestResponse acceptRequest(String receiverId, int collaborationRequestId) {
         AcceptRequestResponse response = new AcceptRequestResponse();
 
         CollaborationRequest request = collaborationRequestValidator.validateReceiverAndPending(receiverId, collaborationRequestId);
@@ -153,7 +159,7 @@ public class CollaborationRequestService {
     }
 
     @Transactional
-    public RejectRequestResponse rejectRequest(int receiverId, int collaborationRequestId) {
+    public RejectRequestResponse rejectRequest(String receiverId, int collaborationRequestId) {
         RejectRequestResponse response = new RejectRequestResponse();
 
         CollaborationRequest request = collaborationRequestValidator.validateReceiverAndPending(receiverId, collaborationRequestId);
@@ -166,7 +172,7 @@ public class CollaborationRequestService {
     }
 
     @Transactional(readOnly = true)
-    public GetReceivedPendingRequestsResponse getReceivedPendingRequests(int receiverId) {
+    public GetReceivedPendingRequestsResponse getReceivedPendingRequests(String receiverId) {
         GetReceivedPendingRequestsResponse response = new GetReceivedPendingRequestsResponse();
 
         List<CollaborationRequest> pendingRequests = collaborationRequestRepository
