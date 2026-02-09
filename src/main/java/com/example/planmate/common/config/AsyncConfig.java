@@ -1,11 +1,11 @@
 package com.example.planmate.common.config;
 
+import java.util.concurrent.Executor;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-
-import java.util.concurrent.Executor;
 
 /**
  * Global async configuration for executing external API & IO bound tasks.
@@ -18,9 +18,9 @@ public class AsyncConfig {
     public Executor placeExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         // Core & max can be adjusted based on expected concurrency & API quota
-        executor.setCorePoolSize(8);
-        executor.setMaxPoolSize(8);
-        executor.setQueueCapacity(100);
+        executor.setCorePoolSize(20);
+        executor.setMaxPoolSize(50);
+        executor.setQueueCapacity(200);
         executor.setThreadNamePrefix("place-async-");
         executor.setAwaitTerminationSeconds(10);
         executor.initialize();
