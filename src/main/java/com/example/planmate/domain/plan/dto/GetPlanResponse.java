@@ -9,6 +9,9 @@ import com.example.planmate.common.dto.CommonResponse;
 import com.example.planmate.common.valueObject.PlaceBlockVO;
 import com.example.planmate.common.valueObject.PlanFrameVO;
 import com.example.planmate.common.valueObject.TimetableVO;
+import com.example.planmate.domain.plan.entity.Plan;
+import com.example.planmate.domain.plan.entity.TimeTable;
+import com.example.planmate.domain.plan.entity.TimeTablePlaceBlock;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -39,6 +42,32 @@ public class GetPlanResponse extends CommonResponse {
     }
     public void addTimetable(int timetableId, LocalDate date, LocalTime startTime, LocalTime endTime) {
         timetables.add(new TimetableVO(timetableId, date, startTime, endTime));
+    }
+
+    public void fill(Plan plan, List<TimeTable> timeTables, List<List<TimeTablePlaceBlock>> placeBlocks) {
+        this.addPlanFrame(
+                plan.getPlanId(), plan.getPlanName(), plan.getDeparture(),
+                plan.getTravel().getTravelCategory().getTravelCategoryName(),
+                plan.getTravel().getTravelId(), plan.getTravel().getTravelName(),
+                plan.getAdultCount(), plan.getChildCount(),
+                plan.getTransportationCategory().getTransportationCategoryId()
+        );
+
+        for (TimeTable tt : timeTables) {
+            this.addTimetable(tt.getTimeTableId(), tt.getDate(), tt.getTimeTableStartTime(), tt.getTimeTableEndTime());
+        }
+
+        for (List<TimeTablePlaceBlock> blocks : placeBlocks) {
+            if (blocks != null) {
+                for (TimeTablePlaceBlock b : blocks) {
+                    this.addPlaceBlock(b.getBlockId(), b.getTimeTable().getTimeTableId(),
+                            b.getPlaceCategory().getPlaceCategoryId(), b.getPlaceName(), b.getPlaceTheme(),
+                            b.getPlaceRating(), b.getPlaceAddress(), b.getPlaceLink(), b.getPhotoUrl(),
+                            b.getPlaceId(), b.getXLocation(), b.getYLocation(), b.getMemo(),
+                            b.getBlockStartTime(), b.getBlockEndTime());
+                }
+            }
+        }
     }
 
 }

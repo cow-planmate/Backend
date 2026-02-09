@@ -70,6 +70,31 @@ public class PlanService {
     private final TimeTableCache timeTableCache;
     private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
 
+    private record PlanFullData(Plan plan, List<TimeTable> timeTables, List<List<TimeTablePlaceBlock>> placeBlocks) {}
+
+    private PlanFullData fetchPlanFullData(int planId) {
+        Plan plan;
+        List<TimeTable> timeTables;
+        List<List<TimeTablePlaceBlock>> placeBlocks = new ArrayList<>();
+
+        Optional<Plan> cachedPlan = planCache.findById(planId);
+        if (cachedPlan.isPresent()) {
+            plan = cachedPlan.get();
+            timeTables = new ArrayList<>(timeTableCache.findByParentId(planId));
+            timeTables.sort(Comparator.comparing(TimeTable::getDate));
+            for (TimeTable timeTable : timeTables) {
+                placeBlocks.add(timeTablePlaceBlockCache.findByParentId(timeTable.getTimeTableId()));
+            }
+        } else {
+            plan = planRepository.findById(planId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
+            timeTables = timeTableRepository.findByPlanPlanId(planId);
+            timeTables.sort(Comparator.comparing(TimeTable::getDate));
+            for (TimeTable timeTable : timeTables) {
+                placeBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
+            }
+        }
+        return new PlanFullData(plan, timeTables, placeBlocks);
+    }
 
     public MakePlanResponse makeService(int userId, String departure, int travelId, int transportationCategoryId, List<LocalDate> dates, int adultCount, int childCount) {
         User user = userRepository.findById(userId)
@@ -124,79 +149,19 @@ public class PlanService {
 
     public GetPlanResponse getPlan(int userId, int planId) {
         GetPlanResponse response = new GetPlanResponse();
+        PlanFullData data = fetchPlanFullData(planId);
 
-        Plan plan;
-        List<TimeTable> timeTables;
-        List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
-
-        // 1. Plan 캐시 확인 및 데이터 로드 분기
-        Optional<Plan> cachedPlan = planCache.findById(planId);
-
-        if (cachedPlan.isPresent()) {
-            // 캐시에 있는 경우: 연관 데이터도 모두 캐시에서 조회
-            plan = cachedPlan.get();
-            timeTables = new ArrayList<>(timeTableCache.findByParentId(planId));
-            for (TimeTable timeTable : timeTables) {
-                timeTablePlaceBlocks.add(timeTablePlaceBlockCache.findByParentId(timeTable.getTimeTableId()));
-            }
-        } else {
-            // 캐시에 없는 경우: DB에서 조회 (권한 검증 포함)
-            plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-            timeTables = new ArrayList<>(timeTableRepository.findByPlanPlanId(planId));
-            for (TimeTable timeTable : timeTables) {
-                timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
-            }
-        }
-
-        // 2. 권한 검증 (캐시에서 가져온 경우를 위해 재확인)
-        boolean isOwner = plan.getUser().getUserId().equals(userId);
+        // 2. 권한 검증
+        boolean isOwner = data.plan().getUser().getUserId().equals(userId);
         boolean isEditor = planEditorRepository.existsByUserUserIdAndPlanPlanId(userId, planId);
 
         if (!isOwner && !isEditor) {
             throw new AccessDeniedException("요청 권한이 없습니다");
         }
 
-        // 3. 데이터 정렬 및 응답 생성
-        timeTables.sort(Comparator.comparing(TimeTable::getDate));
-
-        response.addPlanFrame(
-                planId,
-                plan.getPlanName(),
-                plan.getDeparture(),
-                plan.getTravel().getTravelCategory().getTravelCategoryName(),
-                plan.getTravel().getTravelId(),
-                plan.getTravel().getTravelName(),
-                plan.getAdultCount(),
-                plan.getChildCount(),
-                plan.getTransportationCategory().getTransportationCategoryId());
-
-        for (TimeTable timeTable : timeTables){
-            response.addTimetable(timeTable.getTimeTableId(), timeTable.getDate(), timeTable.getTimeTableStartTime(), timeTable.getTimeTableEndTime());
-        }
-
-        for (List<TimeTablePlaceBlock> blocks : timeTablePlaceBlocks) {
-            if (blocks != null) {
-                for (TimeTablePlaceBlock block : blocks) {
-                    response.addPlaceBlock(
-                            block.getBlockId(),
-                            block.getTimeTable().getTimeTableId(),
-                            block.getPlaceCategory().getPlaceCategoryId(),
-                            block.getPlaceName(),
-                            block.getPlaceTheme(),
-                            block.getPlaceRating(),
-                            block.getPlaceAddress(),
-                            block.getPlaceLink(),
-                            block.getPhotoUrl(),
-                            block.getPlaceId(),
-                            block.getXLocation(),
-                            block.getYLocation(),
-                            block.getMemo(),
-                            block.getBlockStartTime(),
-                            block.getBlockEndTime()
-                    );
-                }
-            }
-        }
+        // 3. 응답 생성
+        response.fill(data.plan(), data.timeTables(), data.placeBlocks());
+        response.setMessage("성공적으로 일정을 조회했습니다.");
         return response;
     }
 
@@ -337,53 +302,9 @@ public class PlanService {
 
     public GetCompletePlanResponse getCompletePlan(int planId) {
         GetCompletePlanResponse response = new GetCompletePlanResponse();
+        PlanFullData data = fetchPlanFullData(planId);
 
-        Plan plan = planRepository.findById(planId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
-        List<TimeTable> timeTables = timeTableRepository.findByPlanPlanId(planId);
-        List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
-        
-        for (TimeTable timeTable : timeTables) {
-            timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
-        }
-        
-        response.addPlanFrame(
-                planId,
-                plan.getPlanName(),
-                plan.getDeparture(),
-                plan.getTravel().getTravelCategory().getTravelCategoryName(),
-                plan.getTravel().getTravelId(),
-                plan.getTravel().getTravelName(),
-                plan.getAdultCount(),
-                plan.getChildCount(),
-                plan.getTransportationCategory().getTransportationCategoryId());
-
-        for (TimeTable timeTable : timeTables){
-            response.addTimetable(timeTable.getTimeTableId(), timeTable.getDate(), timeTable.getTimeTableStartTime(), timeTable.getTimeTableEndTime());
-        }
-
-        for (List<TimeTablePlaceBlock> timeTablePlaceBlock : timeTablePlaceBlocks) {
-            if(timeTablePlaceBlock!=null){
-                for (TimeTablePlaceBlock timeTablePlaceBlock1 : timeTablePlaceBlock) {
-                    response.addPlaceBlock(
-                            timeTablePlaceBlock1.getBlockId(),
-                            timeTablePlaceBlock1.getTimeTable().getTimeTableId(),
-                            timeTablePlaceBlock1.getPlaceCategory().getPlaceCategoryId(),
-                            timeTablePlaceBlock1.getPlaceName(),
-                            timeTablePlaceBlock1.getPlaceTheme(),
-                            timeTablePlaceBlock1.getPlaceRating(),
-                            timeTablePlaceBlock1.getPlaceAddress(),
-                            timeTablePlaceBlock1.getPlaceLink(),
-                            timeTablePlaceBlock1.getPhotoUrl(),
-                            timeTablePlaceBlock1.getPlaceId(),
-                            timeTablePlaceBlock1.getXLocation(),
-                            timeTablePlaceBlock1.getYLocation(),
-                            timeTablePlaceBlock1.getMemo(),
-                            timeTablePlaceBlock1.getBlockStartTime(),
-                            timeTablePlaceBlock1.getBlockEndTime()
-                    );
-                }
-            }
-        }
+        response.fill(data.plan(), data.timeTables(), data.placeBlocks());
         response.setMessage("성공적으로 일정 완성본을 전송하였습니다.");
         return response;
     }
