@@ -49,7 +49,9 @@ sharedsync:
     endpoint: "/ws"
     allowed-origins:
       - "http://localhost:5173"
+      - "http://localhost:5174"
       - "https://planmate.site"
+      - "https://www.planmate.site"
     redis-sync:
       enabled: true
   presence:
