@@ -1,5 +1,7 @@
 package com.example.planmate.common.config;
 
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,8 +13,6 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-
-import java.util.UUID;
 
 import io.lettuce.core.ReadFrom;
 
@@ -58,6 +58,17 @@ public class PlanMateRedisConfig {
     @Bean(name = "refreshTokenRedis")
     public RedisTemplate<String, UUID> refreshTokenRedis(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, UUID> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    @Bean(name = "emailVerificationRedis")
+    @Primary
+    public RedisTemplate<String, Object> emailVerificationRedis(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());

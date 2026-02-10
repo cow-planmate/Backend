@@ -1,13 +1,16 @@
 package com.example.planmate.domain.emailVerificaiton;
 
-import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.io.Serializable;
+
+import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class EmailVerification implements Serializable {
 
     private String email;
@@ -21,8 +24,9 @@ public class EmailVerification implements Serializable {
         this.code = code;
         this.verified = false;
     }
+
     public boolean verify(EmailVerificationPurpose purpose, int inputCode) {
-        if(inputCode == this.code && purpose.equals(this.purpose)) {
+        if (inputCode == this.code && purpose.equals(this.purpose)) {
             this.verified = true;
             return true;
         }
