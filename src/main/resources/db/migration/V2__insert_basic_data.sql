@@ -3,55 +3,52 @@ VALUES
     (0, '관광지'),
     (1, '숙소'),
     (2, '식당')
-ON CONFLICT (preferred_theme_category_id) DO NOTHING;
+    ON CONFLICT (preferred_theme_category_id) DO NOTHING;
 
-INSERT INTO preferred_theme (preferred_theme_name, preferred_theme_category_id)
-VALUES 
-    ('역사 유적지', 0),
-    ('자연 경관', 0),
-    ('테마파크', 0),
-    ('산책로/둘레길', 0),
-    ('호수/강변 명소', 0),
-    ('해변/바다 여행지', 0),
-    ('전망대/야경 명소', 0),
-    ('문화 유산 탐방', 0),
-    ('미술관/박물관', 0),
-    ('전통 마을 탐방', 0);
+INSERT INTO preferred_theme (preferred_theme_name, preferred_theme_category_id) VALUES
+                                                                                    ('유적지', 0),
+                                                                                    ('공원', 0),
+                                                                                    ('테마파크', 0),
+                                                                                    ('산책로', 0),
+                                                                                    ('호수', 0),
+                                                                                    ('해수욕장', 0),
+                                                                                    ('전망대', 0),
+                                                                                    ('박물관', 0),
+                                                                                    ('미술관', 0),
+                                                                                    ('한옥마을', 0);
 
-INSERT INTO preferred_theme (preferred_theme_name, preferred_theme_category_id)
-VALUES 
-    ('호텔', 1),
-    ('모텔', 1),
-    ('게스트하우스', 1),
-    ('펜션', 1),
-    ('리조트', 1),
-    ('캠핑장', 1),
-    ('글램핑', 1),
-    ('카라반', 1),
-    ('한옥스테이', 1),
-    ('에어비앤비 숙소', 1);
+-- 숙소
+INSERT INTO preferred_theme (preferred_theme_name, preferred_theme_category_id) VALUES
+                                                                                    ('호텔', 1),
+                                                                                    ('모텔', 1),
+                                                                                    ('게스트하우스', 1),
+                                                                                    ('펜션', 1),
+                                                                                    ('리조트', 1),
+                                                                                    ('캠핑장', 1),
+                                                                                    ('글램핑', 1),
+                                                                                    ('풀빌라', 1);
 
-INSERT INTO preferred_theme (preferred_theme_name, preferred_theme_category_id)
-VALUES 
-    ('한식 맛집', 2),
-    ('카페 투어', 2),
-    ('전통 시장 음식', 2),
-    ('디저트 전문점', 2),
-    ('고기집', 2),
-    ('해산물 요리', 2),
-    ('퓨전 요리', 2),
-    ('채식/비건 식당', 2),
-    ('분식 맛집', 2),
-    ('지역 특산물 음식점', 2);
+-- 맛집/카페
+INSERT INTO preferred_theme (preferred_theme_name, preferred_theme_category_id) VALUES
+                                                                                    ('한식', 2),
+                                                                                    ('카페', 2),
+                                                                                    ('전통시장', 2),
+                                                                                    ('베이커리', 2),
+                                                                                    ('고기집', 2),
+                                                                                    ('횟집', 2),
+                                                                                    ('퓨전음식', 2),
+                                                                                    ('브런치', 2),
+                                                                                    ('분식', 2),
+                                                                                    ('이자카야', 2);
 
 INSERT INTO transportation_category (transportation_category_id, transportation_category_name)
-VALUES 
+VALUES
     (0, '대중교통'),
     (1, '자가용')
-ON CONFLICT (transportation_category_id) DO NOTHING;
+    ON CONFLICT (transportation_category_id) DO NOTHING;
 
 INSERT INTO travel_category (travel_category_name)
-VALUES 
+VALUES
     ('서울특별시'),
     ('부산광역시'),
     ('대구광역시'),
@@ -362,4 +359,4 @@ VALUES
     (2, '식당'),
     (3, '자유'),
     (4, '검색')
-ON CONFLICT (place_category_id) DO NOTHING;
+    ON CONFLICT (place_category_id) DO NOTHING;
