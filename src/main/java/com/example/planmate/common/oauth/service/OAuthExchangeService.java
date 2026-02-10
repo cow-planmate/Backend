@@ -1,11 +1,14 @@
 package com.example.planmate.common.oauth.service;
 
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
 import com.example.planmate.common.auth.JwtTokenProvider;
 import com.example.planmate.common.oauth.dto.TokenResponse;
 import com.example.planmate.domain.user.repository.UserRepository;
-import com.example.planmate.domain.user.service.UserService;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +21,7 @@ public class OAuthExchangeService {
     public TokenResponse exchange(String code) {
 
         // 🔐 1회용 code 검증 + 소비
-        int userId = oauthCodeService.consumeLoginCode(code);
+        UUID userId = oauthCodeService.consumeLoginCode(code);
 
         // 👤 유저 조회
         var user = userRepository.findById(userId)

@@ -1,5 +1,7 @@
 package com.example.planmate.domain.user.controller;
 
+import java.util.UUID;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -46,7 +48,7 @@ public class UserController {
     @Operation(summary = "선호 테마 저장", description = "사용자의 여행 선호 테마를 초기 저장합니다.")
     @PostMapping("/preferredTheme")
     public ResponseEntity<SavePreferredThemeResponse> savePreferredTheme(Authentication authentication, @RequestBody SavePreferredThemeRequest request) {
-        int userId = Integer.parseInt(authentication.getName());
+        UUID userId = UUID.fromString(authentication.getName());
         SavePreferredThemeResponse response = userService.savePreferredTheme(userId, request.getPreferredThemeIds());
         return ResponseEntity.ok(response);
     }
@@ -54,7 +56,7 @@ public class UserController {
     @Operation(summary = "마이페이지 프로필 조회", description = "사용자의 닉네임, 이메일, 작성한 플랜 등 마이페이지 정보를 조회합니다.")
     @GetMapping("/profile")
     public ResponseEntity<MoveMypageResponse> moveMypage(Authentication authentication) {
-        int userId = Integer.parseInt(authentication.getName());
+        UUID userId = UUID.fromString(authentication.getName());
         MoveMypageResponse response = userService.getMypageInfo(userId);
         return ResponseEntity.ok(response);
     }
@@ -62,7 +64,7 @@ public class UserController {
     @Operation(summary = "닉네임 변경", description = "사용자의 닉네임을 수정합니다.")
     @PatchMapping("/nickname")
     public ResponseEntity<ChangeNicknameResponse> changeNickname(Authentication authentication, @RequestBody ChangeNicknameRequest request) {
-        int userId = Integer.parseInt(authentication.getName());
+        UUID userId = UUID.fromString(authentication.getName());
         ChangeNicknameResponse response = userService.changeNickname(userId, request.getNickname());
         return ResponseEntity.ok(response);
     }
@@ -70,7 +72,7 @@ public class UserController {
     @Operation(summary = "나이 변경", description = "사용자의 나이 정보를 수정합니다.")
     @PatchMapping("/age")
     public ResponseEntity<ChangeAgeResponse> changeAge(Authentication authentication, @RequestBody ChangeAgeRequest request) {
-        int userId = Integer.parseInt(authentication.getName());
+        UUID userId = UUID.fromString(authentication.getName());
         ChangeAgeResponse response = userService.changeAge(userId, request.getAge());
         return ResponseEntity.ok(response);
     }
@@ -78,7 +80,7 @@ public class UserController {
     @Operation(summary = "성별 변경", description = "사용자의 성별 정보를 수정합니다.")
     @PatchMapping("/gender")
     public ResponseEntity<ChangeGenderResponse> changeGender(Authentication authentication, @RequestBody ChangeGenderRequest request) {
-        int userId = Integer.parseInt(authentication.getName());
+        UUID userId = UUID.fromString(authentication.getName());
         ChangeGenderResponse response = userService.changeGender(userId, request.getGender());
         return ResponseEntity.ok(response);
     }
@@ -86,7 +88,7 @@ public class UserController {
     @Operation(summary = "선호 테마 수정", description = "사용자의 여행 선호 테마를 수정합니다.")
     @PatchMapping("/preferredThemes")
     public ResponseEntity<ChangePreferredThemesResponse> changeGender(Authentication authentication, @RequestBody ChangePreferredThemesRequest request) {
-        int userId = Integer.parseInt(authentication.getName());
+        UUID userId = UUID.fromString(authentication.getName());
         ChangePreferredThemesResponse response = userService.changePreferredThemes(userId, request.getPreferredThemeCategoryId(), request.getPreferredThemeIds());
         return ResponseEntity.ok(response);
     }
@@ -94,7 +96,7 @@ public class UserController {
     @Operation(summary = "회원 탈퇴", description = "사용자 계정을 영구적으로 삭제하고 모든 개인 정보를 제거합니다.")
     @DeleteMapping("/account")
     public ResponseEntity<ResignAccountResponse> changeGender(Authentication authentication) {
-        int userId = Integer.parseInt(authentication.getName());
+        UUID userId = UUID.fromString(authentication.getName());
         ResignAccountResponse response = userService.resignAccount(userId);
         return ResponseEntity.ok(response);
     }

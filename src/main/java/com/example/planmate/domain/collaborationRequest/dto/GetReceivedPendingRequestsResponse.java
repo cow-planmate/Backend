@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -19,9 +20,9 @@ public class GetReceivedPendingRequestsResponse extends CommonResponse {
 
     public void addPendingRequest(
             int requestId,
-            int senderId,
+            UUID senderId,
             String senderNickname,
-            int planId,
+            UUID planId,
             String planName,
             String type
     ) {

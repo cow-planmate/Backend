@@ -2,11 +2,13 @@ package com.example.planmate.domain.plan.entity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import com.example.planmate.domain.collaborationRequest.entity.CollaborationRequest;
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
 import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.user.entity.User;
+import com.github.f4b6a3.uuid.UuidCreator;
 import com.sharedsync.shared.annotation.CacheEntity;
 import com.sharedsync.shared.annotation.CacheId;
 import com.sharedsync.shared.annotation.IgnoreShared;
@@ -16,15 +18,13 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,9 +42,9 @@ import lombok.NoArgsConstructor;
 public class Plan {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "plan_id", updatable = false, nullable = false)
     @CacheId
-    private Integer planId;
+    private UUID planId;
 
     @Column(nullable = false)
     private String planName;
@@ -102,12 +102,14 @@ public class Plan {
     }
 
     public void changeTransportationCategory(TransportationCategory transportationCategory) {
-        if (transportationCategory == null) throw new IllegalArgumentException("TransportationCategory는 null일 수 없습니다.");
+        if (transportationCategory == null)
+            throw new IllegalArgumentException("TransportationCategory는 null일 수 없습니다.");
         this.transportationCategory = transportationCategory;
     }
 
     public void changeTravel(Travel travel) {
-        if (travel == null) throw new IllegalArgumentException("Travel은 null일 수 없습니다.");
+        if (travel == null)
+            throw new IllegalArgumentException("Travel은 null일 수 없습니다.");
         this.travel = travel;
     }
 
@@ -124,13 +126,14 @@ public class Plan {
         }
         this.departure = newDeparture;
     }
-    
+
     /**
      * Redis에서 가져온 Plan 데이터로 필드만 업데이트 (연관관계 컬렉션은 건드리지 않음)
      */
     public void updateFromRedis(Plan redisPlan) {
-        if (redisPlan == null) return;
-        
+        if (redisPlan == null)
+            return;
+
         // 기본 필드들만 업데이트
         if (redisPlan.getPlanName() != null) {
             this.planName = redisPlan.getPlanName();
@@ -140,7 +143,7 @@ public class Plan {
         }
         this.adultCount = redisPlan.getAdultCount();
         this.childCount = redisPlan.getChildCount();
-        
+
         // 연관관계는 null이 아닐 때만 업데이트
         if (redisPlan.getTransportationCategory() != null) {
             this.transportationCategory = redisPlan.getTransportationCategory();
@@ -149,5 +152,12 @@ public class Plan {
             this.travel = redisPlan.getTravel();
         }
         // timeTables, collaborationRequests, editors는 의도적으로 업데이트하지 않음
+    }
+
+    @PrePersist
+    public void prePersist() {
+        if (this.planId == null) {
+            this.planId = UuidCreator.getTimeOrderedEpoch();
+        }
     }
 }

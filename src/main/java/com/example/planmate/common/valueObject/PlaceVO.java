@@ -1,5 +1,8 @@
 package com.example.planmate.common.valueObject;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -32,9 +35,13 @@ public class PlaceVO {
     private String photoUrl;
 
     @Schema(description = "경도 (X 좌표)", example = "126.9768967")
+    @JsonProperty("xLocation")
+    @JsonAlias({ "xlocation" })
     private double xLocation;
 
     @Schema(description = "위도 (Y 좌표)", example = "37.5776087")
+    @JsonProperty("yLocation")
+    @JsonAlias({ "ylocation" })
     private double yLocation;
 
     @Schema(description = "아이콘 URL", example = "https://...")

@@ -1,5 +1,7 @@
 package com.example.planmate.domain.plan.auth;
 
+import java.util.UUID;
+
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
@@ -16,11 +18,11 @@ public class PlanAccessValidator {
     private final PlanRepository planRepository;
     private final PlanEditorRepository planEditorRepository;
 
-    public Plan validateUserHasAccessToPlan(int userId, int planId) {
+    public Plan validateUserHasAccessToPlan(UUID userId, UUID planId) {
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new RuntimeException("없는 일정입니다"));
 
-        boolean isOwner = plan.getUser().getUserId() == userId;
+        boolean isOwner = plan.getUser().getUserId().equals(userId);
         boolean isEditor = planEditorRepository.existsByUserUserIdAndPlanPlanId(userId, planId);
 
         if (!isOwner && !isEditor) {
@@ -29,11 +31,11 @@ public class PlanAccessValidator {
         return plan;
     }
 
-    public void checkUserAccessToPlan(int userId, int planId) {
+    public void checkUserAccessToPlan(UUID userId, UUID planId) {
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new RuntimeException("없는 일정입니다"));
 
-        boolean isOwner = plan.getUser().getUserId() == userId;
+        boolean isOwner = plan.getUser().getUserId().equals(userId);
         boolean isEditor = planEditorRepository.existsByUserUserIdAndPlanPlanId(userId, planId);
 
         if (!isOwner && !isEditor) {

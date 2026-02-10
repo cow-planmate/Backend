@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -64,8 +65,8 @@ public class PlaceService {
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Transactional
-    private PlaceResponse getPlaceForUserAndPlan(int userId,
-                                                 int planId,
+    private PlaceResponse getPlaceForUserAndPlan(UUID userId,
+                                                 UUID planId,
                                                  int preferredThemeCategoryId) throws IOException {
         PlaceResponse response = new PlaceResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
@@ -248,22 +249,22 @@ public class PlaceService {
     }
 
     @Transactional
-    public PlaceResponse getTourPlace(int userId, int planId) throws IOException {
+    public PlaceResponse getTourPlace(UUID userId, UUID planId) throws IOException {
         return getPlaceForUserAndPlan(userId, planId, 0);
     }
 
     @Transactional
-    public PlaceResponse getLodgingPlace(int userId, int planId) throws IOException {
+    public PlaceResponse getLodgingPlace(UUID userId, UUID planId) throws IOException {
         return getPlaceForUserAndPlan(userId, planId, 1);
     }
 
     @Transactional
-    public PlaceResponse getRestaurantPlace(int userId, int planId) throws IOException {
+    public PlaceResponse getRestaurantPlace(UUID userId, UUID planId) throws IOException {
         return getPlaceForUserAndPlan(userId, planId, 2);
     }
 
     @Transactional
-    public PlaceResponse getSearchPlace(int userId, int planId, String query) throws IOException {
+    public PlaceResponse getSearchPlace(UUID userId, UUID planId, String query) throws IOException {
         PlaceResponse response = new PlaceResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
 

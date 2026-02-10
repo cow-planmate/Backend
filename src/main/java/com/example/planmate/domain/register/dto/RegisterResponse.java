@@ -4,9 +4,11 @@ import com.example.planmate.common.dto.CommonResponse;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 public class RegisterResponse extends CommonResponse {
     private  boolean isRegistered;
-    private int userId;
+    private UUID userId;
 }

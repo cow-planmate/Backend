@@ -10,11 +10,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface CollaborationRequestRepository extends JpaRepository<CollaborationRequest, Integer> {
 
     Optional<CollaborationRequest> findBySenderAndReceiverAndPlanAndTypeAndStatus(User sender, User receiver, Plan plan, CollaborationRequestType collaborationRequestType, CollaborationRequestStatus collaborationRequestStatus);
 
-    List<CollaborationRequest> findByReceiver_UserIdAndStatus(int receiverId, CollaborationRequestStatus collaborationRequestStatus);
+    List<CollaborationRequest> findByReceiver_UserIdAndStatus(UUID receiverId, CollaborationRequestStatus collaborationRequestStatus);
 }

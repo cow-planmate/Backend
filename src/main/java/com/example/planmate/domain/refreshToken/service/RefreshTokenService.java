@@ -7,6 +7,8 @@ import com.example.planmate.domain.refreshToken.dto.RefreshTokenResponse;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
@@ -14,7 +16,7 @@ public class RefreshTokenService {
     private final JwtTokenProvider jwtTokenProvider;
     public RefreshTokenResponse getToken(String refreshToken) {
         RefreshTokenResponse response = new RefreshTokenResponse();
-    Integer userId = refreshTokenStore.findUserIdByRefreshToken(refreshToken);
+        UUID userId = refreshTokenStore.findUserIdByRefreshToken(refreshToken);
         if(userId != null){
             response.setAccessToken(jwtTokenProvider.generateAccessToken(userId));
         }

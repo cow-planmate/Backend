@@ -1,19 +1,22 @@
 package com.example.planmate.domain.password.service;
 
+import java.security.SecureRandom;
+import java.util.UUID;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.planmate.common.enums.MailTemplate;
+import com.example.planmate.common.exception.UserNotFoundException;
 import com.example.planmate.common.service.CustomMailService;
 import com.example.planmate.domain.password.dto.ChangePasswordResponse;
 import com.example.planmate.domain.password.dto.SendTempPasswordResponse;
 import com.example.planmate.domain.password.dto.VerifyPasswordResponse;
 import com.example.planmate.domain.user.entity.User;
-import com.example.planmate.common.exception.UserNotFoundException;
 import com.example.planmate.domain.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +26,7 @@ public class PasswordService {
     private final SecureRandom secureRandom;
     private final CustomMailService customMailService;
 
-    public VerifyPasswordResponse verifyPassword(int userId, String password) {
+    public VerifyPasswordResponse verifyPassword(UUID userId, String password) {
         VerifyPasswordResponse response = new VerifyPasswordResponse();
 
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
@@ -39,7 +42,7 @@ public class PasswordService {
     }
 
     @Transactional
-    public ChangePasswordResponse changePassword(int userId, String password, String confirmPassword) {
+    public ChangePasswordResponse changePassword(UUID userId, String password, String confirmPassword) {
         ChangePasswordResponse response = new ChangePasswordResponse();
 
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);

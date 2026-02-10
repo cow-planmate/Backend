@@ -71,7 +71,7 @@ public class PlanService {
     private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
 
 
-    public MakePlanResponse makeService(int userId, String departure, int travelId, int transportationCategoryId, List<LocalDate> dates, int adultCount, int childCount) {
+    public MakePlanResponse makeService(UUID userId, String departure, int travelId, int transportationCategoryId, List<LocalDate> dates, int adultCount, int childCount) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
@@ -122,7 +122,7 @@ public class PlanService {
         return travel.getTravelName()+ " " + i;
     }
 
-    public GetPlanResponse getPlan(int userId, int planId) {
+    public GetPlanResponse getPlan(UUID userId, UUID planId) {
         GetPlanResponse response = new GetPlanResponse();
 
         Plan plan;
@@ -191,7 +191,8 @@ public class PlanService {
                             block.getXLocation(),
                             block.getYLocation(),
                             block.getBlockStartTime(),
-                            block.getBlockEndTime()
+                            block.getBlockEndTime(),
+                            block.getMemo()
                     );
                 }
             }
@@ -200,11 +201,11 @@ public class PlanService {
     }
 
     @Transactional
-    public EditPlanNameResponse EditPlanName(int userId, int planId, String name){
+    public EditPlanNameResponse EditPlanName(UUID userId, UUID planId, String name){
         EditPlanNameResponse response = new EditPlanNameResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
 
-        if(userId != plan.getUser().getUserId()){
+        if(!userId.equals(plan.getUser().getUserId())){
             response.setEdited(false);
             response.setMessage("이름 변경 권한이 없습니다.");
             return response;
@@ -221,7 +222,7 @@ public class PlanService {
 
 
     @Transactional
-    public CreatePlanResponse createPlan(int userId, String departure, int travelId, int transportationCategoryId, int adultCount, int childCount, List<TimetableVO> timetableVOs, List<TimetablePlaceBlockVO> timetablePlaceBlockVOs) {
+    public CreatePlanResponse createPlan(UUID userId, String departure, int travelId, int transportationCategoryId, int adultCount, int childCount, List<TimetableVO> timetableVOs, List<TimetablePlaceBlockVO> timetablePlaceBlockVOs) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
@@ -284,6 +285,7 @@ public class PlanService {
                         .placeAddress(vo.getPlaceAddress())
                         .placeLink(vo.getPlaceLink())
                         .photoUrl(vo.getPhotoUrl())
+                        .memo(vo.getMemo())
                         .blockStartTime(vo.getStartTime())
                         .blockEndTime(vo.getEndTime())
                         .xLocation(vo.getXLocation())
@@ -295,7 +297,7 @@ public class PlanService {
         timeTablePlaceBlockRepository.saveAll(timeTablePlaceBlocks);
     }
     @Transactional
-    public DeletePlanResponse deletePlan(int userId, int planId) {
+    public DeletePlanResponse deletePlan(UUID userId, UUID planId) {
         DeletePlanResponse response = new DeletePlanResponse();
 
         if (!planRepository.existsById(planId)) {
@@ -314,7 +316,7 @@ public class PlanService {
         return response;
     }
     @Transactional
-    public DeleteMultiplePlansResponse deleteMultiplePlans(int userId, List<Integer> planIds) {
+    public DeleteMultiplePlansResponse deleteMultiplePlans(UUID userId, List<UUID> planIds) {
         DeleteMultiplePlansResponse response = new DeleteMultiplePlansResponse();
 
         if (planIds == null || planIds.isEmpty()) {
@@ -333,7 +335,7 @@ public class PlanService {
         return response;
     }
 
-    public GetCompletePlanResponse getCompletePlan(int planId) {
+    public GetCompletePlanResponse getCompletePlan(UUID planId) {
         GetCompletePlanResponse response = new GetCompletePlanResponse();
 
         Plan plan = planRepository.findById(planId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
@@ -376,7 +378,8 @@ public class PlanService {
                             timeTablePlaceBlock1.getXLocation(),
                             timeTablePlaceBlock1.getYLocation(),
                             timeTablePlaceBlock1.getBlockStartTime(),
-                            timeTablePlaceBlock1.getBlockEndTime()
+                            timeTablePlaceBlock1.getBlockEndTime(),
+                            timeTablePlaceBlock1.getMemo()
                     );
                 }
             }
@@ -386,7 +389,7 @@ public class PlanService {
     }
 
     @Transactional
-    public RemoveEditorAccessByOwnerResponse removeEditorAccessByOwner(int ownerId, int planId, int targetUserId) {
+    public RemoveEditorAccessByOwnerResponse removeEditorAccessByOwner(UUID ownerId, UUID planId, UUID targetUserId) {
         RemoveEditorAccessByOwnerResponse response = new RemoveEditorAccessByOwnerResponse();
 
         Plan plan = planRepository.findById(planId)
@@ -406,7 +409,7 @@ public class PlanService {
     }
 
     @Transactional
-    public ResignEditorAccessResponse resignEditorAccess(int userId, int planId) {
+    public ResignEditorAccessResponse resignEditorAccess(UUID userId, UUID planId) {
         ResignEditorAccessResponse response = new ResignEditorAccessResponse();
 
         PlanEditor planEditor = planEditorRepository.findByUser_UserIdAndPlan_PlanId(userId, planId).orElseThrow(() -> new IllegalArgumentException("해당 편집 권한이 존재하지 않습니다."));
@@ -418,7 +421,7 @@ public class PlanService {
     }
 
     @Transactional(readOnly = true)
-    public GetEditorsResponse getEditors(int userId, int planId) {
+    public GetEditorsResponse getEditors(UUID userId, UUID planId) {
         GetEditorsResponse response = new GetEditorsResponse();
 
         if (!planRepository.existsByPlanIdAndUserUserId(planId, userId) &&
@@ -438,7 +441,7 @@ public class PlanService {
     }
 
     @Transactional
-    public GetShareLinkResponse getShareLink(int userId, int planId) {
+    public GetShareLinkResponse getShareLink(UUID userId, UUID planId) {
         GetShareLinkResponse response = new GetShareLinkResponse();
 
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
@@ -466,12 +469,12 @@ public class PlanService {
         return response;
     }
 
-    private String buildShareUrl(int planId, String token) {
+    private String buildShareUrl(UUID planId, String token) {
         return "https://www.planmate.site/complete?id=" + planId + "&token=" + token;
     }
 
     @Transactional
-    public void validateShareToken(int planId, String shareToken) {
+    public void validateShareToken(UUID planId, String shareToken) {
         if (shareToken == null || shareToken.isBlank()) {
             throw new IllegalArgumentException("유효한 공유 토큰이 필요합니다.");
         }

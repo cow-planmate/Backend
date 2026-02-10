@@ -8,9 +8,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
+
 @Data
 public class CustomUserDetails implements UserDetails {
-    private final int userId;
+    private final UUID userId;
     private final String email;
     private final String password;
     @Getter

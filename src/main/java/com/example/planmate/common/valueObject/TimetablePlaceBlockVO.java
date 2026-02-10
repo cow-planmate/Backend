@@ -59,11 +59,16 @@ public class TimetablePlaceBlockVO {
     @JsonAlias({ "blockEndTime" })    
     private LocalTime endTime;
 
+    @Schema(description = "메모", example = "점심 식사 장소")
+    private String memo;
+
     @Schema(description = "경도 (X 좌표)", example = "126.9768967")
     @JsonProperty("xLocation")
+    @JsonAlias({ "xlocation" })
     private Double xLocation;
 
     @Schema(description = "위도 (Y 좌표)", example = "37.5776087")
     @JsonProperty("yLocation")
+    @JsonAlias({ "ylocation" })
     private Double yLocation;
 }
