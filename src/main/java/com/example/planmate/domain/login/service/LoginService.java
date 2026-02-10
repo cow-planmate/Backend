@@ -1,7 +1,5 @@
 package com.example.planmate.domain.login.service;
 
-import java.util.UUID;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -43,8 +41,7 @@ public class LoginService {
         if (!"local".equals(user.getProvider())) {
             response.setMessage(
                     "SNS 계정으로 가입된 이메일입니다. "
-                            + user.getProvider() + " 로그인 방식을 사용하세요."
-            );
+                            + user.getProvider() + " 로그인 방식을 사용하세요.");
             response.setLoginSuccess(false);
             return response;
         }
@@ -53,9 +50,7 @@ public class LoginService {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             email,
-                            password
-                    )
-            );
+                            password));
             SecurityContextHolder.getContext().setAuthentication(authentication);
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
@@ -75,20 +70,10 @@ public class LoginService {
     }
 
     public LogoutResponse logout(String refreshToken) {
-        if (refreshToken == null || refreshToken.isEmpty()) {
-            LogoutResponse response = new LogoutResponse(false);
-            response.setMessage("리프레시 토큰이 필요합니다");
-            return response;
+        if (refreshToken != null && !refreshToken.isEmpty()) {
+            refreshTokenStore.deleteRefreshToken(refreshToken);
         }
 
-        UUID userId = refreshTokenStore.findUserIdByRefreshToken(refreshToken);
-        if (userId == null) {
-            LogoutResponse response = new LogoutResponse(false);
-            response.setMessage("유효하지 않거나 이미 만료된 리프레시 토큰입니다");
-            return response;
-        }
-
-        refreshTokenStore.deleteRefreshToken(refreshToken);
         SecurityContextHolder.clearContext();
 
         LogoutResponse response = new LogoutResponse(true);
