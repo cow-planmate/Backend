@@ -1,5 +1,7 @@
 package com.example.planmate.common.oauth.dto;
 
+import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -10,7 +12,7 @@ public class OAuthCompleteResponse {
     private String message;
     private String accessToken;
     private String refreshToken;
-    private Integer userId;
+    private UUID userId;
     private String nickname;
     private String email;
 }

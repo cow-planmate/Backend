@@ -1,5 +1,7 @@
 package com.example.planmate.domain.plan.dto;
 
+import java.util.UUID;
+
 import com.example.planmate.common.dto.CommonResponse;
 
 import lombok.AllArgsConstructor;
@@ -10,5 +12,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CreatePlanResponse extends CommonResponse {
-    private int planId;
+    private UUID planId;
 }

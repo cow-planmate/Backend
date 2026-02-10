@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
-def sharedSyncVersion = '77e4578447'
+def sharedSyncVersion = 'main-SNAPSHOT'
 
 java {
     toolchain {
@@ -61,6 +61,7 @@ dependencies {
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-hibernate6'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
     implementation 'io.minio:minio:8.5.12'
+    implementation 'com.github.f4b6a3:uuid-creator:6.0.0'
 }
 
 tasks.named('test') {

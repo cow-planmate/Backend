@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +32,7 @@ public class CollaborationRequestService {
     private final CollaborationRequestValidator collaborationRequestValidator;
 
     @Transactional
-    public InviteUserToPlanResponse inviteUserToPlan(int senderId, int planId, String receiverNickname) {
+    public InviteUserToPlanResponse inviteUserToPlan(UUID senderId, UUID planId, String receiverNickname) {
         InviteUserToPlanResponse response = new InviteUserToPlanResponse();
 
         // 1. 사용자와 플랜 유효성 검증
@@ -77,7 +78,7 @@ public class CollaborationRequestService {
         return response;
     }
     @Transactional
-    public RequestEditAccessResponse requestEditAccess(int senderId, int planId) {
+    public RequestEditAccessResponse requestEditAccess(UUID senderId, UUID planId) {
         RequestEditAccessResponse response = new RequestEditAccessResponse();
 
         // 1. 사용자와 플랜 유효성 검증
@@ -129,7 +130,7 @@ public class CollaborationRequestService {
     }
 
     @Transactional
-    public AcceptRequestResponse acceptRequest(int receiverId, int collaborationRequestId) {
+    public AcceptRequestResponse acceptRequest(UUID receiverId, int collaborationRequestId) {
         AcceptRequestResponse response = new AcceptRequestResponse();
 
         CollaborationRequest request = collaborationRequestValidator.validateReceiverAndPending(receiverId, collaborationRequestId);
@@ -153,7 +154,7 @@ public class CollaborationRequestService {
     }
 
     @Transactional
-    public RejectRequestResponse rejectRequest(int receiverId, int collaborationRequestId) {
+    public RejectRequestResponse rejectRequest(UUID receiverId, int collaborationRequestId) {
         RejectRequestResponse response = new RejectRequestResponse();
 
         CollaborationRequest request = collaborationRequestValidator.validateReceiverAndPending(receiverId, collaborationRequestId);
@@ -166,7 +167,7 @@ public class CollaborationRequestService {
     }
 
     @Transactional(readOnly = true)
-    public GetReceivedPendingRequestsResponse getReceivedPendingRequests(int receiverId) {
+    public GetReceivedPendingRequestsResponse getReceivedPendingRequests(UUID receiverId) {
         GetReceivedPendingRequestsResponse response = new GetReceivedPendingRequestsResponse();
 
         List<CollaborationRequest> pendingRequests = collaborationRequestRepository

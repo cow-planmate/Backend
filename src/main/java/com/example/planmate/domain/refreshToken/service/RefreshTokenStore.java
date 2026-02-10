@@ -1,5 +1,6 @@
 package com.example.planmate.domain.refreshToken.service;
 
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -9,11 +10,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class RefreshTokenStore {
 
-    private final RedisTemplate<String, Integer> refreshTokenRedis;
+    private final RedisTemplate<String, UUID> refreshTokenRedis;
 
     public RefreshTokenStore(
             @Qualifier("refreshTokenRedis")
-            RedisTemplate<String, Integer> refreshTokenRedis
+            RedisTemplate<String, UUID> refreshTokenRedis
     ) {
         this.refreshTokenRedis = refreshTokenRedis;
     }
@@ -22,12 +23,12 @@ public class RefreshTokenStore {
         return "REFRESHTOKEN:" + suffix;
     }
 
-    public void insertRefreshToken(String token, int userId) {
+    public void insertRefreshToken(String token, UUID userId) {
         refreshTokenRedis.opsForValue()
                 .set(key(token), userId, 14L, TimeUnit.DAYS);
     }
 
-    public Integer findUserIdByRefreshToken(String refreshToken) {
+    public UUID findUserIdByRefreshToken(String refreshToken) {
         return refreshTokenRedis.opsForValue().get(key(refreshToken));
     }
 

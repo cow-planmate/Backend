@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -88,7 +89,7 @@ public class ChatBotController {
     /**
      * AI가 요청한 액션을 실제로 실행하고 WebSocket으로 브로드캐스트
      */
-    private void executeActions(ChatBotActionResponse actionResponse, Integer planId) {
+    private void executeActions(ChatBotActionResponse actionResponse, UUID planId) {
         if (actionResponse.getActions() == null || actionResponse.getActions().isEmpty()) {
             log.warn("Action response marked as hasAction but no actions were provided.");
             return;
@@ -105,7 +106,7 @@ public class ChatBotController {
         }
     }
 
-    private void handleAction(ChatBotActionResponse.ActionData action, Integer planId, Map<Integer, Integer> tempTimetableIdMap) {
+    private void handleAction(ChatBotActionResponse.ActionData action, UUID planId, Map<Integer, Integer> tempTimetableIdMap) {
         if (action == null) {
             log.warn("Received null action from ChatBotActionResponse.");
             return;

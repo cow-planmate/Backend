@@ -13,12 +13,16 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 @Getter
 @Setter
 @Schema(description = "마이페이지 정보 조회 응답 데이터")
 public class MoveMypageResponse extends CommonResponse {
-    @Schema(description = "사용자 고유 식별자", example = "1")
-    private int userId;
+    @Schema(description = "사용자 고유 식별자")
+    private UUID userId;
 
     @Schema(description = "사용자 이메일", example = "user@example.com")
     private String email;
@@ -58,10 +62,10 @@ public class MoveMypageResponse extends CommonResponse {
                 preferredTheme.getPreferredThemeCategory().getPreferredThemeCategoryName());
         preferredThemes.add(preferredThemeVO);
     }
-    public void addMyPlanVO(int planId, String planName) {
+    public void addMyPlanVO(UUID planId, String planName) {
         myPlanVOs.add(new SimplePlanVO(planId, planName));
     }
-    public void addEditablePlanVO(int planId, String planName) {
+    public void addEditablePlanVO(UUID planId, String planName) {
         editablePlanVOs.add(new SimplePlanVO(planId, planName));
     }
 }

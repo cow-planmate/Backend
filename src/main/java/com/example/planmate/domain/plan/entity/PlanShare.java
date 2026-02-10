@@ -1,8 +1,21 @@
 package com.example.planmate.domain.plan.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "plan_share")
@@ -13,7 +26,7 @@ import java.time.LocalDateTime;
 public class PlanShare {
 
     @Id
-    private Integer planId;  // PK이자 FK
+    private UUID planId;  // PK이자 FK
 
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId

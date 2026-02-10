@@ -1,22 +1,32 @@
 package com.example.planmate.domain.user.service;
 
-import com.example.planmate.common.exception.ResourceConflictException;
-import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
-import com.example.planmate.domain.plan.entity.Plan;
-import com.example.planmate.domain.plan.repository.PlanEditorRepository;
-import com.example.planmate.domain.user.dto.*;
-import com.example.planmate.domain.user.entity.PreferredTheme;
-import com.example.planmate.domain.user.entity.User;
-import com.example.planmate.common.exception.UserNotFoundException;
-import com.example.planmate.domain.plan.repository.PlanRepository;
-import com.example.planmate.domain.user.repository.PreferredThemeRepository;
-import com.example.planmate.domain.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.example.planmate.common.exception.ResourceConflictException;
+import com.example.planmate.common.exception.UserNotFoundException;
+import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
+import com.example.planmate.domain.plan.entity.Plan;
+import com.example.planmate.domain.plan.repository.PlanEditorRepository;
+import com.example.planmate.domain.plan.repository.PlanRepository;
+import com.example.planmate.domain.user.dto.ChangeAgeResponse;
+import com.example.planmate.domain.user.dto.ChangeGenderResponse;
+import com.example.planmate.domain.user.dto.ChangeNicknameResponse;
+import com.example.planmate.domain.user.dto.ChangePreferredThemesResponse;
+import com.example.planmate.domain.user.dto.GetPreferredThemeResponse;
+import com.example.planmate.domain.user.dto.MoveMypageResponse;
+import com.example.planmate.domain.user.dto.ResignAccountResponse;
+import com.example.planmate.domain.user.dto.SavePreferredThemeResponse;
+import com.example.planmate.domain.user.entity.PreferredTheme;
+import com.example.planmate.domain.user.entity.User;
+import com.example.planmate.domain.user.repository.PreferredThemeRepository;
+import com.example.planmate.domain.user.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -35,7 +45,7 @@ public class UserService {
         return response;
     }
 
-    public SavePreferredThemeResponse savePreferredTheme(int userId, List<Integer> preferredThemeIds) {
+    public SavePreferredThemeResponse savePreferredTheme(UUID userId, List<Integer> preferredThemeIds) {
         SavePreferredThemeResponse response = new SavePreferredThemeResponse();
 
         userRepository.findById(userId).ifPresent(user -> {
@@ -52,7 +62,7 @@ public class UserService {
         return response;
     }
 
-    public MoveMypageResponse getMypageInfo(int userId) {
+    public MoveMypageResponse getMypageInfo(UUID userId) {
         MoveMypageResponse response = new MoveMypageResponse();
 
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
@@ -82,7 +92,7 @@ public class UserService {
         return response;
     }
     @Transactional
-    public ChangeNicknameResponse changeNickname(int userId, String nickname) {
+    public ChangeNicknameResponse changeNickname(UUID userId, String nickname) {
         ChangeNicknameResponse response = new ChangeNicknameResponse();
 
         if (userRepository.findByNickname(nickname).isPresent()) {
@@ -97,7 +107,7 @@ public class UserService {
         return response;
     }
     @Transactional
-    public ChangeAgeResponse changeAge(int userId, int age) {
+    public ChangeAgeResponse changeAge(UUID userId, int age) {
         ChangeAgeResponse response = new ChangeAgeResponse();
 
         if (age < 0) {
@@ -113,7 +123,7 @@ public class UserService {
         return response;
     }
     @Transactional
-    public ChangeGenderResponse changeGender(int userId, int gender) {
+    public ChangeGenderResponse changeGender(UUID userId, int gender) {
         ChangeGenderResponse response = new ChangeGenderResponse();
 
         if (gender != 0 && gender != 1) {
@@ -130,7 +140,7 @@ public class UserService {
     }
 
     @Transactional
-    public ChangePreferredThemesResponse changePreferredThemes(int userId, int preferredThemeCategoryId, List<Integer> preferredThemeIds) {
+    public ChangePreferredThemesResponse changePreferredThemes(UUID userId, int preferredThemeCategoryId, List<Integer> preferredThemeIds) {
         ChangePreferredThemesResponse response = new ChangePreferredThemesResponse();
 
         if (preferredThemeCategoryId != 0 && preferredThemeCategoryId != 1 && preferredThemeCategoryId != 2) {
@@ -154,7 +164,7 @@ public class UserService {
     }
 
     @Transactional
-    public ResignAccountResponse resignAccount(int userId) {
+    public ResignAccountResponse resignAccount(UUID userId) {
         ResignAccountResponse response = new ResignAccountResponse();
 
         if (!userRepository.existsById(userId)) {

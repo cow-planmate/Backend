@@ -2,6 +2,9 @@ package com.example.planmate.common.valueObject;
 
 import java.time.LocalTime;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -43,9 +46,13 @@ public class PlaceBlockVO {
     private String placeId;
 
     @Schema(description = "경도 (X 좌표)", example = "126.9768967")
+    @JsonProperty("xLocation")
+    @JsonAlias({ "xlocation" })
     private Double xLocation;
 
     @Schema(description = "위도 (Y 좌표)", example = "37.5776087")
+    @JsonProperty("yLocation")
+    @JsonAlias({ "ylocation" })
     private Double yLocation;
 
     @Schema(description = "시작 시간", example = "10:00:00")
@@ -53,4 +60,7 @@ public class PlaceBlockVO {
 
     @Schema(description = "종료 시간", example = "12:00:00")
     private LocalTime blockEndTime;
+
+    @Schema(description = "메모", example = "점심 식사 장소")
+    private String memo;
 }

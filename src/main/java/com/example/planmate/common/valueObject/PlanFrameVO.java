@@ -1,5 +1,7 @@
 package com.example.planmate.common.valueObject;
 
+import java.util.UUID;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +15,7 @@ import lombok.Setter;
 @Schema(description = "플랜 기본 정보 (프레임)")
 public class PlanFrameVO {
     @Schema(description = "플랜 ID", example = "1")
-    private int planId;
+    private UUID planId;
 
     @Schema(description = "플랜 이름", example = "나의 서울 여행")
     private String planName;

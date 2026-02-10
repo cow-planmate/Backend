@@ -1,5 +1,7 @@
 package com.example.planmate.domain.login.service;
 
+import java.util.UUID;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -79,7 +81,7 @@ public class LoginService {
             return response;
         }
 
-        Integer userId = refreshTokenStore.findUserIdByRefreshToken(refreshToken);
+        UUID userId = refreshTokenStore.findUserIdByRefreshToken(refreshToken);
         if (userId == null) {
             LogoutResponse response = new LogoutResponse(false);
             response.setMessage("유효하지 않거나 이미 만료된 리프레시 토큰입니다");

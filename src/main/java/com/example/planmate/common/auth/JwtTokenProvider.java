@@ -2,6 +2,7 @@ package com.example.planmate.common.auth;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -42,19 +43,19 @@ public class JwtTokenProvider implements AuthenticationTokenResolver{
     }
 
     // 토큰 생성
-    public String generateAccessToken(int userId) {
+    public String generateAccessToken(UUID userId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + accessTtlMillis);
 
         return Jwts.builder()
                 .claim("typ", "access")
-                .setSubject(Integer.toString(userId))
+                .setSubject(userId.toString())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(accessKey, SignatureAlgorithm.HS256)
                 .compact();
     }
-    public String generateRefreshToken(int userId) {
+    public String generateRefreshToken(UUID userId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + refreshTtlMillis);
         String token = Jwts.builder()

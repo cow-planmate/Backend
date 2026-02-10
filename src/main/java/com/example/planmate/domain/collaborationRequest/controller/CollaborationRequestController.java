@@ -1,6 +1,7 @@
 package com.example.planmate.domain.collaborationRequest.controller;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -29,7 +30,7 @@ public class CollaborationRequestController {
     @Operation(summary = "협업 요청 수락", description = "초대받은 협업 요청이나 편집 권한 요청을 수락합니다.")
     @PostMapping("/{collaborationRequestId}/accept")
     public ResponseEntity<AcceptRequestResponse> acceptRequest(Authentication authentication, @PathVariable("collaborationRequestId") int collaborationRequestId) throws IOException {
-        int userId = Integer.parseInt(authentication.getName());
+        UUID userId = UUID.fromString(authentication.getName());
         AcceptRequestResponse response = collaborationRequestService.acceptRequest(userId, collaborationRequestId);
         return ResponseEntity.ok(response);
     }
@@ -37,7 +38,7 @@ public class CollaborationRequestController {
     @Operation(summary = "협업 요청 거절", description = "초대받은 협업 요청이나 편집 권한 요청을 거절합니다.")
     @PostMapping("/{collaborationRequestId}/reject")
     public ResponseEntity<RejectRequestResponse> rejectRequest(Authentication authentication, @PathVariable("collaborationRequestId") int collaborationRequestId) throws IOException {
-        int userId = Integer.parseInt(authentication.getName());
+        UUID userId = UUID.fromString(authentication.getName());
         RejectRequestResponse response = collaborationRequestService.rejectRequest(userId, collaborationRequestId);
         return ResponseEntity.ok(response);
     }
@@ -45,7 +46,7 @@ public class CollaborationRequestController {
     @Operation(summary = "대기 중인 요청 조회", description = "사용자가 받은 아직 처리되지 않은 협업 요청 목록을 조회합니다.")
     @GetMapping("/pending")
     public ResponseEntity<GetReceivedPendingRequestsResponse> getReceivedPendingRequests(Authentication authentication) throws IOException {
-        int userId = Integer.parseInt(authentication.getName());
+        UUID userId = UUID.fromString(authentication.getName());
         GetReceivedPendingRequestsResponse response = collaborationRequestService.getReceivedPendingRequests(userId);
         return ResponseEntity.ok(response);
     }

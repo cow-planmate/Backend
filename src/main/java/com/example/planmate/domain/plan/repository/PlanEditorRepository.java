@@ -8,18 +8,19 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface PlanEditorRepository extends JpaRepository<PlanEditor, Integer> {
 
     boolean existsByUserAndPlan(User user, Plan plan);
 
-    List<PlanEditor> findByUserUserId(int userId);
+    List<PlanEditor> findByUserUserId(UUID userId);
 
-    Optional<PlanEditor> findByUser_UserIdAndPlan_PlanId(int userId, int planId);
+    Optional<PlanEditor> findByUser_UserIdAndPlan_PlanId(UUID userId, UUID planId);
 
-    List<PlanEditor> findByPlan_PlanId(int planId);
+    List<PlanEditor> findByPlan_PlanId(UUID planId);
 
-    boolean existsByUser_UserIdAndPlan_PlanId(int userId, int planId);
-    boolean existsByUserUserIdAndPlanPlanId(int userId, int planId);
+    boolean existsByUser_UserIdAndPlan_PlanId(UUID userId, UUID planId);
+    boolean existsByUserUserIdAndPlanPlanId(UUID userId, UUID planId);
 }
