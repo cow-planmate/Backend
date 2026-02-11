@@ -4,7 +4,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.example.planmate.common.externalAPI.GooglePlaceImageWorker;
@@ -24,7 +23,6 @@ public class ImageService {
     private final PlaceSearchResultRepository placeSearchResultRepository;
     private final TimeTablePlaceBlockRepository timeTablePlaceBlockRepository;
 
-    @Transactional
     public ResponseEntity<Resource> getGooglePlaceImage(String placeId) {
         if (!StringUtils.hasText(placeId)) {
             return ResponseEntity.badRequest().build();
@@ -33,7 +31,8 @@ public class ImageService {
         // 1. Try to find photoUrl in current database records
         String photoUrl = findPhotoUrlInDb(placeId);
 
-        // If explicitly set to empty string, it means "no photo available" - return 404 immediately
+        // If explicitly set to empty string, it means "no photo available" - return 404
+        // immediately
         if ("".equals(photoUrl)) {
             return ResponseEntity.notFound().build();
         }
@@ -44,7 +43,7 @@ public class ImageService {
                 var details = googlePlaceImageWorker.fetchSinglePlaceDetailsAsync(placeId, null).get();
                 if (details != null && details.photoUrl() != null) {
                     photoUrl = details.photoUrl();
-                    
+
                     placeSearchResultRepository.updatePhotoUrlByPlaceId(placeId, photoUrl);
                     timeTablePlaceBlockRepository.updatePhotoUrlByPlaceId(placeId, photoUrl);
                 }
@@ -77,8 +76,9 @@ public class ImageService {
                 .map(res -> res.getPhotoUrl())
                 // .filter(StringUtils::hasText) // Remove this to allow ""
                 .orElse(null);
-        
-        if (fromResult != null) return fromResult;
+
+        if (fromResult != null)
+            return fromResult;
 
         // Then try TimeTablePlaceBlock
         return timeTablePlaceBlockRepository.findFirstByPlaceIdAndPhotoUrlIsNotNull(placeId)
@@ -87,4 +87,3 @@ public class ImageService {
                 .orElse(null);
     }
 }
-

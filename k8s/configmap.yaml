@@ -9,6 +9,7 @@ data:
   SPRING_DATA_REDIS_REPLICA_HOST: "planmate-redis-replica"
   SPRING_DATA_REDIS_PORT: "6379"
   DB_URL: "jdbc:p6spy:postgresql://planmate-db-rw:5432/planmate"
+  DB_RO_URL: "jdbc:p6spy:postgresql://planmate-db-ro:5432/planmate"
   STORAGE_TYPE: "minio"
   MINIO_ENDPOINT: "http://myminio-hl.default.svc.cluster.local:9000"
   MINIO_BUCKET: "planmate"
