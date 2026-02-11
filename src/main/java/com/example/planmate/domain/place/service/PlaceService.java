@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.planmate.common.externalAPI.GoogleMap;
 import com.example.planmate.common.externalAPI.GooglePlaceDetails;
@@ -34,7 +35,9 @@ import com.example.planmate.domain.user.entity.PreferredTheme;
 import com.example.planmate.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PlaceService {
@@ -59,13 +62,10 @@ public class PlaceService {
      *                                 info
      * @param preferredThemeCategoryId filter id for PreferredThemeCategory
      *                                 (0=tour,1=lodging,2=restaurant)
-     * @param googleMapFn              function that calls the appropriate googleMap
-     *                                 method and returns Pair<List<T>,
-     *                                 List<String>>
-     * @param <T>                      concrete VO type that extends PlaceVO
      * @return PlaceResponse with places and next page token
      * @throws IOException if external calls fail
      */
+    @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private PlaceResponse getPlaceForUserAndPlan(UUID userId,
             UUID planId,
@@ -274,6 +274,7 @@ public class PlaceService {
         return getPlaceForUserAndPlan(userId, planId, 2);
     }
 
+    @Transactional
     public PlaceResponse getSearchPlace(UUID userId, UUID planId, String query) throws IOException {
         PlaceResponse response = new PlaceResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
@@ -474,15 +475,8 @@ public class PlaceService {
                 List<PlaceSearchResult> pageResults = placeSearchResultRepository
                         .findByConditionAndSortOrderBetween(condition, startOrder, endOrder);
 
-                if (pageResults.isEmpty()) {
-                    try {
-                        Thread.sleep(500);
-                        pageResults = placeSearchResultRepository.findByConditionAndSortOrderBetween(condition,
-                                startOrder, endOrder);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-                }
+                // Pre-fetch가 아직 완료되지 않은 경우 빈 결과를 즉시 반환
+                // (Thread.sleep으로 서블릿 스레드를 블로킹하지 않음)
 
                 if (!pageResults.isEmpty()) {
                     for (PlaceSearchResult r : pageResults) {
@@ -583,6 +577,8 @@ public class PlaceService {
                                 placeSearchResultRepository.updatePhotoUrlByPlaceId(vo.getPlaceId(),
                                         existing.getPhotoUrl());
                             } catch (Exception e) {
+                                log.warn("Failed to update cached photoUrl for placeId={}: {}", vo.getPlaceId(),
+                                        e.getMessage());
                             }
                         });
             }
@@ -591,6 +587,7 @@ public class PlaceService {
             try {
                 placeSearchResultRepository.updatePhotoUrlByPlaceId(placeId, photoUrl);
             } catch (Exception e) {
+                log.warn("Failed to update photoUrl for placeId={}: {}", placeId, e.getMessage());
             }
         });
     }
