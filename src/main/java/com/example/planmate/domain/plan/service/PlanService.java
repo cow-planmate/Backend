@@ -70,15 +70,16 @@ public class PlanService {
     private final TimeTableCache timeTableCache;
     private final TimeTablePlaceBlockCache timeTablePlaceBlockCache;
 
-
-    public MakePlanResponse makeService(UUID userId, String departure, int travelId, int transportationCategoryId, List<LocalDate> dates, int adultCount, int childCount) {
+    public MakePlanResponse makeService(UUID userId, String departure, int travelId, int transportationCategoryId,
+            List<LocalDate> dates, int adultCount, int childCount) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
         Travel travel = travelRepository.findById(travelId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행지입니다"));
 
-        TransportationCategory transportationCategory = transportationCategoryRepository.findById(transportationCategoryId)
+        TransportationCategory transportationCategory = transportationCategoryRepository
+                .findById(transportationCategoryId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 교통수단입니다"));
         Plan plan = Plan.builder()
                 .planName(makePlanName(travel))
@@ -103,48 +104,69 @@ public class PlanService {
         makePlanResponse.setPlanId(savedPlan.getPlanId());
         return makePlanResponse;
     }
-    public String makePlanName(Travel travel){
+
+    public String makePlanName(Travel travel) {
         List<Plan> plans = planRepository.findAll();
         List<Integer> index = new ArrayList<>();
         String travelName = travel.getTravelName();
         for (Plan plan : plans) {
-            if(plan.getPlanName().contains(travelName)){
-                index.add(Integer.parseInt(plan.getPlanName().substring(travelName.length()+1)));
+            if (plan.getPlanName().contains(travelName)) {
+                index.add(Integer.parseInt(plan.getPlanName().substring(travelName.length() + 1)));
             }
         }
         Collections.sort(index);
 
         int i = 1;
-        for(Integer index2 : index){
-            if(i!=index2){break;}
+        for (Integer index2 : index) {
+            if (i != index2) {
+                break;
+            }
             i++;
         }
-        return travel.getTravelName()+ " " + i;
+        return travel.getTravelName() + " " + i;
     }
 
+    @Transactional(readOnly = true)
     public GetPlanResponse getPlan(UUID userId, UUID planId) {
         GetPlanResponse response = new GetPlanResponse();
 
-        Plan plan;
-        List<TimeTable> timeTables;
+        Plan plan = null;
+        List<TimeTable> timeTables = null;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
 
         // 1. Plan 캐시 확인 및 데이터 로드 분기
-        Optional<Plan> cachedPlan = planCache.findById(planId);
+        // 캐시→DB 동기화 과도기에 부분적 캐시 삭제 상태가 발생할 수 있으므로,
+        // 캐시 조회 실패 시 DB fallback 처리
+        boolean loadedFromCache = false;
+        try {
+            Optional<Plan> cachedPlan = planCache.findById(planId);
+            if (cachedPlan.isPresent()) {
+                plan = cachedPlan.get();
+                timeTables = new ArrayList<>(timeTableCache.findByParentId(planId));
 
-        if (cachedPlan.isPresent()) {
-            // 캐시에 있는 경우: 연관 데이터도 모두 캐시에서 조회
-            plan = cachedPlan.get();
-            timeTables = new ArrayList<>(timeTableCache.findByParentId(planId));
-            for (TimeTable timeTable : timeTables) {
-                timeTablePlaceBlocks.add(timeTablePlaceBlockCache.findByParentId(timeTable.getTimeTableId()));
+                // 캐시에 Plan은 있지만 TimeTable이 비어있다면 동기화 과도기 상태 → DB fallback
+                if (timeTables.isEmpty()) {
+                    throw new IllegalStateException("캐시 동기화 과도기: TimeTable 데이터 없음");
+                }
+
+                for (TimeTable timeTable : timeTables) {
+                    timeTablePlaceBlocks.add(timeTablePlaceBlockCache.findByParentId(timeTable.getTimeTableId()));
+                }
+                loadedFromCache = true;
             }
-        } else {
-            // 캐시에 없는 경우: DB에서 조회 (권한 검증 포함)
+        } catch (Exception e) {
+            // 캐시 조회 중 예외 발생 시 DB로 fallback
+            loadedFromCache = false;
+            timeTablePlaceBlocks.clear();
+        }
+
+        if (!loadedFromCache) {
+            // 캐시에 없거나 캐시 조회 실패: DB에서 조회 (권한 검증 포함)
             plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
             timeTables = new ArrayList<>(timeTableRepository.findByPlanPlanId(planId));
             for (TimeTable timeTable : timeTables) {
-                timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
+                timeTablePlaceBlocks
+                        .add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
             }
         }
 
@@ -170,8 +192,9 @@ public class PlanService {
                 plan.getChildCount(),
                 plan.getTransportationCategory().getTransportationCategoryId());
 
-        for (TimeTable timeTable : timeTables){
-            response.addTimetable(timeTable.getTimeTableId(), timeTable.getDate(), timeTable.getTimeTableStartTime(), timeTable.getTimeTableEndTime());
+        for (TimeTable timeTable : timeTables) {
+            response.addTimetable(timeTable.getTimeTableId(), timeTable.getDate(), timeTable.getTimeTableStartTime(),
+                    timeTable.getTimeTableEndTime());
         }
 
         for (List<TimeTablePlaceBlock> blocks : timeTablePlaceBlocks) {
@@ -192,8 +215,7 @@ public class PlanService {
                             block.getYLocation(),
                             block.getBlockStartTime(),
                             block.getBlockEndTime(),
-                            block.getMemo()
-                    );
+                            block.getMemo());
                 }
             }
         }
@@ -201,11 +223,11 @@ public class PlanService {
     }
 
     @Transactional
-    public EditPlanNameResponse EditPlanName(UUID userId, UUID planId, String name){
+    public EditPlanNameResponse EditPlanName(UUID userId, UUID planId, String name) {
         EditPlanNameResponse response = new EditPlanNameResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
 
-        if(!userId.equals(plan.getUser().getUserId())){
+        if (!userId.equals(plan.getUser().getUserId())) {
             response.setEdited(false);
             response.setMessage("이름 변경 권한이 없습니다.");
             return response;
@@ -220,16 +242,18 @@ public class PlanService {
 
     // removed: place search method moved to PlaceService
 
-
     @Transactional
-    public CreatePlanResponse createPlan(UUID userId, String departure, int travelId, int transportationCategoryId, int adultCount, int childCount, List<TimetableVO> timetableVOs, List<TimetablePlaceBlockVO> timetablePlaceBlockVOs) {
+    public CreatePlanResponse createPlan(UUID userId, String departure, int travelId, int transportationCategoryId,
+            int adultCount, int childCount, List<TimetableVO> timetableVOs,
+            List<TimetablePlaceBlockVO> timetablePlaceBlockVOs) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
         Travel travel = travelRepository.findById(travelId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행지입니다"));
 
-        TransportationCategory transportationCategory = transportationCategoryRepository.findById(transportationCategoryId)
+        TransportationCategory transportationCategory = transportationCategoryRepository
+                .findById(transportationCategoryId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 교통수단입니다"));
         Plan plan = Plan.builder()
                 .planName(makePlanName(travel))
@@ -249,7 +273,7 @@ public class PlanService {
     }
 
     private List<TimeTable> createTimetable(Plan plan, List<TimetableVO> timetableVOs) {
-        if(timetableVOs == null || timetableVOs.isEmpty()) {
+        if (timetableVOs == null || timetableVOs.isEmpty()) {
             return new ArrayList<>();
         }
         List<TimeTable> timeTables = new ArrayList<>();
@@ -263,8 +287,10 @@ public class PlanService {
         }
         return timeTableRepository.saveAll(timeTables);
     }
-    private void createTimetablePlaceBlock(List<TimeTable> savedTimeTables, List<TimetablePlaceBlockVO> timetablePlaceBlockVOs) {
-        if(timetablePlaceBlockVOs == null || timetablePlaceBlockVOs.isEmpty()) {
+
+    private void createTimetablePlaceBlock(List<TimeTable> savedTimeTables,
+            List<TimetablePlaceBlockVO> timetablePlaceBlockVOs) {
+        if (timetablePlaceBlockVOs == null || timetablePlaceBlockVOs.isEmpty()) {
             return;
         }
         List<TimeTablePlaceBlock> timeTablePlaceBlocks = new ArrayList<>();
@@ -296,6 +322,7 @@ public class PlanService {
         }
         timeTablePlaceBlockRepository.saveAll(timeTablePlaceBlocks);
     }
+
     @Transactional
     public DeletePlanResponse deletePlan(UUID userId, UUID planId) {
         DeletePlanResponse response = new DeletePlanResponse();
@@ -315,6 +342,7 @@ public class PlanService {
 
         return response;
     }
+
     @Transactional
     public DeleteMultiplePlansResponse deleteMultiplePlans(UUID userId, List<UUID> planIds) {
         DeleteMultiplePlansResponse response = new DeleteMultiplePlansResponse();
@@ -335,17 +363,47 @@ public class PlanService {
         return response;
     }
 
+    @Transactional(readOnly = true)
     public GetCompletePlanResponse getCompletePlan(UUID planId) {
         GetCompletePlanResponse response = new GetCompletePlanResponse();
 
-        Plan plan = planRepository.findById(planId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
-        List<TimeTable> timeTables = timeTableRepository.findByPlanPlanId(planId);
+        Plan plan = null;
+        List<TimeTable> timeTables = null;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
-        
-        for (TimeTable timeTable : timeTables) {
-            timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
+
+        // 캐시 우선 조회: 동기화 전에는 캐시에 최신 데이터가 있으므로 캐시에서 읽고,
+        // 동기화 완료 후(캐시 삭제됨)에는 DB에서 읽습니다.
+        boolean loadedFromCache = false;
+        try {
+            Optional<Plan> cachedPlan = planCache.findById(planId);
+            if (cachedPlan.isPresent()) {
+                plan = cachedPlan.get();
+                timeTables = new ArrayList<>(timeTableCache.findByParentId(planId));
+
+                if (timeTables.isEmpty()) {
+                    throw new IllegalStateException("캐시 동기화 과도기: TimeTable 데이터 없음");
+                }
+
+                for (TimeTable timeTable : timeTables) {
+                    timeTablePlaceBlocks.add(timeTablePlaceBlockCache.findByParentId(timeTable.getTimeTableId()));
+                }
+                loadedFromCache = true;
+            }
+        } catch (Exception e) {
+            loadedFromCache = false;
+            timeTablePlaceBlocks.clear();
         }
-        
+
+        if (!loadedFromCache) {
+            plan = planRepository.findById(planId)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
+            timeTables = timeTableRepository.findByPlanPlanId(planId);
+            for (TimeTable timeTable : timeTables) {
+                timeTablePlaceBlocks
+                        .add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
+            }
+        }
+
         response.addPlanFrame(
                 planId,
                 plan.getPlanName(),
@@ -357,30 +415,30 @@ public class PlanService {
                 plan.getChildCount(),
                 plan.getTransportationCategory().getTransportationCategoryId());
 
-        for (TimeTable timeTable : timeTables){
-            response.addTimetable(timeTable.getTimeTableId(), timeTable.getDate(), timeTable.getTimeTableStartTime(), timeTable.getTimeTableEndTime());
+        for (TimeTable timeTable : timeTables) {
+            response.addTimetable(timeTable.getTimeTableId(), timeTable.getDate(), timeTable.getTimeTableStartTime(),
+                    timeTable.getTimeTableEndTime());
         }
 
         for (List<TimeTablePlaceBlock> timeTablePlaceBlock : timeTablePlaceBlocks) {
-            if(timeTablePlaceBlock!=null){
-                for (TimeTablePlaceBlock timeTablePlaceBlock1 : timeTablePlaceBlock) {
+            if (timeTablePlaceBlock != null) {
+                for (TimeTablePlaceBlock block : timeTablePlaceBlock) {
                     response.addPlaceBlock(
-                            timeTablePlaceBlock1.getBlockId(),
-                            timeTablePlaceBlock1.getTimeTable().getTimeTableId(),
-                            timeTablePlaceBlock1.getPlaceCategory().getPlaceCategoryId(),
-                            timeTablePlaceBlock1.getPlaceName(),
-                            timeTablePlaceBlock1.getPlaceTheme(),
-                            timeTablePlaceBlock1.getPlaceRating(),
-                            timeTablePlaceBlock1.getPlaceAddress(),
-                            timeTablePlaceBlock1.getPlaceLink(),
-                            timeTablePlaceBlock1.getPhotoUrl(),
-                            timeTablePlaceBlock1.getPlaceId(),
-                            timeTablePlaceBlock1.getXLocation(),
-                            timeTablePlaceBlock1.getYLocation(),
-                            timeTablePlaceBlock1.getBlockStartTime(),
-                            timeTablePlaceBlock1.getBlockEndTime(),
-                            timeTablePlaceBlock1.getMemo()
-                    );
+                            block.getBlockId(),
+                            block.getTimeTable().getTimeTableId(),
+                            block.getPlaceCategory().getPlaceCategoryId(),
+                            block.getPlaceName(),
+                            block.getPlaceTheme(),
+                            block.getPlaceRating(),
+                            block.getPlaceAddress(),
+                            block.getPlaceLink(),
+                            block.getPhotoUrl(),
+                            block.getPlaceId(),
+                            block.getXLocation(),
+                            block.getYLocation(),
+                            block.getBlockStartTime(),
+                            block.getBlockEndTime(),
+                            block.getMemo());
                 }
             }
         }
@@ -412,7 +470,8 @@ public class PlanService {
     public ResignEditorAccessResponse resignEditorAccess(UUID userId, UUID planId) {
         ResignEditorAccessResponse response = new ResignEditorAccessResponse();
 
-        PlanEditor planEditor = planEditorRepository.findByUser_UserIdAndPlan_PlanId(userId, planId).orElseThrow(() -> new IllegalArgumentException("해당 편집 권한이 존재하지 않습니다."));
+        PlanEditor planEditor = planEditorRepository.findByUser_UserIdAndPlan_PlanId(userId, planId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 편집 권한이 존재하지 않습니다."));
 
         planEditorRepository.delete(planEditor);
 
