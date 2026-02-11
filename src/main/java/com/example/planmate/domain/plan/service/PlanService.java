@@ -142,6 +142,12 @@ public class PlanService {
             Optional<Plan> cachedPlan = planCache.findById(planId);
             if (cachedPlan.isPresent()) {
                 plan = cachedPlan.get();
+
+                // 캐시에서 가져온 Plan의 연관 엔티티가 불완전한 경우 DB fallback
+                if (plan.getUser() == null || plan.getTravel() == null || plan.getTransportationCategory() == null) {
+                    throw new IllegalStateException("캐시 Plan의 연관 엔티티 누락 → DB fallback");
+                }
+
                 timeTables = new ArrayList<>(timeTableCache.findByParentId(planId));
 
                 // 캐시에 Plan은 있지만 TimeTable이 비어있다면 동기화 과도기 상태 → DB fallback
@@ -170,8 +176,14 @@ public class PlanService {
             }
         }
 
-        // 2. 권한 검증 (캐시에서 가져온 경우를 위해 재확인)
-        boolean isOwner = plan.getUser().getUserId().equals(userId);
+        // 2. 권한 검증 (캐시에서 가져온 경우 User가 null일 수 있으므로 null-safe 처리)
+        boolean isOwner;
+        if (plan.getUser() != null) {
+            isOwner = plan.getUser().getUserId().equals(userId);
+        } else {
+            // 캐시에서 로드된 Plan은 User가 null → DB를 통해 소유자 확인
+            isOwner = planRepository.existsByPlanIdAndUserUserId(planId, userId);
+        }
         boolean isEditor = planEditorRepository.existsByUserUserIdAndPlanPlanId(userId, planId);
 
         if (!isOwner && !isEditor) {
@@ -378,6 +390,12 @@ public class PlanService {
             Optional<Plan> cachedPlan = planCache.findById(planId);
             if (cachedPlan.isPresent()) {
                 plan = cachedPlan.get();
+
+                // 캐시에서 가져온 Plan의 연관 엔티티가 불완전한 경우 DB fallback
+                if (plan.getUser() == null || plan.getTravel() == null || plan.getTransportationCategory() == null) {
+                    throw new IllegalStateException("캐시 Plan의 연관 엔티티 누락 → DB fallback");
+                }
+
                 timeTables = new ArrayList<>(timeTableCache.findByParentId(planId));
 
                 if (timeTables.isEmpty()) {
