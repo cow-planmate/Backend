@@ -7,7 +7,6 @@ import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -26,13 +25,13 @@ public class DataSourceConfig {
     @Bean
     @ConfigurationProperties(prefix = "spring.datasource.master")
     public DataSource masterDataSource() {
-        return DataSourceBuilder.create().type(HikariDataSource.class).build();
+        return new HikariDataSource();
     }
 
     @Bean
     @ConfigurationProperties(prefix = "spring.datasource.replica")
     public DataSource replicaDataSource() {
-        return DataSourceBuilder.create().type(HikariDataSource.class).build();
+        return new HikariDataSource();
     }
 
     @Bean

@@ -13,21 +13,19 @@ spring:
 
   datasource:
     master:
-      url: ${SPRING_DATASOURCE_URL:jdbc:p6spy:postgresql://localhost:5432/postgres}
+      jdbc-url: ${SPRING_DATASOURCE_URL:jdbc:p6spy:postgresql://localhost:5432/postgres}
       username: ${SPRING_DATASOURCE_USERNAME:postgres}
       password: ${SPRING_DATASOURCE_PASSWORD:1234}
       driver-class-name: com.p6spy.engine.spy.P6SpyDriver
-      hikari:
-        maximum-pool-size: 20
-        connection-timeout: 30000
+      maximum-pool-size: 20
+      connection-timeout: 30000
     replica:
-      url: ${SPRING_DATASOURCE_REPLICA_URL:jdbc:p6spy:postgresql://localhost:5432/postgres}
+      jdbc-url: ${SPRING_DATASOURCE_REPLICA_URL:jdbc:p6spy:postgresql://localhost:5432/postgres}
       username: ${SPRING_DATASOURCE_USERNAME:postgres}
       password: ${SPRING_DATASOURCE_PASSWORD:1234}
       driver-class-name: com.p6spy.engine.spy.P6SpyDriver
-      hikari:
-        maximum-pool-size: 20
-        connection-timeout: 30000
+      maximum-pool-size: 20
+      connection-timeout: 30000
 
   jpa:
     hibernate:
