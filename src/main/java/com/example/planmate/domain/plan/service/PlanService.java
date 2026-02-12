@@ -338,13 +338,31 @@ public class PlanService {
     public GetCompletePlanResponse getCompletePlan(UUID planId) {
         GetCompletePlanResponse response = new GetCompletePlanResponse();
 
-        Plan plan = planRepository.findById(planId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
-        List<TimeTable> timeTables = timeTableRepository.findByPlanPlanId(planId);
+        Plan plan;
+        List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
-        
-        for (TimeTable timeTable : timeTables) {
-            timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
+
+        // 1. Plan 캐시 확인 및 데이터 로드 분기
+        Optional<Plan> cachedPlan = planCache.findById(planId);
+
+        if (cachedPlan.isPresent()) {
+            // 캐시에 있는 경우: 연관 데이터도 모두 캐시에서 조회
+            plan = cachedPlan.get();
+            timeTables = new ArrayList<>(timeTableCache.findByParentId(planId));
+            for (TimeTable timeTable : timeTables) {
+                timeTablePlaceBlocks.add(timeTablePlaceBlockCache.findByParentId(timeTable.getTimeTableId()));
+            }
+        } else {
+            // 캐시에 없는 경우: DB에서 조회
+            plan = planRepository.findById(planId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
+            timeTables = new ArrayList<>(timeTableRepository.findByPlanPlanId(planId));
+            for (TimeTable timeTable : timeTables) {
+                timeTablePlaceBlocks.add(timeTablePlaceBlockRepository.findByTimeTableTimeTableId(timeTable.getTimeTableId()));
+            }
         }
+
+        // 2. 데이터 정렬 및 응답 생성
+        timeTables.sort(Comparator.comparing(TimeTable::getDate));
         
         response.addPlanFrame(
                 planId,
@@ -361,25 +379,25 @@ public class PlanService {
             response.addTimetable(timeTable.getTimeTableId(), timeTable.getDate(), timeTable.getTimeTableStartTime(), timeTable.getTimeTableEndTime());
         }
 
-        for (List<TimeTablePlaceBlock> timeTablePlaceBlock : timeTablePlaceBlocks) {
-            if(timeTablePlaceBlock!=null){
-                for (TimeTablePlaceBlock timeTablePlaceBlock1 : timeTablePlaceBlock) {
+        for (List<TimeTablePlaceBlock> blocks : timeTablePlaceBlocks) {
+            if (blocks != null) {
+                for (TimeTablePlaceBlock block : blocks) {
                     response.addPlaceBlock(
-                            timeTablePlaceBlock1.getBlockId(),
-                            timeTablePlaceBlock1.getTimeTable().getTimeTableId(),
-                            timeTablePlaceBlock1.getPlaceCategory().getPlaceCategoryId(),
-                            timeTablePlaceBlock1.getPlaceName(),
-                            timeTablePlaceBlock1.getPlaceTheme(),
-                            timeTablePlaceBlock1.getPlaceRating(),
-                            timeTablePlaceBlock1.getPlaceAddress(),
-                            timeTablePlaceBlock1.getPlaceLink(),
-                            timeTablePlaceBlock1.getPhotoUrl(),
-                            timeTablePlaceBlock1.getPlaceId(),
-                            timeTablePlaceBlock1.getXLocation(),
-                            timeTablePlaceBlock1.getYLocation(),
-                            timeTablePlaceBlock1.getBlockStartTime(),
-                            timeTablePlaceBlock1.getBlockEndTime(),
-                            timeTablePlaceBlock1.getMemo()
+                            block.getBlockId(),
+                            block.getTimeTable().getTimeTableId(),
+                            block.getPlaceCategory().getPlaceCategoryId(),
+                            block.getPlaceName(),
+                            block.getPlaceTheme(),
+                            block.getPlaceRating(),
+                            block.getPlaceAddress(),
+                            block.getPlaceLink(),
+                            block.getPhotoUrl(),
+                            block.getPlaceId(),
+                            block.getXLocation(),
+                            block.getYLocation(),
+                            block.getBlockStartTime(),
+                            block.getBlockEndTime(),
+                            block.getMemo()
                     );
                 }
             }
