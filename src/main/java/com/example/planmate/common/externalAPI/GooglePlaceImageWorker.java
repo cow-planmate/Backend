@@ -20,12 +20,12 @@ import com.sksamuel.scrimage.webp.WebpWriter;
 
 import lombok.RequiredArgsConstructor;
 
-
 @Component
 @RequiredArgsConstructor
 public class GooglePlaceImageWorker {
 
-    public record PlaceExtraDetails(String photoUrl) {}
+    public record PlaceExtraDetails(String photoUrl) {
+    }
 
     @Value("${api.google.key}")
     private String googleApiKey;
@@ -35,7 +35,7 @@ public class GooglePlaceImageWorker {
     private final java.util.Set<String> processingIds = ConcurrentHashMap.newKeySet();
 
     @SuppressWarnings("unchecked")
-    @Async("placeExecutor")
+    @Async("customPlaceExecutor")
     public CompletableFuture<PlaceExtraDetails> fetchSinglePlaceDetailsAsync(String placeId, String photoReference) {
         if (placeId == null || !processingIds.add(placeId)) {
             return CompletableFuture.completedFuture(null);
@@ -48,15 +48,14 @@ public class GooglePlaceImageWorker {
                 // Google Places API (Legacy) Detail URL
                 String detailsUrl = String.format(
                         "https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=photos&key=%s",
-                        placeId, googleApiKey
-                );
+                        placeId, googleApiKey);
 
                 ResponseEntity<Map<String, Object>> detailsResponse = restTemplate.exchange(
                         detailsUrl,
                         HttpMethod.GET,
                         null,
-                        new ParameterizedTypeReference<Map<String, Object>>() {}
-                );
+                        new ParameterizedTypeReference<Map<String, Object>>() {
+                        });
 
                 Map<String, Object> body = detailsResponse.getBody();
                 if (body != null && "OK".equals(body.get("status"))) {
@@ -73,7 +72,8 @@ public class GooglePlaceImageWorker {
             // Now we have the photoReference
             String finalPhotoUrl = ""; // Default to empty string if no photo found
             if (finalPhotoReference != null) {
-                String photoUrl = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&maxheight=400&photoreference=" + finalPhotoReference + "&key=" + googleApiKey;
+                String photoUrl = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&maxheight=400&photoreference="
+                        + finalPhotoReference + "&key=" + googleApiKey;
                 ResponseEntity<byte[]> photoBytesResponse = restTemplate.getForEntity(photoUrl, byte[].class);
                 byte[] imageBytes = photoBytesResponse.getBody();
                 if (imageBytes != null && imageBytes.length > 0) {
@@ -98,4 +98,3 @@ public class GooglePlaceImageWorker {
         return CompletableFuture.completedFuture(null);
     }
 }
-

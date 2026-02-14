@@ -7,6 +7,7 @@ spring:
 
   main:
     web-application-type: servlet
+    allow-circular-references: true
 
   jackson:
     time-zone: Asia/Seoul
