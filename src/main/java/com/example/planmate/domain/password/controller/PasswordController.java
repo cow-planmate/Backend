@@ -40,7 +40,7 @@ public class PasswordController {
     @PatchMapping("")
     public ResponseEntity<ChangePasswordResponse> changePassword(Authentication authentication, @RequestBody ChangePasswordRequest request) {
         UUID userId = UUID.fromString(authentication.getName());
-        ChangePasswordResponse response = passwordService.changePassword(userId, request.getPassword(), request.getConfirmPassword());
+        ChangePasswordResponse response = passwordService.changePassword(userId, request.getCurrentPassword(), request.getNewPassword(), request.getConfirmPassword());
         return ResponseEntity.ok(response);
     }
 

@@ -7,6 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ChangePasswordRequest implements IRequest {
-    private String password;
+    private String currentPassword;
+    private String newPassword;
     private String confirmPassword;
 }

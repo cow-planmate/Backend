@@ -42,15 +42,19 @@ public class PasswordService {
     }
 
     @Transactional
-    public ChangePasswordResponse changePassword(UUID userId, String password, String confirmPassword) {
+    public ChangePasswordResponse changePassword(UUID userId, String currentPassword, String newPassword, String confirmPassword) {
         ChangePasswordResponse response = new ChangePasswordResponse();
 
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
-        if (!password.equals(confirmPassword)) {
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
             throw new IllegalArgumentException("새 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
         } else{
-            String encodedPassword = passwordEncoder.encode(password);
+            String encodedPassword = passwordEncoder.encode(newPassword);
             user.changePassword(encodedPassword);
             userRepository.save(user);
 
