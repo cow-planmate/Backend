@@ -44,14 +44,26 @@ spec:
           value: "optional:file:/app/config/application-secret.yml"
         - name: TZ
           value: "Asia/Seoul"
-        - name: SPRING_DATASOURCE_URL
+        - name: SPRING_DATASOURCE_MASTER_JDBC_URL # Spring의 datasource.master.jdbc-url에 주입
           value: "jdbc:p6spy:postgresql://planmate-db-rw:5432/planmate"
-        - name: SPRING_DATASOURCE_USERNAME
+        - name: SPRING_DATASOURCE_MASTER_USERNAME
           valueFrom:
             secretKeyRef:
               name: planmate-db-user-password
               key: username
-        - name: SPRING_DATASOURCE_PASSWORD
+        - name: SPRING_DATASOURCE_MASTER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: planmate-db-user-password
+              key: password
+        - name: SPRING_DATASOURCE_REPLICA_JDBC_URL # Replica 설정 (필요시)
+          value: "jdbc:p6spy:postgresql://planmate-db-rw:5432/planmate"
+        - name: SPRING_DATASOURCE_REPLICA_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: planmate-db-user-password
+              key: username
+        - name: SPRING_DATASOURCE_REPLICA_PASSWORD
           valueFrom:
             secretKeyRef:
               name: planmate-db-user-password

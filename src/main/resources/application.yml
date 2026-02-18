@@ -16,10 +16,12 @@ spring:
     master:
       jdbc-url: ${SPRING_DATASOURCE_URL:jdbc:p6spy:postgresql://localhost:5432/postgres}
       username: ${SPRING_DATASOURCE_USERNAME:postgres}
+      password: ${SPRING_DATASOURCE_PASSWORD}
       driver-class-name: com.p6spy.engine.spy.P6SpyDriver
     replica:
       jdbc-url: ${SPRING_REPLICA_DATASOURCE_URL:jdbc:p6spy:postgresql://localhost:5432/postgres}
       username: ${SPRING_DATASOURCE_USERNAME:postgres}
+      password: ${SPRING_DATASOURCE_PASSWORD}
       driver-class-name: com.p6spy.engine.spy.P6SpyDriver
 
   jpa:
