@@ -1,7 +1,18 @@
 package com.example.planmate.domain.collaborationRequest.service;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.planmate.domain.collaborationRequest.auth.CollaborationRequestValidator;
-import com.example.planmate.domain.collaborationRequest.dto.*;
+import com.example.planmate.domain.collaborationRequest.dto.AcceptRequestResponse;
+import com.example.planmate.domain.collaborationRequest.dto.GetReceivedPendingRequestsResponse;
+import com.example.planmate.domain.collaborationRequest.dto.InviteUserToPlanResponse;
+import com.example.planmate.domain.collaborationRequest.dto.RejectRequestResponse;
+import com.example.planmate.domain.collaborationRequest.dto.RequestEditAccessResponse;
 import com.example.planmate.domain.collaborationRequest.entity.CollaborationRequest;
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
 import com.example.planmate.domain.collaborationRequest.enums.CollaborationRequestStatus;
@@ -13,16 +24,12 @@ import com.example.planmate.domain.plan.repository.PlanEditorRepository;
 import com.example.planmate.domain.plan.repository.PlanRepository;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CollaborationRequestService {
     private final PlanRepository planRepository;
     private final PlanAccessValidator planAccessValidator;

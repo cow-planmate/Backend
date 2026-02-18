@@ -32,7 +32,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-@CacheEntity
+@CacheEntity(sequenceName = "time_table_time_table_id_seq")
 public class TimeTable {
 
     @Id
@@ -53,6 +53,7 @@ public class TimeTable {
     private Plan plan;
 
     @OneToMany(mappedBy = "timeTable", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = false)
+    @Builder.Default
     private List<TimeTablePlaceBlock> placeBlocks = new ArrayList<>();
 
     public void changeId(Integer newId) {

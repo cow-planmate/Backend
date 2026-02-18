@@ -33,7 +33,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-@CacheEntity
+@CacheEntity(sequenceName = "time_table_place_block_block_id_seq")
 public class TimeTablePlaceBlock {
 
     @Id

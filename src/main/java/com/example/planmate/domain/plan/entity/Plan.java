@@ -72,14 +72,17 @@ public class Plan {
 
     @IgnoreShared
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @Builder.Default
     private List<TimeTable> timeTables = new ArrayList<>();
 
     @IgnoreShared
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<CollaborationRequest> collaborationRequests = new ArrayList<>();
 
     @IgnoreShared
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<PlanEditor> editors = new ArrayList<>();
 
     @IgnoreShared

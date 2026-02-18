@@ -30,12 +30,14 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserService {
     private final PreferredThemeRepository preferredThemeRepository;
     private final UserRepository userRepository;
     private final PlanRepository planRepository;
     private final PlanEditorRepository planEditorRepository;
 
+    @Transactional(readOnly = true)
     public GetPreferredThemeResponse getPreferredTheme() {
         GetPreferredThemeResponse response = new GetPreferredThemeResponse();
         List<PreferredTheme> preferredThemes= preferredThemeRepository.findAll();
@@ -62,6 +64,7 @@ public class UserService {
         return response;
     }
 
+    @Transactional(readOnly = true)
     public MoveMypageResponse getMypageInfo(UUID userId) {
         MoveMypageResponse response = new MoveMypageResponse();
 

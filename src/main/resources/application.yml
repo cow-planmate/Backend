@@ -13,9 +13,14 @@ spring:
     time-zone: Asia/Seoul
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:p6spy:postgresql://localhost:5432/postgres}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+    master:
+      jdbc-url: ${SPRING_DATASOURCE_URL:jdbc:p6spy:postgresql://localhost:5432/postgres}
+      username: ${SPRING_DATASOURCE_USERNAME:postgres}
+      driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+    replica:
+      jdbc-url: ${SPRING_REPLICA_DATASOURCE_URL:jdbc:p6spy:postgresql://localhost:5432/postgres}
+      username: ${SPRING_DATASOURCE_USERNAME:postgres}
+      driver-class-name: com.p6spy.engine.spy.P6SpyDriver
 
   jpa:
     hibernate:
@@ -74,7 +79,7 @@ logging:
     org.springframework.data: WARN
     com.sksamuel.scrimage: WARN
     com.example.planmate: DEBUG             # 우리 코드만 디버그
-    com.sharedsync: WARN                   # 공유 싱크 디버그
+    com.sharedsync: INFO                   # 공유 싱크 디버그
   file:
     name: ${LOG_PATH:logs}/app.log  # 환경변수로 바꿀 수 있음(기본 logs/)
 

@@ -21,8 +21,6 @@ import lombok.NoArgsConstructor;
 @Table(name = "plan_share")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
 public class PlanShare {
 
     @Id

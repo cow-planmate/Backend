@@ -56,6 +56,7 @@ import sharedsync.cache.TimeTablePlaceBlockCache;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PlanService {
     private final PlanRepository planRepository;
     private final PlanAccessValidator planAccessValidator;
@@ -128,6 +129,7 @@ public class PlanService {
         return travel.getTravelName() + " " + i;
     }
 
+    @Transactional(readOnly = true)
     public GetPlanResponse getPlan(UUID userId, UUID planId) {
         GetPlanResponse response = new GetPlanResponse();
 
