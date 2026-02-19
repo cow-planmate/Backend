@@ -32,6 +32,16 @@ public class OAuthCompleteService {
             throw new IllegalArgumentException("가입 세션이 만료되었습니다.");
         }
 
+        String finalEmail =
+                (req.getEmail() != null && !req.getEmail().isBlank())
+                        ? req.getEmail()
+                        : cache.getEmail();
+
+        if (finalEmail == null || finalEmail.isBlank()) {
+            throw new IllegalArgumentException("이메일 정보가 필요합니다.");
+        }
+
+
         // 2️⃣ 중복 가입 방지 체크
         if (userRepository.existsByProviderAndProviderId(
                 cache.getProvider(), cache.getProviderId())) {

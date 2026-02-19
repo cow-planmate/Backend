@@ -78,6 +78,7 @@ public class OAuthLoginService {
 
         String providerName = provider.name().toLowerCase();
         String email = profile.getEmail();
+        boolean needEmail = (email == null || email.isBlank());
         String providerId = profile.getProviderId();
 
         // 2) 이미 SNS로 가입된 유저인지 체크
@@ -122,7 +123,7 @@ public class OAuthLoginService {
         );
 
         // 5) 추가 정보 입력 필요 (signupId만 전달)
-        return buildAdditionalInfoRedirect(signupId);
+        return buildAdditionalInfoRedirect(signupId, needEmail);
 
     }
 
@@ -137,11 +138,12 @@ public class OAuthLoginService {
     }
 
     /** 신규 SNS 유저 → 추가정보 입력 redirect */
-    private String buildAdditionalInfoRedirect(String signupId) {
+    private String buildAdditionalInfoRedirect(String signupId, boolean needEmail) {
         return UriComponentsBuilder
                 .fromUriString(oAuthProperties.getFrontendRedirectUri())
                 .queryParam("status", "NEED_ADDITIONAL_INFO")
                 .queryParam("signupId", signupId)
+                .queryParam("needEmail", needEmail)
                 .build(true)
                 .toUriString();
     }
