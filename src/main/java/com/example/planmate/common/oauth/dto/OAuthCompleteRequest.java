@@ -4,8 +4,7 @@ import lombok.Getter;
 
 @Getter
 public class OAuthCompleteRequest {
-    private String provider;
-    private String providerId;
+    private String signupId;
     private String email;
     private Integer age;
     private Integer gender;

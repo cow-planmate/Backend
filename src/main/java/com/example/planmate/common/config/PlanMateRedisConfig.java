@@ -2,6 +2,7 @@ package com.example.planmate.common.config;
 
 import java.util.UUID;
 
+import com.example.planmate.common.oauth.dto.OAuthSignupCache;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -75,4 +76,16 @@ public class PlanMateRedisConfig {
         template.afterPropertiesSet();
         return template;
     }
+
+    @Bean(name = "oauthSignupRedis")
+    public RedisTemplate<String, OAuthSignupCache> oauthSignupRedis(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, OAuthSignupCache> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.afterPropertiesSet();
+        return template;
+    }
+
+
 }
