@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.example.planmate.domain.travel.service.TravelService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -30,10 +31,12 @@ public class GoogleWeather {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private final TravelService travelService;
+
     public WeatherResponse getWeatherRecommendations(String city, String startDateStr, String endDateStr) {
         try {
             // 1. Get Lat/Lng for the city
-            Map<String, Double> location = getDestinationLocation(city);
+            Map<String, Double> location = travelService.getOrInitializeLocation(city);
             if (location == null) {
                 return createFallbackResponse(startDateStr, endDateStr);
             }
@@ -125,25 +128,6 @@ public class GoogleWeather {
             case 95: case 96: case 99: return "뇌우";
             default: return "정보 없음";
         }
-    }
-
-    private Map<String, Double> getDestinationLocation(String city) {
-        try {
-            String url = "https://maps.googleapis.com/maps/api/place/textsearch/json?query=" + city + "&key=" + googleApiKey;
-            String response = restTemplate.getForObject(url, String.class);
-            JsonNode root = objectMapper.readTree(response);
-            JsonNode results = root.path("results");
-            if (results.isArray() && results.size() > 0) {
-                JsonNode location = results.get(0).path("geometry").path("location");
-                Map<String, Double> map = new HashMap<>();
-                map.put("lat", location.path("lat").asDouble());
-                map.put("lng", location.path("lng").asDouble());
-                return map;
-            }
-        } catch (Exception e) {
-            log.error("Error getting location for city {}: ", city, e);
-        }
-        return null;
     }
 
     private WeatherResponse createFallbackResponse(String startDateStr, String endDateStr) {

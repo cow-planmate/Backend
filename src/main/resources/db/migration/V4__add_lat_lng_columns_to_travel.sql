@@ -1,0 +1,3 @@
+ALTER TABLE travel
+ADD COLUMN latitude NUMERIC(10,8),
+ADD COLUMN longitude NUMERIC(11,8);

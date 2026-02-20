@@ -1,11 +1,9 @@
 package com.example.planmate.common.externalAPI;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
@@ -22,11 +20,13 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @Component
+@Slf4j
 public class GoogleMap {
     @Value("${api.google.key}")
     private String googleApiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public StringBuilder searchGoogle(String query) throws IOException {
         String url = "https://maps.googleapis.com/maps/api/place/textsearch/json?query=" + query + "&key=" + googleApiKey + "&language=ko";
@@ -441,5 +441,23 @@ public class GoogleMap {
         return Pair.of(results, nextNextPageTokens);
     }
 
+    public Map<String, Double> getDestinationLocation(String city) {
+        try {
+            String url = "https://maps.googleapis.com/maps/api/place/textsearch/json?query=" + city + "&key=" + googleApiKey;
+            String response = restTemplate.getForObject(url, String.class);
+            JsonNode root = objectMapper.readTree(response);
+            JsonNode results = root.path("results");
+            if (results.isArray() && results.size() > 0) {
+                JsonNode location = results.get(0).path("geometry").path("location");
+                Map<String, Double> map = new HashMap<>();
+                map.put("lat", location.path("lat").asDouble());
+                map.put("lng", location.path("lng").asDouble());
+                return map;
+            }
+        } catch (Exception e) {
+            log.error("Error getting location for city {}: ", city, e);
+        }
+        return null;
+    }
 
 }
