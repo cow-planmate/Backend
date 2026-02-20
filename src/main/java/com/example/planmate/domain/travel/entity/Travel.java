@@ -22,11 +22,22 @@ public class Travel {
     @JoinColumn(name = "travel_category_id", nullable = false)
     private TravelCategory travelCategory;
 
+    @Column
+    private Double latitude;
+
+    @Column
+    private Double longitude;
+
+
     public Travel(Integer travelId, String travelName, Integer travelCategoryId, String travelCategoryName) {
         this.travelId = travelId;
         this.travelName = travelName;
         this.travelCategory = new TravelCategory(travelCategoryId, travelCategoryName);
     }
+
+    // ------------------------
+    // Business Logic
+    // ------------------------
 
     public void changeName(String newName) {
         if (newName == null || newName.isBlank()) {
@@ -40,5 +51,17 @@ public class Travel {
             throw new IllegalArgumentException("여행 카테고리는 null일 수 없습니다.");
         }
         this.travelCategory = newCategory;
+    }
+
+    public boolean hasCoordinate() {
+        return latitude != null && longitude != null;
+    }
+
+    public void initializeCoordinate(double lat, double lng) {
+        if (hasCoordinate()) {
+            return; // 이미 세팅되어 있으면 무시
+        }
+        this.latitude = lat;
+        this.longitude = lng;
     }
 }
