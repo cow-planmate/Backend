@@ -22,10 +22,10 @@ public class Travel {
     @JoinColumn(name = "travel_category_id", nullable = false)
     private TravelCategory travelCategory;
 
-    @Column(precision = 10, scale = 8)
+    @Column
     private Double latitude;
 
-    @Column(precision = 11, scale = 8)
+    @Column
     private Double longitude;
 
 
