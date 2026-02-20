@@ -1,6 +1,7 @@
 package com.example.planmate.common.oauth.service;
 
 import com.example.planmate.common.oauth.config.OAuthProperties;
+import com.example.planmate.common.oauth.dto.OAuthSignupCache;
 import com.example.planmate.common.oauth.dto.OAuthUserProfile;
 import com.example.planmate.common.oauth.dto.google.GoogleTokenResponse;
 import com.example.planmate.common.oauth.dto.google.GoogleUserResponse;
@@ -13,6 +14,7 @@ import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
 import com.example.planmate.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +25,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +39,7 @@ public class OAuthLoginService {
     private final OAuthCodeService oauthCodeService; // ✅ 추가
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private final RedisTemplate<String, OAuthSignupCache> oauthSignupRedis;
 
     /** 1. 로그인 시작 URL 생성 */
     public String buildAuthorizeUrl(OAuthProvider provider) {
@@ -73,6 +78,7 @@ public class OAuthLoginService {
 
         String providerName = provider.name().toLowerCase();
         String email = profile.getEmail();
+        boolean needEmail = (email == null || email.isBlank());
         String providerId = profile.getProviderId();
 
         // 2) 이미 SNS로 가입된 유저인지 체크
@@ -97,30 +103,28 @@ public class OAuthLoginService {
             }
         }
 
-
-        // 4) 신규 SNS 유저 생성
+        // 4) 신규 SNS 유저 → Redis에 임시 저장
         String sanitized = userService.sanitizeNickname(profile.getNickname());
         String finalNickname = userService.resolveUniqueNickname(sanitized);
 
-        User newUser = User.builder()
-                .provider(providerName)
-                .providerId(providerId)
-                .email(email)          // null 가능
-                .nickname(finalNickname)
-                .password(null)        // SNS는 패스워드 없음
-                .age(null)
-                .gender(null)
-                .build();
+        String signupId = UUID.randomUUID().toString();
 
-        userRepository.save(newUser);
-
-        // 5) 추가 정보 입력 필요
-        return buildAdditionalInfoRedirect(
+        OAuthSignupCache cache = new OAuthSignupCache(
                 providerName,
                 providerId,
                 email,
                 finalNickname
         );
+
+        oauthSignupRedis.opsForValue().set(
+                "signup:" + signupId,
+                cache,
+                Duration.ofMinutes(15)
+        );
+
+        // 5) 추가 정보 입력 필요 (signupId만 전달)
+        return buildAdditionalInfoRedirect(signupId, needEmail);
+
     }
 
     /** 기존 SNS 유저 로그인 → loginCode redirect */
@@ -134,19 +138,12 @@ public class OAuthLoginService {
     }
 
     /** 신규 SNS 유저 → 추가정보 입력 redirect */
-    private String buildAdditionalInfoRedirect(
-            String provider,
-            String providerId,
-            String email,
-            String nickname
-    ) {
+    private String buildAdditionalInfoRedirect(String signupId, boolean needEmail) {
         return UriComponentsBuilder
                 .fromUriString(oAuthProperties.getFrontendRedirectUri())
-                .queryParam("status", UriUtils.encode("NEED_ADDITIONAL_INFO", StandardCharsets.UTF_8))
-                .queryParam("provider", UriUtils.encode(provider, StandardCharsets.UTF_8))
-                .queryParam("providerId", UriUtils.encode(providerId, StandardCharsets.UTF_8))
-                .queryParam("email", UriUtils.encode(email == null ? "" : email, StandardCharsets.UTF_8))
-                .queryParam("nickname", UriUtils.encode(nickname, StandardCharsets.UTF_8))
+                .queryParam("status", "NEED_ADDITIONAL_INFO")
+                .queryParam("signupId", signupId)
+                .queryParam("needEmail", needEmail)
                 .build(true)
                 .toUriString();
     }
