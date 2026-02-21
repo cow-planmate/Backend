@@ -1,21 +1,20 @@
 package com.example.planmate.domain.travel.service;
 
-import com.example.planmate.common.externalAPI.GoogleMap;
-import com.example.planmate.domain.travel.entity.Travel;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.planmate.common.externalAPI.GoogleMap;
 import com.example.planmate.domain.travel.dto.GetTravelResponse;
+import com.example.planmate.domain.travel.entity.Travel;
 import com.example.planmate.domain.travel.repository.TravelRepository;
 
 import lombok.RequiredArgsConstructor;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class TravelService {
     private final TravelRepository travelRepository;
     private final GoogleMap googleMap;
@@ -29,14 +28,12 @@ public class TravelService {
                     travel.getTravelId(),
                     travel.getTravelName(),
                     travel.getTravelCategory().getTravelCategoryId(),
-                    travel.getTravelCategory().getTravelCategoryName()
-            );
+                    travel.getTravelCategory().getTravelCategoryName());
         });
 
         return response;
     }
 
-    @Transactional
     public Map<String, Double> getOrInitializeLocation(String city) {
 
         Travel travel = travelRepository.findByTravelName(city)
@@ -51,8 +48,7 @@ public class TravelService {
         }
 
         // 2️⃣ 좌표 없으면 Google 호출
-        Map<String, Double> location =
-                googleMap.getDestinationLocation(city);
+        Map<String, Double> location = googleMap.getDestinationLocation(city);
 
         if (location == null) {
             return null;
@@ -63,6 +59,7 @@ public class TravelService {
 
         // 3️⃣ DB 저장 (캐싱)
         travel.initializeCoordinate(lat, lng);
+        travelRepository.save(travel);
 
         return location;
     }
