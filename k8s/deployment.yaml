@@ -101,6 +101,8 @@ spec:
           value: "true"
         - name: ELASTIC_APM_LOG_LEVEL
           value: "INFO"
+        - name: JAVA_TOOL_OPTIONS
+          value: "-Xms512m -Xmx1024m"
         - name: JWT_ACCESS_SECRET
           valueFrom:
             secretKeyRef:

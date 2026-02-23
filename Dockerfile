@@ -9,7 +9,7 @@ ARG JAR_FILE=build/libs/PlanMate-0.0.1-SNAPSHOT.jar
 COPY ${JAR_FILE} /app.jar
 
 # 4. 앱 실행 (APM 에이전트 포함)
-ENTRYPOINT ["java", "-javaagent:/elastic-apm-agent.jar", "-Duser.timezone=Asia/Seoul", "-jar", "/app.jar"]
+ENTRYPOINT ["java", "-Xms512m", "-Xmx1024m", "-javaagent:/elastic-apm-agent.jar", "-Duser.timezone=Asia/Seoul", "-jar", "/app.jar"]
 
 
 # # 1. JDK 기반 이미지
