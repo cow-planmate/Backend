@@ -1,6 +1,5 @@
 package com.example.planmate.common.externalAPI;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -35,6 +34,72 @@ public class GooglePlaceImageWorker {
     private final java.util.Set<String> processingIds = ConcurrentHashMap.newKeySet();
 
     @SuppressWarnings("unchecked")
+    public String getPhotoReferenceSync(String placeId) {
+        try {
+            String detailsUrl = String.format(
+                    "https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=photos&key=%s",
+                    placeId, googleApiKey);
+
+            ResponseEntity<Map<String, Object>> detailsResponse = restTemplate.exchange(
+                    detailsUrl,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<Map<String, Object>>() {
+                    });
+
+            Map<String, Object> body = detailsResponse.getBody();
+            if (body != null && "OK".equals(body.get("status"))) {
+                Map<String, Object> result = (Map<String, Object>) body.get("result");
+                if (result != null) {
+                    List<Map<String, Object>> photos = (List<Map<String, Object>>) result.get("photos");
+                    if (photos != null && !photos.isEmpty()) {
+                        return (String) photos.get(0).get("photo_reference");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[SYNC_ERROR] placeId=" + placeId + " detail API msg=" + e.getMessage());
+        }
+        return null; // missing or error
+    }
+
+    public String buildGooglePhotoUrl(String photoReference) {
+        if (photoReference == null)
+            return null;
+        return "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&maxheight=400&photoreference="
+                + photoReference + "&key=" + googleApiKey;
+    }
+
+    public ResponseEntity<byte[]> fetchPhotoBytes(String photoReference) {
+        String photoUrl = buildGooglePhotoUrl(photoReference);
+        return restTemplate.getForEntity(photoUrl, byte[].class);
+    }
+
+    @Async("customPlaceExecutor")
+    public void processAndSaveImageFromBytesAsync(String placeId, byte[] imageBytes,
+            java.util.function.Consumer<String> onSuccess) {
+        if (placeId == null || imageBytes == null || imageBytes.length == 0 || !processingIds.add(placeId)) {
+            return;
+        }
+        try {
+            ImmutableImage image = ImmutableImage.loader().fromBytes(imageBytes);
+            // Use quality 6 for better compression as it's now back in the background
+            byte[] webpBytes = image.bytes(new WebpWriter(6, 80, 4, false));
+            if (webpBytes != null) {
+                String objectName = "googleplace/" + placeId + ".webp";
+                String photoUrl = imageStorageService.uploadImage(objectName, webpBytes, "image/webp");
+                if (photoUrl != null && onSuccess != null) {
+                    onSuccess.accept(photoUrl);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[ASYNC_ERROR] placeId=" + placeId + " msg=" + e.getMessage());
+        } finally {
+            processingIds.remove(placeId);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     @Async("customPlaceExecutor")
     public CompletableFuture<PlaceExtraDetails> fetchSinglePlaceDetailsAsync(String placeId, String photoReference) {
         if (placeId == null || !processingIds.add(placeId)) {
@@ -42,59 +107,29 @@ public class GooglePlaceImageWorker {
         }
         try {
             String finalPhotoReference = photoReference;
-
-            // Only call Details API if photoReference is not provided
             if (finalPhotoReference == null) {
-                // Google Places API (Legacy) Detail URL
-                String detailsUrl = String.format(
-                        "https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=photos&key=%s",
-                        placeId, googleApiKey);
-
-                ResponseEntity<Map<String, Object>> detailsResponse = restTemplate.exchange(
-                        detailsUrl,
-                        HttpMethod.GET,
-                        null,
-                        new ParameterizedTypeReference<Map<String, Object>>() {
-                        });
-
-                Map<String, Object> body = detailsResponse.getBody();
-                if (body != null && "OK".equals(body.get("status"))) {
-                    Map<String, Object> result = (Map<String, Object>) body.get("result");
-                    if (result != null) {
-                        List<Map<String, Object>> photos = (List<Map<String, Object>>) result.get("photos");
-                        if (photos != null && !photos.isEmpty()) {
-                            finalPhotoReference = (String) photos.get(0).get("photo_reference");
-                        }
-                    }
-                }
+                finalPhotoReference = getPhotoReferenceSync(placeId);
             }
 
-            // Now we have the photoReference
-            String finalPhotoUrl = ""; // Default to empty string if no photo found
             if (finalPhotoReference != null) {
-                String photoUrl = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&maxheight=400&photoreference="
-                        + finalPhotoReference + "&key=" + googleApiKey;
-                ResponseEntity<byte[]> photoBytesResponse = restTemplate.getForEntity(photoUrl, byte[].class);
-                byte[] imageBytes = photoBytesResponse.getBody();
+                ResponseEntity<byte[]> response = fetchPhotoBytes(finalPhotoReference);
+                byte[] imageBytes = response.getBody();
                 if (imageBytes != null && imageBytes.length > 0) {
                     ImmutableImage image = ImmutableImage.loader().fromBytes(imageBytes);
                     byte[] webpBytes = image.bytes(new WebpWriter(6, 80, 4, false));
                     if (webpBytes != null) {
                         String objectName = "googleplace/" + placeId + ".webp";
-                        finalPhotoUrl = imageStorageService.uploadImage(objectName, webpBytes, "image/webp");
+                        String finalPhotoUrl = imageStorageService.uploadImage(objectName, webpBytes, "image/webp");
+                        return CompletableFuture.completedFuture(new PlaceExtraDetails(finalPhotoUrl));
                     }
                 }
             }
-
-            return CompletableFuture.completedFuture(new PlaceExtraDetails(finalPhotoUrl));
-        } catch (IOException e) {
-            System.err.println("[ASYNC_IO_ERROR] placeId=" + placeId + " msg=" + e.getMessage());
         } catch (Exception e) {
             System.err.println("[ASYNC_ERROR] placeId=" + placeId + " msg=" + e.getMessage());
         } finally {
             processingIds.remove(placeId);
         }
-
         return CompletableFuture.completedFuture(null);
     }
+
 }
