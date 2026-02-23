@@ -32,7 +32,7 @@ spec:
               topologyKey: "kubernetes.io/hostname"
       containers:
       - name: planmate-backend
-        image: cycle123/planmate:test-d524fb65f31cad1c9be903c7a07acefc4b75e70b
+        image: cycle123/planmate:test-22d157ab66985812071641892da26f42f97e444f
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
