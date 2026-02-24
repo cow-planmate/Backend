@@ -17,7 +17,7 @@ spec:
     podTemplate:
       spec:
         nodeSelector:
-          kubernetes.io/hostname: control.k8s
+          kubernetes.io/hostname: ubuntu
         
         containers:
         - name: elasticsearch
