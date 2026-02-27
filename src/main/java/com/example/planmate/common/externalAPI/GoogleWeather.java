@@ -2,12 +2,8 @@ package com.example.planmate.common.externalAPI;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import com.example.planmate.domain.travel.service.TravelService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -25,25 +21,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GoogleWeather {
 
-    @Value("${api.google.key}")
-    private String googleApiKey;
-
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private final TravelService travelService;
-
-    public WeatherResponse getWeatherRecommendations(String city, String startDateStr, String endDateStr) {
+    public WeatherResponse getWeatherRecommendations(double lat, double lng, String startDateStr, String endDateStr) {
         try {
-            // 1. Get Lat/Lng for the city
-            Map<String, Double> location = travelService.getOrInitializeLocation(city);
-            if (location == null) {
-                return createFallbackResponse(startDateStr, endDateStr);
-            }
-
-            double lat = location.get("lat");
-            double lng = location.get("lng");
-
             LocalDate start = LocalDate.parse(startDateStr);
             LocalDate end = LocalDate.parse(endDateStr);
             LocalDate today = LocalDate.now();
@@ -130,7 +112,7 @@ public class GoogleWeather {
         }
     }
 
-    private WeatherResponse createFallbackResponse(String startDateStr, String endDateStr) {
+    public WeatherResponse createFallbackResponse(String startDateStr, String endDateStr) {
         LocalDate start = LocalDate.parse(startDateStr);
         LocalDate end = LocalDate.parse(endDateStr);
         List<SimpleWeatherInfo> weatherList = new ArrayList<>();
