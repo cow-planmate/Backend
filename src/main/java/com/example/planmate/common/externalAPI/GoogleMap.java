@@ -1,6 +1,8 @@
 package com.example.planmate.common.externalAPI;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import lombok.extern.slf4j.Slf4j;
@@ -443,20 +445,32 @@ public class GoogleMap {
 
     public Map<String, Double> getDestinationLocation(String city) {
         try {
-            String url = "https://maps.googleapis.com/maps/api/place/textsearch/json?query=" + city + "&key=" + googleApiKey;
+            String encodedCity = URLEncoder.encode(city, StandardCharsets.UTF_8);
+
+            String url = "https://maps.googleapis.com/maps/api/geocode/json?address="
+                    + encodedCity
+                    + "&language=ko"
+                    + "&key=" + googleApiKey;
+
             String response = restTemplate.getForObject(url, String.class);
             JsonNode root = objectMapper.readTree(response);
-            JsonNode results = root.path("results");
-            if (results.isArray() && results.size() > 0) {
-                JsonNode location = results.get(0).path("geometry").path("location");
+
+            if ("OK".equals(root.path("status").asText())) {
+                JsonNode location = root.path("results")
+                        .get(0)
+                        .path("geometry")
+                        .path("location");
+
                 Map<String, Double> map = new HashMap<>();
                 map.put("lat", location.path("lat").asDouble());
                 map.put("lng", location.path("lng").asDouble());
                 return map;
             }
+
         } catch (Exception e) {
             log.error("Error getting location for city {}: ", city, e);
         }
+
         return null;
     }
 
