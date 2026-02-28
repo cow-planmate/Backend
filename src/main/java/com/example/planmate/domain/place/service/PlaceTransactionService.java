@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,6 +85,9 @@ public class PlaceTransactionService {
                     .placeLink(vo.getUrl())
                     .xLocation(vo.getXLocation())
                     .yLocation(vo.getYLocation())
+                    .userRatingsTotal(vo.getUserRatingsTotal())
+                    .placeTypes(vo.getTypes() == null || vo.getTypes().isEmpty() ? null : vo.getTypes().stream().collect(Collectors.joining(",")))
+                    .priceLevel(vo.getPriceLevel())
                     .sortOrder(currentSortOrder++)
                     .build());
         }

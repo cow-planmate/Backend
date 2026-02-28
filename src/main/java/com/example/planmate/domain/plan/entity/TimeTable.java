@@ -32,7 +32,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-@CacheEntity(sequenceName = "time_table_time_table_id_seq")
+@CacheEntity
 public class TimeTable {
 
     @Id

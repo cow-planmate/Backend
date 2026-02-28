@@ -1,5 +1,7 @@
 package com.example.planmate.common.valueObject;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -47,6 +49,17 @@ public class PlaceVO {
     @Schema(description = "아이콘 URL", example = "https://...")
     private String iconUrl;
 
+    @Schema(description = "리뷰 수", example = "1287")
+    @JsonProperty("user_ratings_total")
+    private Integer userRatingsTotal;
+
+    @Schema(description = "장소 유형 목록", example = "[\"restaurant\", \"food\", \"point_of_interest\", \"establishment\"]")
+    private List<String> types;
+
+    @Schema(description = "가격 수준(0~4)", example = "2")
+    @JsonProperty("price_level")
+    private Integer priceLevel;
+
     @Schema(description = "사진 참조용 토큰", example = "AUphs9V...")
     private String photoReference; 
 
@@ -61,6 +74,9 @@ public class PlaceVO {
         this.xLocation = xLocation;
         this.yLocation = yLocation;
         this.iconUrl = iconUrl;
+        this.userRatingsTotal = null;
+        this.types = null;
+        this.priceLevel = null;
     }
 }
 
