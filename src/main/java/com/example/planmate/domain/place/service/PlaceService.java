@@ -2,6 +2,7 @@ package com.example.planmate.domain.place.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -131,6 +132,9 @@ public class PlaceService {
                                         r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y,
                                         r.getIconUrl());
                             }
+                            vo.setUserRatingsTotal(r.getUserRatingsTotal());
+                            vo.setTypes(parseTypes(r.getPlaceTypes()));
+                            vo.setPriceLevel(r.getPriceLevel());
                             aggregatedPlaces.put(vo.getPlaceId(), vo);
                         }
                     }
@@ -264,8 +268,12 @@ public class PlaceService {
                             float rating = (r.getPlaceRating() != null) ? r.getPlaceRating().floatValue() : 0.0f;
                             String placeLink = (r.getPlaceLink() != null) ? r.getPlaceLink()
                                     : "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId();
-                            return new PlaceVO(r.getPlaceId(), 4, placeLink, r.getPlaceName(), r.getPlaceAddress(),
+                                PlaceVO vo = new PlaceVO(r.getPlaceId(), 4, placeLink, r.getPlaceName(), r.getPlaceAddress(),
                                     rating, r.getPhotoUrl(), x, y, r.getIconUrl());
+                                vo.setUserRatingsTotal(r.getUserRatingsTotal());
+                                vo.setTypes(parseTypes(r.getPlaceTypes()));
+                                vo.setPriceLevel(r.getPriceLevel());
+                                return vo;
                         })
                         .collect(Collectors.toList());
                 fetchImagesWithCacheCheck(places);
@@ -412,6 +420,9 @@ public class PlaceService {
                             vo = new PlaceVO(r.getPlaceId(), categoryId, placeLink, r.getPlaceName(),
                                     r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
                         }
+                        vo.setUserRatingsTotal(r.getUserRatingsTotal());
+                        vo.setTypes(parseTypes(r.getPlaceTypes()));
+                        vo.setPriceLevel(r.getPriceLevel());
                         allPlaces.add(vo);
                     }
 
@@ -478,5 +489,15 @@ public class PlaceService {
     private void fetchImagesWithCacheCheck(List<? extends PlaceVO> places) {
         placeTransactionService.updatePhotoUrlIfMissing(places);
         googlePlaceDetails.fetchMissingImagesInBackground(places, null);
+    }
+
+    private List<String> parseTypes(String placeTypes) {
+        if (placeTypes == null || placeTypes.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(placeTypes.split(","))
+                .map(String::trim)
+                .filter(type -> !type.isEmpty())
+                .collect(Collectors.toList());
     }
 }

@@ -59,5 +59,12 @@ public class PlaceSearchResult {
     private Double xLocation;
     private Double yLocation;
 
+    private Integer userRatingsTotal;
+
+    @Column(columnDefinition = "TEXT")
+    private String placeTypes;
+
+    private Integer priceLevel;
+
     private Integer sortOrder;
 }

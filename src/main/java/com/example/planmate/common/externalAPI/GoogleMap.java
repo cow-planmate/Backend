@@ -1,9 +1,12 @@
 package com.example.planmate.common.externalAPI;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
@@ -19,6 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
@@ -63,6 +68,9 @@ public class GoogleMap {
                 double xLocation = location.path("lng").asDouble(0.0);
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
+                int userRatingsTotal = result.path("user_ratings_total").asInt(0);
+                List<String> types = extractTypes(result.path("types"));
+                Integer priceLevel = result.hasNonNull("price_level") ? result.path("price_level").asInt() : null;
 
                 // Extract photo reference if available to avoid redundant Details API call later
                 String initialPhotoUrl = null;
@@ -76,6 +84,9 @@ public class GoogleMap {
 
                 TourPlaceVO place = new TourPlaceVO(placeId, 0, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
                 place.setPhotoReference(photoReference);
+                place.setUserRatingsTotal(userRatingsTotal);
+                place.setTypes(types);
+                place.setPriceLevel(priceLevel);
                 places.add(place);
             }
         }
@@ -108,6 +119,9 @@ public class GoogleMap {
                 double xLocation = location.path("lng").asDouble(0.0);
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
+                int userRatingsTotal = result.path("user_ratings_total").asInt(0);
+                List<String> types = extractTypes(result.path("types"));
+                Integer priceLevel = result.hasNonNull("price_level") ? result.path("price_level").asInt() : null;
 
                 // Extract photo reference if available to avoid redundant Details API call later
                 String initialPhotoUrl = null;
@@ -121,6 +135,9 @@ public class GoogleMap {
 
                 LodgingPlaceVO place = new LodgingPlaceVO(placeId, 1, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
                 place.setPhotoReference(photoReference);
+                place.setUserRatingsTotal(userRatingsTotal);
+                place.setTypes(types);
+                place.setPriceLevel(priceLevel);
                 places.add(place);
             }
         }
@@ -153,6 +170,9 @@ public class GoogleMap {
                 double xLocation = location.path("lng").asDouble(0.0);
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
+                int userRatingsTotal = result.path("user_ratings_total").asInt(0);
+                List<String> types = extractTypes(result.path("types"));
+                Integer priceLevel = result.hasNonNull("price_level") ? result.path("price_level").asInt() : null;
 
                 // Extract photo reference if available to avoid redundant Details API call later
                 String initialPhotoUrl = null;
@@ -166,6 +186,9 @@ public class GoogleMap {
 
                 RestaurantPlaceVO place = new RestaurantPlaceVO(placeId, 2, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
                 place.setPhotoReference(photoReference);
+                place.setUserRatingsTotal(userRatingsTotal);
+                place.setTypes(types);
+                place.setPriceLevel(priceLevel);
                 places.add(place);
             }
         }
@@ -216,6 +239,9 @@ public class GoogleMap {
                 double xLocation = location.path("lng").asDouble(0.0);
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
+                int userRatingsTotal = result.path("user_ratings_total").asInt(0);
+                List<String> types = extractTypes(result.path("types"));
+                Integer priceLevel = result.hasNonNull("price_level") ? result.path("price_level").asInt() : null;
 
                 // Extract photo reference if available to avoid redundant Details API call later
                 String initialPhotoUrl = null;
@@ -229,6 +255,9 @@ public class GoogleMap {
 
                 PlaceVO place = new PlaceVO(placeId, 4, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
                 place.setPhotoReference(photoReference);
+                place.setUserRatingsTotal(userRatingsTotal);
+                place.setTypes(types);
+                place.setPriceLevel(priceLevel);
                 places.add(place);
             }
         }
@@ -272,6 +301,9 @@ public class GoogleMap {
                 double xLocation = location.path("lng").asDouble(0.0);
                 double yLocation = location.path("lat").asDouble(0.0);
                 String iconUrl = result.path("icon").asText("");
+                int userRatingsTotal = result.path("user_ratings_total").asInt(0);
+                List<String> types = extractTypes(result.path("types"));
+                Integer priceLevel = result.hasNonNull("price_level") ? result.path("price_level").asInt() : null;
 
                 // Extract photo reference if available to avoid redundant Details API call later
                 String initialPhotoUrl = null;
@@ -294,10 +326,28 @@ public class GoogleMap {
                     place = new PlaceVO(placeId, categoryId, url, name, formatted_address, rating, initialPhotoUrl, xLocation, yLocation, iconUrl);
                 }
                 place.setPhotoReference(photoReference);
+                place.setUserRatingsTotal(userRatingsTotal);
+                place.setTypes(types);
+                place.setPriceLevel(priceLevel);
                 places.add(place);
             }
         }
         return Pair.of(places, nextNextPageTokens);
+    }
+
+    private List<String> extractTypes(JsonNode typesNode) {
+        if (typesNode == null || !typesNode.isArray() || typesNode.size() == 0) {
+            return List.of();
+        }
+
+        List<String> types = new ArrayList<>();
+        for (JsonNode typeNode : typesNode) {
+            String type = typeNode.asText(null);
+            if (type != null && !type.isBlank()) {
+                types.add(type);
+            }
+        }
+        return types;
     }
 
     private Pair<JsonNode, List<String>> searchGoogleOrWithJackson(
