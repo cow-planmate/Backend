@@ -1,8 +1,6 @@
 package com.example.planmate.common.externalAPI;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @Slf4j
@@ -443,32 +442,43 @@ public class GoogleMap {
         return Pair.of(results, nextNextPageTokens);
     }
 
-    public Map<String, Double> getDestinationLocation(String city) {
-        try {
-            String encodedCity = URLEncoder.encode(city, StandardCharsets.UTF_8);
 
-            String url = "https://maps.googleapis.com/maps/api/geocode/json?address="
-                    + encodedCity
-                    + "&language=ko"
-                    + "&key=" + googleApiKey;
+    public Map<String, Double> getDestinationLocation(String city) {
+
+        try {
+            city = city.trim();
+
+            String url = UriComponentsBuilder
+                    .fromHttpUrl("https://maps.googleapis.com/maps/api/geocode/json")
+                    .queryParam("address", city)
+                    .queryParam("components", "country:KR")
+                    .queryParam("language", "ko")
+                    .queryParam("key", googleApiKey)
+                    .build()
+                    .encode()
+                    .toUriString();
 
             String response = restTemplate.getForObject(url, String.class);
             JsonNode root = objectMapper.readTree(response);
 
-            if ("OK".equals(root.path("status").asText())) {
+            if ("OK".equals(root.path("status").asText())
+                    && root.path("results").isArray()
+                    && root.path("results").size() > 0) {
+
                 JsonNode location = root.path("results")
                         .get(0)
                         .path("geometry")
                         .path("location");
 
-                Map<String, Double> map = new HashMap<>();
-                map.put("lat", location.path("lat").asDouble());
-                map.put("lng", location.path("lng").asDouble());
-                return map;
+                Map<String, Double> result = new HashMap<>();
+                result.put("lat", location.path("lat").asDouble());
+                result.put("lng", location.path("lng").asDouble());
+
+                return result;
             }
 
         } catch (Exception e) {
-            log.error("Error getting location for city {}: ", city, e);
+            log.error("Error getting location for city {}", city, e);
         }
 
         return null;
