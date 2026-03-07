@@ -125,6 +125,47 @@ class PlanServiceTest {
     }
 
     @Test
+    @DisplayName("makePlanName: 기존 이름이 여행지명과 정확히 일치할 때 오류 없이 다음 번호를 생성한다")
+    void testMakePlanNameExactMatch() {
+        // given
+        Travel travel = mock(Travel.class);
+        given(travel.getTravelName()).willReturn("서울");
+
+        Plan plan = mock(Plan.class);
+        given(plan.getPlanName()).willReturn("서울");
+
+        given(planRepository.findAll()).willReturn(List.of(plan));
+
+        // when
+        String result = planService.makePlanName(travel);
+
+        // then
+        assertEquals("서울 2", result);
+    }
+
+    @Test
+    @DisplayName("makePlanName: 기존 이름에 숫자가 아닌 접미사가 있어도 오류 없이 다음 번호를 생성한다")
+    void testMakePlanNameNonNumericSuffix() {
+        // given
+        Travel travel = mock(Travel.class);
+        given(travel.getTravelName()).willReturn("부산");
+
+        Plan plan1 = mock(Plan.class);
+        given(plan1.getPlanName()).willReturn("부산 여행"); // Not a number
+
+        Plan plan2 = mock(Plan.class);
+        given(plan2.getPlanName()).willReturn("부산 1");
+
+        given(planRepository.findAll()).willReturn(List.of(plan1, plan2));
+
+        // when
+        String result = planService.makePlanName(travel);
+
+        // then
+        assertEquals("부산 2", result);
+    }
+
+    @Test
     @DisplayName("deletePlan: 일정을 삭제한다")
     void testDeletePlan() {
         // given

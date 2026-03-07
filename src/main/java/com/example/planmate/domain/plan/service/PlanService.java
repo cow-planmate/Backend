@@ -109,24 +109,33 @@ public class PlanService {
     }
 
     public String makePlanName(Travel travel) {
-        List<Plan> plans = planRepository.findAll();
-        List<Integer> index = new ArrayList<>();
         String travelName = travel.getTravelName();
+        List<Plan> plans = planRepository.findAll();
+        List<Integer> indexes = new ArrayList<>();
+
         for (Plan plan : plans) {
-            if (plan.getPlanName().contains(travelName)) {
-                index.add(Integer.parseInt(plan.getPlanName().substring(travelName.length() + 1)));
+            String existingName = plan.getPlanName();
+            if (existingName.equals(travelName)) {
+                indexes.add(1); // The first one without a number is conceptually "1"
+            } else if (existingName.startsWith(travelName + " ")) {
+                try {
+                    String suffix = existingName.substring(travelName.length() + 1);
+                    indexes.add(Integer.parseInt(suffix));
+                } catch (NumberFormatException ignored) {
+                }
             }
         }
-        Collections.sort(index);
+        Collections.sort(indexes);
 
-        int i = 1;
-        for (Integer index2 : index) {
-            if (i != index2) {
+        int nextIndex = 1;
+        for (Integer existingIndex : indexes) {
+            if (nextIndex == existingIndex) {
+                nextIndex++;
+            } else if (nextIndex < existingIndex) {
                 break;
             }
-            i++;
         }
-        return travel.getTravelName() + " " + i;
+        return travelName + " " + nextIndex;
     }
 
     @Transactional(readOnly = true)
