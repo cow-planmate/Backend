@@ -86,7 +86,8 @@ public class PlaceTransactionService {
                     .xLocation(vo.getXLocation())
                     .yLocation(vo.getYLocation())
                     .userRatingsTotal(vo.getUserRatingsTotal())
-                    .placeTypes(vo.getTypes() == null || vo.getTypes().isEmpty() ? null : vo.getTypes().stream().collect(Collectors.joining(",")))
+                    .placeTypes(vo.getTypes() == null || vo.getTypes().isEmpty() ? null
+                            : vo.getTypes().stream().collect(Collectors.joining(",")))
                     .priceLevel(vo.getPriceLevel())
                     .sortOrder(currentSortOrder++)
                     .build());
@@ -112,6 +113,15 @@ public class PlaceTransactionService {
                             } catch (Exception e) {
                             }
                         });
+            }
+        }
+    }
+
+    public void updatePhotoUrlForPlace(String placeId, String photoUrl) {
+        if (placeId != null && photoUrl != null && !photoUrl.isBlank()) {
+            try {
+                placeSearchResultRepository.updatePhotoUrlByPlaceId(placeId, photoUrl);
+            } catch (Exception e) {
             }
         }
     }

@@ -268,12 +268,13 @@ public class PlaceService {
                             float rating = (r.getPlaceRating() != null) ? r.getPlaceRating().floatValue() : 0.0f;
                             String placeLink = (r.getPlaceLink() != null) ? r.getPlaceLink()
                                     : "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId();
-                                PlaceVO vo = new PlaceVO(r.getPlaceId(), 4, placeLink, r.getPlaceName(), r.getPlaceAddress(),
+                            PlaceVO vo = new PlaceVO(r.getPlaceId(), 4, placeLink, r.getPlaceName(),
+                                    r.getPlaceAddress(),
                                     rating, r.getPhotoUrl(), x, y, r.getIconUrl());
-                                vo.setUserRatingsTotal(r.getUserRatingsTotal());
-                                vo.setTypes(parseTypes(r.getPlaceTypes()));
-                                vo.setPriceLevel(r.getPriceLevel());
-                                return vo;
+                            vo.setUserRatingsTotal(r.getUserRatingsTotal());
+                            vo.setTypes(parseTypes(r.getPlaceTypes()));
+                            vo.setPriceLevel(r.getPriceLevel());
+                            return vo;
                         })
                         .collect(Collectors.toList());
                 fetchImagesWithCacheCheck(places);
@@ -488,7 +489,9 @@ public class PlaceService {
 
     private void fetchImagesWithCacheCheck(List<? extends PlaceVO> places) {
         placeTransactionService.updatePhotoUrlIfMissing(places);
-        googlePlaceDetails.fetchMissingImagesInBackground(places, null);
+        googlePlaceDetails.fetchMissingImagesInBackground(places, (placeId, photoUrl) -> {
+            placeTransactionService.updatePhotoUrlForPlace(placeId, photoUrl);
+        });
     }
 
     private List<String> parseTypes(String placeTypes) {
