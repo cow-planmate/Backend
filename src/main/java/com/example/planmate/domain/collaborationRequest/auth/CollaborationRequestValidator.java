@@ -24,7 +24,7 @@ public class CollaborationRequestValidator {
         }
 
         if (!request.getStatus().equals(CollaborationRequestStatus.PENDING)) {
-            throw new IllegalStateException("이미 처리된 요청입니다.");
+            throw new IllegalArgumentException("이미 처리된 요청입니다.");
         }
 
         return request;

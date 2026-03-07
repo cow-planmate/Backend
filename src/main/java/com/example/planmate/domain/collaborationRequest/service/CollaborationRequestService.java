@@ -52,7 +52,7 @@ public class CollaborationRequestService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 닉네임의 유저가 존재하지 않습니다."));
 
         if (planEditorRepository.existsByUserAndPlan(receiver, plan)) {
-            throw new IllegalStateException("이미 편집 권한이 있는 유저입니다.");
+            throw new IllegalArgumentException("이미 편집 권한이 있는 유저입니다.");
         }
 
         // 3. 이미 초대한 적이 있는지 확인 (PENDING 상태)
@@ -61,7 +61,7 @@ public class CollaborationRequestService {
                         sender, receiver, plan, CollaborationRequestType.INVITE, CollaborationRequestStatus.PENDING
                 );
         if (existingRequest.isPresent()) {
-            throw new IllegalStateException("이미 초대한 유저입니다.");
+            throw new IllegalArgumentException("이미 초대한 유저입니다.");
         }
 
         // 4. 본인이 본인에게 요청하지 못하도록 막기
@@ -98,7 +98,7 @@ public class CollaborationRequestService {
         // 3. 플랜의 작성자(owner)가 존재하는지 확인
         User owner = plan.getUser();
         if (owner == null) {
-            throw new IllegalStateException("플랜의 소유자가 존재하지 않습니다.");
+            throw new IllegalArgumentException("플랜의 소유자가 존재하지 않습니다.");
         }
 
         // 4. 본인이 본인에게 요청하지 못하도록 막기
@@ -107,7 +107,7 @@ public class CollaborationRequestService {
         }
 
         if (planEditorRepository.existsByUserAndPlan(sender, plan)) {
-            throw new IllegalStateException("이미 편집 권한이 있는 유저입니다.");
+            throw new IllegalArgumentException("이미 편집 권한이 있는 유저입니다.");
         }
 
         // 5. 이미 권한 요청 보냈는지 확인 (PENDING 상태)
@@ -117,7 +117,7 @@ public class CollaborationRequestService {
                 );
 
         if (existingRequest.isPresent()) {
-            throw new IllegalStateException("이미 권한 요청을 보낸 상태입니다.");
+            throw new IllegalArgumentException("이미 권한 요청을 보낸 상태입니다.");
         }
 
         // 6. CollaborationRequest 생성 및 저장
