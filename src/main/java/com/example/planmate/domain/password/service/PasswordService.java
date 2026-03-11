@@ -7,7 +7,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.planmate.common.enums.MailTemplate;
 import com.example.planmate.common.exception.UserNotFoundException;
 import com.example.planmate.common.service.CustomMailService;
 import com.example.planmate.domain.password.dto.ChangePasswordResponse;
@@ -74,11 +73,7 @@ public class PasswordService {
         user.changePassword(passwordEncoder.encode(tempPassword));
         userRepository.save(user);
 
-        customMailService.sendSimpleMail(
-                email,
-                MailTemplate.PASSWORD_RESET.getSubject(),
-                MailTemplate.PASSWORD_RESET.formatBody(tempPassword)
-        );
+        customMailService.sendTemporaryPasswordMail(email, tempPassword);
 
         response.setMessage("임시 비밀번호를 전송했습니다");
 

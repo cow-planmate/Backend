@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum MailTemplate {
-    VERIFICATION_CODE("planMate 인증 코드입니다.", "인증 코드: %s"),
     PASSWORD_RESET("planMate 임시 비밀번호입니다.", "임시 비밀번호: %s");
 
     private final String subject;
