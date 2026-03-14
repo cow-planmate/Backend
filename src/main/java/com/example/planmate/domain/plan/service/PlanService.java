@@ -85,7 +85,7 @@ public class PlanService {
                 .findById(transportationCategoryId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 교통수단입니다"));
         Plan plan = Plan.builder()
-                .planName(makePlanName(travel))
+                .planName(makePlanName(travel, userId))
                 .departure(departure)
                 .adultCount(adultCount)
                 .childCount(childCount)
@@ -108,9 +108,9 @@ public class PlanService {
         return makePlanResponse;
     }
 
-    public String makePlanName(Travel travel) {
+    public String makePlanName(Travel travel, UUID userId) {
         String travelName = travel.getTravelName();
-        List<Plan> plans = planRepository.findAll();
+        List<Plan> plans = planRepository.findByUserUserId(userId);
         List<Integer> indexes = new ArrayList<>();
 
         for (Plan plan : plans) {
@@ -255,7 +255,7 @@ public class PlanService {
                 .findById(transportationCategoryId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 교통수단입니다"));
         Plan plan = Plan.builder()
-                .planName(makePlanName(travel))
+                .planName(makePlanName(travel, userId))
                 .departure(departure)
                 .adultCount(adultCount)
                 .childCount(childCount)
