@@ -488,10 +488,12 @@ public class PlanService {
     }
 
     @Transactional
-    public GetShareLinkResponse getShareLink(UUID userId, UUID planId) {
+    public GetShareLinkResponse getShareLink(UUID planId) {
         GetShareLinkResponse response = new GetShareLinkResponse();
 
-        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+//        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+        Plan plan = planRepository.findById(planId)
+                .orElseThrow(() -> new IllegalArgumentException("플랜이 존재하지 않습니다."));
 
         Optional<PlanShare> existingShare = planShareRepository.findById(planId);
         if (existingShare.isPresent()) {

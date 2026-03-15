@@ -182,9 +182,8 @@ public class PlanController {
 
     @Operation(summary = "공유 링크 생성/조회", description = "다른 사람에게 공유할 수 있는 플랜 뷰어 전용 URL을 생성하거나 조회합니다.")
     @GetMapping("/{planId}/share")
-    public ResponseEntity<GetShareLinkResponse> getShareLink(Authentication authentication, @PathVariable("planId") UUID planId) throws IOException {
-        UUID userId = UUID.fromString(authentication.getName());
-        GetShareLinkResponse response = planService.getShareLink(userId, planId);
+    public ResponseEntity<GetShareLinkResponse> getShareLink(@PathVariable("planId") UUID planId) throws IOException {
+        GetShareLinkResponse response = planService.getShareLink(planId);
         return ResponseEntity.ok(response);
     }
 
