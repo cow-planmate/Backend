@@ -24,6 +24,7 @@ public class AuthWhitelist {
             "/api/plan/lodging/**",
             "/api/plan/place/**",
             "/api/plan/nextplace",
+            "/api/plan/*/share",
             "/logs/**",
             "/image/**",
             "/api/oauth/**",
