@@ -1,4 +1,4 @@
-package com.example.planmate.common.enums;
+package com.example.planmate.domain.emailVerificaiton.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

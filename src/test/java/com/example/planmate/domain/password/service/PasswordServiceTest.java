@@ -21,7 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.example.planmate.common.service.CustomMailService;
+import com.example.planmate.domain.emailVerificaiton.service.CustomMailService;
 import com.example.planmate.domain.password.dto.ChangePasswordResponse;
 import com.example.planmate.domain.password.dto.SendTempPasswordResponse;
 import com.example.planmate.domain.password.dto.VerifyPasswordResponse;
