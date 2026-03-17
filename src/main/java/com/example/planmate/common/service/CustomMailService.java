@@ -149,12 +149,15 @@ public class CustomMailService {
                                                 <tr>
                                                     <td style="padding:0 32px 24px;">
                                                         <table role="presentation" cellpadding="0" cellspacing="0" width="100%%" bgcolor="#f4f7ff" style="background-color:#f4f7ff; border:1px solid #d8e3ff; border-radius:24px;">
-                                                            <tr>
-                                                                <td style="padding:22px 24px 10px; color:#6676a8; font-size:13px; font-weight:700; letter-spacing:0.12em; text-align:center;">__VALUE_LABEL__</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td style="padding:0 24px 24px; color:#2453ff; font-size:44px; line-height:1.15; font-weight:900; letter-spacing:0.16em; text-align:center; word-break:break-word;">__VALUE__</td>
-                                                            </tr>
+                                            <tr>
+                                                <td style="padding:22px 24px 10px; color:#6676a8; font-size:13px; font-weight:700; letter-spacing:0.12em; text-align:center;">__VALUE_LABEL__</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding:0 24px 24px; text-align:center;">
+                                                    <div style="display:inline-block; vertical-align:middle; color:#2453ff; font-size:44px; line-height:1.15; font-weight:900; letter-spacing:0.16em; word-break:break-word;">__VALUE__</div>
+                                                    <button id="copyBtn" style="display:inline-block; vertical-align:middle; margin-left:12px; padding:8px 16px; background-color:#2453ff; color:#ffffff; border:none; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer; text-decoration:none;">복사하기</button>
+                                                </td>
+                                            </tr>
                                                         </table>
                                                     </td>
                                                 </tr>
@@ -214,6 +217,7 @@ public class CustomMailService {
                 .replace("__VALUE__", escapedValue)
                 .replace("__META_LABEL__", escapedMetaLabel)
                 .replace("__META_VALUE__", escapedMetaValue)
-                .replace("__NOTICE__", escapedNotice);
+                .replace("__NOTICE__", escapedNotice)
+                + "<script>document.getElementById('copyBtn').onclick = function() { navigator.clipboard.writeText('" + escapedValue + "').then(function() { alert('복사되었습니다!'); }); };</script>";
     }
 }
