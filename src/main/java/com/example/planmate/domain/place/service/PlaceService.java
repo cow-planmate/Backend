@@ -41,6 +41,7 @@ public class PlaceService {
     private final GoogleMap googleMap;
     private final GooglePlaceDetails googlePlaceDetails;
     private final PlaceTransactionService placeTransactionService;
+    private final com.example.planmate.domain.travel.service.TravelService travelService;
 
     @FunctionalInterface
     private interface ThrowingBiFunction<T, U, R> {
@@ -228,54 +229,20 @@ public class PlaceService {
         return response;
     }
 
-    public PlaceResponse getTourPlace(UUID userId, UUID planId) throws IOException {
-        return getPlaceForUserAndPlan(userId, planId, 0);
-    }
-
-    public PlaceResponse getLodgingPlace(UUID userId, UUID planId) throws IOException {
-        return getPlaceForUserAndPlan(userId, planId, 1);
-    }
-
-    public PlaceResponse getRestaurantPlace(UUID userId, UUID planId) throws IOException {
-        return getPlaceForUserAndPlan(userId, planId, 2);
-    }
-
-    public PlaceResponse getSearchPlace(UUID userId, UUID planId, String query) throws IOException {
+    private PlaceResponse getPlaceWithCache(int travelId, String travelName, int categoryId, List<String> searchThemes, Integer targetThemeId, String cacheKey) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-
-        String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
-        String travelName = travelCategoryName + " " + plan.getTravel().getTravelName();
-        int travelId = plan.getTravel().getTravelId();
-
-        // Use cache logic for general search too
-        String cacheKey = travelId + ":4:" + query;
         var existingConditionOpt = placeTransactionService.getValidCondition(cacheKey);
 
         if (existingConditionOpt.isPresent()) {
             PlaceSearchCondition existingCondition = existingConditionOpt.get();
             List<PlaceSearchResult> first20 = placeTransactionService.getCachedResults(existingCondition, 1, 20);
             if (!first20.isEmpty()) {
-                // Return first 20 from cache
                 List<PlaceVO> places = first20.stream()
                         .filter(r -> {
                             double rating = (r.getPlaceRating() != null) ? r.getPlaceRating().doubleValue() : 0.0;
                             return rating >= 4.0;
                         })
-                        .map(r -> {
-                            double x = (r.getXLocation() != null) ? r.getXLocation() : 0.0;
-                            double y = (r.getYLocation() != null) ? r.getYLocation() : 0.0;
-                            float rating = (r.getPlaceRating() != null) ? r.getPlaceRating().floatValue() : 0.0f;
-                            String placeLink = (r.getPlaceLink() != null) ? r.getPlaceLink()
-                                    : "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId();
-                            PlaceVO vo = new PlaceVO(r.getPlaceId(), 4, placeLink, r.getPlaceName(),
-                                    r.getPlaceAddress(),
-                                    rating, r.getPhotoUrl(), x, y, r.getIconUrl());
-                            vo.setUserRatingsTotal(r.getUserRatingsTotal());
-                            vo.setTypes(parseTypes(r.getPlaceTypes()));
-                            vo.setPriceLevel(r.getPriceLevel());
-                            return vo;
-                        })
+                        .map(r -> convertToVO(r, categoryId))
                         .collect(Collectors.toList());
                 fetchImagesWithCacheCheck(places);
                 response.addPlace(places);
@@ -296,17 +263,38 @@ public class PlaceService {
         Double lat = (coords != null) ? coords.getFirst() : null;
         Double lng = (coords != null) ? coords.getSecond() : null;
 
-        Pair<List<PlaceVO>, List<String>> initialPair = googleMap.getSearchPlace(query, travelName, lat, lng);
-        List<PlaceVO> detailed = initialPair.getFirst();
-        List<String> nextTokens = initialPair.getSecond();
+        Pair rawPair;
+        boolean includeBaseline = (searchThemes == null || searchThemes.isEmpty());
 
-        // Save to Cache
-        PlaceSearchCondition condition = placeTransactionService.saveSearchCondition(travelId, 4, null, cacheKey);
+        if (categoryId == 0) {
+            rawPair = googleMap.getTourPlace(travelName, searchThemes, lat, lng, includeBaseline);
+        } else if (categoryId == 1) {
+            rawPair = googleMap.getLodgingPlace(travelName, searchThemes, lat, lng, includeBaseline);
+        } else if (categoryId == 2) {
+            rawPair = googleMap.getRestaurantPlace(travelName, searchThemes, lat, lng, includeBaseline);
+        } else {
+            // categoryId 4 (Search) case
+            rawPair = googleMap.getSearchPlace(cacheKey.substring(cacheKey.lastIndexOf(":") + 1), travelName, lat, lng);
+        }
+
+        Pair<List<? extends PlaceVO>, List<String>> pair = (Pair) rawPair;
+        List<PlaceVO> detailed = (List<PlaceVO>) pair.getFirst();
+        List<String> nextTokens = pair.getSecond();
+
+        PlaceSearchCondition condition = placeTransactionService.saveSearchCondition(travelId, categoryId, targetThemeId, cacheKey);
         placeTransactionService.clearOldResults(condition);
 
         int currentSortOrder = 1;
         placeTransactionService.saveSearchResults(condition, detailed, currentSortOrder);
         currentSortOrder += detailed.size();
+
+        if (!nextTokens.isEmpty()) {
+            preFetchRemainingPages(cacheKey, nextTokens, currentSortOrder, categoryId);
+            response.addNextPageToken(List.of(NextPageTokenDTO.builder()
+                    .token(cacheKey)
+                    .page(2)
+                    .build()));
+        }
 
         List<PlaceVO> filteredDetailed = detailed.stream()
                 .filter(v -> v.getRating() >= 4.0)
@@ -314,15 +302,52 @@ public class PlaceService {
         fetchImagesWithCacheCheck(filteredDetailed);
         response.addPlace(filteredDetailed);
 
-        if (!nextTokens.isEmpty()) {
-            preFetchRemainingPages(cacheKey, nextTokens, currentSortOrder, 4);
-            response.addNextPageToken(List.of(NextPageTokenDTO.builder()
-                    .token(cacheKey)
-                    .page(2)
-                    .build()));
-        }
-
         return response;
+    }
+
+    private PlaceVO convertToVO(PlaceSearchResult r, int categoryId) {
+        double rating = (r.getPlaceRating() != null) ? r.getPlaceRating().doubleValue() : 0.0;
+        double x = (r.getXLocation() != null) ? r.getXLocation() : 0.0;
+        double y = (r.getYLocation() != null) ? r.getYLocation() : 0.0;
+        String placeLink = (r.getPlaceLink() != null) ? r.getPlaceLink()
+                : "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId();
+
+        PlaceVO vo;
+        if (categoryId == 0) {
+            vo = new TourPlaceVO(r.getPlaceId(), categoryId, placeLink, r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
+        } else if (categoryId == 1) {
+            vo = new LodgingPlaceVO(r.getPlaceId(), categoryId, placeLink, r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
+        } else if (categoryId == 2) {
+            vo = new RestaurantPlaceVO(r.getPlaceId(), categoryId, placeLink, r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
+        } else {
+            vo = new PlaceVO(r.getPlaceId(), categoryId, placeLink, r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
+        }
+        vo.setUserRatingsTotal(r.getUserRatingsTotal());
+        vo.setTypes(parseTypes(r.getPlaceTypes()));
+        vo.setPriceLevel(r.getPriceLevel());
+        return vo;
+    }
+
+    public PlaceResponse getTourPlace(UUID userId, UUID planId) throws IOException {
+        return getPlaceForUserAndPlan(userId, planId, 0);
+    }
+
+    public PlaceResponse getLodgingPlace(UUID userId, UUID planId) throws IOException {
+        return getPlaceForUserAndPlan(userId, planId, 1);
+    }
+
+    public PlaceResponse getRestaurantPlace(UUID userId, UUID planId) throws IOException {
+        return getPlaceForUserAndPlan(userId, planId, 2);
+    }
+
+    public PlaceResponse getSearchPlace(UUID userId, UUID planId, String query) throws IOException {
+        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+        String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
+        String travelName = travelCategoryName + " " + plan.getTravel().getTravelName();
+        int travelId = plan.getTravel().getTravelId();
+        String cacheKey = travelId + ":4:" + query;
+
+        return getPlaceWithCache(travelId, travelName, 4, null, null, cacheKey);
     }
 
     private void preFetchRemainingPages(String cacheKey, List<String> nextTokens, int startSortOrder, int categoryId) {
@@ -453,38 +478,27 @@ public class PlaceService {
     // --- Legacy / Compatibility methods for endpoints without userId/planId ---
 
     public PlaceResponse getTourPlace(String travelCategoryName, String travelName) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        Pair<List<TourPlaceVO>, List<String>> pair = googleMap.getTourPlace(travelCategoryName + " " + travelName,
-                new ArrayList<>());
-        fetchImagesWithCacheCheck(pair.getFirst());
-        response.addPlace(pair.getFirst());
-        return response;
+        com.example.planmate.domain.travel.entity.Travel travel = travelService.getTravelFromCityString(travelCategoryName + " " + travelName);
+        String cacheKey = travel.getTravelId() + ":0:";
+        return getPlaceWithCache(travel.getTravelId(), travelCategoryName + " " + travelName, 0, new ArrayList<>(), null, cacheKey);
     }
 
     public PlaceResponse getLodgingPlace(String travelCategoryName, String travelName) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        Pair<List<LodgingPlaceVO>, List<String>> pair = googleMap.getLodgingPlace(travelCategoryName + " " + travelName,
-                new ArrayList<>());
-        fetchImagesWithCacheCheck(pair.getFirst());
-        response.addPlace(pair.getFirst());
-        return response;
+        com.example.planmate.domain.travel.entity.Travel travel = travelService.getTravelFromCityString(travelCategoryName + " " + travelName);
+        String cacheKey = travel.getTravelId() + ":1:";
+        return getPlaceWithCache(travel.getTravelId(), travelCategoryName + " " + travelName, 1, new ArrayList<>(), null, cacheKey);
     }
 
     public PlaceResponse getRestaurantPlace(String travelCategoryName, String travelName) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        Pair<List<RestaurantPlaceVO>, List<String>> pair = googleMap
-                .getRestaurantPlace(travelCategoryName + " " + travelName, new ArrayList<>());
-        fetchImagesWithCacheCheck(pair.getFirst());
-        response.addPlace(pair.getFirst());
-        return response;
+        com.example.planmate.domain.travel.entity.Travel travel = travelService.getTravelFromCityString(travelCategoryName + " " + travelName);
+        String cacheKey = travel.getTravelId() + ":2:";
+        return getPlaceWithCache(travel.getTravelId(), travelCategoryName + " " + travelName, 2, new ArrayList<>(), null, cacheKey);
     }
 
     public PlaceResponse getSearchPlace(String query) throws IOException {
-        PlaceResponse response = new PlaceResponse();
-        Pair<List<PlaceVO>, List<String>> pair = googleMap.getSearchPlace(query);
-        fetchImagesWithCacheCheck(pair.getFirst());
-        response.addPlace(pair.getFirst());
-        return response;
+        // For general search without location, use a special travelId (e.g., 0)
+        String cacheKey = "0:4:" + query;
+        return getPlaceWithCache(0, null, 4, null, null, cacheKey);
     }
 
     private void fetchImagesWithCacheCheck(List<? extends PlaceVO> places) {

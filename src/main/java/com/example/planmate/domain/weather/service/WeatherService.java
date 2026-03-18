@@ -21,14 +21,12 @@ public class WeatherService {
     @Transactional
     public WeatherResponse getWeather(String city, String startDateStr, String endDateStr) {
 
-        Map<String, Double> location =
-                travelService.getOrInitializeLocation(city);
+        Map<String, Double> location = travelService.getOrInitializeLocation(city);
 
         if (location == null) {
             return googleWeather.createFallbackResponse(
                     startDateStr,
-                    endDateStr
-            );
+                    endDateStr);
         }
 
         double lat = location.get("lat");
@@ -38,7 +36,6 @@ public class WeatherService {
                 lat,
                 lng,
                 startDateStr,
-                endDateStr
-        );
+                endDateStr);
     }
 }

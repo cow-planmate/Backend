@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -85,7 +84,7 @@ public class PlanService {
                 .findById(transportationCategoryId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 교통수단입니다"));
         Plan plan = Plan.builder()
-                .planName(makePlanName(travel, userId))
+                .planName(travel.getTravelName())
                 .departure(departure)
                 .adultCount(adultCount)
                 .childCount(childCount)
@@ -106,36 +105,6 @@ public class PlanService {
         MakePlanResponse makePlanResponse = new MakePlanResponse();
         makePlanResponse.setPlanId(savedPlan.getPlanId());
         return makePlanResponse;
-    }
-
-    public String makePlanName(Travel travel, UUID userId) {
-        String travelName = travel.getTravelName();
-        List<Plan> plans = planRepository.findByUserUserId(userId);
-        List<Integer> indexes = new ArrayList<>();
-
-        for (Plan plan : plans) {
-            String existingName = plan.getPlanName();
-            if (existingName.equals(travelName)) {
-                indexes.add(1); // The first one without a number is conceptually "1"
-            } else if (existingName.startsWith(travelName + " ")) {
-                try {
-                    String suffix = existingName.substring(travelName.length() + 1);
-                    indexes.add(Integer.parseInt(suffix));
-                } catch (NumberFormatException ignored) {
-                }
-            }
-        }
-        Collections.sort(indexes);
-
-        int nextIndex = 1;
-        for (Integer existingIndex : indexes) {
-            if (nextIndex == existingIndex) {
-                nextIndex++;
-            } else if (nextIndex < existingIndex) {
-                break;
-            }
-        }
-        return travelName + " " + nextIndex;
     }
 
     @Transactional(readOnly = true)
@@ -491,7 +460,7 @@ public class PlanService {
     public GetShareLinkResponse getShareLink(UUID planId) {
         GetShareLinkResponse response = new GetShareLinkResponse();
 
-//        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+        // Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new IllegalArgumentException("플랜이 존재하지 않습니다."));
 

@@ -8,7 +8,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import com.example.planmate.common.auth.JwtTokenProvider;
-import com.example.planmate.common.service.CustomMailService;
 import com.example.planmate.domain.emailVerificaiton.EmailVerification;
 import com.example.planmate.domain.emailVerificaiton.dto.EmailVerificationResponse;
 import com.example.planmate.domain.emailVerificaiton.dto.SendEmailResponse;

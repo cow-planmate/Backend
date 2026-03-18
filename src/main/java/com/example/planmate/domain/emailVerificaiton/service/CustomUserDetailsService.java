@@ -1,4 +1,4 @@
-package com.example.planmate.common.service;
+package com.example.planmate.domain.emailVerificaiton.service;
 
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.CustomUserDetails;
