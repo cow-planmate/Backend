@@ -224,7 +224,7 @@ public class PlanService {
                 .findById(transportationCategoryId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 교통수단입니다"));
         Plan plan = Plan.builder()
-                .planName(makePlanName(travel, userId))
+                .planName(travel.getTravelName())
                 .departure(departure)
                 .adultCount(adultCount)
                 .childCount(childCount)
