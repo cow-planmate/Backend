@@ -1,0 +1,74 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: planmate-db-backup
+  namespace: default
+spec:
+  schedule: "0 */2 * * *" # 2시간마다 실행 (0, 2, 4, ...)
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: db-backup
+            image: postgres:15-alpine # pg_dump가 기본 포함된 이미지 사용
+            env:
+            - name: PGHOST
+              value: "planmate-db-rw"
+            - name: PGDATABASE
+              value: "planmate"
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: planmate-db-user-password
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: planmate-db-user-password
+                  key: password
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: planmate-secret
+                  key: MINIO_ACCESS_KEY
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: planmate-secret
+                  key: MINIO_SECRET_KEY
+            - name: MINIO_URL
+              value: "http://myminio-hl.default.svc.cluster.local:9000"
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              # 1. mc (MinIO Client) 설치
+              if ! [ -x "$(command -v mc)" ]; then
+                echo "Installing mc..."
+                wget https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/local/bin/mc
+                chmod +x /usr/local/bin/mc
+              fi
+
+              # 2. MinIO 별칭 설정
+              mc alias set myminio $MINIO_URL $MINIO_ACCESS_KEY $MINIO_SECRET_KEY
+
+              # 3. 백업 파일 생성 (타임스탬프 포함)
+              TIMESTAMP=$(date +%Y%m%d-%H%M)
+              FILENAME="/tmp/planmate-backup-$TIMESTAMP.sql.gz"
+              echo "Starting pg_dump..."
+              pg_dump $PGDATABASE | gzip > $FILENAME
+
+              # 4. MinIO 업로드 (planmate 버킷의 backups/ 폴더)
+              echo "Uploading to MinIO..."
+              mc cp $FILENAME myminio/planmate/backups/
+
+              # 5. 2일(48시간)이 지난 백업 파일 삭제
+              echo "Cleaning up old backups (older than 2d)..."
+              mc rm --recursive --older-than 2d myminio/planmate/backups/
+
+              echo "Backup completed successfully: $FILENAME"
+          restartPolicy: OnFailure
