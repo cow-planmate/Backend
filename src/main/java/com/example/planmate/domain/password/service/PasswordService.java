@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.planmate.common.exception.UserNotFoundException;
-import com.example.planmate.domain.emailVerificaiton.service.CustomMailService;
+import com.example.planmate.domain.emailVerification.service.CustomMailService;
 import com.example.planmate.domain.password.dto.ChangePasswordResponse;
 import com.example.planmate.domain.password.dto.SendTempPasswordResponse;
 import com.example.planmate.domain.password.dto.VerifyPasswordResponse;

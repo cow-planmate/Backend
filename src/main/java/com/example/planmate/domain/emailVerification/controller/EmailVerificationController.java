@@ -1,4 +1,4 @@
-package com.example.planmate.domain.emailVerificaiton.controller;
+package com.example.planmate.domain.emailVerification.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -6,11 +6,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.planmate.domain.emailVerificaiton.dto.EmailVerificationRequest;
-import com.example.planmate.domain.emailVerificaiton.dto.EmailVerificationResponse;
-import com.example.planmate.domain.emailVerificaiton.dto.SendEmailRequest;
-import com.example.planmate.domain.emailVerificaiton.dto.SendEmailResponse;
-import com.example.planmate.domain.emailVerificaiton.service.EmailVerificationService;
+import com.example.planmate.domain.emailVerification.dto.EmailVerificationRequest;
+import com.example.planmate.domain.emailVerification.dto.EmailVerificationResponse;
+import com.example.planmate.domain.emailVerification.dto.SendEmailRequest;
+import com.example.planmate.domain.emailVerification.dto.SendEmailResponse;
+import com.example.planmate.domain.emailVerification.service.EmailVerificationService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

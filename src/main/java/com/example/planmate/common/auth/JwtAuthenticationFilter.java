@@ -13,7 +13,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.example.planmate.common.config.AuthWhitelist;
 import com.example.planmate.common.config.OptionalAuthWhitelist;
-import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
+import com.example.planmate.domain.emailVerification.enums.EmailVerificationPurpose;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

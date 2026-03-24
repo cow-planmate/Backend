@@ -1,4 +1,4 @@
-package com.example.planmate.domain.emailVerificaiton.service;
+package com.example.planmate.domain.emailVerification.service;
 
 import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
@@ -8,10 +8,10 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import com.example.planmate.common.auth.JwtTokenProvider;
-import com.example.planmate.domain.emailVerificaiton.EmailVerification;
-import com.example.planmate.domain.emailVerificaiton.dto.EmailVerificationResponse;
-import com.example.planmate.domain.emailVerificaiton.dto.SendEmailResponse;
-import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
+import com.example.planmate.domain.emailVerification.EmailVerification;
+import com.example.planmate.domain.emailVerification.dto.EmailVerificationResponse;
+import com.example.planmate.domain.emailVerification.dto.SendEmailResponse;
+import com.example.planmate.domain.emailVerification.enums.EmailVerificationPurpose;
 import com.example.planmate.domain.user.repository.UserRepository;
 
 @Service

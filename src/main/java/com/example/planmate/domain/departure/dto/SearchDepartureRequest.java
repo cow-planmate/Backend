@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class SearchDepartureRepuest {
+public class SearchDepartureRequest {
     private String departureQuery;
 
 }

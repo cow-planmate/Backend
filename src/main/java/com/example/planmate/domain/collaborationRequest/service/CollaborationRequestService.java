@@ -38,7 +38,6 @@ public class CollaborationRequestService {
     private final PlanEditorRepository planEditorRepository;
     private final CollaborationRequestValidator collaborationRequestValidator;
 
-    @Transactional
     public InviteUserToPlanResponse inviteUserToPlan(UUID senderId, UUID planId, String receiverNickname) {
         InviteUserToPlanResponse response = new InviteUserToPlanResponse();
 
@@ -84,7 +83,6 @@ public class CollaborationRequestService {
 
         return response;
     }
-    @Transactional
     public RequestEditAccessResponse requestEditAccess(UUID senderId, UUID planId) {
         RequestEditAccessResponse response = new RequestEditAccessResponse();
 
@@ -136,7 +134,6 @@ public class CollaborationRequestService {
         return response;
     }
 
-    @Transactional
     public AcceptRequestResponse acceptRequest(UUID receiverId, int collaborationRequestId) {
         AcceptRequestResponse response = new AcceptRequestResponse();
 
@@ -160,7 +157,6 @@ public class CollaborationRequestService {
         return response;
     }
 
-    @Transactional
     public RejectRequestResponse rejectRequest(UUID receiverId, int collaborationRequestId) {
         RejectRequestResponse response = new RejectRequestResponse();
 

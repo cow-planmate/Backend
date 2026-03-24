@@ -18,7 +18,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Schema(description = "플랜 전체 정보 조회 응답 데이터")
-public class GetCompletePlanResponse extends CommonResponse {
+public class GetCompletePlanResponse extends CommonResponse implements PlanDetailPopulator {
     @Schema(description = "플랜의 기본 정보(프레임)")
     private PlanFrameVO planFrame;
 

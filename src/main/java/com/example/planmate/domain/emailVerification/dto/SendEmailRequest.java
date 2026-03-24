@@ -1,6 +1,6 @@
-package com.example.planmate.domain.emailVerificaiton.dto;
+package com.example.planmate.domain.emailVerification.dto;
 
-import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
+import com.example.planmate.domain.emailVerification.enums.EmailVerificationPurpose;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;

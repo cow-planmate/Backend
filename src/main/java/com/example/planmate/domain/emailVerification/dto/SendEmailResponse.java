@@ -1,4 +1,4 @@
-package com.example.planmate.domain.emailVerificaiton.dto;
+package com.example.planmate.domain.emailVerification.dto;
 
 import com.example.planmate.common.dto.CommonResponse;
 import lombok.Getter;
