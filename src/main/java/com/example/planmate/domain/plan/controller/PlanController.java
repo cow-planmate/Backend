@@ -136,8 +136,8 @@ public class PlanController {
     @PatchMapping("/{planId}/name")
     public ResponseEntity<EditPlanNameResponse> editPlanName(Authentication authentication, @PathVariable("planId") UUID planId, @RequestBody EditPlanNameRequest editPlanNameRequest) {
         UUID userId = UUID.fromString(authentication.getName());
-        EditPlanNameResponse reponse = planService.editPlanName(userId, planId, editPlanNameRequest.getPlanName());
-        return ResponseEntity.ok(reponse);
+        EditPlanNameResponse response = planService.editPlanName(userId, planId, editPlanNameRequest.getPlanName());
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "본인 편집 권한 포기", description = "초대받은 플랜에서 본인의 편집 권한을 포기하고 목록에서 제거합니다.")
