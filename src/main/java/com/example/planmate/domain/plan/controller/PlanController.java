@@ -136,7 +136,7 @@ public class PlanController {
     @PatchMapping("/{planId}/name")
     public ResponseEntity<EditPlanNameResponse> editPlanName(Authentication authentication, @PathVariable("planId") UUID planId, @RequestBody EditPlanNameRequest editPlanNameRequest) {
         UUID userId = UUID.fromString(authentication.getName());
-        EditPlanNameResponse reponse = planService.EditPlanName(userId, planId, editPlanNameRequest.getPlanName());
+        EditPlanNameResponse reponse = planService.editPlanName(userId, planId, editPlanNameRequest.getPlanName());
         return ResponseEntity.ok(reponse);
     }
 

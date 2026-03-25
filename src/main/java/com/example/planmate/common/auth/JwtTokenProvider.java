@@ -7,7 +7,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
+import com.example.planmate.domain.emailVerification.enums.EmailVerificationPurpose;
 import com.example.planmate.domain.refreshToken.service.RefreshTokenStore;
 import com.sharedsync.shared.auth.AuthenticationTokenResolver;
 

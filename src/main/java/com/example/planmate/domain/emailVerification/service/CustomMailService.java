@@ -1,4 +1,4 @@
-package com.example.planmate.domain.emailVerificaiton.service;
+package com.example.planmate.domain.emailVerification.service;
 
 import java.nio.charset.StandardCharsets;
 

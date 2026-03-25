@@ -14,7 +14,9 @@ import java.util.stream.Collectors;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
+import com.example.planmate.common.exception.UserNotFoundException;
 import com.example.planmate.common.externalAPI.GoogleMap;
+import com.example.planmate.domain.place.enums.PlaceCategoryType;
 import com.example.planmate.common.externalAPI.GooglePlaceDetails;
 import com.example.planmate.common.valueObject.LodgingPlaceVO;
 import com.example.planmate.common.valueObject.PlaceVO;
@@ -81,7 +83,7 @@ public class PlaceService {
         int travelId = plan.getTravel().getTravelId();
 
         // 1. Get user's preferred themes for this category
-        List<PreferredTheme> userThemes = userRepository.findById(userId).get().getPreferredThemes();
+        List<PreferredTheme> userThemes = userRepository.findById(userId).orElseThrow(UserNotFoundException::new).getPreferredThemes();
         List<PreferredTheme> filteredThemes = userThemes.stream()
                 .filter(pt -> pt.getPreferredThemeCategory().getPreferredThemeCategoryId() == preferredThemeCategoryId)
                 .collect(Collectors.toList());
@@ -126,11 +128,11 @@ public class PlaceService {
                             double y = (r.getYLocation() != null) ? r.getYLocation() : 0.0;
                             String placeLink = "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId();
 
-                            if (preferredThemeCategoryId == 0) {
+                            if (preferredThemeCategoryId == PlaceCategoryType.TOUR.getId()) {
                                 vo = new TourPlaceVO(r.getPlaceId(), preferredThemeCategoryId, placeLink,
                                         r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y,
                                         r.getIconUrl());
-                            } else if (preferredThemeCategoryId == 1) {
+                            } else if (preferredThemeCategoryId == PlaceCategoryType.LODGING.getId()) {
                                 vo = new LodgingPlaceVO(r.getPlaceId(), preferredThemeCategoryId, placeLink,
                                         r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y,
                                         r.getIconUrl());
@@ -174,9 +176,9 @@ public class PlaceService {
             // 루프 안에서는 개별 테마에만 집중하고, 기본값(Baseline)은 루프가 끝난 뒤 합계가 부족할 때만 처리합니다.
             boolean includeBaseline = (theme == null);
 
-            if (preferredThemeCategoryId == 0) {
+            if (preferredThemeCategoryId == PlaceCategoryType.TOUR.getId()) {
                 rawPair = googleMap.getTourPlace(travelName, searchThemes, lat, lng, includeBaseline);
-            } else if (preferredThemeCategoryId == 1) {
+            } else if (preferredThemeCategoryId == PlaceCategoryType.LODGING.getId()) {
                 rawPair = googleMap.getLodgingPlace(travelName, searchThemes, lat, lng, includeBaseline);
             } else {
                 rawPair = googleMap.getRestaurantPlace(travelName, searchThemes, lat, lng, includeBaseline);
@@ -272,14 +274,14 @@ public class PlaceService {
         Pair rawPair;
         boolean includeBaseline = (searchThemes == null || searchThemes.isEmpty());
 
-        if (categoryId == 0) {
+        if (categoryId == PlaceCategoryType.TOUR.getId()) {
             rawPair = googleMap.getTourPlace(travelName, searchThemes, lat, lng, includeBaseline);
-        } else if (categoryId == 1) {
+        } else if (categoryId == PlaceCategoryType.LODGING.getId()) {
             rawPair = googleMap.getLodgingPlace(travelName, searchThemes, lat, lng, includeBaseline);
-        } else if (categoryId == 2) {
+        } else if (categoryId == PlaceCategoryType.RESTAURANT.getId()) {
             rawPair = googleMap.getRestaurantPlace(travelName, searchThemes, lat, lng, includeBaseline);
         } else {
-            // categoryId 4 (Search) case
+            // categoryId SEARCH(4) case
             rawPair = googleMap.getSearchPlace(cacheKey.substring(cacheKey.lastIndexOf(":") + 1), travelName, lat, lng);
         }
 
@@ -319,11 +321,11 @@ public class PlaceService {
                 : "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId();
 
         PlaceVO vo;
-        if (categoryId == 0) {
+        if (categoryId == PlaceCategoryType.TOUR.getId()) {
             vo = new TourPlaceVO(r.getPlaceId(), categoryId, placeLink, r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
-        } else if (categoryId == 1) {
+        } else if (categoryId == PlaceCategoryType.LODGING.getId()) {
             vo = new LodgingPlaceVO(r.getPlaceId(), categoryId, placeLink, r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
-        } else if (categoryId == 2) {
+        } else if (categoryId == PlaceCategoryType.RESTAURANT.getId()) {
             vo = new RestaurantPlaceVO(r.getPlaceId(), categoryId, placeLink, r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
         } else {
             vo = new PlaceVO(r.getPlaceId(), categoryId, placeLink, r.getPlaceName(), r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
@@ -351,9 +353,9 @@ public class PlaceService {
         String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
         String travelName = travelCategoryName + " " + plan.getTravel().getTravelName();
         int travelId = plan.getTravel().getTravelId();
-        String cacheKey = travelId + ":4:" + query;
+        String cacheKey = travelId + ":" + PlaceCategoryType.SEARCH.getId() + ":" + query;
 
-        return getPlaceWithCache(travelId, travelName, 4, null, null, cacheKey);
+        return getPlaceWithCache(travelId, travelName, PlaceCategoryType.SEARCH.getId(), null, null, cacheKey);
     }
 
     private void preFetchRemainingPages(String cacheKey, List<String> nextTokens, int startSortOrder, int categoryId) {
@@ -439,13 +441,13 @@ public class PlaceService {
                         double y = (r.getYLocation() != null) ? r.getYLocation() : 0.0;
                         String placeLink = "https://www.google.com/maps/place/?q=place_id:" + r.getPlaceId();
 
-                        if (categoryId == 0) {
+                        if (categoryId == PlaceCategoryType.TOUR.getId()) {
                             vo = new TourPlaceVO(r.getPlaceId(), categoryId, placeLink, r.getPlaceName(),
                                     r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
-                        } else if (categoryId == 1) {
+                        } else if (categoryId == PlaceCategoryType.LODGING.getId()) {
                             vo = new LodgingPlaceVO(r.getPlaceId(), categoryId, placeLink, r.getPlaceName(),
                                     r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
-                        } else if (categoryId == 2) {
+                        } else if (categoryId == PlaceCategoryType.RESTAURANT.getId()) {
                             vo = new RestaurantPlaceVO(r.getPlaceId(), categoryId, placeLink, r.getPlaceName(),
                                     r.getPlaceAddress(), (float) rating, r.getPhotoUrl(), x, y, r.getIconUrl());
                         } else {
@@ -485,26 +487,26 @@ public class PlaceService {
 
     public PlaceResponse getTourPlace(String travelCategoryName, String travelName) throws IOException {
         com.example.planmate.domain.travel.entity.Travel travel = travelService.getTravelFromCityString(travelCategoryName + " " + travelName);
-        String cacheKey = travel.getTravelId() + ":0:";
-        return getPlaceWithCache(travel.getTravelId(), travelCategoryName + " " + travelName, 0, new ArrayList<>(), null, cacheKey);
+        String cacheKey = travel.getTravelId() + ":" + PlaceCategoryType.TOUR.getId() + ":";
+        return getPlaceWithCache(travel.getTravelId(), travelCategoryName + " " + travelName, PlaceCategoryType.TOUR.getId(), new ArrayList<>(), null, cacheKey);
     }
 
     public PlaceResponse getLodgingPlace(String travelCategoryName, String travelName) throws IOException {
         com.example.planmate.domain.travel.entity.Travel travel = travelService.getTravelFromCityString(travelCategoryName + " " + travelName);
-        String cacheKey = travel.getTravelId() + ":1:";
-        return getPlaceWithCache(travel.getTravelId(), travelCategoryName + " " + travelName, 1, new ArrayList<>(), null, cacheKey);
+        String cacheKey = travel.getTravelId() + ":" + PlaceCategoryType.LODGING.getId() + ":";
+        return getPlaceWithCache(travel.getTravelId(), travelCategoryName + " " + travelName, PlaceCategoryType.LODGING.getId(), new ArrayList<>(), null, cacheKey);
     }
 
     public PlaceResponse getRestaurantPlace(String travelCategoryName, String travelName) throws IOException {
         com.example.planmate.domain.travel.entity.Travel travel = travelService.getTravelFromCityString(travelCategoryName + " " + travelName);
-        String cacheKey = travel.getTravelId() + ":2:";
-        return getPlaceWithCache(travel.getTravelId(), travelCategoryName + " " + travelName, 2, new ArrayList<>(), null, cacheKey);
+        String cacheKey = travel.getTravelId() + ":" + PlaceCategoryType.RESTAURANT.getId() + ":";
+        return getPlaceWithCache(travel.getTravelId(), travelCategoryName + " " + travelName, PlaceCategoryType.RESTAURANT.getId(), new ArrayList<>(), null, cacheKey);
     }
 
     public PlaceResponse getSearchPlace(String query) throws IOException {
         // For general search without location, use a special travelId (e.g., 0)
-        String cacheKey = "0:4:" + query;
-        return getPlaceWithCache(0, null, 4, null, null, cacheKey);
+        String cacheKey = "0:" + PlaceCategoryType.SEARCH.getId() + ":" + query;
+        return getPlaceWithCache(0, null, PlaceCategoryType.SEARCH.getId(), null, null, cacheKey);
     }
 
     private void fetchImagesWithCacheCheck(List<? extends PlaceVO> places) {

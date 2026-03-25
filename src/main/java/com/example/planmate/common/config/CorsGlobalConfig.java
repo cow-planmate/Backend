@@ -1,22 +1,15 @@
 package com.example.planmate.common.config;
 
-import java.nio.file.Path;
-import java.time.Duration;
-
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.example.planmate.common.log.AccessLogInterceptor;
 
 @Configuration
 public class CorsGlobalConfig implements WebMvcConfigurer {
-    @Value("${LOG_PATH:logs}")
-    private String logPath;
-    
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
@@ -40,14 +33,4 @@ public class CorsGlobalConfig implements WebMvcConfigurer {
     }
 
 
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 1) 로그 디렉터리 매핑
-        String logAbsolute = Path.of(logPath).toAbsolutePath().toString();
-        String logLocation = Path.of(logAbsolute).toUri().toString();
-        if (!registry.hasMappingForPattern("/logs/**")) {
-            registry.addResourceHandler("/logs/**")
-                    .addResourceLocations(logLocation);
-        }
-    }
 }

@@ -1,4 +1,4 @@
-package com.example.planmate.domain.emailVerificaiton.service;
+package com.example.planmate.domain.emailVerification.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -24,10 +24,10 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
 import com.example.planmate.common.auth.JwtTokenProvider;
-import com.example.planmate.domain.emailVerificaiton.EmailVerification;
-import com.example.planmate.domain.emailVerificaiton.dto.EmailVerificationResponse;
-import com.example.planmate.domain.emailVerificaiton.dto.SendEmailResponse;
-import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
+import com.example.planmate.domain.emailVerification.EmailVerification;
+import com.example.planmate.domain.emailVerification.dto.EmailVerificationResponse;
+import com.example.planmate.domain.emailVerification.dto.SendEmailResponse;
+import com.example.planmate.domain.emailVerification.enums.EmailVerificationPurpose;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
 

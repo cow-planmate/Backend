@@ -1,8 +1,8 @@
-package com.example.planmate.domain.emailVerificaiton;
+package com.example.planmate.domain.emailVerification;
 
 import java.io.Serializable;
 
-import com.example.planmate.domain.emailVerificaiton.enums.EmailVerificationPurpose;
+import com.example.planmate.domain.emailVerification.enums.EmailVerificationPurpose;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

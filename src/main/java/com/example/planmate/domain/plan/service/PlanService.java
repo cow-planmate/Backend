@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.planmate.common.exception.UserNotFoundException;
 import com.example.planmate.common.valueObject.TimetablePlaceBlockVO;
+import com.example.planmate.domain.plan.dto.PlanDetailPopulator;
 import com.example.planmate.common.valueObject.TimetableVO;
 import com.example.planmate.domain.collaborationRequest.entity.PlanEditor;
 import com.example.planmate.domain.plan.auth.PlanAccessValidator;
@@ -109,27 +110,22 @@ public class PlanService {
 
     @Transactional(readOnly = true)
     public GetPlanResponse getPlan(UUID userId, UUID planId) {
-        GetPlanResponse response = new GetPlanResponse();
+        // 0. 동기화 대기 (Race Condition 방지)
+        presenceStorage.waitForSync(planId.toString());
 
         Plan plan;
         List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
 
-        // 0. 동기화 대기 (Race Condition 방지)
-        presenceStorage.waitForSync(planId.toString());
-
         // 1. Plan 캐시 확인 및 데이터 로드 분기
         Optional<Plan> cachedPlan = planCache.findById(planId);
-
         if (cachedPlan.isPresent()) {
-            // 캐시에 있는 경우: 연관 데이터도 모두 캐시에서 조회
             plan = cachedPlan.get();
             timeTables = new ArrayList<>(timeTableCache.findByParentId(planId));
             for (TimeTable timeTable : timeTables) {
                 timeTablePlaceBlocks.add(timeTablePlaceBlockCache.findByParentId(timeTable.getTimeTableId()));
             }
         } else {
-            // 캐시에 없는 경우: DB에서 조회 (권한 검증 포함)
             plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
             timeTables = new ArrayList<>(timeTableRepository.findByPlanPlanId(planId));
             for (TimeTable timeTable : timeTables) {
@@ -141,57 +137,17 @@ public class PlanService {
         // 2. 권한 검증 (캐시에서 가져온 경우를 위해 재확인)
         boolean isOwner = plan.getUser().getUserId().equals(userId);
         boolean isEditor = planEditorRepository.existsByUserUserIdAndPlanPlanId(userId, planId);
-
         if (!isOwner && !isEditor) {
             throw new AccessDeniedException("요청 권한이 없습니다");
         }
 
-        // 3. 데이터 정렬 및 응답 생성
-        timeTables.sort(Comparator.comparing(TimeTable::getDate));
-
-        response.addPlanFrame(
-                planId,
-                plan.getPlanName(),
-                plan.getDeparture(),
-                plan.getTravel().getTravelCategory().getTravelCategoryName(),
-                plan.getTravel().getTravelId(),
-                plan.getTravel().getTravelName(),
-                plan.getAdultCount(),
-                plan.getChildCount(),
-                plan.getTransportationCategory().getTransportationCategoryId());
-
-        for (TimeTable timeTable : timeTables) {
-            response.addTimetable(timeTable.getTimeTableId(), timeTable.getDate(), timeTable.getTimeTableStartTime(),
-                    timeTable.getTimeTableEndTime());
-        }
-
-        for (List<TimeTablePlaceBlock> blocks : timeTablePlaceBlocks) {
-            if (blocks != null) {
-                for (TimeTablePlaceBlock block : blocks) {
-                    response.addPlaceBlock(
-                            block.getBlockId(),
-                            block.getTimeTable().getTimeTableId(),
-                            block.getPlaceCategory().getPlaceCategoryId(),
-                            block.getPlaceName(),
-                            block.getPlaceTheme(),
-                            block.getPlaceRating(),
-                            block.getPlaceAddress(),
-                            block.getPlaceLink(),
-                            block.getPhotoUrl(),
-                            block.getPlaceId(),
-                            block.getXLocation(),
-                            block.getYLocation(),
-                            block.getBlockStartTime(),
-                            block.getBlockEndTime(),
-                            block.getMemo());
-                }
-            }
-        }
+        GetPlanResponse response = new GetPlanResponse();
+        populatePlanDetail(response, planId, plan, timeTables, timeTablePlaceBlocks);
         return response;
     }
 
     @Transactional
-    public EditPlanNameResponse EditPlanName(UUID userId, UUID planId, String name) {
+    public EditPlanNameResponse editPlanName(UUID userId, UUID planId, String name) {
         EditPlanNameResponse response = new EditPlanNameResponse();
         Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
 
@@ -332,24 +288,19 @@ public class PlanService {
     }
 
     public GetCompletePlanResponse getCompletePlan(UUID planId) {
-        GetCompletePlanResponse response = new GetCompletePlanResponse();
-
         Plan plan;
         List<TimeTable> timeTables;
         List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks = new ArrayList<>();
 
         // 1. Plan 캐시 확인 및 데이터 로드 분기
         Optional<Plan> cachedPlan = planCache.findById(planId);
-
         if (cachedPlan.isPresent()) {
-            // 캐시에 있는 경우: 연관 데이터도 모두 캐시에서 조회
             plan = cachedPlan.get();
             timeTables = new ArrayList<>(timeTableCache.findByParentId(planId));
             for (TimeTable timeTable : timeTables) {
                 timeTablePlaceBlocks.add(timeTablePlaceBlockCache.findByParentId(timeTable.getTimeTableId()));
             }
         } else {
-            // 캐시에 없는 경우: DB에서 조회
             plan = planRepository.findById(planId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
             timeTables = new ArrayList<>(timeTableRepository.findByPlanPlanId(planId));
             for (TimeTable timeTable : timeTables) {
@@ -358,7 +309,15 @@ public class PlanService {
             }
         }
 
-        // 2. 데이터 정렬 및 응답 생성
+        GetCompletePlanResponse response = new GetCompletePlanResponse();
+        populatePlanDetail(response, planId, plan, timeTables, timeTablePlaceBlocks);
+        response.setMessage("성공적으로 일정 완성본을 전송하였습니다.");
+        return response;
+    }
+
+    private void populatePlanDetail(PlanDetailPopulator response, UUID planId, Plan plan,
+                                    List<TimeTable> timeTables,
+                                    List<List<TimeTablePlaceBlock>> timeTablePlaceBlocks) {
         timeTables.sort(Comparator.comparing(TimeTable::getDate));
 
         response.addPlanFrame(
@@ -373,8 +332,8 @@ public class PlanService {
                 plan.getTransportationCategory().getTransportationCategoryId());
 
         for (TimeTable timeTable : timeTables) {
-            response.addTimetable(timeTable.getTimeTableId(), timeTable.getDate(), timeTable.getTimeTableStartTime(),
-                    timeTable.getTimeTableEndTime());
+            response.addTimetable(timeTable.getTimeTableId(), timeTable.getDate(),
+                    timeTable.getTimeTableStartTime(), timeTable.getTimeTableEndTime());
         }
 
         for (List<TimeTablePlaceBlock> blocks : timeTablePlaceBlocks) {
@@ -399,8 +358,6 @@ public class PlanService {
                 }
             }
         }
-        response.setMessage("성공적으로 일정 완성본을 전송하였습니다.");
-        return response;
     }
 
     @Transactional

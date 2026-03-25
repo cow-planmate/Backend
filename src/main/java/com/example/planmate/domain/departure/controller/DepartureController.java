@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.planmate.domain.departure.dto.SearchDepartureRepuest;
+import com.example.planmate.domain.departure.dto.SearchDepartureRequest;
 import com.example.planmate.domain.departure.dto.SearchDepartureResponse;
 import com.example.planmate.domain.departure.service.DepartureService;
 
@@ -25,8 +25,8 @@ public class DepartureController {
 
     @Operation(summary = "출발지 검색", description = "입력한 키워드를 기반으로 출발 가능한 장소/도시 목록을 검색합니다.")
     @PostMapping("")
-    public ResponseEntity<SearchDepartureResponse> searchDeparture(@RequestBody SearchDepartureRepuest repuest) throws IOException {
-        SearchDepartureResponse response = departureService.searchDeparture(repuest.getDepartureQuery());
+    public ResponseEntity<SearchDepartureResponse> searchDeparture(@RequestBody SearchDepartureRequest request) throws IOException {
+        SearchDepartureResponse response = departureService.searchDeparture(request.getDepartureQuery());
         return ResponseEntity.ok(response);
     }
 }

@@ -50,17 +50,18 @@ public class UserService {
     public SavePreferredThemeResponse savePreferredTheme(UUID userId, List<Integer> preferredThemeIds) {
         SavePreferredThemeResponse response = new SavePreferredThemeResponse();
 
-        userRepository.findById(userId).ifPresent(user -> {
-            List<PreferredTheme> themes = preferredThemeIds.stream()
-                    .map(id -> preferredThemeRepository.findById(id)
-                            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 테마 ID: " + id)))
-                    .toList();
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
-            user.getPreferredThemes().clear();
-            user.getPreferredThemes().addAll(themes);
+        List<PreferredTheme> themes = preferredThemeIds.stream()
+                .map(id -> preferredThemeRepository.findById(id)
+                        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 테마 ID: " + id)))
+                .toList();
 
-            userRepository.save(user);
-        });
+        user.getPreferredThemes().clear();
+        user.getPreferredThemes().addAll(themes);
+
+        userRepository.save(user);
+
         return response;
     }
 
