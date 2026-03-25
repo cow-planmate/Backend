@@ -27,10 +27,12 @@ import com.example.planmate.domain.place.entity.PlaceSearchCondition;
 import com.example.planmate.domain.place.entity.PlaceSearchResult;
 import com.example.planmate.domain.plan.auth.PlanAccessValidator;
 import com.example.planmate.domain.plan.entity.Plan;
+import com.example.planmate.domain.travel.service.TravelService;
 import com.example.planmate.domain.user.entity.PreferredTheme;
 import com.example.planmate.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import sharedsync.cache.PlanCache;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +43,9 @@ public class PlaceService {
     private final GoogleMap googleMap;
     private final GooglePlaceDetails googlePlaceDetails;
     private final PlaceTransactionService placeTransactionService;
-    private final com.example.planmate.domain.travel.service.TravelService travelService;
+    private final TravelService travelService;
+    private final PlanCache planCache;
+
 
     @FunctionalInterface
     private interface ThrowingBiFunction<T, U, R> {
@@ -68,8 +72,10 @@ public class PlaceService {
             UUID planId,
             int preferredThemeCategoryId) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        Plan plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
-
+        Plan plan = planCache.findById(planId).get();
+        if (plan == null) {
+            plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
+        }
         String travelCategoryName = plan.getTravel().getTravelCategory().getTravelCategoryName();
         String travelName = travelCategoryName + " " + plan.getTravel().getTravelName();
         int travelId = plan.getTravel().getTravelId();
