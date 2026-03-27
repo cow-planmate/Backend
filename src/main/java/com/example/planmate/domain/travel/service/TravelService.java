@@ -26,7 +26,7 @@ public class TravelService {
     public GetTravelResponse getTravel() {
         GetTravelResponse response = new GetTravelResponse();
 
-        travelRepository.findAll().forEach(travel -> {
+        travelRepository.findAllWithCategory().forEach(travel -> {
             response.addTravel(
                     travel.getTravelId(),
                     travel.getTravelName(),
