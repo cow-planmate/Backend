@@ -52,6 +52,9 @@ spring:
       port: ${SPRING_DATA_REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
 
+firebase:
+  service-account-path: ${FIREBASE_SERVICE_ACCOUNT_PATH:classpath:firebase-service-account.json}
+
 sharedsync:
   websocket:
     endpoint: "/ws"

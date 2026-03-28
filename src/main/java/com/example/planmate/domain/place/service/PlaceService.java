@@ -74,7 +74,7 @@ public class PlaceService {
             UUID planId,
             int preferredThemeCategoryId) throws IOException {
         PlaceResponse response = new PlaceResponse();
-        Plan plan = planCache.findById(planId).get();
+        Plan plan = planCache.findById(planId).orElse(null);
         if (plan == null) {
             plan = planAccessValidator.validateUserHasAccessToPlan(userId, planId);
         }

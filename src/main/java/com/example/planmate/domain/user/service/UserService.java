@@ -19,6 +19,7 @@ import com.example.planmate.domain.user.dto.ChangeNicknameResponse;
 import com.example.planmate.domain.user.dto.ChangePreferredThemesResponse;
 import com.example.planmate.domain.user.dto.GetPreferredThemeResponse;
 import com.example.planmate.domain.user.dto.MoveMypageResponse;
+import com.example.planmate.domain.user.dto.RegisterFcmTokenResponse;
 import com.example.planmate.domain.user.dto.ResignAccountResponse;
 import com.example.planmate.domain.user.dto.SavePreferredThemeResponse;
 import com.example.planmate.domain.user.entity.PreferredTheme;
@@ -163,6 +164,18 @@ public class UserService {
         user.getPreferredThemes().addAll(newThemes);
 
         response.setMessage("성공적으로 선호테마가 변경되었습니다");
+
+        return response;
+    }
+
+    @Transactional
+    public RegisterFcmTokenResponse registerFcmToken(UUID userId, String fcmToken) {
+        RegisterFcmTokenResponse response = new RegisterFcmTokenResponse();
+
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        user.changeFcmToken(fcmToken);
+
+        response.setMessage("FCM 토큰이 등록되었습니다.");
 
         return response;
     }
