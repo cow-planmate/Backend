@@ -68,7 +68,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(org.springframework.web.HttpMediaTypeNotAcceptableException.class)
-    public ResponseEntity<Void> handleHttpMediaTypeNotAcceptableException(org.springframework.web.HttpMediaTypeNotAcceptableException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
+    public ResponseEntity<CommonResponse> handleHttpMediaTypeNotAcceptableException(org.springframework.web.HttpMediaTypeNotAcceptableException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_ACCEPTABLE)
+                .body(createErrorBody(getErrorMessage(ex, "지원하지 않는 Accept 헤더입니다")));
     }
 }
