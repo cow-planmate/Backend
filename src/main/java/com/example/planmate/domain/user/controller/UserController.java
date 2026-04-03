@@ -22,6 +22,8 @@ import com.example.planmate.domain.user.dto.ChangePreferredThemesRequest;
 import com.example.planmate.domain.user.dto.ChangePreferredThemesResponse;
 import com.example.planmate.domain.user.dto.GetPreferredThemeResponse;
 import com.example.planmate.domain.user.dto.MoveMypageResponse;
+import com.example.planmate.domain.user.dto.RegisterFcmTokenRequest;
+import com.example.planmate.domain.user.dto.RegisterFcmTokenResponse;
 import com.example.planmate.domain.user.dto.ResignAccountResponse;
 import com.example.planmate.domain.user.dto.SavePreferredThemeRequest;
 import com.example.planmate.domain.user.dto.SavePreferredThemeResponse;
@@ -90,6 +92,14 @@ public class UserController {
     public ResponseEntity<ChangePreferredThemesResponse> changeGender(Authentication authentication, @RequestBody ChangePreferredThemesRequest request) {
         UUID userId = UUID.fromString(authentication.getName());
         ChangePreferredThemesResponse response = userService.changePreferredThemes(userId, request.getPreferredThemeCategoryId(), request.getPreferredThemeIds());
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "FCM 토큰 등록", description = "앱 푸시 알림을 위한 FCM 토큰을 등록합니다. 앱 실행 시 또는 토큰 갱신 시 호출하세요.")
+    @PostMapping("/fcm-token")
+    public ResponseEntity<RegisterFcmTokenResponse> registerFcmToken(Authentication authentication, @RequestBody RegisterFcmTokenRequest request) {
+        UUID userId = UUID.fromString(authentication.getName());
+        RegisterFcmTokenResponse response = userService.registerFcmToken(userId, request.getFcmToken());
         return ResponseEntity.ok(response);
     }
 

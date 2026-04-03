@@ -158,6 +158,13 @@ spec:
             secretKeyRef:
               name: planmate-secret
               key: MINIO_SECRET_KEY
+        - name: FIREBASE_SERVICE_ACCOUNT_PATH
+          value: "classpath:planmate-9fbb4-firebase-adminsdk-fbsvc-d4a32e483c.json"
+        - name: FIREBASE_SERVICE_ACCOUNT_JSON
+          valueFrom:
+            secretKeyRef:
+              name: planmate-firebase-secret
+              key: FIREBASE_SERVICE_ACCOUNT_JSON
         resources:
           requests:
             memory: "512Mi"

@@ -54,6 +54,9 @@ public class User {
     @Column
     private Integer gender;
 
+    @Column(name = "fcm_token", length = 512)
+    private String fcmToken;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonIgnore
     @Builder.Default
@@ -131,6 +134,10 @@ public class User {
         }
 
         this.email = email;
+    }
+
+    public void changeFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
     }
 
     public boolean isSocialLogin() {

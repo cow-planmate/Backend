@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.planmate.common.fcm.FcmService;
 import com.example.planmate.domain.collaborationRequest.auth.CollaborationRequestValidator;
 import com.example.planmate.domain.collaborationRequest.dto.AcceptRequestResponse;
 import com.example.planmate.domain.collaborationRequest.dto.GetReceivedPendingRequestsResponse;
@@ -37,6 +38,7 @@ public class CollaborationRequestService {
     private final CollaborationRequestRepository collaborationRequestRepository;
     private final PlanEditorRepository planEditorRepository;
     private final CollaborationRequestValidator collaborationRequestValidator;
+    private final FcmService fcmService;
 
     public InviteUserToPlanResponse inviteUserToPlan(UUID senderId, UUID planId, String receiverNickname) {
         InviteUserToPlanResponse response = new InviteUserToPlanResponse();
@@ -78,6 +80,12 @@ public class CollaborationRequestService {
                 .build();
 
         collaborationRequestRepository.save(request);
+
+        fcmService.sendNotification(
+                receiver.getFcmToken(),
+                "일정 초대",
+                sender.getNickname() + "님이 '" + plan.getPlanName() + "' 일정에 초대했습니다."
+        );
 
         response.setMessage("성공적으로 초대 메세지를 보냈습니다.");
 
@@ -129,6 +137,12 @@ public class CollaborationRequestService {
 
         collaborationRequestRepository.save(request);
 
+        fcmService.sendNotification(
+                owner.getFcmToken(),
+                "편집 권한 요청",
+                sender.getNickname() + "님이 '" + plan.getPlanName() + "' 일정의 편집 권한을 요청했습니다."
+        );
+
         response.setMessage("성공적으로 권한 요청을 보냈습니다.");
 
         return response;
@@ -152,6 +166,12 @@ public class CollaborationRequestService {
             planEditorRepository.save(planEditor);
         }
 
+        fcmService.sendNotification(
+                request.getSender().getFcmToken(),
+                "요청 수락",
+                request.getReceiver().getNickname() + "님이 '" + request.getPlan().getPlanName() + "' 관련 요청을 수락했습니다."
+        );
+
         response.setMessage("성공적으로 메세지를 수락했습니다.");
 
         return response;
@@ -163,6 +183,12 @@ public class CollaborationRequestService {
         CollaborationRequest request = collaborationRequestValidator.validateReceiverAndPending(receiverId, collaborationRequestId);
 
         request.changeStatus(CollaborationRequestStatus.getRejectedStatus(request.getType()));
+
+        fcmService.sendNotification(
+                request.getSender().getFcmToken(),
+                "요청 거절",
+                request.getReceiver().getNickname() + "님이 '" + request.getPlan().getPlanName() + "' 관련 요청을 거절했습니다."
+        );
 
         response.setMessage("성공적으로 메세지를 거절했습니다.");
 
