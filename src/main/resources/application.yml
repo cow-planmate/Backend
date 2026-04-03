@@ -53,7 +53,8 @@ spring:
       password: ${REDIS_PASSWORD:}
 
 firebase:
-  service-account-path: ${FIREBASE_SERVICE_ACCOUNT_PATH:classpath:firebase-service-account.json}
+  service-account-json: ${FIREBASE_SERVICE_ACCOUNT_JSON:}
+  service-account-path: ${FIREBASE_SERVICE_ACCOUNT_PATH:classpath:planmate-9fbb4-firebase-adminsdk-fbsvc-d4a32e483c.json}
 
 sharedsync:
   websocket:
