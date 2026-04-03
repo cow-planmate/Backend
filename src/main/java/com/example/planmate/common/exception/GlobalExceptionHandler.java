@@ -1,8 +1,5 @@
 package com.example.planmate.common.exception;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.example.planmate.common.dto.CommonResponse;
 
 import org.springframework.http.HttpStatus;
