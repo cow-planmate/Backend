@@ -17,22 +17,23 @@ spec:
 
               # 1. PostgreSQL 변경 체크 및 백업
               echo "Checking PostgreSQL changes..."
-              STATE_FILE="/state/last_xact"
-              LAST_XACT=$(cat $STATE_FILE 2>/dev/null || echo 0)
+              STATE_FILE="/state/last_lsn"
+              LAST_LSN=$(cat $STATE_FILE 2>/dev/null || echo "none")
 
-              CURR_XACT=$(PGPASSWORD=$DB_PASSWORD psql -h planmate-db-ro -U $DB_USER -d planmate -t -A -c "SELECT xact_commit + xact_rollback FROM pg_stat_database WHERE datname='planmate'")
+              # 조회 시에 증가하지 않는 WAL LSN 기반으로 변경 확인
+              CURR_LSN=$(PGPASSWORD=$DB_PASSWORD psql -h planmate-db-ro -U $DB_USER -d planmate -t -A -c "SELECT CASE WHEN pg_is_in_recovery() THEN pg_last_wal_replay_lsn() ELSE pg_current_wal_lsn() END")
 
-              if [ -n "$CURR_XACT" ] && [ "$CURR_XACT" != "$LAST_XACT" ]; then
-                echo "Postgres changed ($LAST_XACT -> $CURR_XACT). Backing up..."
+              if [ -n "$CURR_LSN" ] && [ "$CURR_LSN" != "$LAST_LSN" ]; then
+                echo "Postgres changed ($LAST_LSN -> $CURR_LSN). Backing up..."
                 PGPASSWORD=$DB_PASSWORD pg_dump -h planmate-db-ro -U $DB_USER planmate | \
                 rclone --config /config/rclone.conf rcat gdrive:planmatebackup/postgres/planmate_$(date +%Y%m%d_%H%M%S).sql
                 
                 if [ $? -eq 0 ]; then
-                  echo $CURR_XACT > $STATE_FILE
+                  echo $CURR_LSN > $STATE_FILE
                   echo "Postgres backup complete."
                 fi
               else
-                echo "No changes in Postgres or could not connect. Skipping backup."
+                echo "No data changes in Postgres (LSN: $CURR_LSN). Skipping backup."
               fi
 
               # 2. MinIO 동기화
