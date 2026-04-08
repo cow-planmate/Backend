@@ -4,64 +4,82 @@ metadata:
   name: planmate-gdrive-backup
   namespace: default
 spec:
-  schedule: "*/5 * * * *" # 5분마다 실행
   concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
       template:
         spec:
           containers:
-          - name: backup
-            image: rclone/rclone:latest
-            command: ["/bin/sh", "-c"]
-            args:
-              - |
-                apk add --no-cache postgresql-client
+          - args:
+            - |
+              apk add --no-cache postgresql-client
+
+              # 1. PostgreSQL 변경 체크 및 백업
+              echo "Checking PostgreSQL changes..."
+              STATE_FILE="/state/last_xact"
+              LAST_XACT=$(cat $STATE_FILE 2>/dev/null || echo 0)
+
+              CURR_XACT=$(PGPASSWORD=$DB_PASSWORD psql -h planmate-db-ro -U $DB_USER -d planmate -t -A -c "SELECT xact_commit + xact_rollback FROM pg_stat_database WHERE datname='planmate'")
+
+              if [ -n "$CURR_XACT" ] && [ "$CURR_XACT" != "$LAST_XACT" ]; then
+                echo "Postgres changed ($LAST_XACT -> $CURR_XACT). Backing up..."
+                PGPASSWORD=$DB_PASSWORD pg_dump -h planmate-db-ro -U $DB_USER planmate | \
+                rclone --config /config/rclone.conf rcat gdrive:planmatebackup/postgres/planmate_$(date +%Y%m%d_%H%M%S).sql
                 
-                # 1. PostgreSQL 변경 체크 및 백업
-                echo "Checking PostgreSQL changes..."
-                STATE_FILE="/state/last_xact"
-                LAST_XACT=$(cat $STATE_FILE 2>/dev/null || echo 0)
-                
-                CURR_XACT=$(PGPASSWORD=$DB_PASSWORD psql -h planmate-db-ro -U $DB_USER -d planmate -t -A -c "SELECT xact_commit + xact_rollback FROM pg_stat_database WHERE datname='planmate'")
-                
-                if [ -n "$CURR_XACT" ] && [ "$CURR_XACT" != "$LAST_XACT" ]; then
-                  echo "Postgres changed ($LAST_XACT -> $CURR_XACT). Backing up..."
-                  PGPASSWORD=$DB_PASSWORD pg_dump -h planmate-db-ro -U $DB_USER planmate | \
-                  rclone --config /config/rclone.conf rcat gdrive:backup/postgres/planmate_$(date +%Y%m%d_%H%M%S).sql
-                  
-                  if [ $? -eq 0 ]; then
-                    echo $CURR_XACT > $STATE_FILE
-                    echo "Postgres backup complete."
-                  fi
-                else
-                  echo "No changes in Postgres or could not connect. Skipping backup."
+                if [ $? -eq 0 ]; then
+                  echo $CURR_XACT > $STATE_FILE
+                  echo "Postgres backup complete."
                 fi
-                
-                # 2. MinIO 동기화
-                echo "Syncing MinIO to Google Drive..."
-                export MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY
-                export MINIO_SECRET_KEY=$MINIO_SECRET_KEY
-                export MINIO_ENDPOINT=$MINIO_ENDPOINT
-                
-                rclone --config /config/rclone.conf sync minio:planmate gdrive:backup/minio --progress
+              else
+                echo "No changes in Postgres or could not connect. Skipping backup."
+              fi
+
+              # 2. MinIO 동기화
+              echo "Syncing MinIO to Google Drive..."
+              rclone --config /config/rclone.conf sync minio:planmate gdrive:planmatebackup/minio --progress
+            command:
+            - /bin/sh
+            - -c
             env:
             - name: DB_USER
-              valueFrom: { secretKeyRef: { name: planmate-db-user-password, key: username } }
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: planmate-db-user-password
             - name: DB_PASSWORD
-              valueFrom: { secretKeyRef: { name: planmate-db-user-password, key: password } }
-            - name: MINIO_ACCESS_KEY
-              valueFrom: { secretKeyRef: { name: planmate-secret, key: MINIO_ACCESS_KEY } }
-            - name: MINIO_SECRET_KEY
-              valueFrom: { secretKeyRef: { name: planmate-secret, key: MINIO_SECRET_KEY } }
-            - name: MINIO_ENDPOINT
-              valueFrom: { configMapKeyRef: { name: planmate-config, key: MINIO_ENDPOINT } }
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: planmate-db-user-password
+            - name: RCLONE_CONFIG_MINIO_TYPE
+              value: "s3"
+            - name: RCLONE_CONFIG_MINIO_PROVIDER
+              value: "Minio"
+            - name: RCLONE_CONFIG_MINIO_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  key: MINIO_ACCESS_KEY
+                  name: planmate-secret
+            - name: RCLONE_CONFIG_MINIO_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: MINIO_SECRET_KEY
+                  name: planmate-secret
+            - name: RCLONE_CONFIG_MINIO_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  key: MINIO_ENDPOINT
+                  name: planmate-config
+            image: rclone/rclone:latest
+            name: backup
             volumeMounts:
-            - name: rclone-config
-              mountPath: /config
+            - mountPath: /config
+              name: rclone-config
               readOnly: true
-            - name: state-storage
-              mountPath: /state
+            - mountPath: /state
+              name: state-storage
+          restartPolicy: OnFailure
           volumes:
           - name: rclone-config
             secret:
@@ -69,4 +87,4 @@ spec:
           - name: state-storage
             persistentVolumeClaim:
               claimName: backup-state-pvc
-          restartPolicy: OnFailure
+  schedule: '*/5 * * * *'
