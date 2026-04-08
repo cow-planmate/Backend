@@ -1,0 +1,72 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: planmate-gdrive-backup
+  namespace: default
+spec:
+  schedule: "*/5 * * * *" # 5분마다 실행
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: rclone/rclone:latest
+            command: ["/bin/sh", "-c"]
+            args:
+              - |
+                apk add --no-cache postgresql-client
+                
+                # 1. PostgreSQL 변경 체크 및 백업
+                echo "Checking PostgreSQL changes..."
+                STATE_FILE="/state/last_xact"
+                LAST_XACT=$(cat $STATE_FILE 2>/dev/null || echo 0)
+                
+                CURR_XACT=$(PGPASSWORD=$DB_PASSWORD psql -h planmate-db-ro -U $DB_USER -d planmate -t -A -c "SELECT xact_commit + xact_rollback FROM pg_stat_database WHERE datname='planmate'")
+                
+                if [ -n "$CURR_XACT" ] && [ "$CURR_XACT" != "$LAST_XACT" ]; then
+                  echo "Postgres changed ($LAST_XACT -> $CURR_XACT). Backing up..."
+                  PGPASSWORD=$DB_PASSWORD pg_dump -h planmate-db-ro -U $DB_USER planmate | \
+                  rclone --config /config/rclone.conf rcat gdrive:backup/postgres/planmate_$(date +%Y%m%d_%H%M%S).sql
+                  
+                  if [ $? -eq 0 ]; then
+                    echo $CURR_XACT > $STATE_FILE
+                    echo "Postgres backup complete."
+                  fi
+                else
+                  echo "No changes in Postgres or could not connect. Skipping backup."
+                fi
+                
+                # 2. MinIO 동기화
+                echo "Syncing MinIO to Google Drive..."
+                export MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY
+                export MINIO_SECRET_KEY=$MINIO_SECRET_KEY
+                export MINIO_ENDPOINT=$MINIO_ENDPOINT
+                
+                rclone --config /config/rclone.conf sync minio:planmate gdrive:backup/minio --progress
+            env:
+            - name: DB_USER
+              valueFrom: { secretKeyRef: { name: planmate-db-user-password, key: username } }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: planmate-db-user-password, key: password } }
+            - name: MINIO_ACCESS_KEY
+              valueFrom: { secretKeyRef: { name: planmate-secret, key: MINIO_ACCESS_KEY } }
+            - name: MINIO_SECRET_KEY
+              valueFrom: { secretKeyRef: { name: planmate-secret, key: MINIO_SECRET_KEY } }
+            - name: MINIO_ENDPOINT
+              valueFrom: { configMapKeyRef: { name: planmate-config, key: MINIO_ENDPOINT } }
+            volumeMounts:
+            - name: rclone-config
+              mountPath: /config
+              readOnly: true
+            - name: state-storage
+              mountPath: /state
+          volumes:
+          - name: rclone-config
+            secret:
+              secretName: rclone-config
+          - name: state-storage
+            persistentVolumeClaim:
+              claimName: backup-state-pvc
+          restartPolicy: OnFailure
