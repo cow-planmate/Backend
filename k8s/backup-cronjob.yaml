@@ -1,47 +1,144 @@
+# ============================================================
+# 백업 구조 (Google Drive: planmatebackup/)
+# ============================================================
+#
+#  planmatebackup/
+#  ├── postgres/
+#  │   ├── daily/
+#  │   │   ├── planmate_20260408_020000.dump   ← 시간별 스냅샷 (7일 보존)
+#  │   │   └── planmate_20260408_030000.dump
+#  │   └── weekly/
+#  │       └── planmate_2026_W15.dump          ← 주간 스냅샷 (4주 보존)
+#  └── minio/
+#      ├── current/                            ← 항상 최신 상태
+#      │   ├── images/photo.jpg
+#      │   └── ...
+#      └── archive/
+#          ├── 20260408_02/                    ← 이 시각에 변경·삭제된 파일만
+#          │   └── images/old_photo.jpg
+#          └── 20260407_14/
+#              └── ...                         ← 30일 보존
+#
+# ============================================================
+# PostgreSQL 복구 방법
+# ============================================================
+#
+# 1. 복구할 덤프 파일 확인 (Google Drive에서 날짜/시간 확인)
+#    - daily 폴더: 시간 단위 롤백 (최근 7일)
+#    - weekly 폴더: 주 단위 롤백 (최근 4주)
+#
+# 2. rclone으로 덤프 파일 다운로드
+#    rclone --config rclone.conf copyto \
+#      gdrive:planmatebackup/postgres/daily/planmate_20260408_020000.dump \
+#      ./restore.dump
+#
+# 3. DB 복구
+#    pg_restore \
+#      -h <DB_HOST> -U <DB_USER> \
+#      -d planmate \
+#      --clean --if-exists \
+#      ./restore.dump
+#
+# ============================================================
+# MinIO 복구 방법
+# ============================================================
+#
+# [현재 상태로 복구] - current/ 폴더에서 그대로 MinIO로 동기화
+#    rclone --config rclone.conf sync \
+#      gdrive:planmatebackup/minio/current \
+#      minio:planmate
+#
+# [특정 파일 복구] - archive에서 원하는 시점 파일 찾아 복구
+#    rclone --config rclone.conf copyto \
+#      "gdrive:planmatebackup/minio/archive/20260408_02/images/photo.jpg" \
+#      minio:planmate/images/photo.jpg
+#
+# [특정 시점 전체 복구] - archive 폴더 전체를 current에 덮어쓰기
+#    rclone --config rclone.conf copy \
+#      gdrive:planmatebackup/minio/archive/20260408_02 \
+#      minio:planmate
+#
+# ============================================================
+---
+# PostgreSQL 백업
+# - 전략: LSN 변경 감지 → custom 포맷 압축 덤프
+# - daily/  : 변경 시마다 저장, 7일 보존 (롤백 단위: 시간)
+# - weekly/ : 매주 일요일 당일 백업 복사, 4주 보존
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: planmate-gdrive-backup
+  name: planmate-postgres-backup
   namespace: default
 spec:
+  schedule: '0 * * * *'   # 매시 정각
   concurrencyPolicy: Forbid
-  failedJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  successfulJobsHistoryLimit: 3
   jobTemplate:
     spec:
+      backoffLimit: 2
       template:
         spec:
+          restartPolicy: OnFailure
           containers:
-          - args:
+          - name: postgres-backup
+            image: rclone/rclone:latest
+            command: ["/bin/sh", "-c"]
+            args:
             - |
+              set -e
               apk add --no-cache postgresql-client
 
-              # 1. PostgreSQL 변경 체크 및 백업
-              echo "Checking PostgreSQL changes..."
-              STATE_FILE="/state/last_lsn"
-              LAST_LSN=$(cat $STATE_FILE 2>/dev/null || echo "none")
+              STATE_FILE="/state/last_pg_lsn"
+              LAST_LSN=$(cat "$STATE_FILE" 2>/dev/null || echo "none")
 
-              # 조회 시에 증가하지 않는 WAL LSN 기반으로 변경 확인
-              CURR_LSN=$(PGPASSWORD=$DB_PASSWORD psql -h planmate-db-ro -U $DB_USER -d planmate -t -A -c "SELECT CASE WHEN pg_is_in_recovery() THEN pg_last_wal_replay_lsn() ELSE pg_current_wal_lsn() END")
+              CURR_LSN=$(PGPASSWORD=$DB_PASSWORD psql \
+                -h planmate-db-ro -U $DB_USER -d planmate -t -A \
+                -c "SELECT CASE WHEN pg_is_in_recovery()
+                        THEN pg_last_wal_replay_lsn()
+                        ELSE pg_current_wal_lsn() END")
 
-              if [ -n "$CURR_LSN" ] && [ "$CURR_LSN" != "$LAST_LSN" ]; then
-                echo "Postgres changed ($LAST_LSN -> $CURR_LSN). Backing up..."
-                PGPASSWORD=$DB_PASSWORD pg_dump -h planmate-db-ro -U $DB_USER planmate | \
-                rclone --config /config/rclone.conf rcat gdrive:planmatebackup/postgres/planmate_$(date +%Y%m%d_%H%M%S).sql
-                
-                if [ $? -eq 0 ]; then
-                  echo $CURR_LSN > $STATE_FILE
-                  echo "Postgres backup complete."
-                fi
-              else
-                echo "No data changes in Postgres (LSN: $CURR_LSN). Skipping backup."
+              if [ -z "$CURR_LSN" ]; then
+                echo "ERROR: LSN 조회 실패. 종료."
+                exit 1
               fi
 
-              # 2. MinIO 동기화
-              echo "Syncing MinIO to Google Drive..."
-              rclone --config /config/rclone.conf sync minio:planmate gdrive:planmatebackup/minio --progress
-            command:
-            - /bin/sh
-            - -c
+              if [ "$CURR_LSN" = "$LAST_LSN" ]; then
+                echo "변경 없음 (LSN: $CURR_LSN). 백업 생략."
+                exit 0
+              fi
+
+              echo "변경 감지 ($LAST_LSN -> $CURR_LSN). 백업 시작..."
+
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              DAILY_PATH="gdrive:planmatebackup/postgres/daily/planmate_${TIMESTAMP}.dump"
+
+              # custom 포맷 + 압축 레벨 9 (SQL 대비 ~80% 절약)
+              PGPASSWORD=$DB_PASSWORD pg_dump \
+                -h planmate-db-ro -U $DB_USER planmate \
+                --format=custom --compress=9 | \
+                rclone --config /config/rclone.conf rcat "$DAILY_PATH"
+
+              echo "$CURR_LSN" > "$STATE_FILE"
+              echo "Daily 백업 완료: $DAILY_PATH"
+
+              # 일요일이면 weekly 폴더에도 복사 (재덤프 없이 복사)
+              if [ "$(date +%u)" = "7" ]; then
+                WEEKLY_PATH="gdrive:planmatebackup/postgres/weekly/planmate_$(date +%Y_W%V).dump"
+                rclone --config /config/rclone.conf copyto \
+                  "$DAILY_PATH" "$WEEKLY_PATH"
+                echo "Weekly 백업 완료: $WEEKLY_PATH"
+
+                # weekly 보존: 4주 (28일)
+                rclone --config /config/rclone.conf delete \
+                  gdrive:planmatebackup/postgres/weekly --min-age 28d
+              fi
+
+              # daily 보존: 7일
+              rclone --config /config/rclone.conf delete \
+                gdrive:planmatebackup/postgres/daily --min-age 7d
+
+              echo "보존 정책 정리 완료."
             env:
             - name: DB_USER
               valueFrom:
@@ -53,6 +150,76 @@ spec:
                 secretKeyRef:
                   key: password
                   name: planmate-db-user-password
+            volumeMounts:
+            - mountPath: /config
+              name: rclone-config
+              readOnly: true
+            - mountPath: /state
+              name: state-storage
+          volumes:
+          - name: rclone-config
+            secret:
+              secretName: rclone-config
+          - name: state-storage
+            persistentVolumeClaim:
+              claimName: backup-state-pvc
+---
+# MinIO 백업
+# - 전략: rclone sync --backup-dir (증분 백업)
+#   current/             : 항상 최신 상태 유지
+#   archive/YYYYMMDD_HH/ : 변경되거나 삭제된 파일만 이동 저장
+# - sync는 삭제를 전파하지 않고 archive로 보냄 → 실수로 지운 파일 복구 가능
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: planmate-minio-backup
+  namespace: default
+spec:
+  schedule: '30 * * * *'  # 매시 30분 (postgres와 엇갈리게)
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 3
+  successfulJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: minio-backup
+            image: rclone/rclone:latest
+            command: ["/bin/sh", "-c"]
+            args:
+            - |
+              set -e
+
+              CURRENT_DIR="gdrive:planmatebackup/minio/current"
+              ARCHIVE_DIR="gdrive:planmatebackup/minio/archive/$(date +%Y%m%d_%H)"
+
+              echo "MinIO 증분 백업 시작..."
+              echo "  current : $CURRENT_DIR"
+              echo "  archive : $ARCHIVE_DIR"
+
+              # --backup-dir: current에서 대체되거나 삭제되는 파일을 archive로 이동
+              # 결과: current = 최신 상태 / archive = 변경·삭제 이력
+              rclone --config /config/rclone.conf sync \
+                minio:planmate \
+                "$CURRENT_DIR" \
+                --backup-dir "$ARCHIVE_DIR" \
+                --progress
+
+              echo "동기화 완료."
+
+              # archive 보존: 30일
+              rclone --config /config/rclone.conf delete \
+                gdrive:planmatebackup/minio/archive --min-age 30d
+
+              # 빈 archive 디렉터리 정리
+              rclone --config /config/rclone.conf rmdirs \
+                gdrive:planmatebackup/minio/archive
+
+              echo "보존 정책 정리 완료."
+            env:
             - name: RCLONE_CONFIG_MINIO_TYPE
               value: "s3"
             - name: RCLONE_CONFIG_MINIO_PROVIDER
@@ -72,20 +239,11 @@ spec:
                 configMapKeyRef:
                   key: MINIO_ENDPOINT
                   name: planmate-config
-            image: rclone/rclone:latest
-            name: backup
             volumeMounts:
             - mountPath: /config
               name: rclone-config
               readOnly: true
-            - mountPath: /state
-              name: state-storage
-          restartPolicy: OnFailure
           volumes:
           - name: rclone-config
             secret:
               secretName: rclone-config
-          - name: state-storage
-            persistentVolumeClaim:
-              claimName: backup-state-pvc
-  schedule: '*/5 * * * *'
