@@ -87,11 +87,11 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "선호 테마 수정", description = "사용자의 여행 선호 테마를 수정합니다.")
+    @Operation(summary = "선호 테마 다중 카테고리 수정", description = "사용자의 여러 카테고리에 걸친 여행 선호 테마를 한 번에 수정합니다.")
     @PatchMapping("/preferredThemes")
-    public ResponseEntity<ChangePreferredThemesResponse> changeGender(Authentication authentication, @RequestBody ChangePreferredThemesRequest request) {
+    public ResponseEntity<ChangePreferredThemesResponse> changePreferredThemes(Authentication authentication, @RequestBody ChangePreferredThemesRequest request) {
         UUID userId = UUID.fromString(authentication.getName());
-        ChangePreferredThemesResponse response = userService.changePreferredThemes(userId, request.getPreferredThemeCategoryId(), request.getPreferredThemeIds());
+        ChangePreferredThemesResponse response = userService.changePreferredThemes(userId, request.getThemeUpdates());
         return ResponseEntity.ok(response);
     }
 

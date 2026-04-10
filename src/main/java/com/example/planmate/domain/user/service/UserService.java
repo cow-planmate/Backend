@@ -16,6 +16,7 @@ import com.example.planmate.domain.plan.repository.PlanRepository;
 import com.example.planmate.domain.user.dto.ChangeAgeResponse;
 import com.example.planmate.domain.user.dto.ChangeGenderResponse;
 import com.example.planmate.domain.user.dto.ChangeNicknameResponse;
+import com.example.planmate.common.valueObject.PreferredThemeUpdateVO;
 import com.example.planmate.domain.user.dto.ChangePreferredThemesResponse;
 import com.example.planmate.domain.user.dto.GetPreferredThemeResponse;
 import com.example.planmate.domain.user.dto.MoveMypageResponse;
@@ -145,25 +146,34 @@ public class UserService {
     }
 
     @Transactional
-    public ChangePreferredThemesResponse changePreferredThemes(UUID userId, int preferredThemeCategoryId, List<Integer> preferredThemeIds) {
+    public ChangePreferredThemesResponse changePreferredThemes(UUID userId, List<PreferredThemeUpdateVO> themeUpdates) {
         ChangePreferredThemesResponse response = new ChangePreferredThemesResponse();
 
-        if (preferredThemeCategoryId != 0 && preferredThemeCategoryId != 1 && preferredThemeCategoryId != 2) {
-            throw new IllegalArgumentException("preferredThemeCategoryId 값은 0(관광지) 또는 1(식당) 또는 2(숙소)이어야 합니다.");
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        List<PreferredTheme> userThemes = user.getPreferredThemes();
+
+        if (themeUpdates != null) {
+            for (PreferredThemeUpdateVO update : themeUpdates) {
+                int categoryId = update.getPreferredThemeCategoryId();
+                List<Integer> themeIds = update.getPreferredThemeIds();
+
+                if (categoryId != 0 && categoryId != 1 && categoryId != 2) {
+                    throw new IllegalArgumentException("preferredThemeCategoryId 값은 0(관광지) 또는 1(식당) 또는 2(숙소)이어야 합니다. 잘못된 값: " + categoryId);
+                }
+
+                userThemes.removeIf(theme ->
+                        theme.getPreferredThemeCategory() != null &&
+                                theme.getPreferredThemeCategory().getPreferredThemeCategoryId() == categoryId
+                );
+
+                if (themeIds != null && !themeIds.isEmpty()) {
+                    List<PreferredTheme> newThemes = preferredThemeRepository.findAllById(themeIds);
+                    userThemes.addAll(newThemes);
+                }
+            }
         }
 
-        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
-        List<PreferredTheme> preferredTourThemes = user.getPreferredThemes();
-        List<PreferredTheme> newThemes = preferredThemeRepository.findAllById(preferredThemeIds);
-
-        preferredTourThemes.removeIf(theme ->
-                theme.getPreferredThemeCategory() != null &&
-                        theme.getPreferredThemeCategory().getPreferredThemeCategoryId() == preferredThemeCategoryId
-        );
-
-        user.getPreferredThemes().addAll(newThemes);
-
-        response.setMessage("성공적으로 선호테마가 변경되었습니다");
+        response.setMessage("성공적으로 선호테마가 통합 변경되었습니다");
 
         return response;
     }
