@@ -46,3 +46,5 @@ out/
 k8s/secret.yaml
 .env
 src/main/resources/planmate-9fbb4-firebase-adminsdk-fbsvc-d4a32e483c.json
+
+project_ai/
