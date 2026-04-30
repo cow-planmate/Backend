@@ -10,4 +10,5 @@ public class TokenResponse {
     private String refreshToken;
     private String nickname;
     private String email;
+    private String role;
 }

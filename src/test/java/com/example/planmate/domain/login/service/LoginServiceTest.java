@@ -25,6 +25,7 @@ import com.example.planmate.domain.login.dto.LoginResponse;
 import com.example.planmate.domain.login.dto.LogoutResponse;
 import com.example.planmate.domain.refreshToken.service.RefreshTokenStore;
 import com.example.planmate.domain.user.CustomUserDetails;
+import com.example.planmate.domain.user.entity.Role;
 import com.example.planmate.domain.user.entity.User;
 import com.example.planmate.domain.user.repository.UserRepository;
 
@@ -51,6 +52,7 @@ class LoginServiceTest {
         String password = "password";
         User user = mock(User.class);
         given(user.getProvider()).willReturn("local");
+        given(user.getRole()).willReturn(Role.USER);
         given(userRepository.findByEmailIgnoreCase(email)).willReturn(Optional.of(user));
 
         Authentication authentication = mock(Authentication.class);
@@ -63,7 +65,7 @@ class LoginServiceTest {
         given(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .willReturn(authentication);
 
-        given(jwtTokenProvider.generateAccessToken(any(UUID.class))).willReturn("accessToken");
+        given(jwtTokenProvider.generateAccessToken(any(UUID.class), any(String.class))).willReturn("accessToken");
         given(jwtTokenProvider.generateRefreshToken(any(UUID.class))).willReturn("refreshToken");
 
         // when

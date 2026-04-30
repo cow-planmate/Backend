@@ -1,8 +1,10 @@
 package com.example.planmate.domain.refreshToken.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +16,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.planmate.common.auth.JwtTokenProvider;
 import com.example.planmate.domain.refreshToken.dto.RefreshTokenResponse;
+import com.example.planmate.domain.user.entity.Role;
+import com.example.planmate.domain.user.entity.User;
+import com.example.planmate.domain.user.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class RefreshTokenServiceTest {
@@ -22,6 +27,8 @@ class RefreshTokenServiceTest {
     private RefreshTokenStore refreshTokenStore;
     @Mock
     private JwtTokenProvider jwtTokenProvider;
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private RefreshTokenService refreshTokenService;
@@ -32,8 +39,10 @@ class RefreshTokenServiceTest {
         // given
         String refreshToken = "refreshToken123";
         UUID userId = UUID.randomUUID();
+        User user = User.builder().nickname("test").provider("local").role(Role.USER).build();
         given(refreshTokenStore.findUserIdByRefreshToken(refreshToken)).willReturn(userId);
-        given(jwtTokenProvider.generateAccessToken(userId)).willReturn("newAccessToken");
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(jwtTokenProvider.generateAccessToken(any(UUID.class), any(String.class))).willReturn("newAccessToken");
 
         // when
         RefreshTokenResponse response = refreshTokenService.getToken(refreshToken);
@@ -42,3 +51,4 @@ class RefreshTokenServiceTest {
         assertEquals("newAccessToken", response.getAccessToken());
     }
 }
+

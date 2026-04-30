@@ -54,8 +54,9 @@ public class LoginService {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-            response.setAccessToken(jwtTokenProvider.generateAccessToken(userDetails.getUserId()));
+            response.setAccessToken(jwtTokenProvider.generateAccessToken(userDetails.getUserId(), user.getRole().name()));
             response.setRefreshToken(jwtTokenProvider.generateRefreshToken(userDetails.getUserId()));
+            response.setRole(user.getRole().name());
             response.setUserId(userDetails.getUserId());
             response.setNickname(userDetails.getNickname());
             response.setMessage("성공적으로 로그인하였습니다");

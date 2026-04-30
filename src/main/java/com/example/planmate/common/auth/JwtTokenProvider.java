@@ -43,12 +43,13 @@ public class JwtTokenProvider implements AuthenticationTokenResolver{
     }
 
     // 토큰 생성
-    public String generateAccessToken(UUID userId) {
+    public String generateAccessToken(UUID userId, String role) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + accessTtlMillis);
 
         return Jwts.builder()
                 .claim("typ", "access")
+                .claim("role", role)
                 .setSubject(userId.toString())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
@@ -89,6 +90,16 @@ public class JwtTokenProvider implements AuthenticationTokenResolver{
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+    }
+
+    public String getRole(String token) {
+        String role = Jwts.parserBuilder()
+                .setSigningKey(accessKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("role", String.class);
+        return role != null ? role : "USER";
     }
 
     public EmailVerificationPurpose getPurpose(String token) {

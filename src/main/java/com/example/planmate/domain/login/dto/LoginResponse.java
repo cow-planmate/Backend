@@ -15,6 +15,9 @@ public class LoginResponse extends CommonResponse {
     @Schema(description = "로그인 성공 여부", example = "true")
     private boolean loginSuccess;
 
+    @Schema(description = "사용자 권한", example = "USER")
+    private String role;
+
     @Schema(description = "사용자 고유 식별자")
     private UUID userId;
 

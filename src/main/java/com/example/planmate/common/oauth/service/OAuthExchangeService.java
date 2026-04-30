@@ -28,7 +28,7 @@ public class OAuthExchangeService {
                 .orElseThrow(() -> new IllegalStateException("User not found"));
 
         // 🎫 JWT 발급
-        String accessToken = jwtTokenProvider.generateAccessToken(userId);
+        String accessToken = jwtTokenProvider.generateAccessToken(userId, user.getRole().name());
         String refreshToken = jwtTokenProvider.generateRefreshToken(userId);
 
         // 📦 DTO 반환
@@ -36,7 +36,8 @@ public class OAuthExchangeService {
                 accessToken,
                 refreshToken,
                 user.getNickname(),
-                user.getEmail()
+                user.getEmail(),
+                user.getRole().name()
         );
     }
 }

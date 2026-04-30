@@ -69,7 +69,7 @@ public class OAuthCompleteService {
         oauthSignupRedis.delete(key);
 
         // 5️⃣ JWT 발급
-        String access = jwtTokenProvider.generateAccessToken(user.getUserId());
+        String access = jwtTokenProvider.generateAccessToken(user.getUserId(), user.getRole().name());
         String refresh = jwtTokenProvider.generateRefreshToken(user.getUserId());
 
         return new OAuthCompleteResponse(
@@ -79,7 +79,8 @@ public class OAuthCompleteService {
                 refresh,
                 user.getUserId(),
                 user.getNickname(),
-                user.getEmail()
+                user.getEmail(),
+                user.getRole().name()
         );
     }
 }

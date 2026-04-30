@@ -57,6 +57,11 @@ public class User {
     @Column(name = "fcm_token", length = 512)
     private String fcmToken;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private Role role = Role.USER;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonIgnore
     @Builder.Default

@@ -11,6 +11,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import com.example.planmate.common.config.AuthWhitelist;
 import com.example.planmate.common.config.OptionalAuthWhitelist;
 import com.example.planmate.domain.emailVerification.enums.EmailVerificationPurpose;
@@ -57,7 +59,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (purpose == null) {
                 // 일반 로그인 토큰 (subject = userId)
                 UUID userId = UUID.fromString(subject);
-                Authentication auth = new UsernamePasswordAuthenticationToken(userId, null, List.of());
+                String role = jwtTokenProvider.getRole(token);
+                Authentication auth = new UsernamePasswordAuthenticationToken(
+                        userId, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } else {
                 // 이메일 인증 토큰 (subject = email)

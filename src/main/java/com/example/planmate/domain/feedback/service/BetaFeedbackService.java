@@ -1,7 +1,11 @@
 package com.example.planmate.domain.feedback.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 
+import com.example.planmate.domain.feedback.dto.AdminFeedbackListResponse;
 import com.example.planmate.domain.feedback.dto.BetaFeedbackRequest;
 import com.example.planmate.domain.feedback.dto.BetaFeedbackResponse;
 import com.example.planmate.domain.feedback.entity.BetaFeedback;
@@ -29,4 +33,16 @@ public class BetaFeedbackService {
         response.setMessage("피드백이 정상적으로 전송되었습니다");
         return response;
     }
+
+    public AdminFeedbackListResponse getAllFeedbacks() {
+        List<BetaFeedback> feedbacks = repository.findAll();
+        AdminFeedbackListResponse response = new AdminFeedbackListResponse();
+        response.setMessage("피드백 목록 조회 성공");
+        response.setFeedbacks(feedbacks.stream()
+                .map(f -> new AdminFeedbackListResponse.FeedbackItem(
+                        f.getFeedbackId(), f.getContent(), f.getCreatedAt()))
+                .collect(Collectors.toList()));
+        return response;
+    }
 }
+

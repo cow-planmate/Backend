@@ -15,4 +15,5 @@ public class OAuthCompleteResponse {
     private UUID userId;
     private String nickname;
     private String email;
+    private String role;
 }
