@@ -37,7 +37,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class SseEmitterService {
 
     private static final long SSE_TIMEOUT = 30 * 60 * 1000L; // 30분
@@ -45,8 +44,14 @@ public class SseEmitterService {
     // Multiple emitters per user to support multiple tabs / simultaneous connections
     private final ConcurrentHashMap<UUID, CopyOnWriteArrayList<SseEmitter>> emitters = new ConcurrentHashMap<>();
 
-    private final StringRedisTemplate stringRedisTemplate;
+    private final StringRedisTemplate sseStringRedisTemplate;
     private final ObjectMapper objectMapper;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public SseEmitterService(@org.springframework.beans.factory.annotation.Qualifier("sseStringRedisTemplate") StringRedisTemplate sseStringRedisTemplate, ObjectMapper objectMapper) {
+        this.sseStringRedisTemplate = sseStringRedisTemplate;
+        this.objectMapper = objectMapper;
+    }
 
     public SseEmitter subscribe(UUID userId) {
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
@@ -89,7 +94,7 @@ public class SseEmitterService {
         SseNotificationMessage message = new SseNotificationMessage(userId.toString(), eventName, data);
         try {
             String json = objectMapper.writeValueAsString(message);
-            stringRedisTemplate.convertAndSend(SseRedisConfig.SSE_CHANNEL, json);
+            sseStringRedisTemplate.convertAndSend(SseRedisConfig.SSE_CHANNEL, json);
         } catch (JsonProcessingException e) {
             log.warn("SSE 알림 직렬화 실패 (userId: {}, event: {}): {}", userId, eventName, e.getMessage());
             deliverToLocalEmitters(userId, eventName, data);

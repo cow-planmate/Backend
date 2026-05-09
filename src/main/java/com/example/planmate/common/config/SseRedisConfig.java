@@ -27,7 +27,7 @@ public class SseRedisConfig {
 
     @Bean
     public RedisMessageListenerContainer sseRedisListenerContainer(
-            RedisConnectionFactory connectionFactory,
+            @org.springframework.beans.factory.annotation.Qualifier("pubSubRedisConnectionFactory") RedisConnectionFactory connectionFactory,
             SseRedisSubscriber subscriber) {
 
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
