@@ -78,29 +78,10 @@ spec:
             secretKeyRef:
               name: planmate-secret
               key: MAIL_PASSWORD
-        - name: ELASTIC_APM_SERVER_URLS
-          value: "https://apm-server-apm-http:8200"
-        - name: ELASTIC_APM_VERIFY_SERVER_CERT
+        # APM 비활성화 (ECK 스택 미배포). 다시 켜려면 k8sempty의 ES/Kibana/ApmServer 적용 후
+        # apm-server-apm-token 시크릿 생성되면 ELASTIC_APM_* 설정을 복구할 것.
+        - name: ELASTIC_APM_ENABLED
           value: "false"
-        - name: ELASTIC_APM_SECRET_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: apm-server-apm-token
-              key: secret-token
-        - name: ELASTIC_APM_SERVER_REQUEST_TIMEOUT
-          value: "120s"
-        - name: ELASTIC_APM_API_REQUEST_SIZE
-          value: "2mb"
-        - name: ELASTIC_APM_SERVICE_NAME
-          value: "planmate-backend"
-        - name: ELASTIC_APM_ENVIRONMENT
-          value: "prod"
-        - name: ELASTIC_APM_APPLICATION_PACKAGES
-          value: "com.example.planmate"
-        - name: ELASTIC_APM_LOG_SENDING
-          value: "true"
-        - name: ELASTIC_APM_LOG_LEVEL
-          value: "INFO"
         - name: JAVA_TOOL_OPTIONS
           value: "-Xms512m -Xmx1024m"
         - name: JWT_ACCESS_SECRET
