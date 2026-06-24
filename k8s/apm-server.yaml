@@ -18,4 +18,4 @@ spec:
     podTemplate:
       spec:
         nodeSelector:
-          kubernetes.io/hostname: ubuntu
+          kubernetes.io/hostname: oracle-arm

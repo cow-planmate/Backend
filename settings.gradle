@@ -1,5 +1,5 @@
 rootProject.name = 'PlanMate'
 
 if (settings.hasProperty('useLocalSharedSync') && settings.useLocalSharedSync == 'true') {
-    includeBuild('../sharedsync')
+    includeBuild('../SharedSync')
 }

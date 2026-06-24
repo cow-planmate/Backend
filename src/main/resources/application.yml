@@ -14,14 +14,14 @@ spring:
 
   datasource:
     master:
-      jdbc-url: ${SPRING_DATASOURCE_URL:jdbc:p6spy:postgresql://localhost:5432/postgres}
+      jdbc-url: ${SPRING_DATASOURCE_URL:jdbc:p6spy:postgresql://localhost:5432/planmate}
       username: ${SPRING_DATASOURCE_USERNAME:postgres}
-      password: ${SPRING_DATASOURCE_PASSWORD}
+      password: ${SPRING_DATASOURCE_PASSWORD:postgres}
       driver-class-name: com.p6spy.engine.spy.P6SpyDriver
     replica:
-      jdbc-url: ${SPRING_REPLICA_DATASOURCE_URL:jdbc:p6spy:postgresql://localhost:5432/postgres}
+      jdbc-url: ${SPRING_REPLICA_DATASOURCE_URL:jdbc:p6spy:postgresql://localhost:5432/planmate}
       username: ${SPRING_DATASOURCE_USERNAME:postgres}
-      password: ${SPRING_DATASOURCE_PASSWORD}
+      password: ${SPRING_DATASOURCE_PASSWORD:postgres}
       driver-class-name: com.p6spy.engine.spy.P6SpyDriver
 
   jpa:
@@ -91,6 +91,7 @@ logging:
 
 
 server:
+  port: 8080
   servlet:
     encoding:
       enabled: true

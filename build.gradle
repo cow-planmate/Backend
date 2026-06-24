@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
-def sharedSyncVersion = 'dc8c28cadb'
+def sharedSyncVersion = 'eabb8eeda0'
 
 java {
     toolchain {
@@ -17,20 +17,17 @@ java {
 repositories {
     mavenCentral()
     mavenLocal()
-    maven {
-        url "https://repo.luciad.com/maven2"
-    }
     maven { url 'https://jitpack.io' }
 }
 
 dependencies {
     // SharedSync Framework
     if (project.hasProperty('useLocalSharedSync') && project.useLocalSharedSync == 'true') {
-        implementation 'com.sharedsync:sharedsync-starter'
-        annotationProcessor 'com.sharedsync:sharedsync-autoconfigure'
+        implementation 'com.sharedsync:sharedsync-starter:1.1.26'
+        annotationProcessor 'com.sharedsync:sharedsync-autoconfigure:1.1.26'
     } else {
-        implementation "com.github.cow-planmate.sharedsync:sharedsync-starter:$sharedSyncVersion"
-        annotationProcessor "com.github.cow-planmate.sharedsync:sharedsync-autoconfigure:$sharedSyncVersion"
+        implementation "com.github.Shared-Sync.SharedSync:sharedsync-starter:$sharedSyncVersion"
+        annotationProcessor "com.github.Shared-Sync.SharedSync:sharedsync-autoconfigure:$sharedSyncVersion"
     }
 
     implementation 'org.springframework.boot:spring-boot-starter'

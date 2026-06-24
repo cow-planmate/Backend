@@ -12,3 +12,8 @@ spec:
     tls:
       selfSignedCertificate:
         disabled: true
+  # ES/APM과 동일하게 oracle-arm 노드에 배치 (모니터링 스택 co-location)
+  podTemplate:
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: oracle-arm
