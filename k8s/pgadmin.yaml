@@ -27,7 +27,7 @@ spec:
         imagePullPolicy: IfNotPresent
         env:
         - name: PGADMIN_DEFAULT_EMAIL
-          value: "admin@salmakis.online"
+          value: "admin@salmakis.cloud"
         - name: PGADMIN_DEFAULT_PASSWORD
           valueFrom:
             secretKeyRef:

@@ -13,14 +13,14 @@ metadata:
 spec:
   tls:
   - hosts:
-    - pmserver1.salmakis.online
-    - minio.salmakis.online
-    - redis.salmakis.online
-    - db.salmakis.online
-    - kibana.salmakis.online
+    - pmserver1.salmakis.cloud
+    - minio.salmakis.cloud
+    - redis.salmakis.cloud
+    - db.salmakis.cloud
+    - kibana.salmakis.cloud
     secretName: planmate-backend-tls
   rules:
-  - host: kibana.salmakis.online
+  - host: kibana.salmakis.cloud
     http:
       paths:
       - path: /
@@ -30,7 +30,7 @@ spec:
             name: kibana-kb-http
             port:
               number: 5601
-  - host: redis.salmakis.online
+  - host: redis.salmakis.cloud
     http:
       paths:
       - path: /
@@ -40,7 +40,7 @@ spec:
             name: redisinsight-service
             port:
               number: 80
-  - host: db.salmakis.online
+  - host: db.salmakis.cloud
     http:
       paths:
       - path: /
@@ -50,7 +50,7 @@ spec:
             name: pgadmin-service
             port:
               number: 80
-  - host: pmserver1.salmakis.online
+  - host: pmserver1.salmakis.cloud
     http:
       paths:
       - path: /
@@ -61,7 +61,7 @@ spec:
             port:
               number: 80
 
-  - host: minio.salmakis.online
+  - host: minio.salmakis.cloud
     http:
       paths:
       - path: /
