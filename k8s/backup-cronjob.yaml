@@ -210,13 +210,19 @@ spec:
 
               echo "동기화 완료."
 
+              # archive 디렉터리 보장: 변경분이 없으면 sync가 archive를 만들지 않고,
+              # rmdirs가 빈 루트까지 지워 다음 delete가 "directory not found"로 실패함.
+              # mkdir은 멱등이라 항상 먼저 보장해 둔다.
+              rclone --config /config/rclone.conf mkdir \
+                gdrive:planmatebackup/minio/archive
+
               # archive 보존: 30일
               rclone --config /config/rclone.conf delete \
                 gdrive:planmatebackup/minio/archive --min-age 30d
 
-              # 빈 archive 디렉터리 정리
+              # 빈 하위 디렉터리만 정리 (archive 루트는 유지 → 위 문제 재발 방지)
               rclone --config /config/rclone.conf rmdirs \
-                gdrive:planmatebackup/minio/archive
+                gdrive:planmatebackup/minio/archive --leave-root
 
               echo "보존 정책 정리 완료."
             env:
