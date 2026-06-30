@@ -147,6 +147,13 @@ spec:
             secretKeyRef:
               name: planmate-secret
               key: REDIS_PASSWORD
+        # Sentinel 인증용(= redis 비밀번호와 동일). configmap의 SENTINEL_NODES와 함께
+        # 동작해 Lettuce가 sentinel을 통해 현재 master를 찾는다(노드 장애 시 자동 추종).
+        - name: SPRING_DATA_REDIS_SENTINEL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: planmate-secret
+              key: REDIS_PASSWORD
         - name: API_GOOGLE_KEY
           valueFrom:
             secretKeyRef:

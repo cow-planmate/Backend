@@ -8,6 +8,11 @@ data:
   SPRING_DATA_REDIS_HOST: "planmate-redis-master"
   SPRING_DATA_REDIS_REPLICA_HOST: "planmate-redis-replica"
   SPRING_DATA_REDIS_PORT: "6379"
+  # Sentinel 기반 HA: nodes가 설정되면 Lettuce가 sentinel에게 현재 master를 물어
+  # 직접 연결한다(고정 master Service에 의존하지 않으므로 노드 장애 시 자동 failover를 따라감).
+  # sentinel.password는 deployment에서 secret(REDIS_PASSWORD)로 주입.
+  SPRING_DATA_REDIS_SENTINEL_MASTER: "myMaster"
+  SPRING_DATA_REDIS_SENTINEL_NODES: "planmate-redis-sentinel-sentinel:26379"
   DB_URL: "jdbc:p6spy:postgresql://planmate-db-rw:5432/planmate"
   STORAGE_TYPE: "minio"
   MINIO_ENDPOINT: "http://myminio-hl.default.svc.cluster.local:9000"
