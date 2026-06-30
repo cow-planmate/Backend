@@ -48,3 +48,38 @@ spec:
         resources:
           requests:
             storage: 300Mi
+---
+# 자동 failover: RedisReplication 단독은 master가 죽어도 replica를 승격하지 않는다.
+# (실제로 control.k8s 노드 장애 시 master가 죽은 노드에 묶인 채 멈춰 백엔드 WebSocket/STOMP가
+#  깨졌다.) RedisSentinel이 master를 직접 핑해 down 감지 → quorum 합의 → replica 자동 승격.
+apiVersion: redis.redis.opstreelabs.in/v1beta2
+kind: RedisSentinel
+metadata:
+  name: planmate-redis-sentinel
+  namespace: default
+spec:
+  clusterSize: 3            # sentinel 3개(quorum 2). 노드 적으면 일부는 co-locate 가능.
+  kubernetesConfig:
+    image: quay.io/opstree/redis-sentinel:v7.2.4
+    imagePullPolicy: IfNotPresent
+    redisSecret:
+      name: planmate-redis-password
+      key: password
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+  redisSentinelConfig:
+    redisReplicationName: planmate-redis   # 감시 대상 RedisReplication
+    masterGroupName: myMaster
+    quorum: "2"
+    downAfterMilliseconds: "5000"
+    failoverTimeout: "30000"
+    parallelSyncs: "1"
+    redisReplicationPassword:
+      secretKeyRef:
+        name: planmate-redis-password
+        key: password
