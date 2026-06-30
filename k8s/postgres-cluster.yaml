@@ -7,6 +7,19 @@ spec:
   instances: 2
   imageName: ghcr.io/cloudnative-pg/postgresql:15
 
+  # 고가용성: primary와 replica를 서로 다른 노드에 강제 분산.
+  # CNPG 기본값은 podAntiAffinityType: preferred(soft)라 분산이 강제가 아니어서
+  # 둘 다 한 노드(control.k8s)에 몰렸고, 그 노드 장애 시 DB 전체가 내려간다.
+  # required로 바꿔 노드 분리를 강제한다.
+  # (노드 3개 / 인스턴스 2개 → 데드락 없음. 이미지가 멀티아치라 3노드 모두 후보)
+  # 주의: local-path(노드 로컬) 스토리지라, 이미 control.k8s에 데이터가 묶인 기존
+  # replica는 이 설정만으로 안 옮겨진다. 다른 노드에 replica를 재생성해 데이터를
+  # 새로 복제시켜야 실제로 분산된다(`cnpg destroy planmate-db <replica-id>`).
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+    podAntiAffinityType: required
+
   # 슈퍼유저(postgres) 비밀번호 자동 설정
   superuserSecret:
     name: planmate-db-superuser-password
