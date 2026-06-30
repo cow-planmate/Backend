@@ -21,6 +21,24 @@ spec:
       labels:
         app: planmate-backend
     spec:
+      # 노드당 1개씩 강제 분산(가용성). 후보 노드는 amd64인 control.k8s/ubuntu 2개뿐이고
+      # 레플리카도 2개라, 둘이 같은 노드에 몰리면 그 노드 장애 시 전체가 내려간다.
+      #
+      # whenUnsatisfiable: DoNotSchedule 로 분산을 강제하되, matchLabelKeys: [pod-template-hash]
+      # 로 skew 계산을 "같은 리비전(ReplicaSet) 파드끼리만" 한정한다.
+      # → 이게 없으면 롤링 업데이트 때 maxSurge로 띄우는 신규 파드가 구버전 파드까지
+      #   카운트해 2노드가 모두 점유된 것으로 보고 surge 파드가 Pending 데드락에 빠진다.
+      #   (예전에 이 옵션 없이 고정했다가 "2개 이상 못 들어간다"는 오류로 롤백했던 원인)
+      #   k8s 1.27+ 필요 (현재 클러스터 1.34).
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: planmate-backend
+        matchLabelKeys:
+        - pod-template-hash
       affinity:
         # 백엔드 이미지(cycle123/planmate)는 CI에서 amd64로만 빌드되므로
         # arm64 노드(oracle-arm)에 스케줄되면 exec format error로 크래시한다.
