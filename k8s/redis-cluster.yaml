@@ -60,7 +60,7 @@ metadata:
 spec:
   clusterSize: 3            # sentinel 3개(quorum 2). 노드 적으면 일부는 co-locate 가능.
   kubernetesConfig:
-    image: quay.io/opstree/redis-sentinel:v7.2.4
+    image: quay.io/opstree/redis-sentinel:v7.2.3   # v7.2.4 태그는 OT 레지스트리에 없음(7.2 라인 최신 패치)
     imagePullPolicy: IfNotPresent
     redisSecret:
       name: planmate-redis-password
