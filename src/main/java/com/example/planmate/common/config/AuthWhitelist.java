@@ -40,7 +40,9 @@ public class AuthWhitelist {
             "/actuator/**",
             "/redis/**",
             "/api/beta/**",
-            "/api/weather/recommendations");
+            "/api/weather/recommendations",
+            // 내부 서버-투-서버 API (InternalTokenFilter에서 별도 인증)
+            "/api/internal/**");
 
     public static boolean isWhitelisted(String uri) {
         return PATHS.stream().anyMatch(pattern -> pathMatcher.match(pattern, uri));
