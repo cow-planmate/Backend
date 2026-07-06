@@ -53,6 +53,14 @@ spec:
   - host: pmserver1.salmakis.cloud
     http:
       paths:
+      # 커뮤니티 마이크로서비스 — /api/community/* 는 community-service로 라우팅 (/ 룰보다 먼저)
+      - path: /api/community
+        pathType: Prefix
+        backend:
+          service:
+            name: community-service
+            port:
+              number: 80
       - path: /
         pathType: Prefix
         backend:
