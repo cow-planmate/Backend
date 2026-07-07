@@ -35,7 +35,7 @@ public class OAuthController {
 
 
     // 1) SNS 로그인 시작
-    @Operation(summary = "SNS 로그인 시작", description = "지정된 SNS 제공자(google, kakao 등)의 로그인 페이지로 리다이렉트합니다.")
+    @Operation(summary = "SNS 로그인 시작", description = "지정된 SNS 제공자(google, naver)의 로그인 페이지로 리다이렉트합니다.")
     @GetMapping("/{provider}")
     public void redirectToProvider(@PathVariable String provider,
                                    HttpServletResponse response) throws IOException {

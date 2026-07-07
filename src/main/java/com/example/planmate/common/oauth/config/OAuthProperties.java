@@ -18,7 +18,7 @@ public class OAuthProperties {
     /** 프론트에게 JWT 전달할 때 redirect 할 URL */
     private String frontendRedirectUri;
 
-    /** provider: {kakao, google, naver} */
+    /** provider: {google, naver} */
     private Map<String, Provider> provider;
 
     @Getter

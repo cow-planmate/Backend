@@ -3,7 +3,7 @@ package com.example.planmate.common.oauth.enums;
 import java.util.Arrays;
 
 public enum OAuthProvider {
-    KAKAO, GOOGLE, NAVER;
+    GOOGLE, NAVER;
 
     public static OAuthProvider fromPath(String provider) {
         return Arrays.stream(values())

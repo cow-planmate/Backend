@@ -5,8 +5,6 @@ import com.example.planmate.common.oauth.dto.OAuthSignupCache;
 import com.example.planmate.common.oauth.dto.OAuthUserProfile;
 import com.example.planmate.common.oauth.dto.google.GoogleTokenResponse;
 import com.example.planmate.common.oauth.dto.google.GoogleUserResponse;
-import com.example.planmate.common.oauth.dto.kakao.KakaoTokenResponse;
-import com.example.planmate.common.oauth.dto.kakao.KakaoUserResponse;
 import com.example.planmate.common.oauth.dto.naver.NaverTokenResponse;
 import com.example.planmate.common.oauth.dto.naver.NaverUserResponse;
 import com.example.planmate.common.oauth.enums.OAuthProvider;
@@ -71,7 +69,6 @@ public class OAuthLoginService {
         // 1) OAuth 프로필 가져오기
         OAuthUserProfile profile =
                 switch (provider) {
-                    case KAKAO -> fetchKakaoProfile(code);
                     case GOOGLE -> fetchGoogleProfile(code);
                     case NAVER -> fetchNaverProfile(code, state);
                 };
@@ -159,44 +156,6 @@ public class OAuthLoginService {
 
 
     /* ================= PROVIDER 구현부 ================= */
-
-    private OAuthUserProfile fetchKakaoProfile(String code) {
-        OAuthProperties.Provider config = oAuthProperties.getProvider(OAuthProvider.KAKAO);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("grant_type", "authorization_code");
-        body.add("client_id", config.getClientId());
-        body.add("client_secret", config.getClientSecret());
-        body.add("redirect_uri", config.getRedirectUri());
-        body.add("code", code);
-
-        KakaoTokenResponse token = restTemplate.postForObject(
-                config.getTokenUri(),
-                new HttpEntity<>(body, headers),
-                KakaoTokenResponse.class
-        );
-
-        HttpHeaders infoHeaders = new HttpHeaders();
-        infoHeaders.setBearerAuth(token.getAccessToken());
-
-        ResponseEntity<KakaoUserResponse> response = restTemplate.exchange(
-                config.getUserInfoUri(),
-                HttpMethod.GET,
-                new HttpEntity<>(infoHeaders),
-                KakaoUserResponse.class
-        );
-
-        KakaoUserResponse d = response.getBody();
-
-        return new OAuthUserProfile(
-                String.valueOf(d.getId()),
-                d.getKakaoAccount().getEmail(),
-                d.getKakaoAccount().getProfile().getNickname()
-        );
-    }
 
     private OAuthUserProfile fetchGoogleProfile(String code) {
         OAuthProperties.Provider config = oAuthProperties.getProvider(OAuthProvider.GOOGLE);
