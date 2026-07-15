@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.example.planmate.common.externalAPI.OdsayTransit;
+import com.example.planmate.common.externalAPI.OdsayTransit.TransitLaneResult;
 import com.example.planmate.common.externalAPI.OdsayTransit.TransitResult;
 import com.example.planmate.common.externalAPI.OsrmRouting;
 import com.example.planmate.common.externalAPI.OsrmRouting.RoutingResult;
@@ -16,6 +17,7 @@ import com.example.planmate.domain.route.dto.RouteResponse;
 import com.example.planmate.domain.route.dto.RouteTableResponse;
 import com.example.planmate.domain.route.dto.RouteTripLegDto;
 import com.example.planmate.domain.route.dto.RouteTripResponse;
+import com.example.planmate.domain.route.dto.TransitLaneResponse;
 import com.example.planmate.domain.route.dto.TransitRouteResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -79,9 +81,21 @@ public class RouteService {
         TransitResult result = odsayTransit.getTransitPath(from, to);
 
         if (result == null) {
-            return new TransitRouteResponse(false, "대중교통 경로 조회에 실패했습니다", null, null, null, null, null, null);
+            return new TransitRouteResponse(false, "대중교통 경로 조회에 실패했습니다", new ArrayList<>(), 0, 0, 0);
         }
-        return new TransitRouteResponse(result.available(), result.message(), result.totalTime(), result.payment(),
-                result.totalDistance(), result.busTransitCount(), result.subwayTransitCount(), result.pathType());
+        return new TransitRouteResponse(result.available(), result.message(), result.routes(),
+                result.busCount(), result.subwayCount(), result.subwayBusCount());
+    }
+
+    /**
+     * 선택한 대중교통 경로(mapObj)의 지도 폴리라인을 조회한다. 실패/없음 시 빈 목록을 반환한다.
+     */
+    public TransitLaneResponse getTransitLane(String mapObj) {
+        TransitLaneResult result = odsayTransit.getLane(mapObj);
+
+        if (result == null) {
+            return new TransitLaneResponse(new ArrayList<>());
+        }
+        return new TransitLaneResponse(result.lanes());
     }
 }

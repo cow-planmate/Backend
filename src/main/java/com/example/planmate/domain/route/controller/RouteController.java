@@ -11,6 +11,8 @@ import com.example.planmate.domain.route.dto.RouteTableRequest;
 import com.example.planmate.domain.route.dto.RouteTableResponse;
 import com.example.planmate.domain.route.dto.RouteTripRequest;
 import com.example.planmate.domain.route.dto.RouteTripResponse;
+import com.example.planmate.domain.route.dto.TransitLaneRequest;
+import com.example.planmate.domain.route.dto.TransitLaneResponse;
 import com.example.planmate.domain.route.dto.TransitRouteRequest;
 import com.example.planmate.domain.route.dto.TransitRouteResponse;
 import com.example.planmate.domain.route.service.RouteService;
@@ -49,5 +51,11 @@ public class RouteController {
     @PostMapping("/transit")
     public TransitRouteResponse getTransit(@RequestBody TransitRouteRequest request) {
         return routeService.getTransit(request.getFrom(), request.getTo());
+    }
+
+    @Operation(summary = "대중교통 경로 폴리라인 조회", description = "선택한 대중교통 경로(mapObj)의 노선별 지도 폴리라인 좌표를 반환합니다.")
+    @PostMapping("/transit/lane")
+    public TransitLaneResponse getTransitLane(@RequestBody TransitLaneRequest request) {
+        return routeService.getTransitLane(request.getMapObj());
     }
 }
