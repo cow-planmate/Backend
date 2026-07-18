@@ -11,8 +11,11 @@ data:
   # Sentinel 기반 HA: nodes가 설정되면 Lettuce가 sentinel에게 현재 master를 물어
   # 직접 연결한다(고정 master Service에 의존하지 않으므로 노드 장애 시 자동 failover를 따라감).
   # sentinel.password는 deployment에서 secret(REDIS_PASSWORD)로 주입.
+  # nodes는 sentinel 파드를 개별 주소로 나열한다. ClusterIP Service 하나만 주면
+  # Lettuce 입장에서 sentinel이 1개뿐이라, 그 요청이 고장난 sentinel에 걸렸을 때
+  # 물러설 곳이 없다(master 조회 실패 -> 쓰기가 replica로 흘러 READONLY 발생).
   SPRING_DATA_REDIS_SENTINEL_MASTER: "myMaster"
-  SPRING_DATA_REDIS_SENTINEL_NODES: "planmate-redis-sentinel-sentinel:26379"
+  SPRING_DATA_REDIS_SENTINEL_NODES: "planmate-redis-sentinel-sentinel-0.planmate-redis-sentinel-sentinel-headless.default.svc.cluster.local:26379,planmate-redis-sentinel-sentinel-1.planmate-redis-sentinel-sentinel-headless.default.svc.cluster.local:26379,planmate-redis-sentinel-sentinel-2.planmate-redis-sentinel-sentinel-headless.default.svc.cluster.local:26379"
   DB_URL: "jdbc:p6spy:postgresql://planmate-db-rw:5432/planmate"
   STORAGE_TYPE: "minio"
   MINIO_ENDPOINT: "http://myminio-hl.default.svc.cluster.local:9000"
