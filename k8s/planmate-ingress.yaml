@@ -13,7 +13,6 @@ metadata:
 spec:
   tls:
   - hosts:
-    - pmserver1.salmakis.cloud
     - minio.salmakis.cloud
     - redis.salmakis.cloud
     - db.salmakis.cloud
@@ -50,25 +49,10 @@ spec:
             name: pgadmin-service
             port:
               number: 80
-  - host: pmserver1.salmakis.cloud
-    http:
-      paths:
-      # 커뮤니티 마이크로서비스 — /api/community/* 는 community-service로 라우팅 (/ 룰보다 먼저)
-      - path: /api/community
-        pathType: Prefix
-        backend:
-          service:
-            name: community-service
-            port:
-              number: 80
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: planmate-backend-service
-            port:
-              number: 80
-
+  # pmserver1.salmakis.cloud 는 planmate 네임스페이스의 새 스택(planmate-v2-ingress)이
+  # 받는다. Ingress 는 다른 네임스페이스의 서비스를 가리킬 수 없어 규칙째 옮겼다.
+  # 구 모놀리스(planmate-backend-service)는 그대로 떠 있으므로, 되돌리려면 이 블록을
+  # 복원하고 deploy 레포 쪽 규칙을 지우면 된다.
   - host: minio.salmakis.cloud
     http:
       paths:
