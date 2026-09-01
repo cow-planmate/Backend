@@ -51,8 +51,7 @@ spec:
               number: 80
   # pmserver1.salmakis.cloud 는 planmate 네임스페이스의 새 스택(planmate-v2-ingress)이
   # 받는다. Ingress 는 다른 네임스페이스의 서비스를 가리킬 수 없어 규칙째 옮겼다.
-  # 구 모놀리스(planmate-backend-service)는 그대로 떠 있으므로, 되돌리려면 이 블록을
-  # 복원하고 deploy 레포 쪽 규칙을 지우면 된다.
+  # 구 모놀리스(Deployment/Service)는 삭제됐다. 되돌리려면 git 이력에서 되살려야 한다.
   - host: minio.salmakis.cloud
     http:
       paths:
