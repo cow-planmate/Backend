@@ -202,10 +202,13 @@ spec:
 
               # --backup-dir: current에서 대체되거나 삭제되는 파일을 archive로 이동
               # 결과: current = 최신 상태 / archive = 변경·삭제 이력
+              # googleplace/ 는 재수집 가능한 캐시라 제외, 연결 폭주가 노드 UDP를 막아 etcd가 흔들려 checkers/tpslimit 제한
               rclone --config /config/rclone.conf sync \
                 minio:planmate \
                 "$CURRENT_DIR" \
                 --backup-dir "$ARCHIVE_DIR" \
+                --exclude "googleplace/**" \
+                --fast-list --checkers 2 --tpslimit 5 \
                 --progress
 
               echo "동기화 완료."
