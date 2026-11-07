@@ -1,13 +1,7 @@
-# Please edit the object below. Lines beginning with a '#' will be ignored,               
-# and an empty file will abort the edit. If an error occurs while saving this file will be
-# reopened with the relevant failures.       
-#                                                        
 apiVersion: minio.min.io/v2                              
 kind: Tenant                                             
 metadata:                                    
   annotations:                                                  
-  creationTimestamp: "2026-02-05T17:19:15Z"              
-  generation: 1                            
   labels:                                                
     app: minio                                               
     app.kubernetes.io/instance: planmate
