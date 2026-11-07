@@ -5,7 +5,7 @@ metadata:
   namespace: default
 spec:
   serviceName: "pgadmin-service"
-  replicas: 2
+  replicas: 1  # 관리 도구라 1개로 충분하다.
   selector:
     matchLabels:
       app: pgadmin

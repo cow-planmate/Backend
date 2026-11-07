@@ -17,7 +17,7 @@ metadata:
   name: redisinsight
   namespace: default
 spec:
-  replicas: 1
+  replicas: 0  # 상시 띄울 이유가 없다. 쓸 때 1 로 올려 머지한다(ArgoCD selfHeal 이 kubectl scale 을 되돌린다).
   selector:
     matchLabels:
       app: redisinsight
