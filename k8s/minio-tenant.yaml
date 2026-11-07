@@ -52,6 +52,52 @@ spec:
           requests:                      
             storage: 1Gi    
     volumesPerServer: 4                  
+  # pool-0(4대, 노드당 2대) 축소용. 노드당 1대라 노드 하나가 빠져도 읽기는 유지된다.
+  # oracle-arm 은 WAN 너머라 서버 간 통신 지연 때문에 뺀다.
+  - affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+              - control.k8s
+              - ubuntu
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              v1.min.io/pool: pool-1
+          topologyKey: kubernetes.io/hostname
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      runAsGroup: 1000
+      runAsNonRoot: true
+      runAsUser: 1000
+      seccompProfile:
+        type: RuntimeDefault
+    name: pool-1
+    securityContext:
+      fsGroup: 1000
+      fsGroupChangePolicy: OnRootMismatch
+      runAsGroup: 1000
+      runAsNonRoot: true
+      runAsUser: 1000
+    servers: 2
+    volumeClaimTemplate:
+      metadata:
+        name: data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+    volumesPerServer: 4
   poolsMetadata:                     
     annotations: {}         
     labels: {}                           
