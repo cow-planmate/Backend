@@ -41,7 +41,7 @@ spec:
         - containerPort: 80
         resources:
           requests:
-            cpu: 100m
+            cpu: 10m   # 실사용 1m. ubuntu 노드 CPU 예약이 차 롤아웃이 막히던 문제(2026-11-07)
             memory: 256Mi
           limits:
             cpu: 500m
