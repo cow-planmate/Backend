@@ -13,26 +13,6 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
 spec:
   rules:
-  - host: s3.planmate.site
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: minio
-            port:
-              number: 80
-  - host: minio.planmate.site
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: myminio-console
-            port:
-              number: 9090
   - host: kibana.planmate.site
     http:
       paths:
@@ -65,8 +45,6 @@ spec:
               number: 80
   tls:
   - hosts:
-    - s3.planmate.site
-    - minio.planmate.site
     - kibana.planmate.site
     - redis.planmate.site
     - db.planmate.site
